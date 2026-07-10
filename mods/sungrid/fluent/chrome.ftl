@@ -1,49 +1,59 @@
-## Shroud
-checkbox-fog-of-war =
-    .label = Fog of War
-    .description = Line of sight is required to view enemy forces
-
-checkbox-explored-map =
-    .label = Explored Map
-    .description = Initial map shroud is revealed
-
-## DeveloperMode
-checkbox-debug-menu =
-    .label = Debug Menu
-    .description = Enables cheats and developer commands
-
-## MapStartingLocations
-checkbox-separate-team-spawns =
-    .label = Separate Team Spawns
-    .description = Players without assigned spawn points will start as far as possible from enemy players
-
-## SpawnStartingUnits
-dropdown-starting-units =
-    .label = Starting Units
-    .description = The units that players start the game with
-
-## World
-options-starting-units =
-    .unlabeled = Unlabeled
-
 ## ingame-observer.yaml
-label-mute-indicator = Audio Muted
-button-observer-widgets-options = Options (Esc)
-button-replay-player-pause-tooltip = Pause
-button-replay-player-play-tooltip = Play
+label-economy-stats-harvesters-header = Harvesters
+label-economy-stats-derricks-header = Oil Derricks
 
-button-replay-player-slow =
-    .tooltip = Slow speed
-    .label = 50%
 
-button-replay-player-regular =
-    .tooltip = Regular speed
-    .label = 100%
 
-button-replay-player-fast =
-    .tooltip = Fast speed
-    .label = 200%
+## ingame-player.yaml
+button-command-bar-force-move =
+    .tooltip = Force Move
+    .tooltipdesc =
+    Selected units will move to the desired location
+     - Default activity for the target is suppressed
+     - Vehicles will attempt to crush enemies at the target location
+     - Helicopters will land at the target location
+     - Chrono Tanks will teleport towards the target location
 
-button-replay-player-maximum =
-    .tooltip = Maximum speed
-    .label = MAX
+    Left-click icon then right-click on target.
+    Hold <(Alt)> to activate temporarily while commanding units.
+
+button-command-bar-force-attack =
+    .tooltip = Force Attack
+    .tooltipdesc =
+    Selected units will attack the targeted unit or location
+     - Default activity for the target is suppressed
+     - Allows targeting of own or ally forces
+     - Long-range artillery units will always target the
+       location, ignoring units and buildings
+
+    Left-click icon then right-click on target.
+    Hold <(Ctrl)> to activate temporarily while commanding units.
+
+button-command-bar-deploy =
+    .tooltip = Deploy
+    .tooltipdesc =
+    Selected units will perform their default deploy activity
+     - MCVs will unpack into a Construction Yard
+     - Construction Yards will re-pack into a MCV
+     - Transports will unload their passengers
+     - Demolition Trucks and MAD Tanks will self-destruct
+     - Minelayers will deploy a mine
+     - Aircraft will return to base
+
+    Acts immediately on selected units.
+
+
+button-top-buttons-beacon-tooltip = Place Beacon
+button-top-buttons-sell-tooltip = Sell
+button-top-buttons-power-tooltip = Power Down
+button-top-buttons-repair-tooltip = Repair
+
+button-production-types-building-tooltip = Buildings
+button-production-types-defense-tooltip = Defense
+button-production-types-infantry-tooltip = Infantry
+button-production-types-vehicle-tooltip = Vehicles
+button-production-types-aircraft-tooltip = Aircraft
+button-production-types-naval-tooltip = Naval
+
+## ingame-debug.yaml
+button-debug-panel-power-outage = Power Outage

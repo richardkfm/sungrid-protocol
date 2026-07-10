@@ -1,32 +1,55 @@
 Cursors:
-	sungrid|cursors/default.yaml
+	sungrid|cursors.yaml
 
 Missions:
 	sungrid|missions/sungrid.yaml
 
 Music:
-	sungrid|music/sungrid.yaml
+	sungrid|audio/music.yaml
 
 Notifications:
-	sungrid|notifications/sungrid.yaml
+	sungrid|audio/notifications.yaml
 
 Rules:
-	sungrid|rules/sungrid.yaml
-	sungrid|rules/mpspawn.yaml
-	sungrid|rules/palettes.yaml
+	sungrid|rules/misc.yaml
+	sungrid|rules/ai.yaml
 	sungrid|rules/player.yaml
+	sungrid|rules/palettes.yaml
 	sungrid|rules/world.yaml
+	sungrid|rules/defaults.yaml
+	sungrid|rules/vehicles.yaml
+	sungrid|rules/husks.yaml
+	sungrid|rules/structures.yaml
+	sungrid|rules/infantry.yaml
+	sungrid|rules/civilian.yaml
+	sungrid|rules/decoration.yaml
+	sungrid|rules/aircraft.yaml
+	sungrid|rules/ships.yaml
+	sungrid|rules/fakes.yaml
+	sungrid|rules/map-generators.yaml
 
 Sequences:
-	sungrid|sequences/sungrid.yaml
-	sungrid|sequences/mapeditor.yaml
-	sungrid|sequences/mpspawn.yaml
+	sungrid|sequences/ships.yaml
+	sungrid|sequences/vehicles.yaml
+	sungrid|sequences/structures.yaml
+	sungrid|sequences/infantry.yaml
+	sungrid|sequences/aircraft.yaml
+	sungrid|sequences/misc.yaml
+	sungrid|sequences/decorations.yaml
 
 TileSets:
-	sungrid|tilesets/sungrid.yaml
-	
+	sungrid|tilesets/snow.yaml
+	sungrid|tilesets/interior.yaml
+	sungrid|tilesets/temperat.yaml
+	sungrid|tilesets/desert.yaml
+
 Voices:
-	sungrid|voices/sungrid.yaml
+	sungrid|audio/voices.yaml
 
 Weapons:
-	sungrid|weapons/sungrid.yaml
+	sungrid|weapons/explosions.yaml
+	sungrid|weapons/ballistics.yaml
+	sungrid|weapons/missiles.yaml
+	sungrid|weapons/other.yaml
+	sungrid|weapons/smallcaliber.yaml
+	sungrid|weapons/superweapons.yaml
