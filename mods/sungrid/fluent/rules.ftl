@@ -24,7 +24,7 @@ notification-cannot-deploy-here = Cannot deploy here.
 notification-low-power = Low power.
 notification-base-under-attack = Base under attack.
 notification-ally-under-attack = Our ally is under attack.
-notification-silos-needed = Silos needed.
+notification-silos-needed = Battery banks needed.
 
 ## world.yaml
 notification-game-saved = Game saved.
@@ -204,9 +204,9 @@ meta-mine =
 
 ## fakes.yaml
 actor-fpwr =
-    .name = Fake Power Plant
-    .generic-name = Power Plant
-    .description = Looks like a Power Plant.
+    .name = Fake Solar Array
+    .generic-name = Solar Array
+    .description = Looks like a Solar Array.
 
 actor-tenf =
     .name = Fake Allied Barracks
@@ -239,9 +239,9 @@ actor-fixf =
     .description = Looks like a Service Depot.
 
 actor-fapw =
-    .name = Fake Advanced Power Plant
-    .generic-name = Advanced Power Plant
-    .description = Looks like an Advanced Power Plant.
+    .name = Fake Advanced Solar Array
+    .generic-name = Advanced Solar Array
+    .description = Looks like an Advanced Solar Array.
 
 actor-atef =
     .name = Fake Allied Tech Center
@@ -641,16 +641,23 @@ actor-fact =
     Produces structures.
 
 actor-proc =
-    .name = Ore Refinery
+    .name = Materials Refinery
     .description =
-    Refines Ore and Gems into
+    Converts harvested Ore and Gems into
     credits.
 
 actor-silo =
-    .name = Silo
+    .name = Battery Bank
     .description =
-    Stores excess refined
-    Ore and Gems.
+    Stores surplus grid capacity,
+    preventing reserves from overflowing.
+
+actor-oilb =
+    .name = Recycling Depot
+    .description =
+    Reclaims scrap from the battlefield and
+    recycles it into a steady trickle of credits.
+    Draws a modest amount of power.
 
 actor-hpad =
     .name = Helipad
@@ -679,16 +686,17 @@ actor-afld-ukraine-description =
       Special Ability: Parabombs
 
 actor-powr =
-    .name = Power Plant
+    .name = Solar Array
     .description =
+    A field of grid-tied solar panels.
     Provides power for other
     structures.
 
 actor-apwr =
-    .name = Advanced Power Plant
+    .name = Advanced Solar Array
     .description =
     Provides double the power of a standard
-    Power Plant.
+    Solar Array.
 
 actor-stek =
     .name = Soviet Tech Center
