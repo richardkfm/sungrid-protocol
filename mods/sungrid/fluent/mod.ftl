@@ -2,6 +2,14 @@
 mod-title = Sungrid Protocol
 mod-windowtitle = Sungrid Protocol
 
-# To silence "Warning: Missing key `loadscreen-loading` in mod ftl files required by `LogoStripeLoadScreen.Loading`"
-# Because https://github.com/OpenRA/OpenRA/issues/20693 wasn't fixed.
-loadscreen-loading = .
+## LogoStripeLoadScreen
+loadscreen-loading = Filling Crates..., Charging Capacitors..., Reticulating Splines..., Planting Trees..., Building Bridges..., Aging Empires..., Compiling EVA..., Constructing Pylons..., Activating Skynet..., Splitting Atoms...
+
+## Tilesets
+tileset-desert = Desert
+tileset-snow = Snow
+tileset-temperat = Temperate
+tileset-interior = Interior
+
+## SupportPowerTimerWidget
+support-power-timer = { $player }'s { $support-power }: { $time }

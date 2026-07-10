@@ -3,25 +3,84 @@ Metadata:
 	Version: {DEV_VERSION}
 	WindowTitle: mod-windowtitle
 
-FileSystem: DefaultFileSystem
-	Packages:
+PackageFormats: Mix
+
+FileSystem: ContentInstallerFileSystem
+	SystemPackages:
 		^EngineDir
 		$sungrid: sungrid
 		^EngineDir|mods/common: common
+		~^SupportDir|Content/ra/v2/: content
+		common|scripts
+		sungrid|scripts
+		sungrid|uibits
+	ContentPackages:
+		content|allies.mix
+		content|conquer.mix
+		content|interior.mix
+		content|lores.mix: lores
+		content|hires.mix
+		content|local.mix
+		content|russian.mix
+		content|snow.mix
+		content|sounds.mix
+		content|speech.mix
+		content|temperat.mix
+		content|expand
+		content|expand/expand2.mix
+		content|expand/lores1.mix
+		content|expand/hires1.mix
+		content|cnc/desert.mix
+		~content|movies
+		~content|scores.mix
+		~content|general.mix
+		# Below are mod-provided (system) packages that need to be loaded after the content packages so they can override content assets.
+		sungrid|bits
+		sungrid|bits/desert
+	RequiredContentFiles:
+		content|expand/chrotnk1.aud
+		content|expand/fixit1.aud
+		content|expand/jburn1.aud
+		content|expand/jchrge1.aud
+		content|expand/jcrisp1.aud
+		content|expand/jdance1.aud
+		content|expand/jjuice1.aud
+		content|expand/jjump1.aud
+		content|expand/jlight1.aud
+		content|expand/jpower1.aud
+		content|expand/jshock1.aud
+		content|expand/jyes1.aud
+		content|expand/madchrg2.aud
+		content|expand/madexplo.aud
+		content|expand/mboss1.aud
+		content|expand/mhear1.aud
+		content|expand/mhotdig1.aud
+		content|expand/mhowdy1.aud
+		content|expand/mhuh1.aud
+		content|expand/mlaff1.aud
+		content|expand/mrise1.aud
+		content|expand/mwrench1.aud
+		content|expand/myeehaw1.aud
+		content|expand/myes1.aud
+	ContentInstallerMod: ra-content
 
 MapFolders:
 	sungrid|maps: System
+	~^SupportDir|maps/sungrid/{DEV_VERSION}: User
 
-Assemblies: OpenRA.Mods.Common.dll, OpenRA.Mods.Sungrid.dll
+Assemblies: OpenRA.Mods.Common.dll, OpenRA.Mods.Cnc.dll, OpenRA.Mods.Sungrid.dll
 
 AssetBrowser:
-	AudioExtensions: .wav
-	SpriteExtensions: .png
-	VideoExtensions:
+	SpriteExtensions: .shp, .tmp, .tem, .des, .sno, .int
+	AudioExtensions: .aud, .wav, .r00, .r01, .r02, .r03, .v00, .v01, .v02, .v03
+	VideoExtensions: .vqa, .wsa
 
-SupportsMapsFrom: Sungrid
+SupportsMapsFrom: sungrid
 
-LoadScreen: BlankLoadScreen
+LoadScreen: LogoStripeLoadScreen
+	Image: sungrid|uibits/loadscreen.png
+	Image2x: sungrid|uibits/loadscreen-2x.png
+	Image3x: sungrid|uibits/loadscreen-3x.png
 
 ServerTraits:
 	LobbyCommands
@@ -31,16 +90,17 @@ ServerTraits:
 	LobbySettingsNotification
 
 MapGrid:
-	TileSize: 32, 32
 	Type: Rectangular
 
-SpriteFormats: PngSheet
+SpriteFormats: ShpD2, ShpTD, TmpRA, TmpTD, ShpTS
 
-SoundFormats: Wav
+SoundFormats: Aud, Wav
+
+VideoFormats: Vqa, Wsa
 
 TerrainFormat: DefaultTerrain
 
-SpriteSequenceFormat: DefaultSpriteSequence
+SpriteSequenceFormat: ClassicTilesetSpecificSpriteSequence
 
 DefaultOrderGenerator: UnitOrderGenerator
 
