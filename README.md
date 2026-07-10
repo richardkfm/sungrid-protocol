@@ -4,6 +4,8 @@ A solarpunk reinterpretation of the classic Red Alert RTS formula — renewable 
 
 This repository is a fork of the OpenRA engine (see [Technical Architecture](docs/ARCHITECTURE.md) for why, and the trade-offs of that choice). Sungrid Protocol content lives in `mods/sungrid` once Phase 1 scaffolding lands (see [Roadmap](docs/ROADMAP.md)) — as of this writing, that directory does not exist yet; this repo is at the Phase 0 documentation-bootstrap stage.
 
+<img width="848" height="1264" alt="ra-sungrid-protocol-draftq" src="https://github.com/user-attachments/assets/77dac1b2-9888-41ba-a7b7-cbb0018c5ab5" />
+
 ## Start here
 
 * [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) — the full project blueprint: vision, technical strategy, phased roadmap, MVP definition, economic victory mode spec, building plan, and GitHub workflow, all in one place.
