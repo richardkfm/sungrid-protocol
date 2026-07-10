@@ -1,3 +1,9 @@
+# SDK-managed engine dependency (fetched by fetch-engine.sh, not vendored)
+user.config
+engine
+engine_temp
+engine.zip
+
 # Visual Studio
 Release
 bin

@@ -3,62 +3,14 @@ name: Release Packaging
 on:
   push:
     tags:
-    - 'release-*'
-    - 'playtest-*'
-    - 'devtest-*'
+    - '*'
 
 permissions:
-  contents: write # for release creation
+  contents: write  #  for release creation (svenstaro/upload-release-action)
 
 jobs:
-  create-release:
-    name: Create Draft Release
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Create Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          PRE_RELEASE_FLAG=""
-
-          if [[ "${{ github.ref_name }}" == devtest-* ]] || [[ "${{ github.ref_name }}" == playtest-* ]]; then
-            PRE_RELEASE_FLAG="--prerelease"
-          fi
-
-          # Use --repo to interact with the API without needing a git checkout
-          gh release create "${{ github.ref_name }}" \
-            --repo "${{ github.repository }}" \
-            --title "${{ github.ref_name }}" \
-            --draft \
-            $PRE_RELEASE_FLAG
-
-  source:
-    name: Source Tarball
-    needs: create-release
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Clone Repository
-        uses: actions/checkout@v7
-
-      - name: Prepare Environment
-        run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" >> ${GITHUB_ENV}
-
-      - name: Package Source
-        run: |
-          mkdir -p build/source
-          ./packaging/source/buildpackage.sh "${GIT_TAG}" "${PWD}/build/source"
-
-      - name: Upload Packages
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          gh release upload ${{ github.ref_name }} build/source/*
-
   linux:
     name: Linux AppImages
-    needs: create-release
     runs-on: ubuntu-22.04
     steps:
       - name: Clone Repository
@@ -72,8 +24,9 @@ jobs:
       - name: Prepare Environment
         run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" >> ${GITHUB_ENV}
 
-      - name: Package AppImages
+      - name: Package AppImage
         run: |
+          make engine
           mkdir -p build/linux
           sudo apt-get install -y desktop-file-utils
           ./packaging/linux/buildpackage.sh "${GIT_TAG}" "${PWD}/build/linux"
@@ -87,8 +40,7 @@ jobs:
 
   macos:
     name: macOS Disk Image
-    needs: create-release
-    runs-on: macos-14
+    runs-on: macos-13
     steps:
       - name: Clone Repository
         uses: actions/checkout@v7
@@ -109,6 +61,7 @@ jobs:
           MACOS_DEVELOPER_USERNAME: ${{ secrets.MACOS_DEVELOPER_USERNAME }}
           MACOS_DEVELOPER_PASSWORD: ${{ secrets.MACOS_DEVELOPER_PASSWORD }}
         run: |
+          make engine
           mkdir -p build/macos
           ./packaging/macos/buildpackage.sh "${GIT_TAG}" "${PWD}/build/macos"
 
@@ -121,7 +74,6 @@ jobs:
 
   windows:
     name: Windows Installers
-    needs: create-release
     runs-on: ubuntu-22.04
     steps:
       - name: Clone Repository
@@ -140,40 +92,13 @@ jobs:
 
       - name: Package Installers
         run: |
+          make engine
           mkdir -p build/windows
           ./packaging/windows/buildpackage.sh "${GIT_TAG}" "${PWD}/build/windows"
-
-      - name: Upload Installer
-        id: unsigned-artifact
-        if: github.repository == 'openra/openra'
-        uses: actions/upload-artifact@v7
-        with:
-          path: build/windows/*.exe
-
-      - name: Microsoft Authenticode
-        id: signpath
-        if: github.repository == 'openra/openra'
-        uses: signpath/github-action-submit-signing-request@v2
-        with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: '${{ secrets.SIGNPATH_ORGANISATION_ID }}'
-          project-slug: 'OpenRA'
-          signing-policy-slug: 'release-signing'
-          github-artifact-id: '${{ steps.unsigned-artifact.outputs.artifact-id }}'
-          wait-for-completion: true
-          output-artifact-directory: 'build/windows/signed/'
-          parameters: |
-            version: ${{ toJSON(github.ref_name) }}
 
       - name: Upload Packages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          gh release upload "${{ github.ref_name }}" build/windows/*.zip
-
-          if [ "${GITHUB_REPOSITORY}" = "openra/openra" ]; then
-            gh release upload "${{ github.ref_name }}" build/windows/signed/*.exe
-          else
-            gh release upload "${{ github.ref_name }}" build/windows/*.exe
-          fi
+          gh release upload ${{ github.ref_name }} build/windows/*

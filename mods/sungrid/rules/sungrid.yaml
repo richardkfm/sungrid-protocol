@@ -1,0 +1,17 @@
+sungrid:
+	AlwaysVisible:
+	BodyOrientation:
+	HitShape:
+	Immobile:
+	MapEditorData:
+		Categories: Actors
+	QuantizeFacingsFromSequence:
+	RenderSprites:
+	WithSpriteBody:
+
+sungrid.colorpicker:
+	Inherits: sungrid
+	RenderSprites:
+		Image: sungrid
+		Palette: colorpicker
+	-MapEditorData:

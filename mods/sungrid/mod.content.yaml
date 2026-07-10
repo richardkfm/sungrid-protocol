@@ -1,0 +1,32 @@
+Cursors:
+	sungrid|cursors/default.yaml
+
+Missions:
+	sungrid|missions/sungrid.yaml
+
+Music:
+	sungrid|music/sungrid.yaml
+
+Notifications:
+	sungrid|notifications/sungrid.yaml
+
+Rules:
+	sungrid|rules/sungrid.yaml
+	sungrid|rules/mpspawn.yaml
+	sungrid|rules/palettes.yaml
+	sungrid|rules/player.yaml
+	sungrid|rules/world.yaml
+
+Sequences:
+	sungrid|sequences/sungrid.yaml
+	sungrid|sequences/mapeditor.yaml
+	sungrid|sequences/mpspawn.yaml
+
+TileSets:
+	sungrid|tilesets/sungrid.yaml
+	
+Voices:
+	sungrid|voices/sungrid.yaml
+
+Weapons:
+	sungrid|weapons/sungrid.yaml

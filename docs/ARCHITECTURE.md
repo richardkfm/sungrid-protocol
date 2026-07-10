@@ -2,15 +2,18 @@
 
 ## Repo structure decision
 
-`richardkfm/sungrid-protocol` is currently a **direct fork of the OpenRA engine repository itself** (default branch `bleed`), containing the full engine source tree (`OpenRA.Game/`, `OpenRA.Mods.Common/`, `OpenRA.Mods.Cnc/`, `OpenRA.Mods.D2k/`, `OpenRA.Platforms.Default/`, `OpenRA.Server/`, `OpenRA.Test/`, `OpenRA.Utility/`) plus the stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), all unmodified from upstream. This is **not** the lightweight [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) repo, which normally treats the engine as a downloaded dependency and keeps a mod's repo small.
+`richardkfm/sungrid-protocol` started as a **direct fork of the OpenRA engine repository itself** (default branch `bleed`), containing the full engine source tree plus the stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), unmodified from upstream. That was superseded before any mod content existed: this repo now follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pattern instead, where the engine is a **pinned, fetched build dependency** rather than vendored source.
 
-**Decision: keep this repo as the full engine fork, and build Sungrid Protocol as a new mod directory (`mods/sungrid`) forked from `mods/ra`, rather than migrating to a separate OpenRAModSDK-based repo.**
+**Decision: the engine lives under `engine/` (gitignored, downloaded by `fetch-engine.sh`/`make`), pinned via `mod.config`'s `ENGINE_VERSION`. Mod content lives in `mods/sungrid/` (a renamed copy of the SDK's `OpenRA.Mods.Example`/`mods/example` starter template) plus the `OpenRA.Mods.Sungrid/` C# project for mod-specific traits.**
 
-Rationale:
-- Zero migration risk — restructuring into the SDK pattern now would burn Phase 0 time on infrastructure instead of content, with no gameplay payoff.
-- `mods/ra` is a complete, working reference implementation sitting right next to where the new mod will live — the fastest possible starting point.
-- The full engine tree is already available in-repo if a Phase 3+ friction point genuinely requires an engine-level (not mod-level) change — no separate checkout needed.
-- Trade-off accepted: this repo is heavier than a typical mod repo, and pulling upstream OpenRA engine updates later means merging against a full engine tree rather than bumping a dependency version. This is an acceptable cost given the "fastest realistic route to a playable prototype" priority; it can be revisited post-MVP if upstream sync pain becomes real.
+Why this superseded the original full-fork decision: the original rationale ("zero migration risk" from not restructuring) undervalued that the migration cost is close to zero *only* before any mod content exists — and by Phase 0 docs-only, it still didn't. Every phase that passes makes switching later more expensive, so this was the cheapest point the project would ever be at to make the change, and it's also the structure OpenRA's own docs recommend for new mods.
+
+Rationale for the SDK pattern:
+- Matches the standard, documented path for new OpenRA mods — not a nonstandard structure future contributors (human or AI) have to re-learn.
+- Much smaller, faster repo and CI — no engine source to check out, diff, or build alongside mod content.
+- Upstream OpenRA engine updates become a version bump (`mod.config`'s `ENGINE_VERSION`) instead of a merge against a full vendored tree.
+- `ENGINE_VERSION` is pinned to `bf4102a029f132824d682069fce1105d56fc5e96` — the exact commit this repo forked from — so the SDK migration itself introduces zero behavioral drift. Bumping to a newer engine version later is a deliberate, separate decision (see `docs/CONTRIBUTING.md`'s RFC process).
+- If a genuine engine-level change is ever needed for Grid Reserve (see friction point #1 below), the SDK pattern still accommodates it: pin `ENGINE_VERSION`/`AUTOMATIC_ENGINE_SOURCE` to a personal engine fork's commit instead of upstream's. That remains lighter-weight than vendoring the full engine tree in this repo permanently.
 
 ## Data-driven vs. engine-level split
 
@@ -27,9 +30,10 @@ The rule of thumb: if it can be expressed as YAML composing existing traits, it'
 
 ## Fastest path to a playable prototype
 
-1. Fork `mods/ra` → `mods/sungrid` (copy, rename mod id/metadata, no rule changes). Verify it launches and plays identically to RA under the new mod id. This is all of Phase 1.
-2. Layer in Phase 2's reflavored buildings via YAML only — no new traits, no new art pipeline yet (recolor/retexture existing sprites). Verify nothing regresses.
-3. Only then start Phase 3's Grid Reserve trait work, since it's the one piece that can't be done purely in YAML.
+1. **Done in Phase 0:** the SDK scaffold itself — `mod.config`, `fetch-engine.sh`, and `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed from the SDK's example template — fetches the pinned engine and builds/launches to the in-game main menu under the `sungrid` mod id. This proves the scaffold works before any real gameplay content exists.
+2. **Phase 1:** replace the example template's placeholder rules/sequences/maps in `mods/sungrid` with real content forked from `mods/ra`'s gameplay (pulled from the fetched `engine/mods/ra` reference or the public OpenRA/OpenRA repo, since `mods/ra` is no longer vendored locally). Verify it launches and plays a full skirmish.
+3. Layer in Phase 2's reflavored buildings via YAML only — no new traits, no new art pipeline yet (recolor/retexture existing sprites). Verify nothing regresses.
+4. Only then start Phase 3's Grid Reserve trait work in `OpenRA.Mods.Sungrid`, since it's the one piece that can't be done purely in YAML.
 
 This sequencing means there is a genuinely playable (if visually undifferentiated) build after Phase 1, well before any new C# code is written — which de-risks the whole project against "big rewrite that never ships."
 
@@ -41,18 +45,18 @@ This sequencing means there is a genuinely playable (if visually undifferentiate
 4. **Asset pipeline for new art.** Phase 5's original art pass needs a decided pixel-art/sprite pipeline (palette, resolution, animation frame conventions) consistent with `docs/ART_DIRECTION.md` before more than one artist (human or AI-assisted) touches it, or assets won't compose visually.
 5. **AI script depth.** OpenRA's built-in AI is script-driven (Lua) and not naturally aware of custom win conditions. Phase 4's "AI understands Grid Reserve" deliverable is bounded on purpose (see Phase 4 risk note in `docs/ROADMAP.md`) because teaching the stock AI genuinely good judgment about a brand-new mechanic is open-ended.
 
-## What this repo will look like after Phase 1
+## What this repo looks like
 
 ```
-mods/
-  ra/            # unmodified upstream reference, kept for diffing
-  sungrid/       # new: Sungrid Protocol mod (forked from ra)
-    mod.yaml
-    rules/
-    sequences/
-    maps/
-    chrome/
-    ...
+mod.config                  # MOD_ID, ENGINE_VERSION pin, packaging metadata
+fetch-engine.sh / .cmd      # downloads/builds the pinned engine into engine/ (gitignored)
+Makefile, make.cmd/.ps1     # build entry points (call fetch-engine automatically)
+launch-game.sh/.cmd, launch-dedicated.sh/.cmd, utility.sh/.cmd
+Sungrid.sln                 # references OpenRA.Mods.Sungrid + engine/OpenRA.Game, engine/OpenRA.Mods.Common
+OpenRA.Mods.Sungrid/         # mod-specific C# (Grid Reserve trait lands here in Phase 3)
+mods/sungrid/                # mod content: rules/, sequences/, maps/, chrome/, fluent/, etc.
+packaging/                   # SDK-style installer scripts, mod-scale (not the full engine's multi-mod packaging)
+engine/                      # gitignored — fetched by fetch-engine.sh, not committed
 ```
 
-Upstream engine directories (`OpenRA.Game/`, `OpenRA.Mods.*/`, etc.) are expected to stay untouched through at least Phase 5. If a future phase needs an engine change, it should be a small, clearly-justified diff reviewed with the same scrutiny as any upstream OpenRA contribution — not a place to accumulate hacks.
+There is no vendored `OpenRA.Game/`, `OpenRA.Mods.Common/`, or stock `mods/ra`/`mods/cnc`/`mods/d2k`/`mods/ts` in this repo anymore — they're part of the fetched `engine/` dependency. If a future phase needs a genuine engine-level change, pin `ENGINE_VERSION` to a personal engine fork's commit rather than reintroducing a vendored tree (see the rationale above).

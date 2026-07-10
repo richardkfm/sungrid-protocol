@@ -1,10 +1,5 @@
 {
 	"version": "2.0.0",
-	"options": {
-		"env": {
-			"ENGINE_DIR": ".."
-		}
-	},
 	"tasks": [
 		{
 			"label": "build",
@@ -16,8 +11,14 @@
 		},
 		{
 			"label": "Run Utility",
-			"command": "dotnet ${workspaceRoot}/bin/OpenRA.Utility.dll ${input:modId} ${input:command}",
+			"command": "dotnet ${workspaceRoot}/engine/bin/OpenRA.Utility.dll ${input:modId} ${input:command}",
 			"type": "shell",
+			"options": {
+				"env": {
+					"ENGINE_DIR": "${workspaceRoot}/engine",
+					"MOD_SEARCH_PATHS": "${workspaceRoot}/mods,${workspaceRoot}/engine/mods"
+				}
+			}
 		}
 	],
 	"inputs": [

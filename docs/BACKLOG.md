@@ -6,22 +6,23 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ---
 
-### 1. Scaffold mods/sungrid from mods/ra template
+### 1. Port mods/ra's gameplay into mods/sungrid
 
 **Labels:** `phase:1`, `type:content`, `good-first-issue`
 
 **Phase:** 1 — Baseline playable shell (see `docs/ROADMAP.md`)
 
-**Purpose:** Create the Sungrid Protocol mod directory by forking the stock `mods/ra` mod. No rule changes yet — this is pure plumbing to get a mod identity that boots.
+**Purpose:** Replace the placeholder SDK example-mod content in `mods/sungrid` (already renamed to Sungrid branding as part of the Mod SDK migration) with real gameplay forked from `mods/ra`. No new rules/mechanics yet — this is a content port, not a design pass.
 
 **Scope:**
-- Copy `mods/ra` → `mods/sungrid`.
-- Update `mod.yaml` metadata: mod id, title, description, version, icon placeholder.
-- No changes to units/buildings/rules YAML in this issue.
+- Pull `mods/ra`'s rules/sequences/maps from the fetched engine's bundled copy (`engine/mods/ra` after `fetch-engine.sh` runs) or the public OpenRA/OpenRA repo, since `mods/ra` is no longer vendored in this repo.
+- Replace `mods/sungrid`'s current placeholder content (rules, sequences, maps, chrome, fluent strings) with the ported RA content.
+- Keep `mod.yaml`/`mod.config` metadata as already set by the Mod SDK migration (mod id `sungrid`, etc.) — no changes needed there.
+- No new units/buildings/rules design in this issue — straight port only.
 
-**Dependencies:** Depends on the Phase 0 docs PR (`docs/ARCHITECTURE.md`, `docs/ROADMAP.md`) being merged, since it defines this exact approach.
+**Dependencies:** Depends on the Phase 0 docs + Mod SDK migration PR being merged, since it defines this exact approach and already did the renaming/scaffolding.
 
-**Definition of done:** `mods/sungrid` exists, builds, and appears as its own distinct entry (not "Red Alert") in the OpenRA mod chooser.
+**Definition of done:** `mods/sungrid` builds, plays real Red Alert-derived gameplay (not the SDK's placeholder example content), and appears as its own distinct entry (not "Red Alert") in the OpenRA mod chooser.
 
 ---
 
@@ -31,35 +32,35 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 **Phase:** 1 — Baseline playable shell (see `docs/ROADMAP.md`)
 
-**Purpose:** Prove the forked `mods/sungrid` mod is genuinely playable before any content work starts, per the "fastest path to a playable prototype" sequencing in `docs/ARCHITECTURE.md`.
+**Purpose:** Prove `mods/sungrid` is genuinely playable with real content before any solarpunk content work starts, per the "fastest path to a playable prototype" sequencing in `docs/ARCHITECTURE.md`.
 
 **Scope:**
 - Launch `mods/sungrid`.
 - Play a full skirmish match against the built-in AI.
 - Confirm destruction victory/defeat triggers correctly.
-- Confirm no crashes and assets load correctly under the new mod id.
+- Confirm no crashes and assets load correctly under the mod id.
 
-**Dependencies:** Blocked by #1 "Scaffold mods/sungrid from mods/ra template."
+**Dependencies:** Blocked by #1 "Port mods/ra's gameplay into mods/sungrid."
 
 **Definition of done:** A complete skirmish match can be played start-to-finish with a normal win/loss result and no crashes.
 
 ---
 
-### 3. Set up CI build for the Sungrid mod
+### 3. Confirm CI is green on real mod content
 
 **Labels:** `phase:0`, `type:engine`
 
 **Phase:** 0/1 — Bootstrap / Baseline playable shell
 
-**Purpose:** Catch broken mod builds automatically instead of relying on manual verification, per `docs/CONTRIBUTING.md`'s PR checklist ("builds cleanly").
+**Purpose:** CI (`ci.yml`) already builds/validates `mods/sungrid` against the fetched engine as part of the Mod SDK migration — but only against the SDK's placeholder example content so far. This issue confirms CI still passes once #1 replaces that placeholder with real `mods/ra`-derived content, per `docs/CONTRIBUTING.md`'s PR checklist ("builds cleanly").
 
 **Scope:**
-- Extend the existing engine CI workflow to also build/validate `mods/sungrid`.
-- Fail CI if the mod fails to build or its `mod.yaml`/rules fail to parse.
+- Re-run CI (`make check`, `make test`) against #1's ported content and fix anything that breaks.
+- Confirm CI still fails on an intentionally broken mod build/rules parse.
 
 **Dependencies:** Blocked by #1.
 
-**Definition of done:** A PR that intentionally breaks `mods/sungrid` fails CI; a healthy PR passes.
+**Definition of done:** CI is green against real `mods/ra`-derived content; a PR that intentionally breaks `mods/sungrid` still fails CI.
 
 ---
 

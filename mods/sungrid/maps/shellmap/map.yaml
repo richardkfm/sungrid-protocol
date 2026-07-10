@@ -1,0 +1,30 @@
+MapFormat: 12
+
+RequiresMod: sungrid
+
+Title: Sungrid Shellmap
+
+Author: Sungrid Author
+
+Tileset: SUNGRID
+
+MapSize: 34,34
+
+Bounds: 1,1,32,32
+
+Visibility: Shellmap
+
+Categories: Maps
+
+Players:
+	PlayerReference@Neutral:
+		Name: Neutral
+		OwnsWorld: True
+		NonCombatant: True
+		Faction: Random
+	PlayerReference@Creeps:
+		Name: Creeps
+		NonCombatant: True
+		Faction: Random
+
+Actors:
