@@ -15,6 +15,7 @@ This repository is a fork of the OpenRA engine (see [Technical Architecture](doc
 * [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction.
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 * [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) — license inheritance and EA non-affiliation.
+* [`docs/BACKLOG.md`](docs/BACKLOG.md) — first 10 engineering issues, held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
 * [`CLAUDE.md`](CLAUDE.md) — navigation map for AI-assisted development sessions in this repo.
 
 ## Play
