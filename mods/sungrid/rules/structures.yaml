@@ -1398,6 +1398,42 @@ SILO:
 		PipCount: 5
 		FullSequence: pip-yellow
 
+OILB:
+	Inherits: ^Building
+	Selectable:
+		Bounds: 1024, 1024
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 65
+		Prerequisites: anypower, ~techlevel.infonly
+		Description: actor-oilb.description
+	Valued:
+		Cost: 600
+	Targetable:
+		TargetTypes: GroundActor, Structure, C4, DetonateAttack
+	Tooltip:
+		Name: actor-oilb.name
+	-GivesBuildableArea:
+	Health:
+		HP: 40000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4c0
+	WithBuildingBib:
+		HasMinibib: true
+	CashTrickler:
+		InitialDelay: 25
+		Interval: 125
+		Amount: 25
+		ShowTicks: true
+	Power:
+		Amount: -20
+	FireWarheadsOnDeath:
+		Weapon: SmallBuildingExplode
+		EmptyWeapon: SmallBuildingExplode
+	ProvidesPrerequisite@buildingname:
+
 HPAD:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
