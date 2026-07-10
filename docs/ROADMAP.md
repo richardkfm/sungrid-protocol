@@ -16,25 +16,25 @@ Scope control is the whole game here. Each phase must ship something playable or
 
 ## Phase 0 — Repository bootstrap and architecture setup
 
-- **Why:** Nothing downstream is trustworthy if the repo structure, docs, and contribution model aren't settled first. This is also where the "full engine fork vs. Mod SDK" question gets answered once, in writing, so it never gets re-litigated per-PR.
-- **Deliverables:** `docs/` design doc set (this file and its siblings), `CLAUDE.md` navigation map, root `README.md` reframed for Sungrid Protocol, label taxonomy and milestones created in GitHub, first 10 issues opened.
-- **Code scope:** None. No `mods/sungrid` directory yet.
-- **Data/content scope:** None.
-- **Testing scope:** Docs review only — links resolve, tables render, no contradictions between docs.
-- **Exit criteria:** All docs merged to `bleed`; milestones and labels exist; contributors (even a future solo-plus-Claude workflow) can onboard from `README.md` alone.
-- **Biggest risk:** Scope creep into actually starting `mods/sungrid` before the plan is settled, which tends to produce content that has to be redone once the mod-structure decision is final.
-- **Do NOT attempt yet:** Any C# engine changes, any new traits, any art asset pipeline decisions.
+- **Why:** Nothing downstream is trustworthy if the repo structure, docs, and contribution model aren't settled first. This is also where the "full engine fork vs. Mod SDK" question got answered (Mod SDK — see `docs/ARCHITECTURE.md`) once, in writing, so it never gets re-litigated per-PR.
+- **Deliverables:** `docs/` design doc set (this file and its siblings), `CLAUDE.md` navigation map, root `README.md` reframed for Sungrid Protocol, label taxonomy and milestones created in GitHub, first 10 issues opened; **the repo restructured onto the OpenRAModSDK pattern** — `mod.config`, `fetch-engine.sh`, and `mods/sungrid`/`OpenRA.Mods.Sungrid` (renamed from the SDK's example template) in place, engine fetch verified working.
+- **Code scope:** None beyond the SDK's own example-mod stub, renamed to Sungrid branding.
+- **Data/content scope:** None beyond the SDK's placeholder example content, renamed. No real gameplay rules yet.
+- **Testing scope:** Docs review (links resolve, tables render, no contradictions) plus a build check: `fetch-engine.sh`/`make` successfully fetches the pinned engine and the stub mod builds/launches to the main menu.
+- **Exit criteria:** All docs merged to `bleed`; milestones and labels exist; contributors (even a future solo-plus-Claude workflow) can onboard from `README.md` alone; `make` + `launch-game.sh Game.Mod=sungrid` reaches the main menu on a clean checkout.
+- **Biggest risk:** Scope creep into writing real gameplay content in `mods/sungrid` before Phase 1 properly starts — this phase proves the scaffold works, it doesn't populate it with Red Alert-derived rules yet.
+- **Do NOT attempt yet:** Any C# traits beyond the SDK's stub, any real gameplay YAML, any art asset pipeline decisions.
 
 ## Phase 1 — Baseline playable shell on OpenRA
 
-- **Why:** Prove the fork boots, plays, and can be reskinned before any new mechanic is added. This is the fastest way to a "playable" milestone and it de-risks the mod-structure decision from Phase 0.
-- **Deliverables:** `mods/sungrid` created as a fork of `mods/ra` (same rules, same units, same maps initially), mod metadata (`mod.yaml`, id, title, icon placeholder) updated, mod appears in the OpenRA mod chooser and launches to a working skirmish against the AI.
-- **Code scope:** None beyond what `mods/ra` already has. No new traits.
-- **Data/content scope:** Mod metadata only — id/title/version/icon. Unit and building YAML is untouched (still literally Red Alert content, just running under the Sungrid Protocol mod id).
+- **Why:** Prove the SDK scaffold can carry real gameplay content, not just the placeholder example mod, before any new mechanic is added. This is the fastest way to a genuinely "playable" milestone.
+- **Deliverables:** `mods/sungrid`'s placeholder example rules/sequences/maps replaced with real content forked from `mods/ra`'s gameplay (pulled from the fetched `engine/mods/ra` reference or the public OpenRA/OpenRA repo, since `mods/ra` is no longer vendored locally), mod metadata (title, icon placeholder) finalized, mod appears in the OpenRA mod chooser and launches to a working skirmish against the AI.
+- **Code scope:** None beyond what `mods/ra` already has. No new traits in `OpenRA.Mods.Sungrid` yet beyond the SDK's stub.
+- **Data/content scope:** Real rules/sequences/maps replacing the SDK's `example` placeholder content. Unit and building YAML is untouched from `mods/ra` at this point (still literally Red Alert content, just running under the Sungrid Protocol mod id).
 - **Testing scope:** Manual: launch the mod, start a skirmish vs. AI, confirm win/lose on destruction victory, confirm no crashes, confirm assets load.
 - **Exit criteria:** A build of the Sungrid Protocol mod can be launched, played start-to-finish against the AI, and produces a normal win/loss result.
 - **Biggest risk:** Treating this phase as "done" content-wise — it isn't, it's plumbing. It's tempting to start reskinning immediately; resist until Phase 1 is merged and stable.
-- **Do NOT attempt yet:** Any new buildings, new economy mechanics, or art replacement. This phase is a rename-and-verify pass, not a content pass.
+- **Do NOT attempt yet:** Any new buildings, new economy mechanics, or art replacement. This phase is a port-and-verify pass, not a content pass.
 
 ## Phase 2 — First solarpunk content layer
 

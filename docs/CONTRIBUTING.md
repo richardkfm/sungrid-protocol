@@ -1,14 +1,15 @@
 # Contributing to Sungrid Protocol
 
-This document covers Sungrid Protocol's project workflow: branching, issues, RFCs, releases. For C# coding style on engine-level changes, see the root [`CONTRIBUTING.md`](../CONTRIBUTING.md), which is OpenRA's upstream engine contribution guide and still applies to anything touching `OpenRA.*` directories.
+This document covers Sungrid Protocol's project workflow: branching, issues, RFCs, releases. For C# coding style on engine-level changes, see the root [`CONTRIBUTING.md`](../CONTRIBUTING.md) (the Mod SDK's contributing guidelines, which point to OpenRA's coding-standard wiki).
 
 ## Repository structure
 
 ```
-OpenRA.Game/, OpenRA.Mods.*/, ...   # upstream engine — avoid touching unless justified in docs/ARCHITECTURE.md
-mods/ra, mods/cnc, mods/d2k, mods/ts  # stock upstream mods — reference only, do not edit
-mods/sungrid/                       # Sungrid Protocol mod — this is where almost all work happens
-docs/                                # design docs (this file, VISION, ROADMAP, ARCHITECTURE, GAME_MODES, BUILDINGS, ART_DIRECTION, LICENSE_NOTES, BLUEPRINT)
+engine/                              # fetched by fetch-engine.sh, pinned via mod.config — gitignored, never commit or edit
+mods/sungrid/                        # Sungrid Protocol mod content — this is where almost all work happens
+OpenRA.Mods.Sungrid/                 # mod-specific C# traits (Grid Reserve lands here)
+mod.config, fetch-engine.sh, Makefile, launch-*, utility.*, Sungrid.sln, packaging/   # SDK scaffolding
+docs/                                # design docs (this file, VISION, ROADMAP, ARCHITECTURE, GAME_MODES, BUILDINGS, ART_DIRECTION, LICENSE_NOTES, BLUEPRINT, BACKLOG)
 CLAUDE.md                            # navigation map for AI-assisted sessions
 ```
 
@@ -58,7 +59,7 @@ Pure `type:content` changes (a new building's YAML stats, a balance tweak) don't
 - [ ] If `type:engine`: matching RFC issue linked, and the change is additive (doesn't alter unrelated existing traits/behavior)
 - [ ] If it changes a documented rule: the relevant `docs/*.md` file is updated in the same PR
 - [ ] Manually playtested (skirmish match minimum) if it touches buildable content or a game mode
-- [ ] No changes to `OpenRA.*` upstream engine directories unless explicitly justified and called out in the PR description
+- [ ] No changes to anything under `engine/` (it's fetched, gitignored, and never committed)
 - [ ] Builds cleanly (`make` / the repo's standard build command)
 
 ## Release strategy
@@ -80,7 +81,7 @@ Keep a `CHANGELOG.md` at the repo root once Phase 1 ships a playable build (not 
 
 ## Using Claude Code safely in this repo
 
-- Default Claude Code sessions to `mods/sungrid/` and `docs/` — treat any diff touching `OpenRA.*` upstream engine directories as requiring explicit justification against a named friction point in `docs/ARCHITECTURE.md`, not a default action.
+- Default Claude Code sessions to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/` — nothing under `engine/` should ever be touched (it's fetched, gitignored). If a friction point genuinely needs an engine-level change, see `docs/ARCHITECTURE.md`'s guidance on pinning to a personal engine fork instead of vendoring source into this repo.
 - Prefer data-driven (YAML/Lua) changes; a Claude session proposing a new C# trait should point to which "New C# traits" row in `docs/ARCHITECTURE.md` it satisfies.
 - Never push directly to `bleed` from an automated session — always a branch + PR, even for docs.
 - Keep sessions scoped to one issue/phase item at a time; a session that starts drifting into unrelated files or future-phase content is a signal to stop and re-scope, not to keep going.

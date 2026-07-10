@@ -1,0 +1,45 @@
+^baseworld:
+	Inherits: ^palettes
+	ActorMap:
+	AlwaysVisible:
+	ControlGroups:
+	Faction@Random:
+		InternalName: Random
+		Name: faction-random.name
+		RandomFactionMembers: sungrid
+		Description: faction-random.description
+	Faction@sungrid:
+		InternalName: sungrid
+		Name: faction-sungrid.name
+		Description: faction-sungrid.description
+	LoadWidgetAtGameStart:
+	MusicPlaylist:
+	ScreenMap:
+	Selection:
+	TerrainRenderer:
+
+world:
+	Inherits: ^baseworld
+	ColorPickerManager:
+		PreviewActor: sungrid.colorpicker
+	CreateMapPlayers:
+	CustomTerrainDebugOverlay:
+	DebugVisualizations:
+	MapStartingLocations:
+	SpawnMapActors:
+	SpawnStartingUnits:
+	StartingUnits@Sungrid:
+		BaseActor: sungrid
+		Factions: sungrid
+		ClassName: options-starting-units.unlabeled
+
+editorworld:
+	Inherits: ^baseworld
+	BuildableTerrainOverlay:
+		AllowedTerrainTypes:
+		Palette:
+	EditorActionManager:
+	EditorActorLayer:
+	EditorCursorLayer:
+	MarkerLayerOverlay:
+	TerrainGeometryOverlay:

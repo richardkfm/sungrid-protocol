@@ -27,11 +27,11 @@ Sungrid Protocol is a solarpunk reinterpretation of the classic Red Alert RTS fo
 
 Full detail in [`ARCHITECTURE.md`](ARCHITECTURE.md). Summary:
 
-**Repo structure.** This repo (`richardkfm/sungrid-protocol`) is currently a direct fork of the full OpenRA engine (branch `bleed`), not the lightweight OpenRAModSDK template. **Decision: keep it that way, and build Sungrid Protocol as a new `mods/sungrid` directory forked from the existing `mods/ra` reference mod**, rather than migrating to a separate SDK-based repo. This avoids burning Phase 0 time on infrastructure migration with zero gameplay payoff, and `mods/ra` is a ready-made, working starting point sitting right next to where the new mod will live. Trade-off: this repo is heavier than a typical mod repo and pulling upstream engine updates later means merging against a full engine tree — acceptable given the priority on speed to prototype.
+**Repo structure.** This repo (`richardkfm/sungrid-protocol`) started as a direct fork of the full OpenRA engine (branch `bleed`). That was superseded before any mod content existed: **the repo now follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pattern** — the engine is a pinned, fetched build dependency (`engine/`, gitignored, downloaded by `fetch-engine.sh`), not vendored source. Reasoning for the switch: the original "avoid migration risk" rationale only holds *before* mod content exists, and it still did at the time — so this was the cheapest point the project would ever be at to adopt the structure OpenRA's own docs recommend for new mods. `mods/sungrid` and `OpenRA.Mods.Sungrid` are the SDK's example-mod template, renamed to Sungrid branding; Phase 1 replaces the placeholder content with real gameplay forked from `mods/ra` (pulled from the fetched engine's bundled copy, or the public OpenRA/OpenRA repo, since `mods/ra` is no longer vendored locally). `ENGINE_VERSION` is pinned to the exact commit this repo forked from, so the migration itself introduced zero behavioral drift.
 
-**Data-driven vs. engine-level.** Buildings, units, weapons, costs, and tech tree are YAML in `mods/sungrid/rules/*.yaml`, composing existing OpenRA traits (`Power`, `Cargo`, `Reservable`, `AttackBase`, `Health`, etc.) — this covers nearly the entire building roster. New C# trait work is reserved for the one thing YAML genuinely can't express: the Grid Reserve vault/deposit/hold-to-win mechanic (Phase 3). Core engine changes (`OpenRA.Game`, netcode, renderer) are avoided entirely unless a named friction point forces it.
+**Data-driven vs. engine-level.** Buildings, units, weapons, costs, and tech tree are YAML in `mods/sungrid/rules/*.yaml`, composing existing OpenRA traits (`Power`, `Cargo`, `Reservable`, `AttackBase`, `Health`, etc.) — this covers nearly the entire building roster. New C# trait work (in `OpenRA.Mods.Sungrid/`) is reserved for the one thing YAML genuinely can't express: the Grid Reserve vault/deposit/hold-to-win mechanic (Phase 3). Core engine changes are avoided entirely unless a named friction point forces it — and even then, the SDK pattern accommodates it by pinning to a personal engine fork's commit rather than reverting to a vendored tree.
 
-**Fastest path to a playable prototype:** (1) fork `mods/ra` → `mods/sungrid`, verify it boots and plays identically under the new mod id — no rule changes yet; (2) layer in reflavored buildings via YAML only, still no new traits; (3) only then start the Grid Reserve trait work, since it's the one piece that can't be done in pure YAML. This means a genuinely playable build exists after step 1, before any new C# code is written.
+**Fastest path to a playable prototype:** (0, done) SDK scaffold in place — engine fetch verified, `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed and building; (1) replace the placeholder example content with real gameplay forked from `mods/ra`, verify it boots and plays a full skirmish under the new mod id; (2) layer in reflavored buildings via YAML only, still no new traits; (3) only then start the Grid Reserve trait work, since it's the one piece that can't be done in pure YAML. This means a genuinely playable build exists after step 1, before any new C# code is written.
 
 **Biggest technical unknowns:**
 1. The Grid Reserve win-condition hook — needs to plug into OpenRA's elimination-oriented `MissionObjectives` framework with a hold-a-threshold-with-countdown condition that stays deterministic/lockstep-safe in multiplayer. Highest-risk item in the roadmap; merits a small 1v1 design spike before Phase 3 is considered "in progress."
@@ -48,8 +48,8 @@ Full detail — objective, why, deliverables, code scope, data/content scope, te
 
 | Phase | Objective | Milestone | Exit criteria (short) |
 |---|---|---|---|
-| 0 | Repository bootstrap and architecture setup | `P0: Bootstrap` | Docs, labels, milestones, first issues all in place |
-| 1 | Baseline playable shell on OpenRA | `P1: Baseline Shell` | `mods/sungrid` (forked from `mods/ra`) launches and plays a full skirmish |
+| 0 | Repository bootstrap and architecture setup | `P0: Bootstrap` | Docs, labels, milestones, first issues, and the Mod SDK scaffold all in place |
+| 1 | Baseline playable shell on OpenRA | `P1: Baseline Shell` | `mods/sungrid` (real content forked from `mods/ra`, replacing the SDK's placeholder example) launches and plays a full skirmish |
 | 2 | First solarpunk content layer | `P2: First Content Pass` | 3+ new/reflavored buildings playable without regressions |
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` | 3+ player match winnable via Grid Reserve, toggle works, a raid demonstrably disrupts a leader |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` | External testers complete a full multiplayer match with no desyncs/crashes |
@@ -126,7 +126,7 @@ Full detail — fantasy, gameplay purpose, prerequisites, likely counters, imple
 
 Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 
-- **Repo structure:** upstream engine (`OpenRA.*`) untouched by default; `mods/ra` etc. as unmodified references; `mods/sungrid` as the active mod; `docs/` for design docs.
+- **Repo structure:** engine fetched/pinned under `engine/` (gitignored, never committed); `mods/sungrid` + `OpenRA.Mods.Sungrid` as the active mod; `docs/` for design docs.
 - **Branch strategy:** `bleed` is the protected integration branch; short-lived `feature/*`/`claude/*` branches per issue; no direct pushes to `bleed`.
 - **Milestones:** one per roadmap phase (`P0: Bootstrap` through `P6: Diplomacy (conditional)`).
 - **Label taxonomy:** `phase:0`-`phase:6`, `type:design`/`content`/`engine`/`docs`/`bug`, `area:economy`/`energy`/`defense`/`intelligence`/`logistics`/`grid-reserve`, `risk:scope-trap`, `good-first-issue`.
@@ -135,7 +135,7 @@ Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 - **Release strategy:** internal builds off `bleed` per phase exit criteria; first public-facing tag at the Phase 5/MVP point.
 - **Changelog:** starts at Phase 1 (first playable build), one plain-language entry per merged PR, grouped by phase.
 - **Contributor onboarding:** README → VISION → ROADMAP → ARCHITECTURE → pick an issue matching the current milestone.
-- **Claude Code usage:** default to `mods/sungrid/` and `docs/`; treat any `OpenRA.*` engine diff as requiring explicit justification; prefer YAML/Lua over new C# traits; never push directly to `bleed`; keep sessions scoped to one issue/phase item.
+- **Claude Code usage:** default to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/`; never touch `engine/` (fetched, gitignored); prefer YAML/Lua over new C# traits; never push directly to `bleed`; keep sessions scoped to one issue/phase item.
 
 ---
 
@@ -161,9 +161,9 @@ Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 
 See the issues opened alongside this PR for the live versions; summarized here for reference:
 
-1. **Scaffold `mods/sungrid` from `mods/ra` template** — Phase 1. Fork the mod directory, update `mod.yaml` metadata (id/title/icon), no rule changes. *Depends on: this docs PR merged.* *DoD: mod appears in the OpenRA mod chooser under its own name.*
+1. **Port `mods/ra`'s gameplay into `mods/sungrid`** — Phase 1. Replace the SDK's placeholder example content (already renamed to Sungrid branding in the Mod SDK migration) with real rules/sequences/maps forked from `mods/ra`, pulled from the fetched engine's bundled copy or the public OpenRA/OpenRA repo. *Depends on: this docs PR merged.* *DoD: mod appears in the OpenRA mod chooser under its own name with real RA-derived gameplay, not the placeholder.*
 2. **Verify baseline playable shell** — Phase 1. Launch `mods/sungrid`, play a full skirmish vs. AI, confirm destruction win/loss works. *Depends on: #1.* *DoD: a complete match can be played start-to-finish with no crashes.*
-3. **Set up CI build for the Sungrid mod** — Phase 0/1. Extend existing CI workflow to build/validate `mods/sungrid`. *Depends on: #1.* *DoD: CI fails on a broken mod build.*
+3. **Set up CI build for the Sungrid mod** — Phase 0/1. **Largely done by the Mod SDK migration** — `ci.yml` already runs `make check`/`make test` against the fetched engine and the current (placeholder) mod content; this issue is really about confirming CI still passes once #1 replaces the placeholder with real `mods/ra`-derived content. *Depends on: #1.* *DoD: CI is green on real mod content, not just the placeholder.*
 4. **Add Solar Array + Battery Bank building stubs** — Phase 2. YAML-only reflavor of the power plant and silo-equivalent; Battery Bank here is placeholder economy only, not yet the Grid Reserve Vault. *Depends on: #2.* *DoD: both buildable and functional in a skirmish.*
 5. **Add Recycling Depot** — Phase 2. Refinery-adjacent economy building with a salvage-based income stream. *Depends on: #2.* *DoD: buildable, produces Credits from battlefield wreckage in a test match.*
 6. **RFC: Grid Reserve trait design** — Phase 3, `type:design`. Design the Vault deposit/capacity/decay/win-condition trait before writing it. *Depends on: #2.* *DoD: RFC issue resolved, `GAME_MODES.md`/`ARCHITECTURE.md` updated if the design shifts from the current spec.*
@@ -178,7 +178,7 @@ See the issues opened alongside this PR for the live versions; summarized here f
 
 After this planning PR merges, these are the next three prompts to run, in order:
 
-1. *"Fork `mods/ra` into a new `mods/sungrid` mod: copy the directory, update `mod.yaml` (id, title, description, icon path) to Sungrid Protocol branding, and make no other rule changes. Verify it builds and appears as a separate entry in the OpenRA mod chooser. This is issue #1/#2 from `docs/BLUEPRINT.md` section 9."*
+1. *"Replace `mods/sungrid`'s placeholder example content (rules, sequences, maps, chrome) with real gameplay forked from `mods/ra`, pulled from the fetched `engine/mods/ra` or the public OpenRA/OpenRA repo. Keep the mod id/metadata as already set by the Mod SDK migration. Verify it builds and plays a full skirmish under the Sungrid mod id. This is issue #1/#2 from `docs/BLUEPRINT.md` section 9."*
 2. *"In `mods/sungrid`, add Solar Array (power plant reflavor), Battery Bank (silo reflavor, placeholder economy only — not yet the Grid Reserve Vault), and Recycling Depot (refinery-adjacent salvage income) as YAML-only content changes composing existing OpenRA traits. No new C# code. Playtest a skirmish to confirm no regressions to the baseline shell. This is issues #4/#5 from `docs/BLUEPRINT.md` section 9."*
 3. *"Write the Grid Reserve RFC (issue #6): a concrete C# trait design for the Vault building — deposit/withdrawal-forbidden state, per-tick deposit rate cap, per-Vault capacity cap, destruction-drain behavior, and the hold-to-win Lockdown countdown hook into OpenRA's win-condition framework — checked specifically for lockstep-determinism in multiplayer. Update `docs/GAME_MODES.md` and `docs/ARCHITECTURE.md` if the concrete design differs from the current spec, before any implementation code is written."*
 
@@ -190,11 +190,12 @@ The full 10-building roster, both victory modes (destruction default, Grid Reser
 
 ## B. Recommended Phase 0 checklist
 
-- [x] Write and merge the full `docs/` design doc set (`VISION`, `ROADMAP`, `ARCHITECTURE`, `GAME_MODES`, `BUILDINGS`, `ART_DIRECTION`, `CONTRIBUTING`, `LICENSE_NOTES`, `BLUEPRINT`) and `CLAUDE.md`.
+- [x] Write and merge the full `docs/` design doc set (`VISION`, `ROADMAP`, `ARCHITECTURE`, `GAME_MODES`, `BUILDINGS`, `ART_DIRECTION`, `CONTRIBUTING`, `LICENSE_NOTES`, `BLUEPRINT`, `BACKLOG`) and `CLAUDE.md`.
 - [x] Reframe root `README.md` around Sungrid Protocol while preserving OpenRA attribution/license requirements.
+- [x] Migrate the repo onto the OpenRAModSDK pattern (`mod.config`, `fetch-engine.sh`, `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed from the SDK's example template, CI updated) instead of the original full engine fork.
 - [ ] Create GitHub milestones `P0`-`P6` matching `ROADMAP.md`.
 - [ ] Create the label taxonomy from `docs/CONTRIBUTING.md`.
-- [ ] Open the first 10 issues (section 9 above).
+- [ ] Enable GitHub Issues and open the first 10 issues (`docs/BACKLOG.md`).
 - [ ] Merge this PR to `bleed`.
 
 ## C. Top 3 scope traps to avoid
@@ -205,4 +206,4 @@ The full 10-building roster, both victory modes (destruction default, Grid Reser
 
 ## D. Single next action
 
-Merge this docs PR, then run Claude Code prompt #1 from section 10: fork `mods/ra` into `mods/sungrid` and get a genuinely playable (if unstyled) build launching under its own mod identity. Everything else in the roadmap is downstream of that one step existing and working.
+Merge this PR, then run Claude Code prompt #1 from section 10: replace `mods/sungrid`'s placeholder example content with real gameplay forked from `mods/ra`, and get a genuinely playable (if unstyled) build launching under its own mod identity. Everything else in the roadmap is downstream of that one step existing and working.
