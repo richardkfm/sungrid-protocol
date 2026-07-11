@@ -72,7 +72,7 @@ Scope control is the whole game here. Each phase must ship something playable or
 ## Phase 5 — Expanded buildings / faction flavor / polish
 
 - **Why:** With the core loop (destruction + Grid Reserve) validated by real playtests, this phase spends effort on breadth and production values rather than new systems.
-- **Deliverables:** Remaining buildings from `docs/BUILDINGS.md` (Cryptominer, Datacenter for AI, Drone Bay, Grid Defense Turret, Smart Grid Relay, Resilience Shelter, Sensor Array), first custom art pass replacing recolored placeholders, at least one visually-distinct faction identity, sound/music pass.
+- **Deliverables:** Remaining buildings from `docs/BUILDINGS.md` (Cryptominer, Datacenter for AI, Drone Bay, Grid Defense Turret, Smart Grid Relay, Resilience Shelter, Sensor Array), first custom art pass replacing recolored placeholders — **Solar Array first** (it's still the unmodified stock RA power plant sprite despite being the mod's namesake building; see `docs/BACKLOG.md` issue #12 and `docs/ART_DIRECTION.md`) — at least one visually-distinct faction identity, sound/music pass.
 - **Code scope:** Only as required by new building mechanics (e.g. Drone Bay logistics behavior) — still preferentially data-driven via existing OpenRA traits (`Reservable`, `Cargo`, `AttackBase`, etc.) before new C#.
 - **Data/content scope:** The bulk of this phase — new building YAML, art, audio, tech tree balancing across a fuller roster.
 - **Testing scope:** Full playtest campaign across the expanded roster, regression testing that Phase 3's Grid Reserve balance still holds with more economy options available.
