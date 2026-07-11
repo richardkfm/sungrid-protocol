@@ -353,3 +353,32 @@ Every reference updated to point at the new ids instead of dangling or disappear
 **Dependencies:** None blocking for this pass. The remaining items need either a built engine (`fetch-engine.sh`/`make`, for `utility`'s SHP encode/decode and for actually rendering/verifying a `mainmenu.yaml` override) or new composed audio/video assets (Phase 7).
 
 **Definition of done for this pass:** The shellmap loads without a dangling actor reference, and the icon shown in the taskbar/window chrome/mod chooser is Sungrid's own emblem rather than a stock faction logo. **Met.** Main menu layout, cursors, terrain, and music remain open, explicitly tracked above rather than implied "done" by this issue's title.
+
+---
+
+### 17. Unblock and verify engine-build access for cursors/terrain — RESOLVED, ready to hand to an art/wiring pass
+
+**Status:** Issues #13 and #16 both named the same recurring blocker for the rest of Phase 6: no session doing that work had access to a built engine, so `utility`'s `.shp` encode/decode could never be exercised. `docs/PLAYTESTING.md`'s "Headless / automated testing" section already documented the environment recipe from #9/#10/#12's work (apt-installed `dotnet-sdk-8.0`, the `CryptoUtil.SHA1Hash([])` ambiguity workaround, the `ra-quickinstall` content package), but nobody had actually run it through to the specific commands #13/#16 need. This pass did:
+
+- **Engine build, from this repo's own history, no external download needed.** `mod.config`'s `ENGINE_VERSION` (`bf4102a0...`) is pinned to the exact commit this repo's own `bleed` branch sits at — so `./engine` can be populated directly from `git worktree add`/checkout of `origin/bleed` (or a shallow clone of that SHA) instead of fighting `fetch-engine.sh`'s zip download, which a scoped GitHub token/proxy may block. Confirmed the pinned commit hits the documented `CS0121` `CryptoUtil.SHA1Hash([])` ambiguity under SDK `8.0.128` (installed via `sudo apt-get install -y dotnet-sdk-8.0`); applying the one-line local-only fix (`Array.Empty<byte>()`) in the gitignored `engine/` let `make` complete with **0 warnings, 0 errors** for both the engine and `OpenRA.Mods.Sungrid` — the first time Phase 3's Grid Reserve traits and Phase 5's building roster have been confirmed to compile by anyone/anything other than a manual one-off (see below on CI).
+- **Content assets, legitimately.** Fetched `ra-quickinstall.zip` from a mirror in `ra-quickinstall-mirrors.txt`, verified its SHA1 matches the one already documented in `PLAYTESTING.md`, extracted into `<SupportDir>/Content/ra/v2/`. This is OpenRA's own official freeware redistribution, not a piracy workaround.
+- **The actual thing #13/#16 needed proven, not just theorized:** extracted the real `mouse.shp` (the file `cursors.yaml`'s stock cursor definitions point at) via `utility.sh --extract`, decoded it to 222 individual PNG frames via `--png mouse.shp temperat.pal`, and re-encoded those PNGs back into a working `.shp` via `--shp` — a clean round-trip. Repeated the same for a terrain tile (`clear1.tem`, a `temperat.yaml` template) via `--extract`/`--png`/`--shp`.
+- **One real technical wrinkle surfaced, worth flagging before someone starts the actual art pass:** `--shp` always writes a generic SHP-TS-style container, not a byte-identical re-encode of the original `.tem` TmpRA format. Reconstructing a tileset template likely means pointing `tilesets/temperat.yaml`'s `Images:` field at the new `.shp` output (the mod's `SpriteFormats` list already includes `ShpTS` alongside `TmpRA`) rather than assuming the round-trip preserves the `.tem` container — this wasn't tested end-to-end in a running client and should be the first thing whoever picks up the actual terrain reskin confirms.
+
+**A second, unrelated finding surfaced doing this:** GitHub Actions shows **zero recorded workflow runs ever** on this repo, despite `ci.yml` being configured to trigger on every push/PR to `main`. Every "implemented, needs engine-build verification" status note across this backlog (issues #7, #8, #11, #14) was written assuming CI would eventually compile it — it apparently never has. This pass's manual `make` is the first real compile confirmation for any of that code. Worth checking whether Actions is disabled at the repo level the same way Issues is (see this file's intro) — if so, that's a bigger gap than any single issue here.
+
+**Labels:** `phase:6`, `type:engine`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/ROADMAP.md`)
+
+**Purpose:** Every Phase 6 status note since #13 named the same blocker without anyone actually testing whether it still held. It didn't — this closes that gap so the remaining Phase 6 work (real cursor art, terrain retexture, main menu widget layout) is scoped purely as art/design/wiring work, not environment access.
+
+**Scope:**
+- Document a working recipe for building the engine and exercising `utility`'s SHP tooling without relying on `fetch-engine.sh`'s network path or a full manual RA install (this issue; `docs/PLAYTESTING.md` already carries the detailed steps).
+- Prove the cursor and terrain `.shp`/`.tem` decode→edit→encode loop actually works, not just that the commands exist.
+- Flag the `ENGINE_VERSION`-pin compile bug and the CI-never-ran finding for a real decision rather than silently working around them forever.
+- Out of scope: doing the actual cursor/terrain art, verifying the round-tripped assets render correctly in a live client (no display was exercised in this pass — `PLAYTESTING.md`'s Xvfb recipe covers that for whoever picks this up next), fixing CI or bumping `ENGINE_VERSION`.
+
+**Dependencies:** None blocking. Builds on the environment recipe `PLAYTESTING.md` already documented from #9/#10/#12.
+
+**Definition of done:** A real `.shp` cursor and a real `.tem` terrain tile both round-tripped through `utility.sh --extract`/`--png`/`--shp` without error, using a legitimately-obtained content package and a from-source engine build. **Met.** Two decisions are now ready for a human call rather than another engineering pass rediscovering the same blocker: (1) `ENGINE_VERSION` is pinned to a commit that doesn't compile under current `.NET 8` SDK patch versions — per `docs/CONTRIBUTING.md`'s RFC process for engine bumps, this needs either a documented required local patch step or a deliberate re-pin, not a silent per-session workaround; (2) CI has never actually run — worth confirming whether Actions is disabled repo-wide before assuming any future green check means anything.
