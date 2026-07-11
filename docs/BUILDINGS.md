@@ -12,7 +12,7 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 | Intelligence | Sensor Array, Datacenter for AI (dual-category) |
 | Logistics | Drone Bay |
 
-**Art note (Phase 5):** buildings 4-10 below ship with placeholder art — each reuses an existing structure's sprite (`RenderSprites.Image` override) chosen for rough thematic fit, not a dedicated sprite. This mirrors Phase 2's "recolored/retextured existing art is acceptable" approach, extended to full sprite reuse since no unused building art exists in the current asset set. See `docs/ART_DIRECTION.md`'s Phase 5 asset pipeline note — a real distinct-art pass is still a separate, tracked follow-up, not done in this pass.
+**Art note (Phase 5):** buildings 4-10 below ship with placeholder art — each reuses an existing structure's sprite (`RenderSprites.Image` override) chosen for rough thematic fit, not a dedicated sprite. This mirrors Phase 2's "recolored/retextured existing art is acceptable" approach, extended to full sprite reuse since no unused building art exists in the current asset set. See `docs/ART_DIRECTION.md`'s Phase 5 asset pipeline note — a real distinct-art pass is still a separate, tracked follow-up, not done in this pass. `docs/concept-art/phase5-building-dossier.html` has non-canonical silhouette/palette sketches for these 7 as a discussion starting point ahead of that pass.
 
 ## Building details
 
