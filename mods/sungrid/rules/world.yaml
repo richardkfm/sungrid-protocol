@@ -221,6 +221,12 @@ World:
 	MapBuildRadius:
 		AllyBuildRadiusCheckboxDisplayOrder: 4
 		BuildRadiusCheckboxDisplayOrder: 5
+	GridReserveController:
+		CheckboxDisplayOrder: 6
+		LockdownStartNotification: TimerStarted
+		LockdownStartTextNotification: notification-grid-lockdown-started
+		LockdownCancelledNotification: TimerStopped
+		LockdownCancelledTextNotification: notification-grid-lockdown-cancelled
 	MapOptions:
 		ShortGameCheckboxDisplayOrder: 2
 		TechLevelDropdownDisplayOrder: 2

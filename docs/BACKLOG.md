@@ -101,7 +101,9 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ---
 
-### 6. RFC: Grid Reserve trait design
+### 6. RFC: Grid Reserve trait design — RESOLVED
+
+**Resolution:** Design implemented and documented in the "Technical design (resolved RFC)" section of `docs/GAME_MODES.md` alongside issue #7's implementation. Summary: the Vault is the existing Battery Bank (`SILO`) actor gaining a `GridReserveVault` trait rather than a new building; `GridReserveManager` (per-player) tracks totals/target in integer-only arithmetic; `GridReserveController` (world) owns the lobby toggle, Lockdown countdown, and Grid Decay, and resolves the win by force-completing the winner's `MissionObjectives` (riding the existing `ConquestVictoryConditions` required-objective gate rather than touching `Player.WinState` directly). See the doc for the full reasoning and the explicit couplings/assumptions it calls out.
 
 **Labels:** `phase:3`, `type:design`, `area:grid-reserve`, `risk:scope-trap`
 
@@ -120,7 +122,9 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ---
 
-### 7. Implement Grid Reserve Vault trait + win condition
+### 7. Implement Grid Reserve Vault trait + win condition — IMPLEMENTED, needs engine-build verification
+
+**Status:** `GridReserveVault`, `GridReserveManager`, and `GridReserveController` are implemented in `OpenRA.Mods.Sungrid/GridReserve/` and wired into `mods/sungrid/rules/{structures,player,world}.yaml`. This was built against the pinned engine's actual trait source (fetched read-only from `OpenRA/OpenRA` at `ENGINE_VERSION` to confirm exact APIs — `PlayerResources`, `MissionObjectives`, `ConquestVictoryConditions`, `RevealsShroud`, `ILobbyOptions`, condition granting), but **could not be compiled or run in the environment this was implemented in** (no access to build the pinned engine there). CI (`ci.yml`) builds against the real fetched engine and is the first real compile of this code — treat its result as the actual verification, and expect to iterate on any build errors it surfaces. The 1v1 local test match described below still needs a human playtester.
 
 **Labels:** `phase:3`, `type:engine`, `area:grid-reserve`
 
@@ -139,7 +143,7 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ---
 
-### 8. Add Grid Reserve HUD/scoreboard elements
+### 8. Add Grid Reserve HUD/scoreboard elements — PARTIALLY DONE
 
 **Labels:** `phase:3`, `type:engine`, `area:grid-reserve`
 
@@ -148,14 +152,14 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 **Purpose:** Make Grid Reserve legible and dramatic to play, not just functional — the countdown broadcast and minimap reveal are core anti-turtle mechanics, not cosmetic.
 
 **Scope:**
-- Per-player Reserve bar with numeric current/target in the sidebar/scoreboard.
-- Broadcast banner + audio cue to all players when a Lockdown countdown starts or cancels.
-- Minimap reveal of a player's Vault locations once their Reserve hits 50% of target.
-- End-of-match scoreboard showing final Reserve totals for all players regardless of win condition used.
+- Per-player Reserve bar with numeric current/target in the sidebar/scoreboard. **Not done** — needs a Chrome/Lua widget iterated against a running rendered client, which wasn't available in the environment #7 was implemented in. The underlying data (`GridReserveManager.TotalReserve`/`Target`, `[VerifySync]`-tracked) already exists for this to read from.
+- Broadcast banner + audio cue to all players when a Lockdown countdown starts or cancels. **Done** — `TextNotificationsManager.AddSystemLine` + `Speech: TimerStarted`/`TimerStopped`, unconditional so every client shows/hears it, not just the affected player.
+- Minimap reveal of a player's Vault locations once their Reserve hits 50% of target. **Done** — stock `RevealsShroud` (`ValidRelationships: Enemy`) condition-gated by `GridReserveManager.BeaconActive`, no new rendering code.
+- End-of-match scoreboard showing final Reserve totals for all players regardless of win condition used. **Not done**, same reason as the sidebar bar.
 
-**Dependencies:** Blocked by #7.
+**Dependencies:** Blocked by #7 (implemented; pending CI/build verification — see #7's status note).
 
-**Definition of done:** All four HUD elements are visible, correctly triggered, and verified in a test match.
+**Definition of done:** All four HUD elements are visible, correctly triggered, and verified in a test match. Remaining work: the sidebar bar and end-of-match scoreboard widgets, as a follow-up that needs visual iteration rather than blind implementation.
 
 ---
 

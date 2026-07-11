@@ -18,11 +18,18 @@ checkbox-reusable-engineers =
     .label = Reusable Engineers
     .description = Engineers stay on the battlefield after capturing a structure
 
+checkbox-gridreserve =
+    .label = Grid Reserve
+    .description = Adds an economic victory: bank Credits into Vaults and hold
+    Grid Lockdown once the Reserve target is reached to win
+
 notification-insufficient-funds = Insufficient funds.
 notification-new-construction-options = New construction options.
 notification-cannot-deploy-here = Cannot deploy here.
 notification-low-power = Low power.
 notification-base-under-attack = Base under attack.
+notification-grid-lockdown-started = { $player } has reached their Grid Reserve target - Grid Lockdown initiated.
+notification-grid-lockdown-cancelled = { $player }'s Grid Lockdown was cancelled.
 notification-ally-under-attack = Our ally is under attack.
 notification-silos-needed = Battery banks needed.
 
@@ -649,8 +656,10 @@ actor-proc =
 actor-silo =
     .name = Battery Bank
     .description =
-    Stores surplus grid capacity,
-    preventing reserves from overflowing.
+    Stores surplus grid capacity, preventing
+    resources from overflowing. Also banks spendable
+    credits into permanent Grid Reserve for the
+    economic victory mode, when enabled.
 
 actor-oilb =
     .name = Recycling Depot

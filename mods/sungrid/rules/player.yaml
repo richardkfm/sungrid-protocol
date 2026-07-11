@@ -107,7 +107,13 @@ Player:
 		WinNotification: Win
 		LoseNotification: Lose
 		LeaveNotification: Leave
+		# Lets a Grid Reserve Lockdown win force-resolve every other player's WinState the moment
+		# it completes, instead of leaving still-undefeated opponents stuck Undefined forever.
+		# ConquestVictoryConditions is unaffected: by the time it can complete, opponents are
+		# already Lost through normal elimination, so this is a no-op for destruction victories.
+		EarlyGameOver: true
 	ConquestVictoryConditions:
+	GridReserveManager:
 	PowerManager:
 		SpeechNotification: LowPower
 		TextNotification: notification-low-power
