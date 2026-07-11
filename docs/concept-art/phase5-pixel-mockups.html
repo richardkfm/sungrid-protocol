@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sungrid Protocol — Phase 5 Pixel Mockups</title>
+<style>
+  :root {
+    --bg: #0f1613; --panel: #17241f; --panel-2: #1c2b24; --line: #35493d; --line-strong: #4a6353;
+    --ink: #dfeee2; --ink-dim: #96ab9d; --foliage: #6bb076; --solar: #e8b23d; --rust: #c07c52;
+    --alert-ink: #e2836a; --shadow: 0 18px 40px -20px rgba(0,0,0,0.6);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #eef1e8; --panel: #ffffff; --panel-2: #e6ebe0; --line: #c1cabb; --line-strong: #98a690;
+      --ink: #1c2b20; --ink-dim: #55665a; --foliage: #3f7a4c; --solar: #a3690f; --rust: #8a4e30;
+      --alert-ink: #a13f2d; --shadow: 0 18px 40px -24px rgba(30,40,30,0.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1613; --panel: #17241f; --panel-2: #1c2b24; --line: #35493d; --line-strong: #4a6353;
+    --ink: #dfeee2; --ink-dim: #96ab9d; --foliage: #6bb076; --solar: #e8b23d; --rust: #c07c52;
+    --alert-ink: #e2836a; --shadow: 0 18px 40px -20px rgba(0,0,0,0.6);
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1e8; --panel: #ffffff; --panel-2: #e6ebe0; --line: #c1cabb; --line-strong: #98a690;
+    --ink: #1c2b20; --ink-dim: #55665a; --foliage: #3f7a4c; --solar: #a3690f; --rust: #8a4e30;
+    --alert-ink: #a13f2d; --shadow: 0 18px 40px -24px rgba(30,40,30,0.25);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 34px 34px; background-attachment: fixed;
+  }
+  .sheet { max-width: 1160px; margin: 0 auto; padding: 48px 28px 80px; }
+  .label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 11.5px; color: var(--ink-dim);
+  }
+  header.masthead {
+    display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
+    border-bottom: 2px solid var(--line-strong); padding-bottom: 20px; margin-bottom: 6px;
+  }
+  header.masthead .id-block { display: flex; flex-direction: column; gap: 10px; }
+  h1 {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif; font-weight: 800;
+    font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.01em; margin: 0; text-wrap: balance; color: var(--ink);
+  }
+  h1 span { color: var(--solar); }
+  .status-tag {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; border: 1px solid var(--line-strong); background: var(--panel-2);
+    color: var(--ink-dim); padding: 6px 10px; white-space: nowrap;
+  }
+  .intro { max-width: 64ch; color: var(--ink-dim); font-size: 15.5px; margin: 22px 0 20px; }
+  .intro strong { color: var(--ink); font-weight: 600; }
+  .callout {
+    border: 1px dashed var(--line-strong); background: var(--panel-2); padding: 12px 16px;
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif; font-size: 13px; color: var(--ink-dim);
+    margin-bottom: 40px; max-width: 74ch;
+  }
+  .callout strong { color: var(--alert-ink); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 26px; }
+  .card { position: relative; background: var(--panel); border: 1px solid var(--line); padding: 22px 20px 20px; box-shadow: var(--shadow); }
+  .card::before, .card::after, .card .br::before, .card .br::after {
+    content: ""; position: absolute; width: 14px; height: 14px; border-color: var(--line-strong);
+    border-style: solid; border-width: 0;
+  }
+  .card::before { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+  .card::after { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+  .card .br::before { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+  .card .br::after { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+  .card-id { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.06em; }
+  .card-name { font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif; font-weight: 800; font-size: 19px; margin: 3px 0 0; text-wrap: balance; }
+  .category {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--foliage); border: 1px solid var(--foliage); padding: 3px 7px; white-space: nowrap;
+  }
+  .icon-frame {
+    background:
+      linear-gradient(135deg, transparent 48%, var(--line) 48%, var(--line) 52%, transparent 52%) 0 0 / 16px 16px,
+      var(--panel-2);
+    border: 1px solid var(--line); margin: 4px 0 16px; display: flex; align-items: center; justify-content: center;
+    aspect-ratio: 26 / 18; overflow: hidden;
+  }
+  .icon-frame svg { width: 88%; height: 88%; }
+  .note {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif; font-style: italic; font-size: 12.5px;
+    color: var(--ink-dim); border-left: 2px solid var(--solar); padding-left: 10px; margin: 0;
+  }
+  footer {
+    margin-top: 64px; padding-top: 20px; border-top: 2px solid var(--line-strong); display: flex;
+    justify-content: space-between; gap: 20px; flex-wrap: wrap; color: var(--ink-dim); font-size: 13px;
+  }
+  footer code { font-family: ui-monospace, "SF Mono", Consolas, monospace; background: var(--panel-2); padding: 1px 5px; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+
+
+<div class="sheet">
+  <header class="masthead">
+    <div class="id-block">
+      <div class="label">Sungrid Protocol — Grid Infrastructure Dossier</div>
+      <h1>Phase 5 <span>·</span> Pixel Mockups</h1>
+    </div>
+    <div class="status-tag">Status: faux pixel art — not a real sprite sheet</div>
+  </header>
+
+  <p class="intro">
+    Same 7 buildings, redrawn as blocky, hard-edged, limited-palette sprites — the pixel-art <em>feel</em> the
+    schematic dossier didn't have. Each is hand-placed on a 26×18 cell grid, one flat color per cell, no
+    anti-aliasing, in the spirit of a small RTS building cameo.
+  </p>
+  <p class="callout">
+    <strong>Still not shippable.</strong> These are vector rectangles standing in for pixels, not real indexed-palette
+    <code>.shp</code> sprites in OpenRA's actual format, and they carry no animation frames (idle/damaged/make/dead).
+    Producing those needs either a human pixel artist or an image-generation tool feeding OpenRA's sprite pipeline —
+    neither of which is available in this session. Treat this as "how it could read at a glance," not final art.
+  </p>
+
+  <div class="grid">
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGCRY</div><h3 class="card-name">Cryptominer</h3></div>
+        <span class="category">Economy</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="17" y="1" width="4" height="1" fill="#93a89b"/><rect x="16" y="2" width="1" height="1" fill="#93a89b"/><rect x="17" y="2" width="4" height="1" fill="#6b7d72"/><rect x="21" y="2" width="1" height="1" fill="#93a89b"/><rect x="4" y="3" width="1" height="1" fill="#3a4b41"/><rect x="6" y="3" width="1" height="1" fill="#3a4b41"/><rect x="16" y="3" width="1" height="1" fill="#93a89b"/><rect x="17" y="3" width="4" height="1" fill="#6b7d72"/><rect x="21" y="3" width="1" height="1" fill="#93a89b"/><rect x="4" y="4" width="1" height="1" fill="#3a4b41"/><rect x="6" y="4" width="1" height="1" fill="#3a4b41"/><rect x="17" y="4" width="4" height="1" fill="#93a89b"/><rect x="4" y="5" width="1" height="1" fill="#3a4b41"/><rect x="7" y="5" width="15" height="1" fill="#12201a"/><rect x="7" y="6" width="1" height="1" fill="#12201a"/><rect x="8" y="6" width="11" height="1" fill="#c98a63"/><rect x="19" y="6" width="1" height="1" fill="#12201a"/><rect x="20" y="6" width="1" height="1" fill="#c98a63"/><rect x="21" y="6" width="1" height="1" fill="#12201a"/><rect x="7" y="7" width="1" height="1" fill="#12201a"/><rect x="8" y="7" width="11" height="1" fill="#a8613d"/><rect x="19" y="7" width="1" height="1" fill="#12201a"/><rect x="20" y="7" width="1" height="1" fill="#a8613d"/><rect x="21" y="7" width="1" height="1" fill="#12201a"/><rect x="7" y="8" width="1" height="1" fill="#12201a"/><rect x="8" y="8" width="11" height="1" fill="#a8613d"/><rect x="19" y="8" width="1" height="1" fill="#12201a"/><rect x="20" y="8" width="1" height="1" fill="#a8613d"/><rect x="21" y="8" width="1" height="1" fill="#12201a"/><rect x="1" y="9" width="7" height="1" fill="#12201a"/><rect x="8" y="9" width="13" height="1" fill="#a8613d"/><rect x="21" y="9" width="3" height="1" fill="#12201a"/><rect x="1" y="10" width="1" height="1" fill="#12201a"/><rect x="2" y="10" width="5" height="1" fill="#c98a63"/><rect x="7" y="10" width="1" height="1" fill="#f5cf74"/><rect x="8" y="10" width="15" height="1" fill="#c98a63"/><rect x="23" y="10" width="1" height="1" fill="#12201a"/><rect x="1" y="11" width="1" height="1" fill="#12201a"/><rect x="2" y="11" width="4" height="1" fill="#a8613d"/><rect x="6" y="11" width="1" height="1" fill="#f5cf74"/><rect x="7" y="11" width="16" height="1" fill="#a8613d"/><rect x="23" y="11" width="1" height="1" fill="#12201a"/><rect x="1" y="12" width="1" height="1" fill="#12201a"/><rect x="2" y="12" width="3" height="1" fill="#a8613d"/><rect x="5" y="12" width="1" height="1" fill="#f5cf74"/><rect x="6" y="12" width="2" height="1" fill="#12201a"/><rect x="8" y="12" width="3" height="1" fill="#a8613d"/><rect x="11" y="12" width="3" height="1" fill="#12201a"/><rect x="14" y="12" width="3" height="1" fill="#a8613d"/><rect x="17" y="12" width="3" height="1" fill="#12201a"/><rect x="20" y="12" width="3" height="1" fill="#a8613d"/><rect x="23" y="12" width="1" height="1" fill="#12201a"/><rect x="1" y="13" width="1" height="1" fill="#12201a"/><rect x="2" y="13" width="3" height="1" fill="#a8613d"/><rect x="5" y="13" width="1" height="1" fill="#f5cf74"/><rect x="6" y="13" width="2" height="1" fill="#12201a"/><rect x="8" y="13" width="3" height="1" fill="#a8613d"/><rect x="11" y="13" width="3" height="1" fill="#12201a"/><rect x="14" y="13" width="3" height="1" fill="#a8613d"/><rect x="17" y="13" width="3" height="1" fill="#12201a"/><rect x="20" y="13" width="3" height="1" fill="#a8613d"/><rect x="23" y="13" width="1" height="1" fill="#12201a"/><rect x="1" y="14" width="1" height="1" fill="#12201a"/><rect x="2" y="14" width="2" height="1" fill="#a8613d"/><rect x="4" y="14" width="1" height="1" fill="#f5cf74"/><rect x="5" y="14" width="18" height="1" fill="#a8613d"/><rect x="23" y="14" width="1" height="1" fill="#12201a"/><rect x="1" y="15" width="2" height="1" fill="#e8b23d"/><rect x="3" y="15" width="1" height="1" fill="#f5cf74"/><rect x="4" y="15" width="1" height="1" fill="#e8b23d"/><rect x="5" y="15" width="19" height="1" fill="#12201a"/><rect x="0" y="16" width="26" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">Rust-toned stacked containers, one thin gold cable running in from a scrap solar tab.</p>
+      <div class="br"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGDAI</div><h3 class="card-name">Datacenter for AI</h3></div>
+        <span class="category">Economy / Intel</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="22" y="0" width="1" height="1" fill="#e8b23d"/><rect x="20" y="1" width="1" height="1" fill="#e8b23d"/><rect x="22" y="1" width="1" height="1" fill="#12201a"/><rect x="24" y="1" width="1" height="1" fill="#e8b23d"/><rect x="20" y="2" width="1" height="1" fill="#12201a"/><rect x="22" y="2" width="1" height="1" fill="#12201a"/><rect x="24" y="2" width="1" height="1" fill="#12201a"/><rect x="6" y="3" width="14" height="1" fill="#e8b23d"/><rect x="20" y="3" width="1" height="1" fill="#12201a"/><rect x="22" y="3" width="1" height="1" fill="#12201a"/><rect x="24" y="3" width="1" height="1" fill="#12201a"/><rect x="6" y="4" width="14" height="1" fill="#24352c"/><rect x="20" y="4" width="1" height="1" fill="#12201a"/><rect x="22" y="4" width="1" height="1" fill="#12201a"/><rect x="24" y="4" width="1" height="1" fill="#12201a"/><rect x="7" y="5" width="12" height="1" fill="#24352c"/><rect x="8" y="6" width="10" height="1" fill="#24352c"/><rect x="9" y="7" width="8" height="1" fill="#24352c"/><rect x="2" y="8" width="22" height="1" fill="#12201a"/><rect x="2" y="9" width="1" height="1" fill="#12201a"/><rect x="3" y="9" width="20" height="1" fill="#93a89b"/><rect x="23" y="9" width="1" height="1" fill="#12201a"/><rect x="2" y="10" width="1" height="1" fill="#12201a"/><rect x="3" y="10" width="20" height="1" fill="#6b7d72"/><rect x="23" y="10" width="1" height="1" fill="#12201a"/><rect x="2" y="11" width="1" height="1" fill="#12201a"/><rect x="3" y="11" width="3" height="1" fill="#6b7d72"/><rect x="6" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="7" y="11" width="2" height="1" fill="#6b7d72"/><rect x="9" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="11" width="2" height="1" fill="#6b7d72"/><rect x="12" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="13" y="11" width="2" height="1" fill="#6b7d72"/><rect x="15" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="16" y="11" width="2" height="1" fill="#6b7d72"/><rect x="18" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="19" y="11" width="2" height="1" fill="#6b7d72"/><rect x="21" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="22" y="11" width="1" height="1" fill="#6b7d72"/><rect x="23" y="11" width="1" height="1" fill="#12201a"/><rect x="2" y="12" width="1" height="1" fill="#12201a"/><rect x="3" y="12" width="3" height="1" fill="#6b7d72"/><rect x="6" y="12" width="1" height="1" fill="#e8b23d"/><rect x="7" y="12" width="2" height="1" fill="#6b7d72"/><rect x="9" y="12" width="1" height="1" fill="#e8b23d"/><rect x="10" y="12" width="2" height="1" fill="#6b7d72"/><rect x="12" y="12" width="1" height="1" fill="#e8b23d"/><rect x="13" y="12" width="2" height="1" fill="#6b7d72"/><rect x="15" y="12" width="1" height="1" fill="#e8b23d"/><rect x="16" y="12" width="2" height="1" fill="#6b7d72"/><rect x="18" y="12" width="1" height="1" fill="#e8b23d"/><rect x="19" y="12" width="2" height="1" fill="#6b7d72"/><rect x="21" y="12" width="1" height="1" fill="#e8b23d"/><rect x="22" y="12" width="1" height="1" fill="#6b7d72"/><rect x="23" y="12" width="1" height="1" fill="#12201a"/><rect x="2" y="13" width="1" height="1" fill="#12201a"/><rect x="3" y="13" width="3" height="1" fill="#6b7d72"/><rect x="6" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="7" y="13" width="2" height="1" fill="#6b7d72"/><rect x="9" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="13" width="2" height="1" fill="#6b7d72"/><rect x="12" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="13" y="13" width="2" height="1" fill="#6b7d72"/><rect x="15" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="16" y="13" width="2" height="1" fill="#6b7d72"/><rect x="18" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="19" y="13" width="2" height="1" fill="#6b7d72"/><rect x="21" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="22" y="13" width="1" height="1" fill="#6b7d72"/><rect x="23" y="13" width="1" height="1" fill="#12201a"/><rect x="2" y="14" width="1" height="1" fill="#12201a"/><rect x="3" y="14" width="3" height="1" fill="#6b7d72"/><rect x="6" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="7" y="14" width="2" height="1" fill="#6b7d72"/><rect x="9" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="14" width="2" height="1" fill="#6b7d72"/><rect x="12" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="13" y="14" width="2" height="1" fill="#6b7d72"/><rect x="15" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="16" y="14" width="2" height="1" fill="#6b7d72"/><rect x="18" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="19" y="14" width="2" height="1" fill="#6b7d72"/><rect x="21" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="22" y="14" width="1" height="1" fill="#6b7d72"/><rect x="23" y="14" width="1" height="1" fill="#12201a"/><rect x="2" y="15" width="4" height="1" fill="#12201a"/><rect x="6" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="7" y="15" width="2" height="1" fill="#12201a"/><rect x="9" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="15" width="2" height="1" fill="#12201a"/><rect x="12" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="13" y="15" width="2" height="1" fill="#12201a"/><rect x="15" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="16" y="15" width="2" height="1" fill="#12201a"/><rect x="18" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="19" y="15" width="2" height="1" fill="#12201a"/><rect x="21" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="22" y="15" width="2" height="1" fill="#12201a"/><rect x="1" y="16" width="24" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">Domed roof with a gold rim, green server fins along the base, a small antenna cluster.</p>
+      <div class="br"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGDRN</div><h3 class="card-name">Drone Bay</h3></div>
+        <span class="category">Logistics</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="17" y="3" width="1" height="1" fill="#6b7d72"/><rect x="18" y="3" width="1" height="1" fill="#4f8f5b"/><rect x="19" y="3" width="1" height="1" fill="#6b7d72"/><rect x="14" y="4" width="1" height="1" fill="#3a4b41"/><rect x="17" y="4" width="3" height="1" fill="#4f8f5b"/><rect x="15" y="5" width="1" height="1" fill="#3a4b41"/><rect x="17" y="5" width="1" height="1" fill="#6b7d72"/><rect x="18" y="5" width="1" height="1" fill="#4f8f5b"/><rect x="19" y="5" width="1" height="1" fill="#6b7d72"/><rect x="8" y="6" width="1" height="1" fill="#6b7d72"/><rect x="9" y="6" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="6" width="1" height="1" fill="#6b7d72"/><rect x="4" y="7" width="1" height="1" fill="#3a4b41"/><rect x="8" y="7" width="3" height="1" fill="#4f8f5b"/><rect x="6" y="8" width="1" height="1" fill="#3a4b41"/><rect x="8" y="8" width="1" height="1" fill="#6b7d72"/><rect x="9" y="8" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="8" width="1" height="1" fill="#6b7d72"/><rect x="6" y="11" width="14" height="1" fill="#e8b23d"/><rect x="4" y="12" width="18" height="1" fill="#6b7d72"/><rect x="2" y="13" width="1" height="1" fill="#12201a"/><rect x="3" y="13" width="20" height="1" fill="#6b7d72"/><rect x="23" y="13" width="1" height="1" fill="#12201a"/><rect x="2" y="14" width="1" height="1" fill="#12201a"/><rect x="3" y="14" width="20" height="1" fill="#6b7d72"/><rect x="23" y="14" width="1" height="1" fill="#12201a"/><rect x="2" y="15" width="1" height="1" fill="#12201a"/><rect x="3" y="15" width="20" height="1" fill="#3a4b41"/><rect x="23" y="15" width="1" height="1" fill="#12201a"/><rect x="1" y="16" width="24" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">A gold-rimmed pad below two small drones — the pad is furniture, the drones are the point.</p>
+      <div class="br"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGTUR</div><h3 class="card-name">Grid Defense Turret</h3></div>
+        <span class="category">Defense</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="10" y="3" width="1" height="1" fill="#f5cf74"/><rect x="10" y="4" width="1" height="1" fill="#f5cf74"/><rect x="10" y="5" width="1" height="1" fill="#f5cf74"/><rect x="9" y="6" width="1" height="1" fill="#12201a"/><rect x="10" y="6" width="1" height="1" fill="#f5cf74"/><rect x="11" y="6" width="7" height="1" fill="#12201a"/><rect x="9" y="7" width="1" height="1" fill="#12201a"/><rect x="10" y="7" width="1" height="1" fill="#e8b23d"/><rect x="11" y="7" width="6" height="1" fill="#93a89b"/><rect x="17" y="7" width="1" height="1" fill="#12201a"/><rect x="9" y="8" width="1" height="1" fill="#12201a"/><rect x="10" y="8" width="1" height="1" fill="#6b7d72"/><rect x="11" y="8" width="1" height="1" fill="#e8b23d"/><rect x="12" y="8" width="5" height="1" fill="#6b7d72"/><rect x="17" y="8" width="7" height="1" fill="#12201a"/><rect x="9" y="9" width="1" height="1" fill="#12201a"/><rect x="10" y="9" width="1" height="1" fill="#e8b23d"/><rect x="11" y="9" width="6" height="1" fill="#6b7d72"/><rect x="17" y="9" width="7" height="1" fill="#3a4b41"/><rect x="9" y="10" width="1" height="1" fill="#12201a"/><rect x="10" y="10" width="1" height="1" fill="#6b7d72"/><rect x="11" y="10" width="1" height="1" fill="#e8b23d"/><rect x="12" y="10" width="5" height="1" fill="#6b7d72"/><rect x="17" y="10" width="1" height="1" fill="#12201a"/><rect x="9" y="11" width="1" height="1" fill="#12201a"/><rect x="10" y="11" width="1" height="1" fill="#e8b23d"/><rect x="11" y="11" width="6" height="1" fill="#6b7d72"/><rect x="17" y="11" width="1" height="1" fill="#12201a"/><rect x="4" y="12" width="7" height="1" fill="#12201a"/><rect x="11" y="12" width="1" height="1" fill="#e8b23d"/><rect x="12" y="12" width="10" height="1" fill="#12201a"/><rect x="3" y="13" width="2" height="1" fill="#12201a"/><rect x="5" y="13" width="3" height="1" fill="#6b7d72"/><rect x="8" y="13" width="1" height="1" fill="#c1533f"/><rect x="9" y="13" width="2" height="1" fill="#6b7d72"/><rect x="11" y="13" width="1" height="1" fill="#c1533f"/><rect x="12" y="13" width="2" height="1" fill="#6b7d72"/><rect x="14" y="13" width="1" height="1" fill="#c1533f"/><rect x="15" y="13" width="6" height="1" fill="#6b7d72"/><rect x="21" y="13" width="2" height="1" fill="#12201a"/><rect x="3" y="14" width="2" height="1" fill="#12201a"/><rect x="5" y="14" width="2" height="1" fill="#6b7d72"/><rect x="7" y="14" width="1" height="1" fill="#c1533f"/><rect x="8" y="14" width="2" height="1" fill="#6b7d72"/><rect x="10" y="14" width="1" height="1" fill="#c1533f"/><rect x="11" y="14" width="2" height="1" fill="#6b7d72"/><rect x="13" y="14" width="1" height="1" fill="#c1533f"/><rect x="14" y="14" width="7" height="1" fill="#6b7d72"/><rect x="21" y="14" width="2" height="1" fill="#12201a"/><rect x="3" y="15" width="1" height="1" fill="#12201a"/><rect x="4" y="15" width="2" height="1" fill="#6b7d72"/><rect x="6" y="15" width="1" height="1" fill="#c1533f"/><rect x="7" y="15" width="2" height="1" fill="#6b7d72"/><rect x="9" y="15" width="1" height="1" fill="#c1533f"/><rect x="10" y="15" width="2" height="1" fill="#6b7d72"/><rect x="12" y="15" width="1" height="1" fill="#c1533f"/><rect x="13" y="15" width="9" height="1" fill="#6b7d72"/><rect x="22" y="15" width="1" height="1" fill="#12201a"/><rect x="2" y="16" width="22" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">Gold capacitor stripe up the mount, a long barrel, warning-red hatching at the base.</p>
+      <div class="br"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGREL</div><h3 class="card-name">Smart Grid Relay</h3></div>
+        <span class="category">Energy</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="12" y="2" width="1" height="1" fill="#3a4b41"/><rect x="13" y="2" width="1" height="1" fill="#93a89b"/><rect x="12" y="3" width="1" height="1" fill="#3a4b41"/><rect x="13" y="3" width="1" height="1" fill="#93a89b"/><rect x="12" y="4" width="1" height="1" fill="#3a4b41"/><rect x="13" y="4" width="1" height="1" fill="#93a89b"/><rect x="12" y="5" width="1" height="1" fill="#3a4b41"/><rect x="13" y="5" width="1" height="1" fill="#93a89b"/><rect x="6" y="6" width="14" height="1" fill="#3a4b41"/><rect x="6" y="7" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="7" width="2" height="1" fill="#f5cf74"/><rect x="19" y="7" width="1" height="1" fill="#4f8f5b"/><rect x="4" y="8" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="8" width="2" height="1" fill="#e8b23d"/><rect x="21" y="8" width="1" height="1" fill="#4f8f5b"/><rect x="8" y="9" width="4" height="1" fill="#3a4b41"/><rect x="12" y="9" width="2" height="1" fill="#f5cf74"/><rect x="14" y="9" width="4" height="1" fill="#3a4b41"/><rect x="2" y="10" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="10" width="1" height="1" fill="#3a4b41"/><rect x="13" y="10" width="1" height="1" fill="#93a89b"/><rect x="23" y="10" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="11" width="1" height="1" fill="#3a4b41"/><rect x="13" y="11" width="1" height="1" fill="#93a89b"/><rect x="1" y="12" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="12" width="1" height="1" fill="#3a4b41"/><rect x="13" y="12" width="1" height="1" fill="#93a89b"/><rect x="24" y="12" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="13" width="1" height="1" fill="#3a4b41"/><rect x="13" y="13" width="1" height="1" fill="#93a89b"/><rect x="12" y="14" width="1" height="1" fill="#3a4b41"/><rect x="13" y="14" width="1" height="1" fill="#93a89b"/><rect x="10" y="15" width="1" height="1" fill="#12201a"/><rect x="11" y="15" width="4" height="1" fill="#6b7d72"/><rect x="15" y="15" width="1" height="1" fill="#12201a"/><rect x="1" y="16" width="24" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">Thin pylon, two cross-arms, a small gold core, green cable dots swooping off both edges.</p>
+      <div class="br"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGSHL</div><h3 class="card-name">Resilience Shelter</h3></div>
+        <span class="category">Defense</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="13" y="3" width="1" height="1" fill="#4f8f5b"/><rect x="9" y="4" width="1" height="1" fill="#4f8f5b"/><rect x="17" y="4" width="1" height="1" fill="#4f8f5b"/><rect x="6" y="6" width="1" height="1" fill="#4f8f5b"/><rect x="20" y="6" width="1" height="1" fill="#4f8f5b"/><rect x="12" y="7" width="2" height="1" fill="#e8b23d"/><rect x="8" y="8" width="10" height="1" fill="#6b7d72"/><rect x="4" y="9" width="1" height="1" fill="#4f8f5b"/><rect x="6" y="9" width="14" height="1" fill="#6b7d72"/><rect x="22" y="9" width="1" height="1" fill="#4f8f5b"/><rect x="5" y="10" width="1" height="1" fill="#12201a"/><rect x="6" y="10" width="14" height="1" fill="#93a89b"/><rect x="20" y="10" width="1" height="1" fill="#12201a"/><rect x="5" y="11" width="1" height="1" fill="#12201a"/><rect x="6" y="11" width="14" height="1" fill="#6b7d72"/><rect x="20" y="11" width="1" height="1" fill="#12201a"/><rect x="5" y="12" width="1" height="1" fill="#12201a"/><rect x="6" y="12" width="14" height="1" fill="#6b7d72"/><rect x="20" y="12" width="1" height="1" fill="#12201a"/><rect x="5" y="13" width="1" height="1" fill="#c98a63"/><rect x="6" y="13" width="2" height="1" fill="#6b7d72"/><rect x="8" y="13" width="1" height="1" fill="#c98a63"/><rect x="9" y="13" width="2" height="1" fill="#6b7d72"/><rect x="11" y="13" width="1" height="1" fill="#c98a63"/><rect x="12" y="13" width="2" height="1" fill="#6b7d72"/><rect x="14" y="13" width="1" height="1" fill="#c98a63"/><rect x="15" y="13" width="2" height="1" fill="#6b7d72"/><rect x="17" y="13" width="1" height="1" fill="#c98a63"/><rect x="18" y="13" width="1" height="1" fill="#6b7d72"/><rect x="19" y="13" width="1" height="1" fill="#c98a63"/><rect x="20" y="13" width="1" height="1" fill="#12201a"/><rect x="5" y="14" width="2" height="1" fill="#a8613d"/><rect x="7" y="14" width="1" height="1" fill="#12201a"/><rect x="8" y="14" width="2" height="1" fill="#a8613d"/><rect x="10" y="14" width="1" height="1" fill="#12201a"/><rect x="11" y="14" width="2" height="1" fill="#a8613d"/><rect x="13" y="14" width="1" height="1" fill="#12201a"/><rect x="14" y="14" width="2" height="1" fill="#a8613d"/><rect x="16" y="14" width="1" height="1" fill="#12201a"/><rect x="17" y="14" width="4" height="1" fill="#a8613d"/><rect x="13" y="15" width="1" height="1" fill="#4f8f5b"/><rect x="3" y="16" width="20" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">A dome bunker over a row of rust sandbags, dotted green ring implying the mitigation aura.</p>
+      <div class="br"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div><div class="card-id">SGSNS</div><h3 class="card-name">Sensor Array</h3></div>
+        <span class="category">Intelligence</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 26 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+<rect x="11" y="1" width="1" height="1" fill="#f5cf74"/><rect x="12" y="1" width="1" height="1" fill="#e8b23d"/><rect x="11" y="3" width="1" height="1" fill="#12201a"/><rect x="12" y="3" width="1" height="1" fill="#3a4b41"/><rect x="16" y="3" width="3" height="1" fill="#6b7d72"/><rect x="11" y="4" width="1" height="1" fill="#12201a"/><rect x="12" y="4" width="1" height="1" fill="#3a4b41"/><rect x="16" y="4" width="1" height="1" fill="#6b7d72"/><rect x="17" y="4" width="1" height="1" fill="#12201a"/><rect x="18" y="4" width="1" height="1" fill="#6b7d72"/><rect x="2" y="5" width="1" height="1" fill="#4f8f5b"/><rect x="6" y="5" width="3" height="1" fill="#6b7d72"/><rect x="11" y="5" width="1" height="1" fill="#12201a"/><rect x="12" y="5" width="1" height="1" fill="#3a4b41"/><rect x="14" y="5" width="2" height="1" fill="#12201a"/><rect x="6" y="6" width="1" height="1" fill="#6b7d72"/><rect x="7" y="6" width="1" height="1" fill="#12201a"/><rect x="8" y="6" width="1" height="1" fill="#6b7d72"/><rect x="9" y="6" width="1" height="1" fill="#12201a"/><rect x="11" y="6" width="3" height="1" fill="#12201a"/><rect x="6" y="7" width="1" height="1" fill="#4f8f5b"/><rect x="10" y="7" width="2" height="1" fill="#12201a"/><rect x="12" y="7" width="1" height="1" fill="#3a4b41"/><rect x="2" y="8" width="1" height="1" fill="#4f8f5b"/><rect x="11" y="8" width="1" height="1" fill="#12201a"/><rect x="12" y="8" width="1" height="1" fill="#3a4b41"/><rect x="6" y="9" width="1" height="1" fill="#4f8f5b"/><rect x="11" y="9" width="1" height="1" fill="#12201a"/><rect x="12" y="9" width="1" height="1" fill="#3a4b41"/><rect x="11" y="10" width="1" height="1" fill="#12201a"/><rect x="12" y="10" width="1" height="1" fill="#3a4b41"/><rect x="3" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="7" y="11" width="1" height="1" fill="#4f8f5b"/><rect x="11" y="11" width="1" height="1" fill="#12201a"/><rect x="12" y="11" width="1" height="1" fill="#3a4b41"/><rect x="11" y="12" width="1" height="1" fill="#12201a"/><rect x="12" y="12" width="1" height="1" fill="#3a4b41"/><rect x="9" y="13" width="1" height="1" fill="#4f8f5b"/><rect x="11" y="13" width="1" height="1" fill="#12201a"/><rect x="12" y="13" width="1" height="1" fill="#3a4b41"/><rect x="5" y="14" width="1" height="1" fill="#4f8f5b"/><rect x="9" y="14" width="1" height="1" fill="#12201a"/><rect x="10" y="14" width="3" height="1" fill="#6b7d72"/><rect x="13" y="14" width="1" height="1" fill="#12201a"/><rect x="9" y="15" width="5" height="1" fill="#12201a"/><rect x="1" y="16" width="24" height="1" fill="#12201a"/>
+        </svg>
+      </div>
+      <p class="note">Thin mast, two angled pods, a single gold blink at the top, faint green sweep arcs behind.</p>
+      <div class="br"></div>
+    </article>
+
+  </div>
+
+  <footer>
+    <div>Palette per <code>docs/ART_DIRECTION.md</code>. Companion to <code>docs/concept-art/phase5-building-dossier.html</code>.</div>
+    <div>Faux pixel art — hand-placed vector cells, not exported sprites.</div>
+  </footer>
+</div>
+</body>
+</html>
