@@ -91,7 +91,7 @@ ServerTraits:
 MapGrid:
 	Type: Rectangular
 
-SpriteFormats: ShpD2, ShpTD, TmpRA, TmpTD, ShpTS
+SpriteFormats: ShpD2, ShpTD, TmpRA, TmpTD, ShpTS, PngSheet
 
 SoundFormats: Aud, Wav
 

@@ -167,6 +167,8 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ### 9. 3-4 player Grid Reserve playtest + balance pass
 
+**Status:** Mechanical/technical bar cleared, balance question still open. Built the engine from source and ran a headless 4-player (1 real client + 3 AI bots: normal/normal/turtle) Grid-Reserve-enabled skirmish on a temperate 4-player map (Chernobyl) for ~4.5 minutes of simulated time. Confirmed via `perf.log`/`server.log`: `GridReserveManager`, `MissionObjectives`, and `HarvesterBotModule` all initialized correctly per player, the world loaded, the match started, and there were zero exceptions or desyncs across the run. This rules out crash/desync risk under real multi-player load. **It does not answer this issue's actual question** — the AI bots don't meaningfully engage with Grid Reserve strategy (they're not turtling deliberately or contesting vaults), so "can a player win by hiding" and "does a raid disrupt a leader's countdown" are still unverified and need real human players. The automated harness used for this (a temporary, local-only, never-committed CLI flag added to the gitignored `engine/` to headlessly fill a skirmish lobby with bots) is documented in `docs/PLAYTESTING.md`'s "Headless / automated testing" section for reuse.
+
 **Labels:** `phase:3`, `phase:4`, `type:content`, `area:grid-reserve`, `risk:scope-trap`
 
 **Phase:** 3/4 — Grid Reserve MVP / Playtest Hardening (see `docs/GAME_MODES.md`)
@@ -185,6 +187,8 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 ---
 
 ### 10. Set up first external playtest build/packaging
+
+**Status:** Packaging build verified, cross-machine dry-run still open. Ran the actual `packaging/linux/buildpackage.sh` build. It compiles the engine + mod in Release mode, stamps the given version into `mod.yaml`, and assembles a complete AppDir bundle (~103MB: all engine + mod DLLs, launcher wrapper, desktop file, icon) — confirmed it registers and launches correctly via its `AppRun` entrypoint in a headless run. The final step (wrapping the AppDir into a single-file AppImage via the third-party `appimagetool` binary) could not complete in this environment because the session's GitHub access is scoped to `richardkfm/sungrid-protocol` only and the proxy blocks fetching arbitrary third-party release binaries from `github.com` — an environment limitation, not a packaging bug. This issue's actual definition of done (a non-team playtester installing and completing a match unassisted on a different machine) still needs a real external tester.
 
 **Labels:** `phase:4`, `phase:5`, `type:content`
 
@@ -222,9 +226,11 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ---
 
-### 12. Solar Array custom art pass — PRIORITY
+### 12. Solar Array custom art pass — FIRST PASS DONE, needs a real artist polish pass
 
-**Labels:** `phase:5`, `type:art`, `area:energy`, `priority`
+**Status:** `POWR`/`APWR` now render dedicated solar-panel-array art (`sgpwr`/`sgapwr` images, `mods/sungrid/bits/sgpwr.png` + `sgapwr.png` + icons) instead of the stock RA power-plant sprite, via a `RenderSprites: Image:` override and new sequence blocks in `mods/sungrid/sequences/structures.yaml`. Shipped as a `PngSheet`-format sprite (added to `mod.yaml`'s `SpriteFormats`) rather than a hand-authored indexed `.shp`, since that's the tractable path without a dedicated pixel-art tool/artist. Confirmed loading and rendering in a live headless skirmish with no regressions (icon renders in the build palette, damaged-idle state is visually distinct with scorch/crack detail, existing vendored `powrdead.shp`/`apwrdead.shp` death animations and shared bib decals are reused unchanged). **This is explicitly a first pass, not final production art** — it establishes the palette/tone (solar-panel blues, gold power-conduit accent, green reclaiming the base, sandbag wear per `docs/ART_DIRECTION.md`) but is programmatically drawn, not a human/dedicated pixel-art pass, and the `make` (construction) sequence is a single static frame rather than a proper build-up animation. A real artist pass matching the rest of the roster's eventual quality bar is still open work.
+
+**Labels:** `phase:5`, `type:art`, `area:energy`
 
 **Phase:** 5 — Faction Flavor (see `docs/ROADMAP.md`, `docs/ART_DIRECTION.md`)
 
@@ -238,4 +244,4 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 **Dependencies:** None blocking — Solar Array's mechanics (`Power` trait) are untouched and already playtested since Phase 2; this is asset-only.
 
-**Definition of done:** `POWR`/`APWR` render with dedicated solar-panel sprite art (not stock RA power-plant art) in a skirmish match, matching `docs/ART_DIRECTION.md`'s palette/tone guardrails, with no regression to power generation behavior.
+**Definition of done:** `POWR`/`APWR` render with dedicated solar-panel sprite art (not stock RA power-plant art) in a skirmish match, matching `docs/ART_DIRECTION.md`'s palette/tone guardrails, with no regression to power generation behavior. **Met by the first pass above** for the mechanical/visual-distinctness bar; remaining open work is a real artist pass (proper indexed-palette pixel art, an actual construction/build-up animation) to replace the programmatically-drawn placeholder, tracked as a follow-up rather than reopening this issue.
