@@ -61,6 +61,8 @@ oilb:
 		Start: 1
 		Length: *
 	make:
+	icon:
+		Filename: oilb.shp
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:

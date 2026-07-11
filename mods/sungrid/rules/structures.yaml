@@ -1403,21 +1403,23 @@ SILO:
 		ValidRelationships: Enemy
 		RequiresCondition: gridreserve-beacon
 
-OILB:
+RCYD:
 	Inherits: ^Building
+	RenderSprites:
+		Image: oilb
 	Selectable:
 		Bounds: 1024, 1024
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 65
 		Prerequisites: anypower, ~techlevel.infonly
-		Description: actor-oilb.description
+		Description: actor-rcyd.description
 	Valued:
 		Cost: 600
 	Targetable:
 		TargetTypes: GroundActor, Structure, C4, DetonateAttack
 	Tooltip:
-		Name: actor-oilb.name
+		Name: actor-rcyd.name
 	-GivesBuildableArea:
 	Health:
 		HP: 40000

@@ -62,13 +62,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[NotificationReference("Speech")]
 		public readonly string LockdownStartNotification = null;
 
-		[FluentReference("player", optional: true)]
+		[FluentReference(optional: true)]
 		public readonly string LockdownStartTextNotification = null;
 
 		[NotificationReference("Speech")]
 		public readonly string LockdownCancelledNotification = null;
 
-		[FluentReference("player", optional: true)]
+		[FluentReference(optional: true)]
 		public readonly string LockdownCancelledTextNotification = null;
 
 		IEnumerable<LobbyOption> ILobbyOptions.LobbyOptions(MapPreview map)
