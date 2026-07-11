@@ -23,7 +23,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `docs/ARCHITECTURE.md` — OpenRA technical strategy, data-driven vs. engine-level split, known friction points.
 - `docs/GAME_MODES.md` — full spec for the Grid Reserve economic victory mode.
 - `docs/BUILDINGS.md` — the 10-building initial roster, categorized and staged.
-- `docs/ART_DIRECTION.md` — solarpunk tone/visual guardrails.
+- `docs/ART_DIRECTION.md` — solarpunk tone/visual guardrails. `docs/concept-art/` holds non-canonical HTML concept sketches (currently the Phase 5 building dossier) — discussion drafts, not shippable assets.
 - `docs/CONTRIBUTING.md` — Sungrid-specific workflow (branches, labels, RFCs, PR checklist). Root `CONTRIBUTING.md` is the Mod SDK's own contributing guidelines (still points to OpenRA's coding-standard wiki for engine-level style).
 - `docs/LICENSE_NOTES.md` — GPLv3 inheritance, EA non-affiliation, original-asset licensing notes.
 

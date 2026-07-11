@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sungrid Protocol — Phase 5 Concept Dossier</title>
+<style>
+  :root {
+    --bg: #0f1613;
+    --panel: #17241f;
+    --panel-2: #1c2b24;
+    --line: #35493d;
+    --line-strong: #4a6353;
+    --ink: #dfeee2;
+    --ink-dim: #96ab9d;
+    --foliage: #6bb076;
+    --solar: #e8b23d;
+    --rust: #c07c52;
+    --alert: #d9695228;
+    --alert-ink: #e2836a;
+    --shadow: 0 18px 40px -20px rgba(0,0,0,0.6);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #eef1e8;
+      --panel: #ffffff;
+      --panel-2: #e6ebe0;
+      --line: #c1cabb;
+      --line-strong: #98a690;
+      --ink: #1c2b20;
+      --ink-dim: #55665a;
+      --foliage: #3f7a4c;
+      --solar: #a3690f;
+      --rust: #8a4e30;
+      --alert: #a13f2d1f;
+      --alert-ink: #a13f2d;
+      --shadow: 0 18px 40px -24px rgba(30,40,30,0.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1613; --panel: #17241f; --panel-2: #1c2b24; --line: #35493d; --line-strong: #4a6353;
+    --ink: #dfeee2; --ink-dim: #96ab9d; --foliage: #6bb076; --solar: #e8b23d; --rust: #c07c52;
+    --alert: #d9695228; --alert-ink: #e2836a; --shadow: 0 18px 40px -20px rgba(0,0,0,0.6);
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1e8; --panel: #ffffff; --panel-2: #e6ebe0; --line: #c1cabb; --line-strong: #98a690;
+    --ink: #1c2b20; --ink-dim: #55665a; --foliage: #3f7a4c; --solar: #a3690f; --rust: #8a4e30;
+    --alert: #a13f2d1f; --alert-ink: #a13f2d; --shadow: 0 18px 40px -24px rgba(30,40,30,0.25);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 34px 34px;
+    background-attachment: fixed;
+  }
+
+  .sheet {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 48px 28px 80px;
+  }
+
+  .label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+  }
+
+  header.masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 2px solid var(--line-strong);
+    padding-bottom: 20px;
+    margin-bottom: 6px;
+  }
+  header.masthead .id-block { display: flex; flex-direction: column; gap: 10px; }
+  h1 {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 4vw, 44px);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  h1 span { color: var(--solar); }
+  .status-tag {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--line-strong);
+    background: var(--panel-2);
+    color: var(--ink-dim);
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .intro {
+    max-width: 62ch;
+    color: var(--ink-dim);
+    font-size: 15.5px;
+    margin: 22px 0 40px;
+  }
+  .intro strong { color: var(--ink); font-weight: 600; }
+
+  /* Palette strip */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 40px;
+  }
+  .swatch {
+    background: var(--panel);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .swatch .chip {
+    width: 100%;
+    height: 30px;
+    border: 1px solid var(--line-strong);
+  }
+  .swatch .name {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+  }
+  .swatch .note {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.01em;
+  }
+
+  /* existing roster strip */
+  .roster-note { display: flex; align-items: center; gap: 14px; margin-bottom: 44px; flex-wrap: wrap; }
+  .roster-note .chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip-pill {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    border: 1px dashed var(--line-strong);
+    padding: 5px 10px;
+  }
+
+  section.roster-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 56px 0 20px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+  }
+  section.roster-heading h2 {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 26px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 22px 20px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card::before, .card::after,
+  .card .br::before, .card .br::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--line-strong);
+    border-style: solid;
+    border-width: 0;
+  }
+  .card::before { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+  .card::after { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+  .card .br::before { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+  .card .br::after { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .card-id { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.06em; }
+  .card-name {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    font-size: 19px;
+    margin: 3px 0 0;
+    text-wrap: balance;
+  }
+  .category {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--foliage);
+    border: 1px solid var(--foliage);
+    padding: 3px 7px;
+    white-space: nowrap;
+  }
+
+  .icon-frame {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    margin: 4px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 11;
+  }
+  .icon-frame svg { width: 82%; height: 82%; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 6px 18px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .stats b { color: var(--ink); font-weight: 600; }
+
+  .flavor {
+    font-size: 14.5px;
+    color: var(--ink);
+    margin: 0 0 12px;
+  }
+  .note {
+    font-family: ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+    font-style: italic;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    border-left: 2px solid var(--solar);
+    padding-left: 10px;
+    margin: 0;
+  }
+
+  .pulse { animation: pulse 3.2s ease-in-out infinite; transform-origin: center; }
+  .sweep { animation: sweep 6s linear infinite; transform-origin: 60px 78px; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse, .sweep { animation: none; }
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 2px solid var(--line-strong);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    color: var(--ink-dim);
+    font-size: 13px;
+  }
+  footer code {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    background: var(--panel-2);
+    padding: 1px 5px;
+    border: 1px solid var(--line);
+  }
+
+  @media (max-width: 520px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="id-block">
+      <div class="label">Sungrid Protocol — Grid Infrastructure Dossier</div>
+      <h1>Phase 5 <span>·</span> Faction Flavor</h1>
+    </div>
+    <div class="status-tag">Status: concept draft — pixel pass not started</div>
+  </header>
+
+  <p class="intro">
+    Seven schematic studies for the buildings shipped in Phase 5 — silhouette, material, and palette
+    intent only. Nothing here is game-ready sprite art; think of it as the sketch a pixel artist would rough out
+    before touching a tile grid. Palette and material choices follow <strong>docs/ART_DIRECTION.md</strong> exactly.
+  </p>
+
+  <div class="palette">
+    <div class="swatch">
+      <div class="chip" style="background: var(--foliage);"></div>
+      <div class="name">Living Systems</div>
+      <div class="note">foliage reclaiming industrial space</div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background: var(--solar);"></div>
+      <div class="name">Solar Grid / Powered</div>
+      <div class="note">the only accent used for "active" state</div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background: var(--rust);"></div>
+      <div class="name">Legacy Counterpoint</div>
+      <div class="note">old-world tech — Cryptominer family</div>
+    </div>
+    <div class="swatch">
+      <div class="chip" style="background: var(--alert-ink);"></div>
+      <div class="name">Alert (reserved)</div>
+      <div class="note">low power / under attack — never decorative</div>
+    </div>
+  </div>
+
+  <div class="roster-note">
+    <span class="label">Already in game — Phase 2:</span>
+    <div class="chips">
+      <span class="chip-pill">POWR · Solar Array</span>
+      <span class="chip-pill">SILO · Battery Bank</span>
+      <span class="chip-pill">OILB · Recycling Depot</span>
+    </div>
+  </div>
+
+  <section class="roster-heading">
+    <h2>The Phase 5 Seven</h2>
+    <span class="label">SGCRY – SGSNS</span>
+  </section>
+
+  <div class="grid">
+
+    <!-- CRYPTOMINER -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGCRY</div>
+          <h3 class="card-name">Cryptominer</h3>
+        </div>
+        <span class="category">Economy</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <rect x="24" y="58" width="46" height="34" fill="var(--rust)" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <rect x="34" y="42" width="46" height="20" fill="var(--rust)" opacity="0.85" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <rect x="30" y="64" width="10" height="6" fill="var(--panel)" opacity="0.5"/>
+          <rect x="46" y="64" width="10" height="6" fill="var(--panel)" opacity="0.5"/>
+          <line x1="98" y1="30" x2="98" y2="46" stroke="var(--ink-dim)" stroke-width="2"/>
+          <circle cx="98" cy="24" r="7" fill="var(--panel)" stroke="var(--ink-dim)" stroke-width="2"/>
+          <path d="M92 20 L104 28 M104 20 L92 28" stroke="var(--ink-dim)" stroke-width="1.2"/>
+          <path d="M18 40 q4 -8 0 -16" stroke="var(--ink-dim)" stroke-width="1.5" opacity="0.6" class="pulse"/>
+          <path d="M28 36 q4 -8 0 -16" stroke="var(--ink-dim)" stroke-width="1.5" opacity="0.4" class="pulse"/>
+          <rect x="20" y="94" width="16" height="8" fill="var(--solar)"/>
+          <line x1="28" y1="94" x2="34" y2="70" stroke="var(--solar)" stroke-width="2" class="pulse"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>1,800</b></div>
+        <div>Power <b>&minus;120</b></div>
+        <div>Queue <b>Building</b></div>
+      </div>
+      <p class="flavor">Legacy proof-of-work compute, run hot off cheap solar. Not clean the way Solar Array is —
+      and it looks it: rust, salvage, one thin gold cable feeding a rack that was never meant to be green.</p>
+      <p class="note">Income tiers off GrantConditionOnPowerState — throttles under grid strain, never a flat rate.</p>
+      <div class="br"></div>
+    </article>
+
+    <!-- DATACENTER FOR AI -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGDAI</div>
+          <h3 class="card-name">Datacenter for AI</h3>
+        </div>
+        <span class="category">Economy / Intel</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <rect x="34" y="56" width="60" height="30" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <path d="M34 56 a30 22 0 0 1 60 0 Z" fill="var(--panel-2)" stroke="var(--solar)" stroke-width="2"/>
+          <line x1="42" y1="66" x2="42" y2="82" stroke="var(--foliage)" stroke-width="2"/>
+          <line x1="52" y1="66" x2="52" y2="82" stroke="var(--foliage)" stroke-width="2"/>
+          <line x1="62" y1="66" x2="62" y2="82" stroke="var(--foliage)" stroke-width="2"/>
+          <line x1="72" y1="66" x2="72" y2="82" stroke="var(--foliage)" stroke-width="2"/>
+          <line x1="82" y1="66" x2="82" y2="82" stroke="var(--foliage)" stroke-width="2"/>
+          <circle cx="42" cy="70" r="1.6" fill="var(--solar)" class="pulse"/>
+          <circle cx="62" cy="74" r="1.6" fill="var(--solar)" class="pulse"/>
+          <circle cx="82" cy="70" r="1.6" fill="var(--solar)" class="pulse"/>
+          <line x1="100" y1="52" x2="106" y2="34" stroke="var(--ink-dim)" stroke-width="1.5"/>
+          <line x1="108" y1="52" x2="108" y2="30" stroke="var(--ink-dim)" stroke-width="1.5"/>
+          <line x1="116" y1="52" x2="112" y2="34" stroke="var(--ink-dim)" stroke-width="1.5"/>
+          <circle cx="106" cy="34" r="2" fill="var(--solar)"/>
+          <circle cx="108" cy="30" r="2" fill="var(--solar)"/>
+          <circle cx="112" cy="34" r="2" fill="var(--solar)"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>1,600</b></div>
+        <div>Power <b>&minus;60</b></div>
+        <div>Queue <b>Building</b></div>
+      </div>
+      <p class="flavor">Racks serving grid logistics and battlefield analytics — the brains behind smart-grid
+      coordination. Cleaner lines than Cryptominer's, a dome instead of a stack, gold trim instead of rust.</p>
+      <p class="note">CashTrickler + RevealsShroud + DetectCloaked — economy and intel from one hull, no new trait.</p>
+      <div class="br"></div>
+    </article>
+
+    <!-- DRONE BAY -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGDRN</div>
+          <h3 class="card-name">Drone Bay</h3>
+        </div>
+        <span class="category">Logistics</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <polygon points="30,88 110,88 96,68 44,68" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <line x1="44" y1="68" x2="96" y2="68" stroke="var(--solar)" stroke-width="2"/>
+          <g class="pulse">
+            <circle cx="52" cy="46" r="3" fill="none" stroke="var(--ink-dim)" stroke-width="1.4"/>
+            <circle cx="62" cy="46" r="3" fill="none" stroke="var(--ink-dim)" stroke-width="1.4"/>
+            <circle cx="52" cy="56" r="3" fill="none" stroke="var(--ink-dim)" stroke-width="1.4"/>
+            <circle cx="62" cy="56" r="3" fill="none" stroke="var(--ink-dim)" stroke-width="1.4"/>
+            <line x1="50" y1="51" x2="64" y2="51" stroke="var(--foliage)" stroke-width="1.4"/>
+            <line x1="57" y1="44" x2="57" y2="58" stroke="var(--foliage)" stroke-width="1.4"/>
+          </g>
+          <g>
+            <circle cx="86" cy="34" r="2.6" fill="none" stroke="var(--ink-dim)" stroke-width="1.2"/>
+            <circle cx="94" cy="34" r="2.6" fill="none" stroke="var(--ink-dim)" stroke-width="1.2"/>
+            <line x1="90" y1="34" x2="90" y2="26" stroke="var(--foliage)" stroke-width="1.2"/>
+          </g>
+          <path d="M20 60 q10 -4 18 -2" stroke="var(--ink-dim)" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.7"/>
+          <path d="M20 66 q10 -2 16 2" stroke="var(--ink-dim)" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>900</b></div>
+        <div>Power <b>&minus;20</b></div>
+        <div>Queue <b>Building</b></div>
+      </div>
+      <p class="flavor">A landing shelf bolted onto whatever structure was standing — improvised, not
+      architecture-magazine. The drones matter more than the pad; nothing here reads as permanent.</p>
+      <p class="note">ProximityExternalCondition grants nearby vehicles a SpeedMultiplier — logistics as an aura.</p>
+      <div class="br"></div>
+    </article>
+
+    <!-- GRID DEFENSE TURRET -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGTUR</div>
+          <h3 class="card-name">Grid Defense Turret</h3>
+        </div>
+        <span class="category">Defense</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <polygon points="40,90 100,90 90,66 50,66" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <rect x="58" y="46" width="24" height="22" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <rect x="80" y="52" width="30" height="7" fill="var(--ink-dim)"/>
+          <path d="M62 66 q-3 -8 0 -16 q3 -8 0 -16" stroke="var(--solar)" stroke-width="2.2" class="pulse" fill="none"/>
+          <line x1="62" y1="34" x2="62" y2="24" stroke="var(--solar)" stroke-width="2"/>
+          <line x1="70" y1="90" x2="70" y2="98" stroke="var(--ink-dim)" stroke-width="2"/>
+          <g stroke="var(--alert-ink)" stroke-width="1" opacity="0.7">
+            <line x1="42" y1="86" x2="48" y2="80"/>
+            <line x1="50" y1="86" x2="56" y2="80"/>
+            <line x1="58" y1="86" x2="64" y2="80"/>
+          </g>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>900</b></div>
+        <div>Power <b>&minus;40</b></div>
+        <div>Queue <b>Defense</b></div>
+      </div>
+      <p class="flavor">A capacitor coil runs visibly up the mount — charged gold when the grid is healthy, dim
+      when it isn't. It should always read as a weapon first, a power gauge second.</p>
+      <p class="note">FirepowerMultiplier scales with grid state — weaker under strain, deliberately never offline.</p>
+      <div class="br"></div>
+    </article>
+
+    <!-- SMART GRID RELAY -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGREL</div>
+          <h3 class="card-name">Smart Grid Relay</h3>
+        </div>
+        <span class="category">Energy</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <line x1="70" y1="26" x2="70" y2="92" stroke="var(--ink-dim)" stroke-width="2.4"/>
+          <line x1="52" y1="42" x2="88" y2="42" stroke="var(--ink-dim)" stroke-width="1.6"/>
+          <line x1="56" y1="56" x2="84" y2="56" stroke="var(--ink-dim)" stroke-width="1.6"/>
+          <circle cx="70" cy="56" r="7" fill="var(--solar)" opacity="0.9" class="pulse"/>
+          <path d="M70 26 q-30 6 -44 30" stroke="var(--foliage)" stroke-width="1.6" fill="none"/>
+          <path d="M70 26 q30 6 44 30" stroke="var(--foliage)" stroke-width="1.6" fill="none"/>
+          <rect x="60" y="88" width="20" height="8" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>600</b></div>
+        <div>Power <b>+60</b></div>
+        <div>Queue <b>Building</b></div>
+      </div>
+      <p class="flavor">The "balances distant clusters" fantasy is bigger than the building — OpenRA pools power
+      globally already. Drawn honestly small: a secondary feed, not a network.</p>
+      <p class="note">Flat Power source only; true range-limited pooling stays deferred (see BUILDINGS.md).</p>
+      <div class="br"></div>
+    </article>
+
+    <!-- RESILIENCE SHELTER -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGSHL</div>
+          <h3 class="card-name">Resilience Shelter</h3>
+        </div>
+        <span class="category">Defense</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <circle cx="70" cy="66" r="34" stroke="var(--foliage)" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.65" class="pulse"/>
+          <path d="M42 78 a28 22 0 0 1 56 0 Z" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.6"/>
+          <g fill="var(--rust)" opacity="0.85">
+            <ellipse cx="46" cy="80" rx="7" ry="4"/>
+            <ellipse cx="58" cy="82" rx="7" ry="4"/>
+            <ellipse cx="70" cy="82.5" rx="7" ry="4"/>
+            <ellipse cx="82" cy="82" rx="7" ry="4"/>
+            <ellipse cx="94" cy="80" rx="7" ry="4"/>
+          </g>
+          <line x1="70" y1="56" x2="70" y2="46" stroke="var(--solar)" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>1,200</b></div>
+        <div>Power <b>&minus;50</b></div>
+        <div>Queue <b>Building</b> · Limit 1</div>
+      </div>
+      <p class="flavor">Hardened concrete, sandbagged at the base, no visible weapon — this building never fights,
+      it just keeps everything around it standing a little longer.</p>
+      <p class="note">DamageMultiplier aura on nearby structures via ProximityExternalCondition — a comeback building.</p>
+      <div class="br"></div>
+    </article>
+
+    <!-- SENSOR ARRAY -->
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-id">SGSNS</div>
+          <h3 class="card-name">Sensor Array</h3>
+        </div>
+        <span class="category">Intelligence</span>
+      </div>
+      <div class="icon-frame">
+        <svg viewBox="0 0 140 110" fill="none">
+          <g class="sweep" opacity="0.5">
+            <path d="M60 78 a18 18 0 0 1 36 0" stroke="var(--foliage)" stroke-width="1.2" fill="none"/>
+            <path d="M50 78 a28 28 0 0 1 56 0" stroke="var(--foliage)" stroke-width="1" fill="none" opacity="0.6"/>
+          </g>
+          <line x1="60" y1="78" x2="60" y2="30" stroke="var(--ink-dim)" stroke-width="2"/>
+          <line x1="60" y1="60" x2="40" y2="50" stroke="var(--ink-dim)" stroke-width="1.4"/>
+          <ellipse cx="36" cy="48" rx="7" ry="4" fill="var(--panel-2)" stroke="var(--ink-dim)" stroke-width="1.2" transform="rotate(-18 36 48)"/>
+          <line x1="60" y1="46" x2="82" y2="40" stroke="var(--ink-dim)" stroke-width="1.4"/>
+          <ellipse cx="86" cy="38" rx="7" ry="4" fill="var(--panel-2)" stroke="var(--ink-dim)" stroke-width="1.2" transform="rotate(14 86 38)"/>
+          <circle cx="60" cy="30" r="3.5" fill="var(--solar)" class="pulse"/>
+          <rect x="54" y="78" width="12" height="10" fill="var(--panel-2)" stroke="var(--line-strong)" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div>Cost <b>800</b></div>
+        <div>Power <b>&minus;30</b></div>
+        <div>Queue <b>Building</b></div>
+      </div>
+      <p class="flavor">A thin mast, three pods at three angles, one blinking status light. Small footprint,
+      wide reach — the building is a symbol for what it does, not a monument.</p>
+      <p class="note">RevealsShroud + DetectCloaked + RenderDetectionCircle — pure awareness, no combat role.</p>
+      <div class="br"></div>
+    </article>
+
+  </div>
+
+  <footer>
+    <div>Palette and material rules per <code>docs/ART_DIRECTION.md</code>. Building stats per <code>mods/sungrid/rules/structures.yaml</code>.</div>
+    <div>Concept draft only — see <code>docs/BUILDINGS.md</code>'s art note for the real pixel-art pass status.</div>
+  </footer>
+
+</div>
+</body>
+</html>

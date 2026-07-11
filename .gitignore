@@ -43,6 +43,9 @@ Settings.md
 openra.6
 update.log
 
+# ...except hand-authored concept-art drafts, which are source, not generated output
+!docs/concept-art/*.html
+
 # SublimeText
 *.sublime-project
 *.sublime-workspace
