@@ -211,6 +211,53 @@ apwr:
 	fake-icon:
 		Filename: fapwicon.shp
 
+# First-pass custom art for Solar Array (docs/BACKLOG.md issue #12) -- replaces the
+# reused stock RA power-plant sprite with dedicated solar-panel-array art. Reuses the
+# existing vendored dead animation and shared bib decal rather than redrawing those.
+sgpwr:
+	Defaults:
+		Filename: sgpwr.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	dead:
+		Filename: powrdead.shp
+		Tick: 800
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+	icon:
+		Filename: sgpwricon.png
+
+sgapwr:
+	Defaults:
+		Filename: sgapwr.png
+		Offset: 0,-10
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	dead:
+		Filename: apwrdead.shp
+		Tick: 800
+		Offset: 0,-10
+	bib:
+		Filename: bib2.tem
+		TilesetFilenames:
+			SNOW: bib2.sno
+			DESERT: bib2.des
+		Length: *
+	icon:
+		Filename: sgapwricon.png
+
 barr:
 	Defaults:
 		Filename: barr.shp
