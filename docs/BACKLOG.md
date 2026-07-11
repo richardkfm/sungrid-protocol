@@ -1,4 +1,4 @@
-# Sungrid Protocol — Phase 0/1/2/3 Issue Backlog
+# Sungrid Protocol — Phase 0-6 Issue Backlog
 
 GitHub Issues are currently **disabled** on this repository, so these could not be opened as actual GitHub issues (attempted via the API, got `410 Issues has been disabled in this repository`). This file holds the exact content, ready to paste in as-is once Issues is enabled (repo Settings → Features → Issues), or to import via `gh issue create` / the GitHub UI.
 
@@ -219,3 +219,125 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 **Dependencies:** None blocking — additive to the existing tech tree, doesn't touch Grid Reserve or the Phase 1-2 economy buildings.
 
 **Definition of done:** All 7 buildings are buildable in a skirmish match, function as described, CI is green, and a human playtest confirms no regressions to the existing build order/economy loop. Remaining Phase 5 scope (real art, palette cohesion pass, sound/music) tracked separately, not part of this issue.
+
+---
+
+### 12. Lock the world/UI asset pipeline — RESOLVED
+
+**Resolution:** Palette (hex values), sprite resolution/frame conventions, and naming convention are locked in `docs/ART_DIRECTION.md`'s "Asset pipeline (locked in Phase 6)" section. Notably, the sprite/frame convention section documents a real blocker discovered while starting #15: terrain tilesets and cursors are Westwood `.shp`-format sprite sheets that require OpenRA's own `utility` tool (built from the fetched `engine/`, not present in this session's environment) to decode/encode. Chrome PNGs (`uibits/*.png`) have no such dependency, which is why #15 could proceed here while #13/#14 (SHP-backed) could not.
+
+**Labels:** `phase:6`, `type:design`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/ROADMAP.md`, `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** Resolve `docs/ART_DIRECTION.md`'s asset-pipeline planning note, deferred through Phase 5. Nothing else in this phase should start until this is written down.
+
+**Scope:**
+- Concrete palette reference (hex/index values) derived from `docs/ART_DIRECTION.md`'s palette direction.
+- Sprite resolution/frame conventions matching `mods/ra`'s existing tileset/cursor sequence definitions.
+- Naming convention consistent with existing `mods/sungrid` sequence/YAML keys.
+- Update `docs/ART_DIRECTION.md` to reference the lock as resolved.
+
+**Dependencies:** None blocking.
+
+**Definition of done:** Pipeline doc/section exists and is referenced from `docs/ART_DIRECTION.md`; issues #13-16 below can cite it instead of inventing their own conventions.
+
+---
+
+### 13. Reskin cursors — BLOCKED, needs an engine-build-capable environment
+
+**Status:** Not started. `cursors.yaml`'s `mouse.shp`/`attackmove.shp`/`nopower.shp` are Westwood `.shp` sprite sheets — reskinning them means decoding/re-encoding SHP frames, which requires OpenRA's `utility` tool built from the fetched `engine/`. That fetch/build wasn't available in the environment this issue was picked up in (no `engine/` present, no network-built OpenRA binaries). Needs to be picked up somewhere the engine can actually be fetched and built (`make`/`fetch-engine.sh`), using `utility.sh --png`-style export/import against the pinned `ENGINE_VERSION`.
+
+**Labels:** `phase:6`, `type:content`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** `cursors.yaml` is still stock. Reskin it to the locked palette/style.
+
+**Scope:**
+- Every existing cursor state (select, move, move-blocked, attack, attack-outside-range, deploy/invalid, guard, enter, etc.) gets new art, same states, same meaning.
+- No new cursor states, no functional changes.
+
+**Dependencies:** Blocked by #12 (resolved) and by engine-build access (not yet available).
+
+**Definition of done:** Cursor set fully replaced; all states exercised in a skirmish and confirmed distinguishable.
+
+---
+
+### 14. Reskin one terrain tileset — BLOCKED, needs an engine-build-capable environment
+
+**Status:** Not started, same blocker as #13 — tilesets (`mods/sungrid/tilesets/*.yaml`) are backed by `.shp`/`.tem`/`.des`/`.sno`/`.int` sprite sheets requiring the built engine's `utility` tool to touch. `docs/WORLD_UI_IDENTITY.md`'s `DESERT` recommendation (below) still stands for whoever picks this up next.
+
+**Labels:** `phase:6`, `type:content`, `area:world`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** Terrain is the largest remaining stock-RA surface and the one players see for the entire match.
+
+**Scope:**
+- Pick exactly one tileset (`docs/WORLD_UI_IDENTITY.md` recommends `DESERT`, since it covers both a played map, `desert-rats`, and the `desert-shellmap` menu background — confirm or override this call when picking up the issue).
+- Palette-shift plus selective re-texture of key tiles per the locked pipeline; not a from-scratch redraw of every tile.
+- Remaining three tilesets stay stock — out of scope here.
+
+**Dependencies:** Blocked by #12 (resolved) and by engine-build access (not yet available).
+
+**Definition of done:** Chosen tileset fully reskinned, confirmed legible (no unit/building silhouette regressions) in a full skirmish on a map using it.
+
+---
+
+### 15. Reskin chrome (main menu, mod chooser, loading screen, in-game panels) — PARTIALLY IMPLEMENTED, needs visual + engine-build verification
+
+**Status:** `dialog.png` and `sidebar.png` (`mods/sungrid/uibits/`) recolored programmatically (piecewise hue remap: only the stock reddish hue band shifts to the locked green, so the untouched navy/gray/black regions in `sidebar.png` aren't disturbed — geometry and canvas dimensions are byte-for-byte unchanged from stock, so `chrome.yaml`'s pixel-exact `Regions`/`PanelRegion` rects still line up). A real finding surfaced while doing this: `sidebar.png`'s `radar` regions (`chrome.yaml`'s `sidebar-allies`/`sidebar-soviet` — the "no radar built yet" placeholder art shown in the minimap panel) and `loadscreen.png`/`-2x`/`-3x` contained the **literal stock Allied chevron and Soviet hammer-and-sickle logos**, baked into this mod's own committed art rather than something abstract from `docs/ART_DIRECTION.md`'s "faction visual differentiation" note. Both were replaced with a single procedural placeholder emblem (gold hexagon/sun motif over a green band, in the locked palette) rather than left as unrelated IP — a real logo design is still a separate, later task, but shipping the actual Allied/Soviet marks was a bigger identity/tone gap than "unstyled," so this couldn't wait for a full art pass. The recolor/emblem script is checked in as `mods/sungrid/uibits/reskin_chrome.py`, with `mods/sungrid/uibits/PLACEHOLDER_ART.md` alongside it marking exactly which pixels are placeholder, their pixel-rect locations per file, and how a human designer replaces them (hand-paint over the existing canvas, or tweak the script's palette/shape and re-run) — put there specifically so this doesn't require re-reading this backlog entry to find.
+Remaining for this issue: mod-chooser chrome, any other `chrome/*.yaml` panels not covered by `dialog.png`/`sidebar.png`, and layout/readability verification in an actual rendered client (not available in this session — no built engine). Grid Reserve HUD elements (`GridReserveHudLogic`, `GridReserveStandingsLogic`) were not visually re-verified against the new skin for the same reason.
+
+**Labels:** `phase:6`, `type:content`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** `chrome.yaml`/`mod.chrome.yaml`/`chrome/*.yaml` are still stock chrome; this is the first thing anyone sees before a match starts.
+
+**Scope:**
+- Reskin color/texture/framing per the locked pipeline; keep existing layout topology, health/status bar conventions, and selection indicators unchanged.
+- Verify the Phase 3/4 Grid Reserve HUD elements (`GridReserveHudLogic`, `GridReserveStandingsLogic`) still read cleanly against the new skin.
+
+**Dependencies:** Blocked by #12 (resolved).
+
+**Definition of done:** Main menu, mod chooser, loading screen, and in-game panels visually read as Sungrid Protocol; Grid Reserve HUD elements confirmed unaffected in a test match.
+
+---
+
+### 16. Re-theme the main-menu shellmap — BLOCKED, needs an engine-build-capable environment
+
+**Status:** Not started. Note this is distinct from the static loading-screen splash (`loadscreen.png`, covered under #15) — the shellmap (`maps/desert-shellmap/`) is the live-rendered map shown *behind* the main menu, using the `DESERT` tileset. Same blocker as #14: its terrain is `.shp`-backed and needs the built engine's `utility` tool to re-texture.
+
+**Labels:** `phase:6`, `type:content`, `area:world`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** The shellmap (`maps/desert-shellmap/`) is the background of the main menu — first impression, currently stock desert terrain.
+
+**Scope:**
+- Re-theme to a solarpunk vista consistent with #14's reskinned tileset (natural pairing if #14 picks `DESERT`).
+
+**Dependencies:** Should follow #14 if the same tileset is involved; blocked by the same engine-build access #14 needs.
+
+**Definition of done:** Main menu background reads as a lush solarpunk vista.
+
+---
+
+### 17. Phase 6 visual regression pass
+
+**Labels:** `phase:6`, `type:content`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** Confirm the reskin doesn't quietly break Design Pillar 1 legibility even though it doesn't touch unit/building art directly — a terrain palette shift can wash out unit silhouettes if contrast isn't checked.
+
+**Scope:**
+- Full skirmish on the reskinned tileset checking unit/building silhouette and team-color legibility.
+- Confirm Grid Reserve HUD and minimap reveal still read correctly.
+- Confirm no cursor state is ambiguous against the new terrain/chrome.
+
+**Dependencies:** Blocked by #13, #14, #15, #16.
+
+**Definition of done:** No legibility regression reported; Phase 6 exit criteria in `docs/ROADMAP.md`/`docs/WORLD_UI_IDENTITY.md` are met.
