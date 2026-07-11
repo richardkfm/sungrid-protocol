@@ -1397,6 +1397,11 @@ SILO:
 		RequiresSelection: true
 		PipCount: 5
 		FullSequence: pip-yellow
+	GridReserveVault:
+	RevealsShroud@GridReserveBeacon:
+		Range: 6c0
+		ValidRelationships: Enemy
+		RequiresCondition: gridreserve-beacon
 
 OILB:
 	Inherits: ^Building
