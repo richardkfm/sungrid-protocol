@@ -19,7 +19,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 **Design docs:**
 - `docs/BLUEPRINT.md` — master document, full project blueprint in one place.
 - `docs/VISION.md` — design pillars, tone, what differentiates Sungrid Protocol from vanilla RA.
-- `docs/ROADMAP.md` — phase-by-phase plan (0 through 7+) with deliverables, exit criteria, explicit non-goals.
+- `docs/ROADMAP.md` — phase-by-phase plan (0 through 8+) with deliverables, exit criteria, explicit non-goals.
 - `docs/ARCHITECTURE.md` — OpenRA technical strategy, data-driven vs. engine-level split, known friction points.
 - `docs/GAME_MODES.md` — full spec for the Grid Reserve economic victory mode.
 - `docs/BUILDINGS.md` — the 10-building initial roster, categorized and staged.
@@ -45,11 +45,11 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - Data-driven-first: buildings/units/rules go through YAML composing existing OpenRA traits wherever possible; new C# traits (in `OpenRA.Mods.Sungrid/`) are reserved for things YAML genuinely can't express (currently: only the Grid Reserve vault/win-condition mechanic).
 - Destruction victory is the permanent default; Grid Reserve is a toggleable lobby option.
 - "Grid Reserve" is the recommended/working name for the economic victory mode (see `docs/GAME_MODES.md` for the other 4 candidates that were considered).
-- Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 7+ in `docs/ROADMAP.md`, renumbered from Phase 6 to make room for Phase 6's world/UI visual identity work — see `docs/WORLD_UI_IDENTITY.md`).
+- Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 8+ in `docs/ROADMAP.md`, renumbered to make room for Phase 6's world/UI visual identity work and Phase 7's sound/music pass).
 
 ## Current status
 
-Phases 0-5 are implemented: Mod SDK scaffold, real RA-derived gameplay content, the Phase 2/5 building roster (10/10 buildings), and the Phase 3/4 Grid Reserve economic victory mode (traits, lobby toggle, HUD/scoreboard). None of it has been verified by an actual human playtest yet — every phase's implementation notes in `docs/BACKLOG.md` flag that it was written without engine build/run access and still needs first-real-compile and playtest verification. Phase 6 (World & UI visual identity overhaul, `docs/WORLD_UI_IDENTITY.md`) is the current phase: terrain, chrome, and cursors are still stock content from the Phase 1 port. Phase 7+ (diplomacy) remains conditional and un-started — its gate (Phase 3-5 playtests showing sustained 3+ player demand) has not been met.
+Phases 0-5 are implemented: Mod SDK scaffold, real RA-derived gameplay content, the Phase 2/5 building roster (10/10 buildings), and the Phase 3/4 Grid Reserve economic victory mode (traits, lobby toggle, HUD/scoreboard). None of it has been verified by an actual human playtest yet — every phase's implementation notes in `docs/BACKLOG.md` flag that it was written without engine build/run access and still needs first-real-compile and playtest verification. Phase 6 (World & UI visual identity overhaul, `docs/WORLD_UI_IDENTITY.md`) is in progress: the asset pipeline is locked (`docs/ART_DIRECTION.md`) and chrome (`mods/sungrid/uibits/dialog.png`, `sidebar.png`, `loadscreen.png`+`-2x`/`-3x`) is recolored to the new palette, including replacing literal stock Allied/Soviet logos that were baked into that art. Cursors and terrain tilesets are still stock — both are `.shp`-format and blocked on having a built OpenRA engine available (see `docs/BACKLOG.md` issues #13/#14/#16). Phase 7 (sound/music pass) and Phase 8+ (diplomacy, conditional) remain un-started — Phase 8's gate (Phase 3-5 playtests showing sustained 3+ player demand) has not been met.
 
 ## Working conventions
 

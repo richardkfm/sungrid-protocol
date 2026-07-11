@@ -1,6 +1,6 @@
 # Sungrid Protocol — World & UI Visual Identity (Phase 6)
 
-This document specifies Phase 6: **World & UI Visual Identity Overhaul**. It supersedes the diplomacy/shared-resource phase that previously held the "Phase 6" slot in `docs/ROADMAP.md` — that work still exists, still gated the same way, and has moved to **Phase 7+** (see the note at the bottom of this doc). This redefinition happened before Phase 7's gate was met, so it does not pull anything forward; it's a renumbering, not a shortcut.
+This document specifies Phase 6: **World & UI Visual Identity Overhaul**. It supersedes the diplomacy/shared-resource phase that previously held the "Phase 6" slot in `docs/ROADMAP.md` — that work still exists, still gated the same way, and has moved to **Phase 8+** (with a new Phase 7, sound/music, inserted between the two — see the note at the bottom of this doc). This redefinition happened before Phase 8's gate was met, so it does not pull anything forward; it's a renumbering, not a shortcut.
 
 ## Why this phase, why now
 
@@ -21,8 +21,8 @@ Phase 5's exit criteria (`docs/ROADMAP.md`) called for "a distinct visual identi
 - Unit and building sprite replacement — Phase 5's placeholder/reused sprites stay as-is; this is a separate, later art pass once the pipeline locked here has been validated on a smaller (world/UI) surface first.
 - A second faction's visual identity — still blocked on there being a second faction at all (see `docs/ART_DIRECTION.md`).
 - Any new gameplay mechanic, trait, or rule change — this phase is visual-only.
-- Diplomacy/shared-resource systems — unchanged, still gated, now tracked as Phase 7+ (see bottom of this doc).
-- Sound/music pass — named alongside art in Phase 5's original deferred list, but audio is a distinct pipeline (voice/SFX/music direction, not sprites/palettes) and is left for its own future phase rather than folded in here to keep this phase's scope singular.
+- Diplomacy/shared-resource systems — unchanged, still gated, now tracked as Phase 8+ (see bottom of this doc).
+- Sound/music pass — named alongside art in Phase 5's original deferred list, but audio is a distinct pipeline (voice/SFX/music direction, not sprites/palettes) and is left for its own future phase (Phase 7) rather than folded in here to keep this phase's scope singular.
 
 ## Why terrain/chrome/cursors/menus and not unit/building art
 
@@ -87,8 +87,17 @@ Same shape as Phase 5's original risk note: art/UI work has no natural stopping 
 - A second faction's visual identity.
 - Sound/music production.
 - Any of the remaining three tilesets, before the first one clears the exit criteria above.
-- Diplomacy/shared-resource systems (Phase 7+, unchanged gate — see below).
+- Diplomacy/shared-resource systems (Phase 8+, unchanged gate — see below).
 
 ## Relationship to the former "Phase 6: Diplomacy" slot
 
-Diplomacy and shared-resource systems (alliances, betrayal, resource sharing on top of Grid Reserve) are unaffected by this redefinition — same scope, same conditional framing, same exit gate (Phase 3-5 playtests showing sustained 3+ player engagement with Grid Reserve and explicit tester demand for social mechanics), just renumbered to **Phase 7+** to make room for this phase. That gate has not been met as of this writing — no recorded playtests exist yet for Phases 3-5 (see `docs/BACKLOG.md`'s implementation status notes) — so Phase 7 remains exactly as un-started and un-scoped as "Phase 6" was before this document.
+Diplomacy and shared-resource systems (alliances, betrayal, resource sharing on top of Grid Reserve) are unaffected by this redefinition — same scope, same conditional framing, same exit gate (Phase 3-5 playtests showing sustained 3+ player engagement with Grid Reserve and explicit tester demand for social mechanics), just renumbered to **Phase 8+** to make room for this phase and the new Phase 7 (sound/music pass). That gate has not been met as of this writing — no recorded playtests exist yet for Phases 3-5 (see `docs/BACKLOG.md`'s implementation status notes) — so Phase 8 remains exactly as un-started and un-scoped as "Phase 6" was before this document.
+
+## Implementation status
+
+See `docs/BACKLOG.md` issues #12-17 for the current per-deliverable status. Summary as of this writing:
+
+- **Asset pipeline lock (#12): done.** Palette hex values, sprite/frame conventions, and naming convention are in `docs/ART_DIRECTION.md`.
+- **Chrome (#15): partially done.** `dialog.png` and `sidebar.png`/`loadscreen.png`(+2x/3x) are recolored to the locked palette. A real finding surfaced doing this work: `sidebar.png`'s "no radar yet" placeholder art and `loadscreen.png` contained the literal stock **Allied chevron and Soviet hammer-and-sickle logos** baked into this mod's committed art — both were replaced with a procedural Sungrid placeholder emblem rather than left shipping unrelated faction IP. Mod-chooser chrome and rendered-client verification remain open.
+- **Cursors (#13) and terrain (#14, #16): blocked.** Both are Westwood `.shp`-format sprite sheets and need OpenRA's `utility` tool (built from the fetched `engine/`) to decode/encode. This session's environment has no fetched/built engine and no standalone SHP codec, so this work needs an environment where `make`/`fetch-engine.sh` can actually run.
+- **Visual regression pass (#17): not started** — depends on #13/#14 and on having a rendered client to check against, neither available here.

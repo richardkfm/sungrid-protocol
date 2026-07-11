@@ -28,6 +28,26 @@ Until a second faction is scoped, "faction flavor" means making the single Sungr
 
 ## Asset pipeline (locked in Phase 6)
 
-Before more than one contributor (human or AI-assisted) produces art, lock: sprite resolution and frame conventions matching OpenRA's existing pixel-art pipeline, a shared base palette file, and a naming/sequence convention consistent with `mods/ra`'s existing structure so new sequences drop into the engine's existing tooling without custom loader work. This is a data/content-pipeline decision, not a code decision — see `docs/ARCHITECTURE.md` friction point #4.
+This was deferred through Phase 5 (which shipped on reused/recolored placeholder sprites instead) and is finally locked here as Phase 6's prerequisite deliverable (backlog issue #12), scoped to world/UI art first (terrain, chrome, cursors, menus) rather than unit/building sprites — see `docs/WORLD_UI_IDENTITY.md` for the full spec, deliverables, and exit criteria.
 
-This was deferred through Phase 5 (which shipped on reused/recolored placeholder sprites instead) and is finally locked as Phase 6's prerequisite deliverable, scoped to world/UI art first (terrain, chrome, cursors, menus) rather than unit/building sprites — see `docs/WORLD_UI_IDENTITY.md` for the full spec, deliverables, and exit criteria.
+**Palette file** (hex, sRGB — derived from the palette direction above):
+
+| Role | Color | Hex |
+|---|---|---|
+| Living green (primary) | mid green | `#2E7D46` |
+| Living green (shade) | deep green | `#163C28` |
+| Living green (accent) | bright leaf | `#8BC34A` |
+| Solar panel blue-black | panel base | `#16232E` |
+| Sun-gold (active/powered) | accent | `#E8A93D` |
+| Legacy/industrial rust | desaturated rust | `#8C5A3C` |
+| Legacy/industrial gray | aged gray | `#6E6259` |
+| Alert red / amber | **unchanged from stock** — reuse OpenRA's existing low-power/under-attack/Lockdown-countdown colors as-is, per the guardrail above |
+
+**Sprite resolution / frame conventions:**
+- Chrome PNGs (`mods/sungrid/uibits/*.png`): canvas dimensions and `Image`/`Image2x`/`Image3x` scale ratios must match the current stock files exactly — `chrome.yaml`'s `Regions`/`PanelRegion` rects are pixel-exact and any resize breaks them.
+- Terrain tiles (`mods/sungrid/tilesets/*.yaml`, backed by `.shp`/`.tem`/`.des`/`.sno`/`.int` sprite sheets): match each tileset's existing per-tile pixel dimensions and template geometry; a reskin re-textures, it doesn't reshape tiles or renumber templates.
+- Cursors (`mouse.shp`, `attackmove.shp`, `nopower.shp`, referenced by `cursors.yaml`): every existing `Start` frame index and hotspot (`X`/`Y`) must be preserved exactly — a reskin replaces frame art, not frame layout.
+
+**Naming convention:** keep existing lowercase filenames as-is (`dialog.png`, `sidebar.png`, `mouse.shp`, etc.) — `chrome.yaml`/`cursors.yaml`/`mod.yaml` reference these by exact path, so reskins overwrite in place rather than rename.
+
+**Known blocker for this session:** terrain tilesets and cursors are Westwood `.shp`-format sprite sheets, which require OpenRA's own `utility` tool (built from the fetched `engine/`) to decode/encode — there's no standalone SHP codec available outside the built engine. Chrome PNGs (`uibits/*.png`) have no such dependency and can be edited directly. See `docs/WORLD_UI_IDENTITY.md`'s issue-by-issue status for what's actually been executed under this lock versus what's blocked pending a build-capable environment.

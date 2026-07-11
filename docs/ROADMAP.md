@@ -13,7 +13,8 @@ Scope control is the whole game here. Each phase must ship something playable or
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` |
 | 6 | World & UI visual identity overhaul | `P6: World & UI Identity` |
-| 7+ | Diplomacy / shared-resource systems (conditional) | `P7: Diplomacy (conditional)` |
+| 7 | Sound and music pass | `P7: Sound & Music` |
+| 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` |
 
 ## Phase 0 — Repository bootstrap and architecture setup
 
@@ -90,9 +91,15 @@ Scope control is the whole game here. Each phase must ship something playable or
 - **Testing scope:** Manual visual review (mod chooser, main menu, loading screen, reskinned tileset in-game, all cursor states exercised in a skirmish); regression check that Grid Reserve HUD (Phase 3/4) and existing unit/building sprites still render legibly against the new palette.
 - **Exit criteria:** Pipeline locked and referenced from `docs/ART_DIRECTION.md`; main menu/mod chooser/loading screen/shellmap read as Sungrid Protocol; one tileset fully reskinned and confirmed legible in a full skirmish; cursor set fully replaced; no legibility regressions.
 - **Biggest risk:** No natural stopping point, same as Phase 5's original art risk — cap scope at one tileset and the explicit deliverable list in `docs/WORLD_UI_IDENTITY.md`; resist expanding into unit/building art or additional tilesets before the first surface is validated.
-- **Do NOT attempt yet:** Unit/building sprite replacement, a second faction's visual identity, sound/music production, additional tilesets before the first clears exit criteria, anything from Phase 7.
+- **Do NOT attempt yet:** Unit/building sprite replacement, a second faction's visual identity, sound/music production, additional tilesets before the first clears exit criteria, anything from Phase 7/8.
 
-## Phase 7+ — Diplomacy and shared-resource systems (conditional)
+## Phase 7 — Sound and music pass
+
+- **Why:** Named alongside art in Phase 5's original deferred list ("art pass... and a sound/music pass") and again called out in `docs/WORLD_UI_IDENTITY.md` as a distinct pipeline (voice/SFX/music direction) deliberately left out of Phase 6 to keep that phase's scope to sprites/palettes only.
+- **Deliverables:** Not scoped in detail yet. Expected shape, by analogy with Phase 6: a locked audio pipeline (format/loudness/naming conventions), a solarpunk-appropriate music pass (`mods/sungrid/audio/music.yaml`), and reflavored unit/building voice lines and notification stings (`audio/voices.yaml`, `audio/notifications.yaml`) consistent with the tone guardrails in `docs/ART_DIRECTION.md`.
+- **Do NOT attempt yet:** Full detailed scoping — write this phase's own spec (mirroring `docs/WORLD_UI_IDENTITY.md`'s structure) when Phase 6 is far enough along that its pipeline-lock pattern can be reused, rather than scoping audio blind right now.
+
+## Phase 8+ — Diplomacy and shared-resource systems (conditional)
 
 - **Why:** Only pursued if Grid Reserve playtests show that the spend/save tension is solid and players are asking for deeper multiplayer social dynamics (alliances, betrayal, resource sharing) on top of it.
 - **Deliverables:** Not scoped yet — deliberately. This phase does not get planned in detail until Phase 3-5 data justifies it.
