@@ -87,7 +87,6 @@ ServerTraits:
 	SkirmishLogic
 	PlayerPinger
 	MasterServerPinger
-	LobbySettingsNotification
 
 MapGrid:
 	Type: Rectangular
