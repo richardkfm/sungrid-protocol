@@ -1120,6 +1120,225 @@ Container@OBSERVER_WIDGETS:
 							AxisFont: TinyBold
 							ScrollbarBackground: observer-scrollpanel-button-pressed
 							ScrollbarButton: observer-scrollpanel-button
+		Container@GRID_RESERVE_STANDINGS:
+			Logic: GridReserveStandingsLogic
+			X: 5
+			Y: 250
+			Width: 330
+			Height: 202
+			Children:
+				ColorBlock@GRID_RESERVE_STANDINGS_BG:
+					Width: PARENT_WIDTH
+					Height: PARENT_HEIGHT
+					Color: 00000090
+				Label@GRID_RESERVE_STANDINGS_HEADER:
+					X: 6
+					Y: 2
+					Width: PARENT_WIDTH - 12
+					Height: 16
+					Font: Bold
+					Shadow: true
+					Text: label-grid-reserve-standings-header
+				Container@ROW_0:
+					X: 4
+					Y: 20
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_1:
+					X: 4
+					Y: 42
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_2:
+					X: 4
+					Y: 64
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_3:
+					X: 4
+					Y: 86
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_4:
+					X: 4
+					Y: 108
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_5:
+					X: 4
+					Y: 130
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_6:
+					X: 4
+					Y: 152
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
+				Container@ROW_7:
+					X: 4
+					Y: 174
+					Width: PARENT_WIDTH - 8
+					Height: 22
+					Children:
+						Label@NAME:
+							Width: 140
+							Height: PARENT_HEIGHT
+							Font: Small
+							Shadow: true
+						Label@AMOUNT:
+							X: 140
+							Width: 100
+							Height: PARENT_HEIGHT
+							Align: Right
+							Font: Small
+							Shadow: true
+						ProgressBar@BAR:
+							X: 246
+							Y: 4
+							Width: 80
+							Height: 14
+							Background: progressbar-bg
+							Bar: progressbar-thumb
 		Container@HPF_ROOT:
 			Logic: LoadIngameHierarchicalPathFinderOverlayLogic
 			X: WINDOW_WIDTH - WIDTH - 255

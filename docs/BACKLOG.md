@@ -143,23 +143,25 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 
 ---
 
-### 8. Add Grid Reserve HUD/scoreboard elements — PARTIALLY DONE
+### 8. Add Grid Reserve HUD/scoreboard elements — IMPLEMENTED, needs engine-build + visual verification
 
-**Labels:** `phase:3`, `type:engine`, `area:grid-reserve`
+**Status:** All four HUD elements are now implemented. The two that were previously deferred — the per-player sidebar bar and the all-players scoreboard — were added in Phase 4 as `GridReserveHudLogic` and `GridReserveStandingsLogic` (`OpenRA.Mods.Sungrid/GridReserve/`), wired into `mods/sungrid/chrome/ingame-player.yaml` and `mods/sungrid/chrome/ingame-observer.yaml`. Both were written against the pinned engine's actual widget/logic source (`ProgressBarWidget`, `LabelWidget`, `ChromeLogic`, `ObserverStatsLogic`, etc., fetched read-only from `OpenRA/OpenRA` at `ENGINE_VERSION`), the same approach #7 used — but **could not be compiled or rendered in the environment this was implemented in** (no engine build access there either). CI is the first real compile; layout/positioning (the fixed `X`/`Y` coordinates chosen to avoid the existing sidebar art without overlap) has not been visually confirmed in a running client and should be checked in the first real playtest.
 
-**Phase:** 3 — Economic victory mode MVP (see `docs/GAME_MODES.md`)
+**Labels:** `phase:3`, `phase:4`, `type:engine`, `area:grid-reserve`
+
+**Phase:** 3/4 — Economic victory mode MVP / Playtest Hardening (see `docs/GAME_MODES.md`)
 
 **Purpose:** Make Grid Reserve legible and dramatic to play, not just functional — the countdown broadcast and minimap reveal are core anti-turtle mechanics, not cosmetic.
 
 **Scope:**
-- Per-player Reserve bar with numeric current/target in the sidebar/scoreboard. **Not done** — needs a Chrome/Lua widget iterated against a running rendered client, which wasn't available in the environment #7 was implemented in. The underlying data (`GridReserveManager.TotalReserve`/`Target`, `[VerifySync]`-tracked) already exists for this to read from.
-- Broadcast banner + audio cue to all players when a Lockdown countdown starts or cancels. **Done** — `TextNotificationsManager.AddSystemLine` + `Speech: TimerStarted`/`TimerStopped`, unconditional so every client shows/hears it, not just the affected player.
-- Minimap reveal of a player's Vault locations once their Reserve hits 50% of target. **Done** — stock `RevealsShroud` (`ValidRelationships: Enemy`) condition-gated by `GridReserveManager.BeaconActive`, no new rendering code.
-- End-of-match scoreboard showing final Reserve totals for all players regardless of win condition used. **Not done**, same reason as the sidebar bar.
+- Per-player Reserve bar with numeric current/target. **Done** — `GridReserveHudLogic` drives a `ProgressBar` + label centered at the top of `ingame-player.yaml`'s HUD, reading `GridReserveManager.TotalReserve`/`Target` directly; hides itself via the new `GridReserveController.Enabled` accessor when the lobby option is off.
+- Broadcast banner + audio cue to all players when a Lockdown countdown starts or cancels. **Done** (Phase 3) — unchanged.
+- Minimap reveal of a player's Vault locations once their Reserve hits 50% of target. **Done** (Phase 3) — unchanged.
+- End-of-match scoreboard showing final Reserve totals for all players regardless of win condition used. **Done** — `GridReserveStandingsLogic` lists up to 8 players' current/target Reserve in `ingame-observer.yaml`. Placed there rather than a dedicated post-game screen because `MissionObjectives.EarlyGameOver: true` (set in `rules/player.yaml`) already drops every remaining participant into the observer/spectator widget tree the moment the match resolves (`Player.Spectating` flips true off `WinState`), so this panel is visible to everyone at match end regardless of which victory condition triggered it.
 
 **Dependencies:** Blocked by #7 (implemented; pending CI/build verification — see #7's status note).
 
-**Definition of done:** All four HUD elements are visible, correctly triggered, and verified in a test match. Remaining work: the sidebar bar and end-of-match scoreboard widgets, as a follow-up that needs visual iteration rather than blind implementation.
+**Definition of done:** All four HUD elements are visible, correctly triggered, and verified in a test match. Implementation is complete; remaining work is purely verification — confirm layout/readability in a rendered client and that nothing overlaps existing sidebar art, as part of issue #9's playtest pass.
 
 ---
 

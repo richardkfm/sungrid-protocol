@@ -91,6 +91,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		int elapsedTicks;
 		Player[] players;
 
+		// Exposes the resolved lobby toggle for HUD widgets (GridReserveHudLogic, GridReserveStandingsLogic)
+		// so they can hide themselves in matches where the mode is off, without re-parsing lobby options.
+		public bool Enabled => enabled;
+
 		public GridReserveController(GridReserveControllerInfo info)
 		{
 			this.info = info;
