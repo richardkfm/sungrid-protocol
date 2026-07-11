@@ -14,6 +14,7 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how this is structured as an OpenRA mod, and what's data-driven vs. engine-level.
 * [`docs/GAME_MODES.md`](docs/GAME_MODES.md) — full spec for the Grid Reserve economic victory mode.
 * [`docs/BUILDINGS.md`](docs/BUILDINGS.md) — the initial building roster.
+* [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) — step-by-step build/launch/troubleshooting instructions to actually run a local match.
 * [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/phase5-pixel-mockups.html">via githack</a> 
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 * [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) — license inheritance and EA non-affiliation.
@@ -22,7 +23,7 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 
 ## Play
 
-Not yet playable with real gameplay content — `mods/sungrid` is still the SDK's placeholder example template as of this writing (see the roadmap). Once Phase 1 lands, Sungrid Protocol will launch as its own entry in the OpenRA mod chooser with content forked from Red Alert.
+Playable today: `mods/sungrid` holds real Red Alert-derived gameplay (Phase 1), the Phase 2/5 building roster, and the Grid Reserve economic victory mode (Phase 3), all confirmed working end-to-end in a local skirmish. Sungrid Protocol launches as its own entry in the OpenRA mod chooser — see [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for exact build/launch/troubleshooting steps. Visual/audio identity is still largely stock OpenRA/RA art — see `docs/ROADMAP.md`'s Phase 6/7 for the plan to change that.
 
 EA has not endorsed and does not support this product. See [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) for the full non-affiliation and licensing notes.
 
@@ -35,7 +36,7 @@ This repo uses the OpenRA Mod SDK build flow — the engine is not vendored, it'
 * **Linux/macOS:** run `make` (this calls `fetch-engine.sh` automatically, then builds). Launch with `./launch-game.sh`.
 * **Windows:** run `make.cmd`. Launch with `launch-game.cmd`.
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the engine pinning (`mod.config`'s `ENGINE_VERSION`) works.
+See [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for a full walkthrough including common launch errors (`.NET` runtime mismatches, crash log locations), and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the engine pinning (`mod.config`'s `ENGINE_VERSION`) works.
 
 ## Contribute
 

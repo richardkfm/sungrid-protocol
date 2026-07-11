@@ -44,11 +44,11 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - Data-driven-first: buildings/units/rules go through YAML composing existing OpenRA traits wherever possible; new C# traits (in `OpenRA.Mods.Sungrid/`) are reserved for things YAML genuinely can't express (currently: only the Grid Reserve vault/win-condition mechanic).
 - Destruction victory is the permanent default; Grid Reserve is a toggleable lobby option.
 - "Grid Reserve" is the recommended/working name for the economic victory mode (see `docs/GAME_MODES.md` for the other 4 candidates that were considered).
-- Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 6+ in `docs/ROADMAP.md`).
+- Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 8+ in `docs/ROADMAP.md`).
 
 ## Current status
 
-Phase 0 is complete: the design doc set, this navigation file, a reframed `README.md`, and the Mod SDK scaffold (engine fetched/pinned rather than vendored, `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed from the SDK's example template) are all in place. `mods/sungrid` currently holds the SDK's placeholder example content, not real gameplay yet — that's Phase 1. See `docs/BACKLOG.md` for the first 10 engineering issues (GitHub Issues is disabled on this repo, so they're tracked there instead of as real issues until it's enabled).
+Phases 0-3 and 5 are functionally complete and confirmed playable: `mods/sungrid` holds real Red Alert-derived gameplay (not the SDK's placeholder example content), the full Phase 2 econ buildings and Phase 5 building roster (Cryptominer, Datacenter for AI, Drone Bay, Grid Defense Turret, Smart Grid Relay, Resilience Shelter, Sensor Array), and the Grid Reserve economic victory mode (deposit/hold-to-win, HUD bars, Lockdown countdown, minimap reveal) are all implemented and merged to `main`. A first real local build/launch/skirmish playtest (see `docs/PLAYTESTING.md`) found and fixed 4 previously-undetected bugs invisible to CI (an invalid `FluentReference` attribute, an actor-id collision breaking rules loading, a nonexistent `ServerTraits` class, a missing sprite icon sequence) — see PR #16. Remaining Phase 5 work is real custom art (still stock/reused RA sprites throughout — see `docs/BACKLOG.md` issue #12) and the broader visual/audio identity overhaul now scoped as Phases 6/7 in `docs/ROADMAP.md`. See `docs/BACKLOG.md` for the full engineering issue list (GitHub Issues is disabled on this repo, so they're tracked there instead of as real issues until it's enabled).
 
 ## Working conventions
 

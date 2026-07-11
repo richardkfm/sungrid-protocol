@@ -24,7 +24,7 @@ CLAUDE.md                            # navigation map for AI-assisted sessions
 
 One GitHub milestone per roadmap phase, named to match `docs/ROADMAP.md` exactly:
 
-`P0: Bootstrap`, `P1: Baseline Shell`, `P2: First Content Pass`, `P3: Grid Reserve MVP`, `P4: Playtest Hardening`, `P5: Faction Flavor`, `P6: Diplomacy (conditional)`.
+`P0: Bootstrap`, `P1: Baseline Shell`, `P2: First Content Pass`, `P3: Grid Reserve MVP`, `P4: Playtest Hardening`, `P5: Faction Flavor`, `P6: World Reskin`, `P7: Unit & Audio Identity`, `P8: Diplomacy (conditional)`.
 
 Every issue and PR should be assigned to the milestone of the phase it belongs to; an issue with no clear phase is a signal it's premature (check it against the "do NOT attempt yet" list in that phase's roadmap entry).
 
@@ -32,7 +32,7 @@ Every issue and PR should be assigned to the milestone of the phase it belongs t
 
 | Label | Meaning |
 |---|---|
-| `phase:0` … `phase:6` | Which roadmap phase this belongs to |
+| `phase:0` … `phase:8` | Which roadmap phase this belongs to |
 | `type:design` | RFC / design proposal, not yet implementation |
 | `type:content` | Data-driven YAML/art/audio work |
 | `type:engine` | New or modified C# trait / engine-level change |
