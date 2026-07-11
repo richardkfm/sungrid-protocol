@@ -3,7 +3,7 @@ mod-title = Sungrid Protocol
 mod-windowtitle = Sungrid Protocol
 
 ## LogoStripeLoadScreen
-loadscreen-loading = Filling Crates..., Charging Capacitors..., Reticulating Splines..., Planting Trees..., Building Bridges..., Aging Empires..., Compiling EVA..., Constructing Pylons..., Activating Skynet..., Splitting Atoms...
+loadscreen-loading = Filling Crates..., Charging Capacitors..., Reticulating Splines..., Planting Trees..., Building Bridges..., Aging Empires..., Balancing the Grid..., Constructing Pylons..., Composting Scrap..., Splitting Atoms...
 
 ## Tilesets
 tileset-desert = Desert

@@ -182,7 +182,7 @@ Actors:
 	Actor69: kenn
 		Location: 43,29
 		Owner: Soviets
-	Actor68: ftur
+	Actor68: arct
 		Location: 34,23
 		Owner: Soviets
 	Actor70: afld
@@ -307,13 +307,13 @@ Actors:
 	Actor108: tsla
 		Location: 95,34
 		Owner: Soviets
-	Actor112: ftur
+	Actor112: arct
 		Location: 93,29
 		Owner: Soviets
-	Actor113: ftur
+	Actor113: arct
 		Location: 90,33
 		Owner: Soviets
-	Actor114: ftur
+	Actor114: arct
 		Location: 37,28
 		Owner: Soviets
 	Actor115: tsla
@@ -460,7 +460,7 @@ Actors:
 	Actor343: brik
 		Location: 82,93
 		Owner: Allies
-	Actor187: ftur
+	Actor187: arct
 		Location: 104,47
 		Owner: Soviets
 	Actor342: lst
@@ -472,7 +472,7 @@ Actors:
 	Actor216: brik
 		Location: 57,80
 		Owner: Allies
-	Actor188: ftur
+	Actor188: arct
 		Location: 107,52
 		Owner: Soviets
 	Actor54: agun

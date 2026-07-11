@@ -163,7 +163,22 @@ def process_loadscreen():
         print(f"{name} recolored + emblem placed", out.size, out.mode)
 
 
+def process_icons():
+    """mods/sungrid/icon(.png|-2x.png|-3x.png) -- the window/taskbar/mod-chooser
+    icon. Stock file was a literal Soviet red star + hammer-and-sickle; replaced
+    outright (not recolored in place) since there's no non-IP content in the
+    original to preserve, only the square canvas size per file."""
+    icon_dir = os.path.dirname(UIBITS)
+    for name, size in (("icon.png", 32), ("icon-2x.png", 64), ("icon-3x.png", 96)):
+        p = f"{icon_dir}/{name}"
+        canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        draw_sungrid_emblem(canvas, size / 2, size / 2, size / 2 - 1)
+        canvas.save(p)
+        print(f"{name} replaced with emblem", canvas.size, canvas.mode)
+
+
 if __name__ == "__main__":
     process_dialog()
     process_sidebar()
     process_loadscreen()
+    process_icons()

@@ -298,3 +298,35 @@ Every reference updated to point at the new ids instead of dangling or disappear
 **Dependencies:** None.
 
 **Definition of done:** `DISR`/`ARCT` are buildable in the same tech-tree slot `E4`/`FTUR` occupied, with equivalent stats and no fire/incineration mechanic; no dangling reference to the old or new ids anywhere in `mods/sungrid`. **Met.** Still needs the same engine-build verification every other content change in this backlog is pending on (no build access in this environment) — in particular, confirming `ftur.shp`/`e4.shp` (pulled from the RA content pack, not committed in this repo) actually render correctly under the new `arct`/`disr` sequence keys.
+
+---
+
+### 15. Menu & intro first-boot redesign — FIRST PASS DONE, mainmenu layout/cursors/shellmap terrain still blocked
+
+**Status:** Direct ask: the game should read as distinctly not-Red-Alert from the moment it boots, not just once you're in a match. Three things landed in this pass:
+
+- **Fixed a real regression from issue #14:** `maps/desert-shellmap/map.yaml` (the map that runs as the animated main-menu background) still placed six actors as `ftur` — the Flame Tower removed in #14 and replaced with `arct` (Arc Turret). Since `FTUR` no longer exists as an actor type, the shellmap would have failed to load its background battle entirely — the main menu itself was broken by that earlier change and this went unnoticed because there was no build/render access to catch it. All six (`Actor68`, `112`, `113`, `114`, `187`, `188`) now place `arct` instead.
+- **Replaced `mods/sungrid/icon.png`/`icon-2x.png`/`icon-3x.png`** (the window/taskbar icon, and the icon shown for this mod in the OpenRA mod chooser — arguably the single most-seen-at-boot asset there is): the stock file was a literal Soviet red star with a hammer-and-sickle, unmodified since the Phase 1 content port. Replaced outright with the same procedural gold-hexagon/sun/green-band emblem used elsewhere in the Phase 6 chrome pass (`reskin_chrome.py`'s new `process_icons()`), at each file's existing canvas size (32/64/96px).
+- **Reworded two loading-screen tip strings** (`loadscreen-loading` in `fluent/mod.ftl`) that referenced other franchises' iconography with no thematic tie to Sungrid ("Activating Skynet...", "Compiling EVA...") to grid/energy-flavored equivalents ("Balancing the Grid...", "Composting Scrap...").
+
+**What's still blocked, and why:** the things that would move the needle most are exactly the items issue #13 already flagged as needing a built engine or new authored assets, unchanged by this pass:
+- **Main menu widget layout itself** (button arrangement, title placement) is `common|chrome/mainmenu.yaml` per `mod.chrome.yaml` — engine-owned, not overridden by `mods/sungrid`. The Phase 6 chrome pass already reskins everything that layout draws from (`dialog.png`/`sidebar.png`/`loadscreen.png`'s colors and emblem, the custom `Title` font), so the visual *content* is already Sungrid; a from-scratch widget layout override would need to duplicate the engine's `MainMenuLogic` widget-ID contract with no way to render/verify it in this environment — deferred rather than risk a silent breakage.
+- **Cursors and terrain tilesets** (including the shellmap's own terrain, distinct from its actor placement fixed above) are unchanged stock `.shp` assets — same `utility`-tool/build-access blocker as issue #13.
+- **Main menu music.** The main menu's background track is `audio/music.yaml`'s `intro` entry (`Hidden: true`, i.e. not in the jukebox list — directly referenced by id) — this is stock Red Alert's own theme audio file, arguably as recognizable as the visuals were. Changing it needs a newly composed/licensed track, which is explicitly Phase 7 (`docs/ROADMAP.md`'s "Unit & Audio Identity Pass") scope, not something this pass can produce.
+- **FMV intro / mod-chooser splash video**, if any, is stock content-pack video, same asset-authoring blocker as issue #13.
+
+**Labels:** `phase:6`, `type:art`, `type:bug`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/ROADMAP.md`, `docs/ART_DIRECTION.md`)
+
+**Purpose:** A player's very first impression is the mod-chooser icon, the boot window icon, and the main menu — if any of those still read as stock Red Alert (or are broken outright), everything else in Phase 6 is undercut before a match even starts.
+
+**Scope:**
+- Fix the `ftur` shellmap actor-id regression from issue #14.
+- Replace the literal stock Soviet icon set with the locked Phase 6 emblem.
+- Polish loading-tip copy for thematic consistency.
+- Out of scope (blocked, tracked here for visibility): main menu widget layout, cursors, terrain tilesets (including the shellmap's own terrain), main menu music, any FMV/video intro.
+
+**Dependencies:** None blocking for this pass. The remaining items need either a built engine (`fetch-engine.sh`/`make`, for `utility`'s SHP encode/decode and for actually rendering/verifying a `mainmenu.yaml` override) or new composed audio/video assets (Phase 7).
+
+**Definition of done for this pass:** The shellmap loads without a dangling actor reference, and the icon shown in the taskbar/window chrome/mod chooser is Sungrid's own emblem rather than a stock faction logo. **Met.** Main menu layout, cursors, terrain, and music remain open, explicitly tracked above rather than implied "done" by this issue's title.
