@@ -32,6 +32,10 @@ Before more than one contributor (human or AI-assisted) produces art, lock: spri
 
 **Priority: Solar Array first.** Every Phase 2/5 building currently ships with placeholder/reused stock art, but Solar Array (`POWR`/`APWR`) is the one that matters most — it's the building the mod is named after, and it's still the unmodified vanilla RA power plant sprite with no solar-panel visuals at all. See `docs/BACKLOG.md` issue #12. Treat it as the building that establishes the sprite pipeline baseline above, rather than picking an arbitrary building to prototype the pipeline on.
 
+## Beyond building art: full visual identity (Phase 6/7)
+
+Everything above governs building art specifically. Terrain tilesets, UI chrome (sidebar/build palette/radar frame), cursors, the main menu shell, unit/vehicle/infantry sprites, and audio (announcer voice lines, music) are all still unmodified stock OpenRA/RA assets as of Phase 5 — the single biggest reason the game still visually reads as "reskinned RA" rather than its own project, independent of how distinct the building roster becomes. `docs/ROADMAP.md`'s Phase 6 (world/UI reskin: terrain, chrome, cursors, main menu) and Phase 7 (unit sprites + audio) scope the work to close that gap; the guardrails, palette direction, and readability rules in this document apply equally to that work, not just buildings.
+
 ## Concept drafts (non-canonical)
 
 `docs/concept-art/phase5-building-dossier.html` is a schematic/silhouette sketch for the 7 Phase 5 buildings — palette and material intent only, not sprite art and not a substitute for the real pixel-art pass this section calls for. Open it directly in a browser. Treat it as a discussion starting point for a human (or dedicated art-pipeline) pass, not as an asset to ship.

@@ -12,7 +12,9 @@ Scope control is the whole game here. Each phase must ship something playable or
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` |
-| 6+ | Diplomacy / shared-resource systems (conditional) | `P6: Diplomacy (conditional)` |
+| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` |
+| 7 | Unit & audio identity pass (vehicle/infantry sprites, voice, music) | `P7: Unit & Audio Identity` |
+| 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` |
 
 ## Phase 0 — Repository bootstrap and architecture setup
 
@@ -80,7 +82,29 @@ Scope control is the whole game here. Each phase must ship something playable or
 - **Biggest risk:** Faction flavor work has no natural stopping point — set a fixed roster (the 10 buildings already listed) and resist adding more before shipping.
 - **Do NOT attempt yet:** Second faction, campaign/story missions, diplomacy.
 
-## Phase 6+ — Diplomacy and shared-resource systems (conditional)
+## Phase 6 — World & UI visual identity overhaul
+
+- **Why:** Even after Phase 5's building roster and first custom art pass, a player's *first impression* — terrain tileset, sidebar/build-palette chrome, cursors, main menu — is still 100% stock OpenRA/Red Alert art. This is visible in every screenshot and every second of play regardless of which buildings/units are on screen, and it's currently the biggest reason Sungrid Protocol still reads as "reskinned RA" rather than its own game. Building-level reflavors don't fix this because the terrain around them and the UI frame around the viewport are unchanged. This directly serves Design Pillar 2 ("solarpunk as a lens, not a coat of paint") at the level the building roster alone can't reach.
+- **Deliverables:** Reskinned temperate tileset (the primary/most-used tileset — snow/desert are a follow-up within this phase or deferred to Phase 7) with a living, "reclaimed industrial" look per `docs/ART_DIRECTION.md`'s guardrails (visible wear/improvisation, not utopian) — new terrain textures and decorative scenery (solar-farm fixtures, salvage piles, greenery reclaiming pavement); custom UI chrome (sidebar, build palette, radar/minimap frame, HUD panel borders) in the green/solar-gold/desaturated-gray palette already defined in `docs/ART_DIRECTION.md`, replacing stock RA's beige/gold frame; custom cursor set replacing the stock RA cursors; main menu background art and music sting (loading screens are already Sungrid-branded via `uibits/loadscreen*.png` — this extends that branding to the rest of the menu shell).
+- **Code scope:** None expected — tilesets, chrome, and cursors are asset + `mod.yaml`/`chrome/*.yaml`/cursor config changes, no new C# traits.
+- **Data/content scope:** New/replaced tileset sprite sheets and scenery actors, new `chrome/*.yaml` layouts referencing new UI art, new cursor sprite sheet + config entries, main menu background asset swap.
+- **Testing scope:** Manual — main menu (new art/music), full skirmish on a temperate map confirming terrain reads correctly (no missing tiles/seams), sidebar/build palette/radar frames render without regressing existing widget layout (must not break the Grid Reserve HUD elements from Phase 3/4), cursors correct across normal/attack/build states.
+- **Exit criteria:** A skirmish on a temperate map is visually distinct from vanilla OpenRA/RA at every level outside of unit/building sprites specifically (terrain, UI chrome, cursors, main menu) — gameplay footage shouldn't be mistakable for stock RA to someone who's seen both.
+- **Biggest risk:** Terrain tileset work touches every existing map simultaneously — a bad tile replacement can break cliff/resource-field boundary visuals across the whole map set at once. Validate against every shipped map, not just the primary playtest map.
+- **Do NOT attempt yet:** Unit/vehicle/infantry sprite work (Phase 7 — much larger asset volume, kept separate so this phase's win ships independently), second-faction visual identity (still deferred per `docs/ART_DIRECTION.md` until a second faction is justified).
+
+## Phase 7 — Unit & audio identity pass
+
+- **Why:** Phase 6 changes what the world and UI look like; every unit and vehicle moving through it is still an unmodified stock RA sprite, and every voice line/sound effect (unit acknowledgements, the EVA-style announcer, ambient music) is still stock RA/C&C audio. This is the largest asset-volume item in the roadmap (dozens of units × multiple facings/animation states each), which is why it's sequenced after Phase 6's lower-volume, higher-visibility pass rather than attempted first.
+- **Deliverables:** New or reworked sprites for the core unit roster actually used in a standard skirmish (basic infantry, first available combat vehicle, harvester/economy units), following `docs/ART_DIRECTION.md`'s silhouette-preserving readability rule — recognizable unit *roles* at a glance, not a redesign of what each unit is; a distinct announcer voice set replacing EVA-equivalent stock lines (construction complete, unit lost, low power, Grid Reserve Lockdown started/cancelled — the last already has custom fluent text from Phase 3/4, this adds matching custom audio); a Sungrid-specific in-game ambient music pass (Phase 6 only covers the menu sting); locks the animation-frame/sprite-sheet conventions for units the way Phase 5's Solar Array pass (`docs/BACKLOG.md` issue #12) locked them for buildings.
+- **Code scope:** None expected — unit art and audio are asset + `sequences/*.yaml`/`rules/*.yaml` (voice/sound reference) changes.
+- **Data/content scope:** New unit sprite sheets and sequence definitions, new voice/announcer audio and notification wiring, new music tracks and playlist config.
+- **Testing scope:** Full skirmish playtest confirming every reworked unit stays readable (silhouette/team-color legibility at standard and max zoom-out per `docs/ART_DIRECTION.md`), voice lines trigger correctly without desyncing existing Grid Reserve audio cues, music doesn't regress existing mixing/volume settings.
+- **Exit criteria:** A full skirmish — terrain, UI, units, and audio together — reads as a cohesive, distinct game to a player unfamiliar with the project, not a reskinned OpenRA mod. This is the phase that actually closes out the "coat of paint" risk named in Design Pillar 2.
+- **Biggest risk:** Unit art is the highest-volume, highest-cost item in the roadmap with no natural stopping point (there's always one more unit or animation state) — cap scope to the core skirmish roster before declaring the phase done, the same discipline Phase 5 applied to the building roster.
+- **Do NOT attempt yet:** Second-faction unit art, campaign-specific units/sprites, full audio localization.
+
+## Phase 8+ — Diplomacy and shared-resource systems (conditional)
 
 - **Why:** Only pursued if Grid Reserve playtests show that the spend/save tension is solid and players are asking for deeper multiplayer social dynamics (alliances, betrayal, resource sharing) on top of it.
 - **Deliverables:** Not scoped yet — deliberately. This phase does not get planned in detail until Phase 3-5 data justifies it.
