@@ -12,6 +12,8 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 | Intelligence | Sensor Array, Datacenter for AI (dual-category) |
 | Logistics | Drone Bay |
 
+**Art note (Phase 5):** buildings 4-10 below ship with placeholder art — each reuses an existing structure's sprite (`RenderSprites.Image` override) chosen for rough thematic fit, not a dedicated sprite. This mirrors Phase 2's "recolored/retextured existing art is acceptable" approach, extended to full sprite reuse since no unused building art exists in the current asset set. See `docs/ART_DIRECTION.md`'s Phase 5 asset pipeline note — a real distinct-art pass is still a separate, tracked follow-up, not done in this pass.
+
 ## Building details
 
 ### 1. Solar Array
@@ -47,8 +49,12 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** A high power-draw, high-Credit-output economy building — trades grid stability (drains power hard) for economic upside, creating a real tension with the Solar Array/power budget.
 - **Prerequisites:** Solar Array (needs power headroom to be worth building), Tech Center-equivalent.
 - **Likely counters:** Power denial (destroy Solar Arrays and the Cryptominer goes offline or throttles), it's a high-value/low-defense target for raids given its output.
-- **Implementation complexity:** Medium — power-draw-scaled income likely needs a small custom trait (existing `Power`/economy traits don't natively support "income that scales with available power headroom"), but no win-condition-level complexity.
-- **Staging:** Mid-term (Phase 5).
+- **Implementation complexity:** Low, in practice — stock `GrantConditionOnPowerState` (per-player Normal/Low/Critical tiers) plus two `CashTrickler` instances gated on those conditions gives power-scaled income with no new C#. Originally estimated Medium (assumed a custom trait was needed); revised down once implemented.
+- **Staging:** Implemented (Phase 5) as `SGCRY`.
+
+### 4a. Note on power-scaled buildings (Cryptominer, Grid Defense Turret)
+
+Both buildings originally assumed they'd need a small custom trait for power-scaled behavior. Implementation found stock `GrantConditionOnPowerState` already covers this (grants a condition based on the owner's aggregate power state), so tiered `CashTrickler`/`FirepowerMultiplier`/`ReloadDelayMultiplier` instances gated on those conditions do the job in pure YAML. Updated `docs/ARCHITECTURE.md` isn't needed since its data-driven-first framing already anticipated this as the default expectation.
 
 ### 5. Datacenter for AI
 - **Category:** Economy / Intelligence
@@ -56,8 +62,8 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** Dual-purpose building — modest passive Credit/tech bonus plus an intelligence effect (e.g. periodic radar pulse or unit-vision bonus), tying economic investment to information advantage rather than pure output.
 - **Prerequisites:** Tech Center-equivalent, Solar Array.
 - **Likely counters:** High-value raid target once its intelligence bonus is felt on the battlefield; power denial reduces its effect the same way as Cryptominer.
-- **Implementation complexity:** Medium — likely composes existing intelligence/reveal traits with a standard economy trait rather than needing new systems.
-- **Staging:** Mid-term (Phase 5).
+- **Implementation complexity:** Low, in practice — composes stock `CashTrickler`, `RevealsShroud`, and `DetectCloaked` (confirmed as the safer, already-verified-in-repo choice over the support-power-style periodic pulse originally described).
+- **Staging:** Implemented (Phase 5) as `SGDAI`.
 
 ### 6. Drone Bay
 - **Category:** Logistics
@@ -65,8 +71,8 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** Logistics building enabling faster resource transport and/or rapid unit repositioning between owned structures — a mobility/economy hybrid that rewards map-spanning infrastructure over turtled play.
 - **Prerequisites:** Construction Yard, Recycling Depot or equivalent economy building.
 - **Likely counters:** Anti-air, since drone traffic is the obvious vulnerability; destroying the Drone Bay itself halts the logistics network.
-- **Implementation complexity:** Medium-High — likely composes existing `Cargo`/`Reservable`/transport traits, but genuinely novel routing behavior could push into new-trait territory; flagged as a Phase 5 friction point to scope carefully before committing.
-- **Staging:** Mid-term (Phase 5).
+- **Implementation complexity:** Low, in practice — scoped down deliberately per this doc's own friction-point flag. Rather than genuinely novel routing/logistics logic, implemented as a `ProximityExternalCondition` aura granting nearby friendly vehicles a `SpeedMultiplier` bonus ("drone-assisted logistics network"). No new unit, no new C#, no novel routing behavior.
+- **Staging:** Implemented (Phase 5) as `SGDRN`.
 
 ### 7. Grid Defense Turret
 - **Category:** Defense
@@ -74,8 +80,8 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** Standard defensive structure, but with its damage/rate-of-fire tied to the base's current power surplus — creates a direct tactical link between the energy economy and combat strength.
 - **Prerequisites:** Solar Array.
 - **Likely counters:** Power denial (destroy power plants to weaken the turret before assaulting), standard artillery/air counters to static defense.
-- **Implementation complexity:** Medium — power-scaled combat stats likely need a small custom trait extension over the stock `AttackBase`/turret traits.
-- **Staging:** Mid-term (Phase 5).
+- **Implementation complexity:** Low, in practice — see the Cryptominer note above; `GrantConditionOnPowerState` gating `FirepowerMultiplier`/`ReloadDelayMultiplier` covers it with no new trait. Deliberately does **not** inherit `DisableOnLowPowerOrPowerDown` — the design calls for "weaker when strained," not "offline," so it stays combat-capable at low power rather than being paused like most power-consuming defenses.
+- **Staging:** Implemented (Phase 5) as `SGTUR`.
 
 ### 8. Smart Grid Relay
 - **Category:** Energy / Logistics
@@ -83,8 +89,8 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** Extends effective power range/pooling between disconnected base clusters, enabling more spread-out, harder-to-snipe-in-one-strike base layouts.
 - **Prerequisites:** Solar Array.
 - **Likely counters:** Destroying the Relay can fragment a spread base's power pool, so it becomes a high-value target in decentralized layouts.
-- **Implementation complexity:** Medium — depends on how OpenRA's stock power-pooling model can be extended; may require a small trait if power pooling isn't naturally range-limited today.
-- **Staging:** Later (post-Phase 5, revisit once base-spread playstyles are observed in playtests).
+- **Implementation complexity:** Low, but scoped down from the original fantasy. OpenRA's stock power system already pools per-player globally (not range-limited), so there's no missing mechanic to extend — building genuine range-limited pooling would mean replacing a core engine system, which is exactly the kind of wide-blast-radius engine change `docs/ARCHITECTURE.md` says to avoid. Implemented instead as a modest flat secondary power source (same `Power` trait as Solar Array, cheaper, smaller footprint), framed narratively as grid-balancing infrastructure. The literal "extends pooling range between disconnected clusters" idea stays deferred until base-spread playstyles are actually observed in a playtest and justify the bigger engine investment.
+- **Staging:** Implemented (Phase 5, scoped-down version) as `SGREL`. Pulled forward from this doc's earlier "post-Phase 5" note to match `docs/ROADMAP.md`'s Phase 5 deliverable list, which named all 7 remaining buildings — this doc's per-building staging notes hadn't been updated to match when that roadmap entry was written.
 
 ### 9. Resilience Shelter
 - **Category:** Defense
@@ -92,8 +98,8 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** Damage-mitigation/comeback structure — e.g. reduces splash damage to nearby structures or grants a brief repair pulse when the base takes heavy losses, softening total wipeouts without preventing them.
 - **Prerequisites:** Construction Yard, Tech Center-equivalent.
 - **Likely counters:** Alpha-strike/overwhelm tactics that outpace its mitigation window; it blunts damage, it doesn't prevent loss.
-- **Implementation complexity:** Medium — likely a conditional damage-modifier trait applied to nearby structures, similar in shape to existing aura/support-power traits.
-- **Staging:** Later (post-Phase 5).
+- **Implementation complexity:** Low, in practice — stock `ProximityExternalCondition` (grants a condition to nearby friendly actors) plus `DamageMultiplier` (gated on that condition, added to the shared `^Building` fragment so any structure can benefit) covers the damage-mitigation aura with no new trait. The "brief repair pulse on heavy losses" alternative from the original fantasy wasn't implemented — the aura alone satisfies the design intent.
+- **Staging:** Implemented (Phase 5) as `SGSHL`. Pulled forward from "post-Phase 5" for the same reason as Smart Grid Relay above.
 
 ### 10. Sensor Array
 - **Category:** Intelligence
@@ -101,5 +107,5 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Gameplay purpose:** Wide-radius vision/detection building (including stealth/cloak detection if the roster ever needs it), rewarding investment in map awareness over blind aggression.
 - **Prerequisites:** Tech Center-equivalent.
 - **Likely counters:** High-value raid/airstrike target once its intelligence value is evident; doesn't defend itself.
-- **Implementation complexity:** Low — largely composes existing reveal/detector traits already in OpenRA's common mod.
-- **Staging:** Later (post-Phase 5).
+- **Implementation complexity:** Low — composes stock `RevealsShroud`, `DetectCloaked`, and `RenderDetectionCircle`, as expected.
+- **Staging:** Implemented (Phase 5) as `SGSNS`. Pulled forward from "post-Phase 5" for the same reason as Smart Grid Relay above.

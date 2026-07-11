@@ -2250,3 +2250,348 @@ ANYPOWER:
 	Interactable:
 	Tooltip:
 		Name: actor-anypower-name
+
+# Phase 5 (Faction Flavor) — remaining roster from docs/BUILDINGS.md.
+# Placeholder art: each reuses an existing building's Image pending a dedicated art pass
+# (see docs/ART_DIRECTION.md's Phase 5 asset pipeline note); none of these touch
+# faction gating (~structures.allies/soviet), matching the Phase 2 buildings' universal reflavor pattern.
+
+SGCRY:
+	Inherits: ^ScienceBuilding
+	Inherits@shape: ^2x2Shape
+	RenderSprites:
+		Image: atek
+	Selectable:
+		Bounds: 2048, 2048
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 200
+		Prerequisites: dome, ~techlevel.high
+		Description: actor-sgcry.description
+	Valued:
+		Cost: 1800
+	Tooltip:
+		Name: actor-sgcry.name
+	Building:
+		Footprint: xx xx ==
+		Dimensions: 2,3
+		LocalCenterOffset: 0,-512,0
+	Targetable:
+		TargetTypes: GroundActor, C4, DetonateAttack, Structure, SpyInfiltrate
+	Health:
+		HP: 80000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		MinRange: 4c0
+		Range: 5c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 4c0
+	WithBuildingBib:
+	GrantConditionOnPowerState@NORMAL:
+		Condition: grid-normal
+		ValidPowerStates: Normal
+	GrantConditionOnPowerState@STRAINED:
+		Condition: grid-strained
+		ValidPowerStates: Low
+	CashTrickler@NORMAL:
+		RequiresCondition: grid-normal
+		Interval: 50
+		InitialDelay: 25
+		Amount: 45
+		ShowTicks: True
+	CashTrickler@STRAINED:
+		RequiresCondition: grid-strained
+		Interval: 50
+		InitialDelay: 25
+		Amount: 15
+		ShowTicks: True
+	Power:
+		Amount: -120
+	ProvidesPrerequisite@buildingname:
+
+SGDAI:
+	Inherits: ^Building
+	Inherits@shape: ^2x2Shape
+	RenderSprites:
+		Image: dome
+	Selectable:
+		Bounds: 2048, 2048
+	HitShape:
+		UseTargetableCellsOffsets: false
+		TargetableOffsets: 0,0,0, 630,-384,0, 630,384,0, -700,-512,0, -700,512,0
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 201
+		Prerequisites: dome, ~techlevel.high
+		Description: actor-sgdai.description
+	Valued:
+		Cost: 1600
+	Tooltip:
+		Name: actor-sgdai.name
+	Building:
+		Footprint: xx xx ==
+		Dimensions: 2,3
+		LocalCenterOffset: 0,-512,0
+	Targetable:
+		TargetTypes: GroundActor, Structure, C4, DetonateAttack, SpyInfiltrate
+	Health:
+		HP: 80000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		MinRange: 5c0
+		Range: 9c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 5c0
+	WithBuildingBib:
+	CashTrickler:
+		Interval: 100
+		InitialDelay: 50
+		Amount: 20
+		ShowTicks: True
+	DetectCloaked:
+		Range: 6c0
+	Power:
+		Amount: -60
+	ProvidesPrerequisite@buildingname:
+
+SGDRN:
+	Inherits: ^Building
+	Inherits@shape: ^2x2Shape
+	RenderSprites:
+		Image: hpad
+	Selectable:
+		Bounds: 2048, 2048
+	HitShape:
+		UseTargetableCellsOffsets: false
+		TargetableOffsets: 0,0,0, 768,-512,0, 768,512,0, -281,-512,0, -630,512,0
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 202
+		Prerequisites: proc, oilb, ~techlevel.medium
+		Description: actor-sgdrn.description
+	Valued:
+		Cost: 900
+	Tooltip:
+		Name: actor-sgdrn.name
+	Building:
+		Footprint: xx xx ==
+		Dimensions: 2,3
+		LocalCenterOffset: 0,-512,0
+	Health:
+		HP: 70000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		MinRange: 4c0
+		Range: 6c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 4c0
+	WithBuildingBib:
+	ProximityExternalCondition@DRONENETWORK:
+		Range: 8c0
+		ValidRelationships: Ally
+		Condition: dronebay-network
+	Power:
+		Amount: -20
+	ProvidesPrerequisite@buildingname:
+
+SGTUR:
+	Inherits: ^Defense
+	Inherits@AUTOTARGET: ^AutoTargetGround
+	Inherits@shape: ^2x1Shape
+	RenderSprites:
+		Image: sam
+	Selectable:
+		Bounds: 2048, 1024
+	HitShape:
+		Type: Rectangle
+			TopLeft: -768,-512
+			BottomRight: 768,512
+	Buildable:
+		Queue: Defense
+		BuildPaletteOrder: 145
+		Prerequisites: powr, ~techlevel.medium
+		Description: actor-sgtur.description
+	Valued:
+		Cost: 900
+	Tooltip:
+		Name: actor-sgtur.name
+	Building:
+		Footprint: xx
+		Dimensions: 2,1
+	Health:
+		HP: 40000
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		MinRange: 5c0
+		Range: 6c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 5c0
+	WithBuildingBib:
+		HasMinibib: True
+	Turreted:
+		TurnSpeed: 120
+		InitialFacing: 0
+		RealignDelay: -1
+		RequiresCondition: !build-incomplete
+	WithSpriteTurret:
+		RequiresCondition: !build-incomplete
+		Recoils: false
+	Armament:
+		Weapon: TurretGun
+		LocalOffset: 0,0,320
+		MuzzleSequence: muzzle
+	AttackTurreted:
+		PauseOnCondition: build-incomplete
+	WithMuzzleOverlay:
+	GrantConditionOnPowerState@NORMAL:
+		Condition: grid-normal
+		ValidPowerStates: Normal
+	GrantConditionOnPowerState@STRAINED:
+		Condition: grid-strained
+		ValidPowerStates: Low, Critical
+	FirepowerMultiplier@NORMAL:
+		RequiresCondition: grid-normal
+		Modifier: 125
+	FirepowerMultiplier@STRAINED:
+		RequiresCondition: grid-strained
+		Modifier: 70
+	ReloadDelayMultiplier@STRAINED:
+		RequiresCondition: grid-strained
+		Modifier: 130
+	Power:
+		Amount: -40
+	-BodyOrientation:
+	ClassicFacingBodyOrientation:
+
+SGREL:
+	Inherits: ^Building
+	RenderSprites:
+		Image: gap
+	Selectable:
+		Bounds: 1024, 1024
+		DecorationBounds: 1024, 2048, 0, -512
+	HitShape:
+		Type: Rectangle
+			TopLeft: -512,-512
+			BottomRight: 512,512
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 205
+		Prerequisites: powr, ~techlevel.medium
+		Description: actor-sgrel.description
+	Valued:
+		Cost: 600
+	Tooltip:
+		Name: actor-sgrel.name
+	Health:
+		HP: 50000
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		MinRange: 5c0
+		Range: 7c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 5c0
+	WithBuildingBib:
+		HasMinibib: True
+	-AcceptsDeliveredCash:
+	Power:
+		Amount: 60
+	ProvidesPrerequisite@buildingname:
+	FireWarheadsOnDeath:
+		Weapon: SmallBuildingExplode
+		EmptyWeapon: SmallBuildingExplode
+
+SGSHL:
+	Inherits: ^ScienceBuilding
+	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDown
+	Inherits@shape: ^2x2Shape
+	RenderSprites:
+		Image: iron
+	Selectable:
+		Bounds: 2048, 2133, 0, -170
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 203
+		Prerequisites: fact, dome, ~techlevel.high
+		BuildLimit: 1
+		Description: actor-sgshl.description
+	Valued:
+		Cost: 1200
+	Tooltip:
+		Name: actor-sgshl.name
+	Building:
+		Footprint: ++ xx
+		Dimensions: 2,2
+	Targetable:
+		TargetTypes: GroundActor, C4, DetonateAttack, Structure, SpyInfiltrate
+	Health:
+		HP: 90000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		MinRange: 5c0
+		Range: 6c0
+		RequiresCondition: !disabled
+		RevealGeneratedShroud: False
+	RevealsShroud@Offline:
+		Range: 5c0
+		RequiresCondition: disabled
+	RevealsShroud@GAPGEN:
+		Range: 5c0
+		RequiresCondition: !disabled
+	WithBuildingBib:
+		HasMinibib: True
+	ProximityExternalCondition@RESILIENCEAURA:
+		RequiresCondition: !disabled
+		Range: 10c0
+		ValidRelationships: Ally
+		Condition: resilience-shelter
+		AffectsParent: True
+	Power:
+		Amount: -50
+	ProvidesPrerequisite@buildingname:
+
+SGSNS:
+	Inherits: ^Building
+	Inherits@shape: ^1x1Shape
+	RenderSprites:
+		Image: kenn
+	Selectable:
+		Bounds: 1024, 1024
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 204
+		Prerequisites: dome, ~techlevel.high
+		Description: actor-sgsns.description
+	Valued:
+		Cost: 800
+	Tooltip:
+		Name: actor-sgsns.name
+	Health:
+		HP: 40000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		MinRange: 6c0
+		Range: 10c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 6c0
+	WithBuildingBib:
+		HasMinibib: True
+	DetectCloaked:
+		Range: 8c0
+	RenderDetectionCircle:
+	Power:
+		Amount: -30
+	ProvidesPrerequisite@buildingname:
