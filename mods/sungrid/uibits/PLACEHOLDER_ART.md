@@ -32,7 +32,7 @@ While doing the Phase 6 chrome reskin, the stock `sidebar.png` radar-placeholder
 logos as pixel art — not just an unstyled color scheme, but literal faction IP shipped inside
 this mod's own committed assets. That felt like a bigger gap than "needs a palette pass," so it
 got replaced immediately with a placeholder rather than left in place until a full art pass.
-Full context: `docs/BACKLOG.md` issue #15, `docs/WORLD_UI_IDENTITY.md`.
+Full context: `docs/BACKLOG.md` issue #13.
 
 ## How to replace the placeholder emblem (or any of this) with real art
 
@@ -48,7 +48,7 @@ Full context: `docs/BACKLOG.md` issue #15, `docs/WORLD_UI_IDENTITY.md`.
    shape), then run `pip install pillow numpy && python3 reskin_chrome.py` from this directory.
    Re-running is safe — it's idempotent against its own prior output.
 4. Once real art lands, delete `reskin_chrome.py` and this file, and update
-   `docs/BACKLOG.md` issue #15 / `docs/WORLD_UI_IDENTITY.md` to mark the chrome deliverable done.
+   `docs/BACKLOG.md` issue #13 to mark the chrome deliverable done.
 
 ## What this doesn't cover
 
