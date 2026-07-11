@@ -661,7 +661,7 @@ actor-silo =
     credits into permanent Grid Reserve for the
     economic victory mode, when enabled.
 
-actor-oilb =
+actor-rcyd =
     .name = Recycling Depot
     .description =
     Reclaims scrap from the battlefield and
