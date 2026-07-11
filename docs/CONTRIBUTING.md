@@ -24,7 +24,7 @@ CLAUDE.md                            # navigation map for AI-assisted sessions
 
 One GitHub milestone per roadmap phase, named to match `docs/ROADMAP.md` exactly:
 
-`P0: Bootstrap`, `P1: Baseline Shell`, `P2: First Content Pass`, `P3: Grid Reserve MVP`, `P4: Playtest Hardening`, `P5: Faction Flavor`, `P6: Diplomacy (conditional)`.
+`P0: Bootstrap`, `P1: Baseline Shell`, `P2: First Content Pass`, `P3: Grid Reserve MVP`, `P4: Playtest Hardening`, `P5: Faction Flavor`, `P6: World & UI Identity`, `P7: Diplomacy (conditional)`.
 
 Every issue and PR should be assigned to the milestone of the phase it belongs to; an issue with no clear phase is a signal it's premature (check it against the "do NOT attempt yet" list in that phase's roadmap entry).
 
@@ -32,7 +32,7 @@ Every issue and PR should be assigned to the milestone of the phase it belongs t
 
 | Label | Meaning |
 |---|---|
-| `phase:0` … `phase:6` | Which roadmap phase this belongs to |
+| `phase:0` … `phase:7` | Which roadmap phase this belongs to |
 | `type:design` | RFC / design proposal, not yet implementation |
 | `type:content` | Data-driven YAML/art/audio work |
 | `type:engine` | New or modified C# trait / engine-level change |
@@ -40,6 +40,7 @@ Every issue and PR should be assigned to the milestone of the phase it belongs t
 | `type:bug` | Regression or broken behavior |
 | `area:economy`, `area:energy`, `area:defense`, `area:intelligence`, `area:logistics` | Matches the building categories in `docs/BUILDINGS.md` |
 | `area:grid-reserve` | Anything touching the economic victory mode specifically |
+| `area:world`, `area:ui` | Phase 6 world (terrain) and UI (chrome/cursors/menus) visual identity work — see `docs/WORLD_UI_IDENTITY.md` |
 | `risk:scope-trap` | Flagged as touching something explicitly deferred in the roadmap — extra scrutiny before merging |
 | `good-first-issue` | Self-contained, low-context-required |
 

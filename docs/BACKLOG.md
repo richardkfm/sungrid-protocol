@@ -1,4 +1,4 @@
-# Sungrid Protocol — Phase 0/1/2/3 Issue Backlog
+# Sungrid Protocol — Phase 0-6 Issue Backlog
 
 GitHub Issues are currently **disabled** on this repository, so these could not be opened as actual GitHub issues (attempted via the API, got `410 Issues has been disabled in this repository`). This file holds the exact content, ready to paste in as-is once Issues is enabled (repo Settings → Features → Issues), or to import via `gh issue create` / the GitHub UI.
 
@@ -219,3 +219,114 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 **Dependencies:** None blocking — additive to the existing tech tree, doesn't touch Grid Reserve or the Phase 1-2 economy buildings.
 
 **Definition of done:** All 7 buildings are buildable in a skirmish match, function as described, CI is green, and a human playtest confirms no regressions to the existing build order/economy loop. Remaining Phase 5 scope (real art, palette cohesion pass, sound/music) tracked separately, not part of this issue.
+
+---
+
+### 12. Lock the world/UI asset pipeline
+
+**Labels:** `phase:6`, `type:design`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/ROADMAP.md`, `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** Resolve `docs/ART_DIRECTION.md`'s asset-pipeline planning note, deferred through Phase 5. Nothing else in this phase should start until this is written down.
+
+**Scope:**
+- Concrete palette reference (hex/index values) derived from `docs/ART_DIRECTION.md`'s palette direction.
+- Sprite resolution/frame conventions matching `mods/ra`'s existing tileset/cursor sequence definitions.
+- Naming convention consistent with existing `mods/sungrid` sequence/YAML keys.
+- Update `docs/ART_DIRECTION.md` to reference the lock as resolved.
+
+**Dependencies:** None blocking.
+
+**Definition of done:** Pipeline doc/section exists and is referenced from `docs/ART_DIRECTION.md`; issues #13-16 below can cite it instead of inventing their own conventions.
+
+---
+
+### 13. Reskin cursors
+
+**Labels:** `phase:6`, `type:content`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** `cursors.yaml` is still stock. Reskin it to the locked palette/style.
+
+**Scope:**
+- Every existing cursor state (select, move, move-blocked, attack, attack-outside-range, deploy/invalid, guard, enter, etc.) gets new art, same states, same meaning.
+- No new cursor states, no functional changes.
+
+**Dependencies:** Blocked by #12.
+
+**Definition of done:** Cursor set fully replaced; all states exercised in a skirmish and confirmed distinguishable.
+
+---
+
+### 14. Reskin one terrain tileset
+
+**Labels:** `phase:6`, `type:content`, `area:world`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** Terrain is the largest remaining stock-RA surface and the one players see for the entire match.
+
+**Scope:**
+- Pick exactly one tileset (`docs/WORLD_UI_IDENTITY.md` recommends `DESERT`, since it covers both a played map, `desert-rats`, and the `desert-shellmap` menu background — confirm or override this call when picking up the issue).
+- Palette-shift plus selective re-texture of key tiles per the locked pipeline; not a from-scratch redraw of every tile.
+- Remaining three tilesets stay stock — out of scope here.
+
+**Dependencies:** Blocked by #12.
+
+**Definition of done:** Chosen tileset fully reskinned, confirmed legible (no unit/building silhouette regressions) in a full skirmish on a map using it.
+
+---
+
+### 15. Reskin chrome (main menu, mod chooser, loading screen, in-game panels)
+
+**Labels:** `phase:6`, `type:content`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** `chrome.yaml`/`mod.chrome.yaml`/`chrome/*.yaml` are still stock chrome; this is the first thing anyone sees before a match starts.
+
+**Scope:**
+- Reskin color/texture/framing per the locked pipeline; keep existing layout topology, health/status bar conventions, and selection indicators unchanged.
+- Verify the Phase 3/4 Grid Reserve HUD elements (`GridReserveHudLogic`, `GridReserveStandingsLogic`) still read cleanly against the new skin.
+
+**Dependencies:** Blocked by #12.
+
+**Definition of done:** Main menu, mod chooser, loading screen, and in-game panels visually read as Sungrid Protocol; Grid Reserve HUD elements confirmed unaffected in a test match.
+
+---
+
+### 16. Re-theme the main-menu shellmap
+
+**Labels:** `phase:6`, `type:content`, `area:world`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** The shellmap (`maps/desert-shellmap/`) is the background of the main menu — first impression, currently stock desert terrain.
+
+**Scope:**
+- Re-theme to a solarpunk vista consistent with #14's reskinned tileset (natural pairing if #14 picks `DESERT`).
+
+**Dependencies:** Should follow #14 if the same tileset is involved; not strictly blocked otherwise.
+
+**Definition of done:** Main menu background reads as a lush solarpunk vista.
+
+---
+
+### 17. Phase 6 visual regression pass
+
+**Labels:** `phase:6`, `type:content`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/WORLD_UI_IDENTITY.md`)
+
+**Purpose:** Confirm the reskin doesn't quietly break Design Pillar 1 legibility even though it doesn't touch unit/building art directly — a terrain palette shift can wash out unit silhouettes if contrast isn't checked.
+
+**Scope:**
+- Full skirmish on the reskinned tileset checking unit/building silhouette and team-color legibility.
+- Confirm Grid Reserve HUD and minimap reveal still read correctly.
+- Confirm no cursor state is ambiguous against the new terrain/chrome.
+
+**Dependencies:** Blocked by #13, #14, #15, #16.
+
+**Definition of done:** No legibility regression reported; Phase 6 exit criteria in `docs/ROADMAP.md`/`docs/WORLD_UI_IDENTITY.md` are met.

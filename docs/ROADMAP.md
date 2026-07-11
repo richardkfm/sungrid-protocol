@@ -12,7 +12,8 @@ Scope control is the whole game here. Each phase must ship something playable or
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` |
-| 6+ | Diplomacy / shared-resource systems (conditional) | `P6: Diplomacy (conditional)` |
+| 6 | World & UI visual identity overhaul | `P6: World & UI Identity` |
+| 7+ | Diplomacy / shared-resource systems (conditional) | `P7: Diplomacy (conditional)` |
 
 ## Phase 0 — Repository bootstrap and architecture setup
 
@@ -80,9 +81,20 @@ Scope control is the whole game here. Each phase must ship something playable or
 - **Biggest risk:** Faction flavor work has no natural stopping point — set a fixed roster (the 10 buildings already listed) and resist adding more before shipping.
 - **Do NOT attempt yet:** Second faction, campaign/story missions, diplomacy.
 
-## Phase 6+ — Diplomacy and shared-resource systems (conditional)
+## Phase 6 — World & UI visual identity overhaul
+
+- **Why:** Phase 5's "distinct visual identity" exit criterion shipped on reused/recolored placeholder art (see `docs/BUILDINGS.md`'s art note), and `docs/ART_DIRECTION.md`'s asset-pipeline lock was explicitly deferred rather than done. Terrain tilesets, chrome, and cursors are still the stock content ported wholesale in Phase 1 — the largest remaining "still visibly stock RA" surface, and the one a player sees for 100% of a match (terrain) or 100% of the pre-match experience (menus). Full spec in `docs/WORLD_UI_IDENTITY.md`.
+- **Deliverables:** Asset pipeline lock (palette file, sprite/frame conventions, naming convention); one reskinned tileset (of `desert`/`temperat`/`snow`/`interior`); reskinned chrome (main menu, mod chooser, loading screen, in-game panel frame/button skin); reskinned cursor set (same states as stock, new look); re-themed main-menu shellmap.
+- **Code scope:** None expected — sequences, tileset/palette YAML, `ChromeLayout` YAML, cursor YAML only, per `docs/ARCHITECTURE.md`'s data-driven-first default.
+- **Data/content scope:** The entire phase — see `docs/WORLD_UI_IDENTITY.md` for the full deliverable list and per-area detail.
+- **Testing scope:** Manual visual review (mod chooser, main menu, loading screen, reskinned tileset in-game, all cursor states exercised in a skirmish); regression check that Grid Reserve HUD (Phase 3/4) and existing unit/building sprites still render legibly against the new palette.
+- **Exit criteria:** Pipeline locked and referenced from `docs/ART_DIRECTION.md`; main menu/mod chooser/loading screen/shellmap read as Sungrid Protocol; one tileset fully reskinned and confirmed legible in a full skirmish; cursor set fully replaced; no legibility regressions.
+- **Biggest risk:** No natural stopping point, same as Phase 5's original art risk — cap scope at one tileset and the explicit deliverable list in `docs/WORLD_UI_IDENTITY.md`; resist expanding into unit/building art or additional tilesets before the first surface is validated.
+- **Do NOT attempt yet:** Unit/building sprite replacement, a second faction's visual identity, sound/music production, additional tilesets before the first clears exit criteria, anything from Phase 7.
+
+## Phase 7+ — Diplomacy and shared-resource systems (conditional)
 
 - **Why:** Only pursued if Grid Reserve playtests show that the spend/save tension is solid and players are asking for deeper multiplayer social dynamics (alliances, betrayal, resource sharing) on top of it.
 - **Deliverables:** Not scoped yet — deliberately. This phase does not get planned in detail until Phase 3-5 data justifies it.
-- **Exit criteria for even starting this phase:** Phase 3-5 playtests show sustained 3+ player engagement with Grid Reserve and explicit tester demand for social/diplomatic mechanics.
+- **Exit criteria for even starting this phase:** Phase 3-5 playtests show sustained 3+ player engagement with Grid Reserve and explicit tester demand for social/diplomatic mechanics. Not yet met as of Phase 6's writing — no recorded playtests exist for Phases 3-5 (see `docs/BACKLOG.md`'s implementation status notes).
 - **Do NOT attempt yet:** Everything. This is the phase most likely to blow up the schedule if pulled forward — see Scope Trap #1 in `docs/BLUEPRINT.md`.

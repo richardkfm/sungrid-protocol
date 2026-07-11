@@ -26,6 +26,8 @@ Lush eco-solarpunk. Renewable power, smart grids, drone logistics, and resilient
 
 Until a second faction is scoped, "faction flavor" means making the single Sungrid Protocol roster visually cohesive and distinct from vanilla RA/Allies/Soviets — not inventing a second full art set. Notes for whenever a second faction is justified: differentiate through material and infrastructure philosophy (e.g. decentralized/drone-based vs. centralized/hardened grid) rather than through tone shifts — both factions should still read as "this world," not swap into a different genre.
 
-## Asset pipeline (Phase 5 planning note)
+## Asset pipeline (locked in Phase 6)
 
 Before more than one contributor (human or AI-assisted) produces art, lock: sprite resolution and frame conventions matching OpenRA's existing pixel-art pipeline, a shared base palette file, and a naming/sequence convention consistent with `mods/ra`'s existing structure so new sequences drop into the engine's existing tooling without custom loader work. This is a data/content-pipeline decision, not a code decision — see `docs/ARCHITECTURE.md` friction point #4.
+
+This was deferred through Phase 5 (which shipped on reused/recolored placeholder sprites instead) and is finally locked as Phase 6's prerequisite deliverable, scoped to world/UI art first (terrain, chrome, cursors, menus) rather than unit/building sprites — see `docs/WORLD_UI_IDENTITY.md` for the full spec, deliverables, and exit criteria.

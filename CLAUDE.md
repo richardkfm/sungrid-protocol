@@ -12,18 +12,19 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, pin `ENGINE_VERSION` to a personal engine fork's commit instead of vendoring source into this repo (see `docs/ARCHITECTURE.md`).
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
-- `mods/sungrid/` — **the Sungrid Protocol mod content** (rules/YAML, sequences, maps, chrome, fluent strings). Currently the SDK's example-mod template renamed to Sungrid branding — Phase 1's job is to replace this placeholder content with real gameplay forked from `mods/ra` (pulled from `engine/mods/ra` once fetched, or the public OpenRA/OpenRA repo).
-- `OpenRA.Mods.Sungrid/` — mod-specific C# project. Currently the SDK's example stub traits (`ColorPickerColorShift`, `PlayerColorShift`), renamed. This is where the Phase 3 Grid Reserve trait will live.
+- `mods/sungrid/` — **the Sungrid Protocol mod content** (rules/YAML, sequences, maps, chrome, fluent strings). Real RA-derived gameplay (Phase 1) plus the Phase 2/5 building roster are in place. Terrain tilesets, `chrome.yaml`, `mod.chrome.yaml`, and `cursors.yaml` are still stock content ported wholesale in Phase 1 — Phase 6's job (see `docs/WORLD_UI_IDENTITY.md`) is to reskin those.
+- `OpenRA.Mods.Sungrid/` — mod-specific C# project. Holds the Phase 3/4 Grid Reserve traits (`GridReserve/GridReserveVault.cs`, `GridReserveManager.cs`, `GridReserveController.cs`, `GridReserveHudLogic.cs`, `GridReserveStandingsLogic.cs`) alongside the renamed SDK example stub traits (`ColorPickerColorShift`, `PlayerColorShift`).
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling).
 
 **Design docs:**
 - `docs/BLUEPRINT.md` — master document, full project blueprint in one place.
 - `docs/VISION.md` — design pillars, tone, what differentiates Sungrid Protocol from vanilla RA.
-- `docs/ROADMAP.md` — phase-by-phase plan (0 through 6+) with deliverables, exit criteria, explicit non-goals.
+- `docs/ROADMAP.md` — phase-by-phase plan (0 through 7+) with deliverables, exit criteria, explicit non-goals.
 - `docs/ARCHITECTURE.md` — OpenRA technical strategy, data-driven vs. engine-level split, known friction points.
 - `docs/GAME_MODES.md` — full spec for the Grid Reserve economic victory mode.
 - `docs/BUILDINGS.md` — the 10-building initial roster, categorized and staged.
 - `docs/ART_DIRECTION.md` — solarpunk tone/visual guardrails.
+- `docs/WORLD_UI_IDENTITY.md` — Phase 6 world (terrain) and UI (chrome/cursors/menus) visual identity spec.
 - `docs/CONTRIBUTING.md` — Sungrid-specific workflow (branches, labels, RFCs, PR checklist). Root `CONTRIBUTING.md` is the Mod SDK's own contributing guidelines (still points to OpenRA's coding-standard wiki for engine-level style).
 - `docs/LICENSE_NOTES.md` — GPLv3 inheritance, EA non-affiliation, original-asset licensing notes.
 
@@ -44,11 +45,11 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - Data-driven-first: buildings/units/rules go through YAML composing existing OpenRA traits wherever possible; new C# traits (in `OpenRA.Mods.Sungrid/`) are reserved for things YAML genuinely can't express (currently: only the Grid Reserve vault/win-condition mechanic).
 - Destruction victory is the permanent default; Grid Reserve is a toggleable lobby option.
 - "Grid Reserve" is the recommended/working name for the economic victory mode (see `docs/GAME_MODES.md` for the other 4 candidates that were considered).
-- Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 6+ in `docs/ROADMAP.md`).
+- Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 7+ in `docs/ROADMAP.md`, renumbered from Phase 6 to make room for Phase 6's world/UI visual identity work — see `docs/WORLD_UI_IDENTITY.md`).
 
 ## Current status
 
-Phase 0 is complete: the design doc set, this navigation file, a reframed `README.md`, and the Mod SDK scaffold (engine fetched/pinned rather than vendored, `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed from the SDK's example template) are all in place. `mods/sungrid` currently holds the SDK's placeholder example content, not real gameplay yet — that's Phase 1. See `docs/BACKLOG.md` for the first 10 engineering issues (GitHub Issues is disabled on this repo, so they're tracked there instead of as real issues until it's enabled).
+Phases 0-5 are implemented: Mod SDK scaffold, real RA-derived gameplay content, the Phase 2/5 building roster (10/10 buildings), and the Phase 3/4 Grid Reserve economic victory mode (traits, lobby toggle, HUD/scoreboard). None of it has been verified by an actual human playtest yet — every phase's implementation notes in `docs/BACKLOG.md` flag that it was written without engine build/run access and still needs first-real-compile and playtest verification. Phase 6 (World & UI visual identity overhaul, `docs/WORLD_UI_IDENTITY.md`) is the current phase: terrain, chrome, and cursors are still stock content from the Phase 1 port. Phase 7+ (diplomacy) remains conditional and un-started — its gate (Phase 3-5 playtests showing sustained 3+ player demand) has not been met.
 
 ## Working conventions
 

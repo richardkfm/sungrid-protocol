@@ -54,7 +54,8 @@ Full detail — objective, why, deliverables, code scope, data/content scope, te
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` | 3+ player match winnable via Grid Reserve, toggle works, a raid demonstrably disrupts a leader |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` | External testers complete a full multiplayer match with no desyncs/crashes |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` | Full 10-building roster balanced, distinct visual identity — this is the MVP release point |
-| 6+ | Diplomacy / shared-resource systems (conditional) | `P6: Diplomacy (conditional)` | Only starts if Phase 3-5 playtests show sustained demand |
+| 6 | World & UI visual identity overhaul | `P6: World & UI Identity` | Asset pipeline locked, one tileset + chrome + cursors + shellmap reskinned, no legibility regressions |
+| 7+ | Diplomacy / shared-resource systems (conditional) | `P7: Diplomacy (conditional)` | Only starts if Phase 3-5 playtests show sustained demand |
 
 ---
 
@@ -128,8 +129,8 @@ Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 
 - **Repo structure:** engine fetched/pinned under `engine/` (gitignored, never committed); `mods/sungrid` + `OpenRA.Mods.Sungrid` as the active mod; `docs/` for design docs.
 - **Branch strategy:** `bleed` is the protected integration branch; short-lived `feature/*`/`claude/*` branches per issue; no direct pushes to `bleed`.
-- **Milestones:** one per roadmap phase (`P0: Bootstrap` through `P6: Diplomacy (conditional)`).
-- **Label taxonomy:** `phase:0`-`phase:6`, `type:design`/`content`/`engine`/`docs`/`bug`, `area:economy`/`energy`/`defense`/`intelligence`/`logistics`/`grid-reserve`, `risk:scope-trap`, `good-first-issue`.
+- **Milestones:** one per roadmap phase (`P0: Bootstrap` through `P7: Diplomacy (conditional)`).
+- **Label taxonomy:** `phase:0`-`phase:7`, `type:design`/`content`/`engine`/`docs`/`bug`, `area:economy`/`energy`/`defense`/`intelligence`/`logistics`/`grid-reserve`/`world`/`ui`, `risk:scope-trap`, `good-first-issue`.
 - **RFC workflow:** any `type:engine` change, or any change to a rule already documented in `GAME_MODES.md`/`BUILDINGS.md`, gets a `type:design` issue first; docs update in the same PR as (or immediately before) the implementation.
 - **PR checklist:** linked issue + milestone; RFC linked if engine-level; docs updated if a documented rule changed; manually playtested; no untouched-directory violations; builds cleanly.
 - **Release strategy:** internal builds off `bleed` per phase exit criteria; first public-facing tag at the Phase 5/MVP point.
@@ -150,6 +151,7 @@ Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 | `GAME_MODES.md` | Economic victory mode spec | Naming, mechanic, win condition, target tables, HUD, anti-stalemate/turtle rules, why 3+ players |
 | `BUILDINGS.md` | Content roster | Per-building fantasy/purpose/prereqs/counters/complexity/staging, categorized |
 | `ART_DIRECTION.md` | Visual/tone direction | Tone, guardrails, readability rules, palette, asset pipeline notes |
+| `WORLD_UI_IDENTITY.md` | Phase 6 world/UI visual identity spec | Scope, non-goals, asset pipeline lock, per-area deliverables (terrain/chrome/cursors/menus), exit criteria |
 | `CONTRIBUTING.md` (docs/) | Sungrid-specific contributor workflow | Repo structure, branches, milestones, labels, RFC process, PR checklist, release/changelog, Claude Code usage |
 | `LICENSE_NOTES.md` | Licensing clarity | GPLv3 inheritance, EA non-affiliation, original-asset licensing, open decisions |
 | `CLAUDE.md` (root) | AI-session navigation map | What this repo is, directory map, doc index, principles, current status, working conventions |
@@ -193,14 +195,14 @@ The full 10-building roster, both victory modes (destruction default, Grid Reser
 - [x] Write and merge the full `docs/` design doc set (`VISION`, `ROADMAP`, `ARCHITECTURE`, `GAME_MODES`, `BUILDINGS`, `ART_DIRECTION`, `CONTRIBUTING`, `LICENSE_NOTES`, `BLUEPRINT`, `BACKLOG`) and `CLAUDE.md`.
 - [x] Reframe root `README.md` around Sungrid Protocol while preserving OpenRA attribution/license requirements.
 - [x] Migrate the repo onto the OpenRAModSDK pattern (`mod.config`, `fetch-engine.sh`, `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed from the SDK's example template, CI updated) instead of the original full engine fork.
-- [ ] Create GitHub milestones `P0`-`P6` matching `ROADMAP.md`.
+- [ ] Create GitHub milestones `P0`-`P7` matching `ROADMAP.md`.
 - [ ] Create the label taxonomy from `docs/CONTRIBUTING.md`.
 - [ ] Enable GitHub Issues and open the first 10 issues (`docs/BACKLOG.md`).
 - [ ] Merge this PR to `bleed`.
 
 ## C. Top 3 scope traps to avoid
 
-1. **Pulling Phase 6 (diplomacy/shared-resource systems) forward.** It's the single biggest risk to the schedule — it's genuinely interesting but has no natural stopping point and isn't validated by any playtest data yet. Don't start it until Phase 3-5 explicitly justify it.
+1. **Pulling Phase 7 (diplomacy/shared-resource systems) forward.** It's the single biggest risk to the schedule — it's genuinely interesting but has no natural stopping point and isn't validated by any playtest data yet. Don't start it until Phase 3-5 explicitly justify it.
 2. **Under-scoping Grid Reserve's anti-turtle mechanics.** If the mode ships without real exposure (minimap reveal, capacity caps, no defensive synergy), the "optimal" strategy becomes hiding in a corner — which directly kills the project's core thesis. This gets dedicated playtesting attention, not just code review.
 3. **Producing custom art before mechanics are validated.** Phase 2's content pass should ship on recolored/placeholder art; committing to a full asset pipeline (Phase 5) before Grid Reserve and the core building set have survived real playtests risks expensive rework.
 
