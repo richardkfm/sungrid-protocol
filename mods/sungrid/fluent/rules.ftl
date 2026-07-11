@@ -48,7 +48,7 @@ map-generator-clear = Clear Terrain
 
 ## Faction
 faction-allies =
-    .name = Allies
+    .name = The Consortium
 
 faction-england =
     .name = England
@@ -69,7 +69,7 @@ faction-germany =
      Special Unit: Chrono Tank
 
 faction-soviet =
-    .name = Soviet
+    .name = The Assembly
 
 faction-russia =
     .name = Russia
@@ -89,14 +89,14 @@ faction-random =
      A random country is chosen when the game starts
 
 faction-randomallies =
-    .name = Allies
-    .description = Random Allied Country
-     A random Allied country is chosen when the game starts
+    .name = The Consortium
+    .description = Random Consortium Country
+     A random Consortium country is chosen when the game starts
 
 faction-randomsoviet =
-    .name = Soviet
-    .description = Random Soviet Country
-     A random Soviet country is chosen when the game starts
+    .name = The Assembly
+    .description = Random Assembly Country
+     A random Assembly country is chosen when the game starts
 
 ## aircraft.yaml
 actor-badr-name = Badger
@@ -216,9 +216,9 @@ actor-fpwr =
     .description = Looks like a Solar Array.
 
 actor-tenf =
-    .name = Fake Allied Barracks
-    .generic-name = Allied Barracks
-    .description = Looks like an Allied Barracks.
+    .name = Fake Consortium Barracks
+    .generic-name = Consortium Barracks
+    .description = Looks like a Consortium Barracks.
 
 actor-syrf =
     .name = Fake Naval Yard
@@ -251,9 +251,9 @@ actor-fapw =
     .description = Looks like an Advanced Solar Array.
 
 actor-atef =
-    .name = Fake Allied Tech Center
-    .generic-name = Allied Tech Center
-    .description = Looks like an Allied Tech Center.
+    .name = Fake Consortium Tech Center
+    .generic-name = Consortium Tech Center
+    .description = Looks like a Consortium Tech Center.
 
 actor-pdof =
     .name = Fake Chronosphere
@@ -630,9 +630,9 @@ actor-sam =
       Weak vs Ground units
 
 actor-atek =
-    .name = Allied Tech Center
+    .name = Consortium Tech Center
     .description =
-    Provides advanced Allied technology.
+    Provides advanced Consortium technology.
       Special Ability: GPS Satellite
     .gpspower-name = GPS Satellite
     .gpspower-description =
@@ -710,12 +710,12 @@ actor-apwr =
     Solar Array.
 
 actor-stek =
-    .name = Soviet Tech Center
+    .name = Assembly Tech Center
     .description =
-    Provides advanced Soviet technology.
+    Provides advanced Assembly technology.
 
 actor-barr =
-    .name = Soviet Barracks
+    .name = Assembly Barracks
     .description =
     Trains infantry units.
 
@@ -725,7 +725,7 @@ actor-kenn =
     Trains Attack Dogs.
 
 actor-tent =
-    .name = Allied Barracks
+    .name = Consortium Barracks
     .description =
     Trains infantry.
 
@@ -778,7 +778,7 @@ actor-2tnk =
     .name = Medium Tank
     .generic-name = Tank
     .description =
-    Allied Main Battle Tank.
+    Consortium Main Battle Tank.
       Strong vs Vehicles
       Weak vs Infantry and Aircraft
 
@@ -786,7 +786,7 @@ actor-3tnk =
     .name = Heavy Tank
     .generic-name = Tank
     .description =
-    Soviet Main Battle Tank with dual cannons.
+    Assembly Main Battle Tank with dual cannons.
       Strong vs Vehicles
       Weak vs Infantry and Aircraft
 
