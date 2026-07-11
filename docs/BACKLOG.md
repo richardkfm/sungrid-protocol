@@ -298,3 +298,26 @@ Every reference updated to point at the new ids instead of dangling or disappear
 **Dependencies:** None.
 
 **Definition of done:** `DISR`/`ARCT` are buildable in the same tech-tree slot `E4`/`FTUR` occupied, with equivalent stats and no fire/incineration mechanic; no dangling reference to the old or new ids anywhere in `mods/sungrid`. **Met.** Still needs the same engine-build verification every other content change in this backlog is pending on (no build access in this environment) — in particular, confirming `ftur.shp`/`e4.shp` (pulled from the RA content pack, not committed in this repo) actually render correctly under the new `arct`/`disr` sequence keys.
+
+---
+
+### 15. Rename the two playable sides away from "Allies"/"Soviet" — PARTIALLY DONE
+
+**Status:** The two umbrella sides are renamed in every player-facing string: **Allies → The Consortium** (capital/technocratic bloc), **Soviet → The Assembly** (scarcity-adapted, improvisational bloc) — a direct fiction request, not derived from a design doc. Updated in `mods/sungrid/fluent/rules.ftl`: the `faction-allies`/`faction-soviet`/`faction-randomallies`/`faction-randomsoviet` fluent entries, and every building/unit name or description that said "Allied"/"Soviet" as an adjective (Tech Center, Barracks, the two fake-structure decoys, Medium/Heavy Tank's flavor text).
+
+**What's deliberately left unrenamed, and why:** the umbrella rename does **not** touch the five individual playable country sub-factions underneath it (`faction-england`/`france`/`germany` under the old Allies side, `faction-russia`/`faction-ukraine` under the old Soviet side, each with real-world-coded special units — British Spy, Tesla Tank, Demolition Truck, etc.) — that's a separate, larger creative decision (new names for five sub-factions, and specifically whether "Russia"/"Ukraine" as opposing in-game factions is something to keep given real-world context) that shouldn't be assumed. Also left alone: every place "Allies"/"Soviet" appears as an **internal identifier** rather than displayed text — `~structures.allies`/`~structures.soviet` prerequisite conditions, `Side: Allies`/`Side: Soviet` in `world.yaml`'s `Faction` definitions, `RandomAllies`/`RandomSoviet` palette-remap keys in `chrome.yaml`, `Allied*`/`Soviet*` notification keys in `audio/notifications.yaml` (the audio files themselves are still stock RA voice lines literally saying "Soviet Empire has fallen" — a Phase 7 audio-pass concern, not a text one), `Soviets:`/`Allies:` palette keys in `campaign-palettes.yaml`, and the ~300 `Owner: Allies`/`Owner: Soviets`/`PlayerReference@Allies`/`PlayerReference@Soviets` entries in the main-menu shellmap (`maps/desert-shellmap/map.yaml`) — none of these are ever displayed as text to a player, so renaming them would be pure internal-plumbing churn with real risk of a typo silently breaking the shellmap or a prerequisite gate.
+
+**Labels:** `type:content`
+
+**Phase:** Not tied to a specific roadmap phase — a tone/fiction correction applicable regardless of phase.
+
+**Purpose:** `docs/BACKLOG.md`'s own earlier audits (and a direct ask) flagged that the two sides were still literally named "Allies"/"Soviet" — the single most player-visible remaining piece of unrenamed Red Alert content, read on every faction-picker screen and in dozens of unit/building tooltips.
+
+**Scope:**
+- Rename the two umbrella `Faction` display names and every adjectival "Allied"/"Soviet" use in building/unit fluent text.
+- Leave internal ids, palette keys, notification keys, and shellmap ownership data untouched — not player-visible, not in scope.
+- Out of scope: the five sub-faction names, their real-world-coded special units, and the RA-original stock voice-line audio.
+
+**Dependencies:** None.
+
+**Definition of done for this pass:** No player-facing string reads "Allies"/"Allied"/"Soviet" anywhere in `mods/sungrid` (confirmed via a full grep of `mods/sungrid/fluent/`). **Met.** Sub-faction naming and the audio pass remain open, tracked separately rather than folded into this issue.
