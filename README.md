@@ -26,6 +26,8 @@ Not yet playable with real gameplay content — `mods/sungrid` is still the SDK'
 
 EA has not endorsed and does not support this product. See [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) for the full non-affiliation and licensing notes.
 
+<img width="1024" height="1280" alt="ra-sungrid_visual" src="https://github.com/user-attachments/assets/31a89549-de39-42be-add0-bf962f9ca148" />
+
 ## Building
 
 This repo uses the OpenRA Mod SDK build flow — the engine is not vendored, it's fetched on demand:
