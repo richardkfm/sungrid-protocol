@@ -15,10 +15,10 @@ CLAUDE.md                            # navigation map for AI-assisted sessions
 
 ## Branch strategy
 
-- `bleed` — default/integration branch, always playable. Nothing merges here that doesn't at least build.
+- `main` — default/integration branch, always playable. Nothing merges here that doesn't at least build. (This repo started life forked from the OpenRA engine's own `bleed` branch; `main` became the default/integration branch once the Mod SDK migration was underway. `bleed` still exists on the remote but is no longer the branch to target — see `CLAUDE.md`'s "Working conventions".)
 - `claude/*` or `feature/*` — short-lived branches per issue/phase item. Named after the issue where possible (e.g. `feature/grid-reserve-vault`).
-- No direct pushes to `bleed` — everything goes through a PR, even for a solo-founder-plus-Claude workflow, so the diff history stays reviewable.
-- Tag releases off `bleed` once a phase's exit criteria (per `docs/ROADMAP.md`) are met.
+- No direct pushes to `main` — everything goes through a PR, even for a solo-founder-plus-Claude workflow, so the diff history stays reviewable.
+- Tag releases off `main` once a phase's exit criteria (per `docs/ROADMAP.md`) are met.
 
 ## Milestones
 
@@ -64,7 +64,7 @@ Pure `type:content` changes (a new building's YAML stats, a balance tweak) don't
 
 ## Release strategy
 
-- Internal/dev builds off `bleed` after every merged phase-exit-criteria milestone (see `docs/ROADMAP.md` exit criteria per phase).
+- Internal/dev builds off `main` after every merged phase-exit-criteria milestone (see `docs/ROADMAP.md` exit criteria per phase).
 - First tagged release intended for external humans is the Phase 5 exit point — see the MVP definition in `docs/BLUEPRINT.md`.
 - Pre-MVP, tags are for the founder's/testers' own tracking (`v0.0.x-phaseN`) — not public releases.
 
@@ -83,5 +83,5 @@ Keep a `CHANGELOG.md` at the repo root once Phase 1 ships a playable build (not 
 
 - Default Claude Code sessions to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/` — nothing under `engine/` should ever be touched (it's fetched, gitignored). If a friction point genuinely needs an engine-level change, see `docs/ARCHITECTURE.md`'s guidance on pinning to a personal engine fork instead of vendoring source into this repo.
 - Prefer data-driven (YAML/Lua) changes; a Claude session proposing a new C# trait should point to which "New C# traits" row in `docs/ARCHITECTURE.md` it satisfies.
-- Never push directly to `bleed` from an automated session — always a branch + PR, even for docs.
+- Never push directly to `main` from an automated session — always a branch + PR, even for docs.
 - Keep sessions scoped to one issue/phase item at a time; a session that starts drifting into unrelated files or future-phase content is a signal to stop and re-scope, not to keep going.

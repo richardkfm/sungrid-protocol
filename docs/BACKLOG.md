@@ -245,3 +245,26 @@ Once Issues is enabled, these can be created in order and this file can be trimm
 **Dependencies:** None blocking — Solar Array's mechanics (`Power` trait) are untouched and already playtested since Phase 2; this is asset-only.
 
 **Definition of done:** `POWR`/`APWR` render with dedicated solar-panel sprite art (not stock RA power-plant art) in a skirmish match, matching `docs/ART_DIRECTION.md`'s palette/tone guardrails, with no regression to power generation behavior. **Met by the first pass above** for the mechanical/visual-distinctness bar; remaining open work is a real artist pass (proper indexed-palette pixel art, an actual construction/build-up animation) to replace the programmatically-drawn placeholder, tracked as a follow-up rather than reopening this issue.
+
+---
+
+### 13. Phase 6 chrome first-pass reskin — FIRST PASS DONE, cursors/terrain still blocked
+
+**Status:** `mods/sungrid/uibits/dialog.png`, `sidebar.png`, and `loadscreen.png`(+`-2x`/`-3x`) recolored from stock RA's beige/maroon to the palette now locked in `docs/ART_DIRECTION.md`, via a scripted piecewise hue remap (only the stock reddish band shifts to green, so untouched hues and every file's exact canvas dimensions/`chrome.yaml` sub-region rects are preserved — verified byte-for-byte identical dimensions before/after). A real finding surfaced doing this: `sidebar.png`'s "no radar built yet" placeholder art (`chrome.yaml`'s `sidebar-allies`/`sidebar-soviet` `radar:` regions) and `loadscreen.png` contained the **literal stock Allied chevron and Soviet hammer-and-sickle logos** baked into this mod's own committed art. Both were replaced with a procedural placeholder emblem (gold hexagon/sun motif, locked palette) rather than ship unrelated faction IP while the rest of Phase 6 is pending. The recolor/emblem script is checked in as `mods/sungrid/uibits/reskin_chrome.py`, with `mods/sungrid/uibits/PLACEHOLDER_ART.md` alongside it — a file-by-file table of exactly which pixels are placeholder, their pixel-rect location, and how a human designer replaces them (hand-paint over the existing canvas, or tweak the script's palette/shape constants and re-run), co-located with the art specifically so it doesn't require re-reading this backlog entry to find.
+
+Cursors (`cursors.yaml`) and terrain tilesets (`mods/sungrid/tilesets/*.yaml`) are **not** touched by this pass and remain fully stock — both are Westwood `.shp`-format sprite sheets that need OpenRA's built `utility` tool (from the fetched `engine/`) to decode/encode, which wasn't available in the environment this pass was done in. Same for the main-menu shellmap (`maps/desert-shellmap/`, distinct from the loading-screen splash `loadscreen.png` above) — its terrain is the same blocked `.shp` format. Mod-chooser chrome and rendered-client verification (including confirming the Phase 3/4 Grid Reserve HUD still reads cleanly against the new skin) also remain open.
+
+**Labels:** `phase:6`, `type:art`, `area:ui`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/ROADMAP.md`, `docs/ART_DIRECTION.md`)
+
+**Purpose:** `docs/ROADMAP.md`'s Phase 6 deliverables call for custom UI chrome "replacing stock RA's beige/gold frame." This is a first pass toward that, using the same "programmatic first pass now, real artist pass later" approach issue #12 used for Solar Array — and, like #12, it surfaced a real content problem (literal faction IP in the mod's own art) worth fixing immediately rather than leaving until a full art pass.
+
+**Scope:**
+- Recolor `dialog.png`, `sidebar.png`, `loadscreen.png`(+2x/3x) to the locked palette in `docs/ART_DIRECTION.md`, preserving exact canvas dimensions and `chrome.yaml` region geometry.
+- Replace the literal Allied/Soviet logos found in `sidebar.png`/`loadscreen.png` with a placeholder emblem — not final logo art, but not shipping unrelated faction IP either.
+- Out of scope: cursors, terrain tilesets, the main-menu shellmap (all blocked on engine-build access), mod-chooser chrome, unit/building sprites, real designer logo art.
+
+**Dependencies:** None blocking for this first pass. Cursors/terrain/shellmap need an environment where `make`/`fetch-engine.sh` can actually build the engine (for `utility`'s SHP encode/decode).
+
+**Definition of done for this issue:** Chrome PNGs read as Sungrid Protocol rather than stock RA, with no literal Allied/Soviet branding remaining, and no regression to `chrome.yaml`'s region geometry. **Met by the first pass above.** Remaining Phase 6 scope (cursors, terrain, shellmap, mod-chooser chrome, rendered-client verification, a real designer pass replacing the placeholder emblem) tracked as follow-up work, not part of this issue.

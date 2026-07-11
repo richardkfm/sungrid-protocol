@@ -129,15 +129,15 @@ Full detail — fantasy, gameplay purpose, prerequisites, likely counters, imple
 Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 
 - **Repo structure:** engine fetched/pinned under `engine/` (gitignored, never committed); `mods/sungrid` + `OpenRA.Mods.Sungrid` as the active mod; `docs/` for design docs.
-- **Branch strategy:** `bleed` is the protected integration branch; short-lived `feature/*`/`claude/*` branches per issue; no direct pushes to `bleed`.
+- **Branch strategy:** `main` is the protected integration branch (the repo's original `bleed`, inherited from the OpenRA engine fork, still exists on the remote but is no longer the branch to target); short-lived `feature/*`/`claude/*` branches per issue; no direct pushes to `main`.
 - **Milestones:** one per roadmap phase (`P0: Bootstrap` through `P8: Diplomacy (conditional)`).
 - **Label taxonomy:** `phase:0`-`phase:8`, `type:design`/`content`/`engine`/`docs`/`bug`, `area:economy`/`energy`/`defense`/`intelligence`/`logistics`/`grid-reserve`, `risk:scope-trap`, `good-first-issue`.
 - **RFC workflow:** any `type:engine` change, or any change to a rule already documented in `GAME_MODES.md`/`BUILDINGS.md`, gets a `type:design` issue first; docs update in the same PR as (or immediately before) the implementation.
 - **PR checklist:** linked issue + milestone; RFC linked if engine-level; docs updated if a documented rule changed; manually playtested; no untouched-directory violations; builds cleanly.
-- **Release strategy:** internal builds off `bleed` per phase exit criteria; first public-facing tag at the Phase 5/MVP point.
+- **Release strategy:** internal builds off `main` per phase exit criteria; first public-facing tag at the Phase 5/MVP point.
 - **Changelog:** starts at Phase 1 (first playable build), one plain-language entry per merged PR, grouped by phase.
 - **Contributor onboarding:** README → VISION → ROADMAP → ARCHITECTURE → pick an issue matching the current milestone.
-- **Claude Code usage:** default to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/`; never touch `engine/` (fetched, gitignored); prefer YAML/Lua over new C# traits; never push directly to `bleed`; keep sessions scoped to one issue/phase item.
+- **Claude Code usage:** default to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/`; never touch `engine/` (fetched, gitignored); prefer YAML/Lua over new C# traits; never push directly to `main`; keep sessions scoped to one issue/phase item.
 
 ---
 
@@ -198,7 +198,7 @@ The full 10-building roster, both victory modes (destruction default, Grid Reser
 - [ ] Create GitHub milestones `P0`-`P6` matching `ROADMAP.md`.
 - [ ] Create the label taxonomy from `docs/CONTRIBUTING.md`.
 - [ ] Enable GitHub Issues and open the first 10 issues (`docs/BACKLOG.md`).
-- [ ] Merge this PR to `bleed`.
+- [x] Merge this PR to `bleed` (historical — `bleed` was the integration branch at Phase 0; `main` has been the integration branch since the Mod SDK migration completed, see `CLAUDE.md`).
 
 ## C. Top 3 scope traps to avoid
 
