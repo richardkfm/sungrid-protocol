@@ -1,10 +1,13 @@
 ## ingame-observer.yaml
 label-economy-stats-harvesters-header = Harvesters
 label-economy-stats-derricks-header = Oil Derricks
+label-grid-reserve-standings-header = Grid Reserve
 
 
 
 ## ingame-player.yaml
+label-grid-reserve-hud =
+    .tooltip = Grid Reserve: { $current } / { $target }
 button-command-bar-force-move =
     .tooltip = Force Move
     .tooltipdesc =

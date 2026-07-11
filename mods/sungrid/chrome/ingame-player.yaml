@@ -12,6 +12,34 @@ Container@PLAYER_WIDGETS:
 			CombineWithGroupKeyPrefix: ControlGroupCombineWith
 			JumpToGroupKeyPrefix: ControlGroupJumpTo
 		LogicTicker@SIDEBAR_TICKER:
+		Container@GRID_RESERVE_HUD:
+			Logic: GridReserveHudLogic
+			X: (WINDOW_WIDTH - WIDTH) / 2
+			Y: 10
+			Width: 260
+			Height: 32
+			Children:
+				ColorBlock@GRID_RESERVE_BG:
+					Width: PARENT_WIDTH
+					Height: PARENT_HEIGHT
+					Color: 00000090
+				ProgressBar@GRID_RESERVE_BAR:
+					X: 4
+					Y: 4
+					Width: PARENT_WIDTH - 8
+					Height: 12
+					Background: progressbar-bg
+					Bar: progressbar-thumb
+				LabelWithTooltip@GRID_RESERVE_LABEL:
+					X: 0
+					Y: 16
+					Width: PARENT_WIDTH
+					Height: 14
+					Align: Center
+					Font: TinyBold
+					Contrast: true
+					TooltipContainer: TOOLTIP_CONTAINER
+					TooltipTemplate: SIMPLE_TOOLTIP
 		Container@SUPPORT_POWERS:
 			Logic: SupportPowerBinLogic
 			X: 10
