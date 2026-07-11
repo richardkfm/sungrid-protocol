@@ -271,27 +271,30 @@ Cursors (`cursors.yaml`) and terrain tilesets (`mods/sungrid/tilesets/*.yaml`) a
 
 ---
 
-### 14. Remove Flame Infantry and Flame Tower — DONE
+### 14. Replace Flame Infantry and Flame Tower — DONE
 
-**Status:** Both actors removed entirely — a tone/content call (immolation weapons don't fit the project), not a balance or design-doc-driven change, so there's no RFC/spec to update. `E4` (Flame Infantry, `mods/sungrid/rules/infantry.yaml`) and `FTUR` (Flame Tower, `mods/sungrid/rules/structures.yaml`) are deleted, along with their dedicated `Flamer`/`FireballLauncher` weapons (`mods/sungrid/weapons/other.yaml`) and both actors' sequence blocks (`mods/sungrid/sequences/infantry.yaml`, `mods/sungrid/sequences/structures.yaml`). Fluent strings removed from `mods/sungrid/fluent/rules.ftl`.
+**Status:** A tone/content call (immolation weapons don't fit the project), not a balance or design-doc-driven change, so there's no RFC/spec to update. Initially implemented as a straight removal, then revised to a like-for-like **replacement** so the Soviet tech tree doesn't lose a slot: `E4` (Flame Infantry) → **`DISR`, Disruptor Trooper**; `FTUR` (Flame Tower) → **`ARCT`, Arc Turret**. Both replacements keep the original's exact `Buildable`/`Health`/`Armor`/cost/prerequisite/tech-level slot and the same chassis art (`e4.shp`/`ftur.shp`+bib, reused under the new actor ids — the models themselves were never the issue, only the weapon), so the tech tree, AI build orders, and balance are unchanged in shape. Only the weapon changed:
+- **`Disruptor`** (replaces `Flamer`) and **`ArcDischarge`** (replaces `FireballLauncher`), `mods/sungrid/weapons/other.yaml` — same damage/spread/versus/burst numbers as the weapons they replace, `DamageTypes` swapped from `FireDeath, Incendiary` to `ElectricityDeath`, and no napalm/scorch effects (`LeaveSmudge` now `SmudgeType: Crater`, no `CreateEffect`).
+- Fluent text reframes both as grid-current/disruptor-based rather than fire-based.
 
-Cleaned up every reference that would otherwise dangle:
-- `mods/sungrid/rules/ai.yaml`: `ftur` removed from `EnemyBaseBuildingTypes`, all four bot difficulty tiers' `DefenseTypes`/`BuildingFractions`/`BuildingDelays`, and all four `ProtectionTypes` lists.
-- `mods/sungrid/maps/desert-shellmap/rules.yaml`: `E4` removed from the paratrooper `DropItems` list (the other three maps' `E4` hits were false positives — hex color codes, not the actor).
-- The Giant Ant's `AntFireball` weapon inherited from `FireballLauncher` for its base fire-weapon fields; re-pointed it directly at the shared `^FireWeapon` template both weapons already descended from, with the two fields it actually needed (`Projectile.TrailImage`/`Image`) copied in explicitly, so removing `FireballLauncher` doesn't break it.
-- E4's build prerequisite on `ftur` is moot since both are gone together; nothing else referenced either actor as a prerequisite.
+Every reference updated to point at the new ids instead of dangling or disappearing:
+- `mods/sungrid/rules/ai.yaml`: `arct` added back into `EnemyBaseBuildingTypes`, all four bot tiers' `DefenseTypes`/`BuildingFractions`/`BuildingDelays` (same weights `ftur` had: 3/2000, 10/1500, 13, 2), and all four `ProtectionTypes` lists.
+- `mods/sungrid/maps/desert-shellmap/rules.yaml`: paratrooper `DropItems` now drops `DISR` where it used to drop `E4`.
+- `DISR`'s `Prerequisites` points at `arct` (was `ftur`) — the coupling itself (trooper requires the tower first) is preserved, just renamed.
+- The Giant Ant's `AntFireball` weapon (which inherited from the now-removed `FireballLauncher`) was re-pointed at the shared `^FireWeapon` template both it and `FireballLauncher` originally descended from, with the two fields it needed (`Projectile.TrailImage`/`Image`) copied in explicitly — unaffected by the Flamer/FireballLauncher removal either way.
 
 **Labels:** `type:content`, `type:bug`
 
 **Phase:** Not tied to a specific roadmap phase — a tone/content correction applicable regardless of phase.
 
-**Purpose:** Direct tone call: flamethrower/incendiary-against-infantry weapons don't fit the project regardless of roadmap phase.
+**Purpose:** Direct tone call: flamethrower/incendiary-against-infantry weapons don't fit the project. Replacing rather than deleting keeps the Soviet early-game tech tree (an anti-infantry static defense, an anti-structure trooper gated behind it) intact rather than quietly losing two roster slots.
 
 **Scope:**
-- Remove `E4`/`FTUR` actors, their weapons, sequences, and fluent strings.
-- Fix every list/dict that referenced either actor by id so nothing dangles (AI build/defense/protection lists, map drop tables, the Giant Ant's shared weapon base).
-- Out of scope: other fire-based weapons (e.g. `Napalm`, used by an airstrike-style support power) — only the two units named were in scope, not every incendiary effect in the ruleset.
+- Replace `E4`/`FTUR` with `DISR`/`ARCT`, reusing the original chassis art and every `Buildable`/cost/prerequisite/tech-tier value unchanged.
+- New `Disruptor`/`ArcDischarge` weapons matching the original `Flamer`/`FireballLauncher` damage numbers, re-themed away from fire.
+- Update every AI list/dict, the map drop table, and the actor-to-actor prerequisite to reference the new ids.
+- Out of scope: other fire-based weapons (e.g. `Napalm`, used by an airstrike-style support power) — only the two units named were in scope.
 
 **Dependencies:** None.
 
-**Definition of done:** No `E4`/`FTUR` actor, weapon, or fluent-string reference remains anywhere in `mods/sungrid`; no other actor's `Inherits`/prerequisite/list membership was left dangling. **Met.** Still needs the same engine-build verification every other content change in this backlog is pending on (no build access in this environment).
+**Definition of done:** `DISR`/`ARCT` are buildable in the same tech-tree slot `E4`/`FTUR` occupied, with equivalent stats and no fire/incineration mechanic; no dangling reference to the old or new ids anywhere in `mods/sungrid`. **Met.** Still needs the same engine-build verification every other content change in this backlog is pending on (no build access in this environment) — in particular, confirming `ftur.shp`/`e4.shp` (pulled from the RA content pack, not committed in this repo) actually render correctly under the new `arct`/`disr` sequence keys.

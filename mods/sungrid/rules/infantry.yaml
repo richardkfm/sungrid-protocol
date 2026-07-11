@@ -232,6 +232,50 @@ E3R1:
 		Types: Veterancy
 		Prerequisites: techlevel.infonly
 
+DISR:
+	Inherits: ^Soldier
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Buildable:
+		Queue: Infantry
+		BuildAtProductionType: Soldier
+		BuildPaletteOrder: 70
+		Prerequisites: ~barr, arct, ~techlevel.low
+		Description: actor-disr.description
+	Valued:
+		Cost: 300
+	Tooltip:
+		Name: actor-disr.name
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Health:
+		HP: 4000
+	Armament@PRIMARY:
+		Weapon: Disruptor
+		LocalOffset: 700,0,500
+		FireDelay: 8
+	Armament@GARRISONED:
+		Name: garrisoned
+		Weapon: Disruptor
+	TakeCover:
+		ProneOffset: 160,0,-288
+	FireWarheadsOnDeath:
+		Weapon: VisualExplode
+		EmptyWeapon: VisualExplode
+		Chance: 50
+	WithInfantryBody:
+		DefaultAttackSequence: shoot
+		RequiresCondition: !parachute
+	WithInfantryBody@PARACHUTE:
+		StandSequences: parachute
+		RequiresCondition: parachute
+		Palette: player-noshadow
+		IsPlayerPalette: true
+	ProducibleWithLevel:
+		Prerequisites: barracks.upgraded
+	WithProductionIconOverlay:
+		Types: Veterancy
+		Prerequisites: barracks.upgraded
+
 E6:
 	Inherits: ^Soldier
 	Inherits@selection: ^SelectableSupportUnit

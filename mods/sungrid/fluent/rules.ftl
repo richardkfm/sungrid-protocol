@@ -326,6 +326,14 @@ actor-e3 =
       Strong vs Vehicles and Aircraft
       Weak vs Infantry
 
+actor-disr =
+    .name = Disruptor Trooper
+    .description =
+    Advanced anti-structure unit, wielding a
+    short-range grid-current disruptor.
+      Strong vs Infantry and Buildings
+      Weak vs Vehicles and Aircraft
+
 actor-e6 =
     .name = Engineer
     .description =
@@ -603,6 +611,15 @@ actor-gun =
     Can detect cloaked units.
       Strong vs Vehicles
       Weak vs Infantry and Aircraft
+
+actor-arct =
+    .name = Arc Turret
+    .description =
+    Anti-Infantry base defense drawing a
+    direct discharge off the local grid.
+    Can detect cloaked units.
+      Strong vs Infantry and Light armor
+      Weak vs Tanks and Aircraft
 
 actor-sam =
     .name = SAM Site

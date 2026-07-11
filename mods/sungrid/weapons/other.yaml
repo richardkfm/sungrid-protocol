@@ -22,6 +22,59 @@
 		ImpactSounds: firebl3.aud
 		ImpactActors: false
 
+ArcDischarge:
+	ValidTargets: Ground, Water, GroundActor, WaterActor
+	ReloadDelay: 70
+	Range: 5c0
+	Report: turret1.aud
+	Burst: 2
+	BurstDelays: 20
+	Projectile: Bullet
+		Speed: 250
+		Image: 120MM
+	Warhead@1Dam: SpreadDamage
+		Spread: 213
+		Damage: 15000
+		ValidTargets: GroundActor, WaterActor
+		Versus:
+			None: 90
+			Wood: 50
+			Tree: 50
+			Light: 50
+			Heavy: 25
+			Concrete: 20
+		DamageTypes: Prone50Percent, TriggerProne, ElectricityDeath
+	Warhead@2Smu: LeaveSmudge
+		SmudgeType: Crater
+		InvalidTargets: Structure, Wall
+
+Disruptor:
+	ValidTargets: Ground, Water, GroundActor, WaterActor
+	ReloadDelay: 50
+	Burst: 15
+	BurstDelays: 1
+	Range: 5c0
+	Projectile: Bullet
+		Speed: 170
+		Image: 120MM
+		LaunchAngle: 62
+		Inaccuracy: 853
+	Warhead@1Dam: SpreadDamage
+		Spread: 341
+		Damage: 1000
+		ValidTargets: GroundActor, WaterActor
+		Versus:
+			None: 70
+			Wood: 80
+			Tree: 80
+			Light: 40
+			Heavy: 20
+			Concrete: 10
+		DamageTypes: Prone50Percent, TriggerProne, ElectricityDeath
+	Warhead@2Smu: LeaveSmudge
+		SmudgeType: Crater
+		Chance: 15
+
 Napalm:
 	Inherits: ^FireWeapon
 	ReloadDelay: 20
