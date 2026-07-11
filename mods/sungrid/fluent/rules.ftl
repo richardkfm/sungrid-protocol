@@ -1132,3 +1132,49 @@ label-ra-map-generator-choice-civilian-density-very-high =
    .label = Very High
 label-ra-map-generator-choice-civilian-density-max =
    .label = Maximum
+
+actor-sgcry =
+    .name = Cryptominer
+    .description =
+    Repurposed compute infrastructure grinding through
+    legacy proof-of-work for a steady, high income.
+    Draws heavy power; throttles when the grid is strained.
+
+actor-sgdai =
+    .name = Datacenter for AI
+    .description =
+    Racks of compute serving grid logistics and battlefield
+    analytics. Modest passive income, wide sensor coverage,
+    and cloak detection.
+
+actor-sgdrn =
+    .name = Drone Bay
+    .description =
+    Autonomous delivery drones speed up nearby friendly
+    vehicles, easing logistics across a spread-out base.
+
+actor-sgtur =
+    .name = Grid Defense Turret
+    .description =
+    A point-defense turret drawing directly off the local
+    grid. Hits harder when the grid is healthy, weaker when
+    power is strained.
+
+actor-sgrel =
+    .name = Smart Grid Relay
+    .description =
+    A grid-balancing relay station providing a modest
+    secondary supply of power.
+
+actor-sgshl =
+    .name = Resilience Shelter
+    .description =
+    A hardened civil-defense structure. Nearby structures
+    take reduced damage while it has power.
+
+actor-sgsns =
+    .name = Sensor Array
+    .description =
+    A distributed sensor mesh reading grid load, drone
+    traffic, and terrain. Wide vision radius; detects
+    cloaked units.

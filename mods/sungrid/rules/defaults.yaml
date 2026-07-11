@@ -271,6 +271,11 @@
 		TextNotification: notification-unit-lost
 	ProximityCaptor:
 		Types: Vehicle
+	ExternalCondition@DRONEBAY:
+		Condition: dronebay-network
+	SpeedMultiplier@DRONEBAY:
+		RequiresCondition: dronebay-network
+		Modifier: 115
 	GpsDot:
 		String: Vehicle
 	WithDamageOverlay:
@@ -768,6 +773,11 @@
 		Position: Center
 		Palette: player
 		IsPlayerPalette: True
+	ExternalCondition@RESILIENCESHELTER:
+		Condition: resilience-shelter
+	DamageMultiplier@RESILIENCESHELTER:
+		RequiresCondition: resilience-shelter
+		Modifier: 85
 
 ^ScienceBuilding:
 	Inherits: ^Building
