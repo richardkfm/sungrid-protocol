@@ -880,51 +880,6 @@ GUN:
 	-BodyOrientation:
 	ClassicFacingBodyOrientation:
 
-FTUR:
-	Inherits: ^Defense
-	Inherits@AUTOTARGET: ^AutoTargetGround
-	Buildable:
-		Queue: Defense
-		BuildPaletteOrder: 60
-		Prerequisites: barr, ~structures.soviet, ~techlevel.low
-		Description: actor-ftur.description
-	Valued:
-		Cost: 600
-	Tooltip:
-		Name: actor-ftur.name
-	Building:
-	Health:
-		HP: 40000
-	Armor:
-		Type: Heavy
-	RevealsShroud:
-		MinRange: 5c0
-		Range: 6c0
-		RevealGeneratedShroud: False
-	RevealsShroud@GAPGEN:
-		Range: 5c0
-	WithBuildingBib:
-		HasMinibib: true
-	Turreted:
-		TurnSpeed: 512
-		Offset: 0,0,112
-	Armament:
-		Weapon: FireballLauncher
-		LocalOffset: 512,0,0
-	AttackTurreted:
-		PauseOnCondition: build-incomplete
-	-QuantizeFacingsFromSequence:
-	BodyOrientation:
-		QuantizedFacings: 8
-	Power:
-		Amount: -20
-	DetectCloaked:
-		Range: 5c0
-	ProvidesPrerequisite@buildingname:
-	FireWarheadsOnDeath:
-		Weapon: BuildingExplode
-		EmptyWeapon: BuildingExplode
-
 SAM:
 	Inherits: ^Defense
 	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDown

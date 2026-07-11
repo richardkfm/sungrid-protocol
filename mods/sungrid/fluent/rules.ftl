@@ -326,13 +326,6 @@ actor-e3 =
       Strong vs Vehicles and Aircraft
       Weak vs Infantry
 
-actor-e4 =
-    .name = Flame Infantry
-    .description =
-    Advanced anti-structure unit.
-      Strong vs Infantry and Buildings
-      Weak vs Vehicles and Aircraft
-
 actor-e6 =
     .name = Engineer
     .description =
@@ -610,14 +603,6 @@ actor-gun =
     Can detect cloaked units.
       Strong vs Vehicles
       Weak vs Infantry and Aircraft
-
-actor-ftur =
-    .name = Flame Tower
-    .description =
-    Anti-Infantry base defense.
-    Can detect cloaked units.
-      Strong vs Infantry and Light armor
-      Weak vs Tanks and Aircraft
 
 actor-sam =
     .name = SAM Site

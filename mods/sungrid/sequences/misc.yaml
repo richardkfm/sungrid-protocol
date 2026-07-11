@@ -68,7 +68,7 @@ explosion:
 		Offset: -2,0
 	small_napalm:
 		Filename: napalm1.shp
-	offset_napalm: # Used for E4 Explosion
+	offset_napalm: # Used by VisualExplode/BridgeExplode
 		Filename: napalm1.shp
 		Offset: 0, -6
 	large_napalm:

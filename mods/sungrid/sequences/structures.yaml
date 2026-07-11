@@ -671,28 +671,6 @@ sam:
 	icon:
 		Filename: samicon.shp
 
-ftur:
-	Defaults:
-		Filename: ftur.shp
-	idle:
-		Offset: 0,-2
-	damaged-idle:
-		Start: 1
-		Offset: 0,-2
-	make:
-		Filename: fturmake.shp
-		Length: *
-		Offset: 0,-2
-	bib:
-		TilesetFilenames:
-			SNOW: mbFTUR.sno
-			INTERIOR: mbFTUR.int
-			TEMPERAT: mbFTUR.tem
-			DESERT: mbFTUR.des
-		Length: *
-	icon:
-		Filename: fturicon.shp
-
 tsla:
 	Defaults:
 		Filename: tsla.shp

@@ -268,3 +268,30 @@ Cursors (`cursors.yaml`) and terrain tilesets (`mods/sungrid/tilesets/*.yaml`) a
 **Dependencies:** None blocking for this first pass. Cursors/terrain/shellmap need an environment where `make`/`fetch-engine.sh` can actually build the engine (for `utility`'s SHP encode/decode).
 
 **Definition of done for this issue:** Chrome PNGs read as Sungrid Protocol rather than stock RA, with no literal Allied/Soviet branding remaining, and no regression to `chrome.yaml`'s region geometry. **Met by the first pass above.** Remaining Phase 6 scope (cursors, terrain, shellmap, mod-chooser chrome, rendered-client verification, a real designer pass replacing the placeholder emblem) tracked as follow-up work, not part of this issue.
+
+---
+
+### 14. Remove Flame Infantry and Flame Tower — DONE
+
+**Status:** Both actors removed entirely — a tone/content call (immolation weapons don't fit the project), not a balance or design-doc-driven change, so there's no RFC/spec to update. `E4` (Flame Infantry, `mods/sungrid/rules/infantry.yaml`) and `FTUR` (Flame Tower, `mods/sungrid/rules/structures.yaml`) are deleted, along with their dedicated `Flamer`/`FireballLauncher` weapons (`mods/sungrid/weapons/other.yaml`) and both actors' sequence blocks (`mods/sungrid/sequences/infantry.yaml`, `mods/sungrid/sequences/structures.yaml`). Fluent strings removed from `mods/sungrid/fluent/rules.ftl`.
+
+Cleaned up every reference that would otherwise dangle:
+- `mods/sungrid/rules/ai.yaml`: `ftur` removed from `EnemyBaseBuildingTypes`, all four bot difficulty tiers' `DefenseTypes`/`BuildingFractions`/`BuildingDelays`, and all four `ProtectionTypes` lists.
+- `mods/sungrid/maps/desert-shellmap/rules.yaml`: `E4` removed from the paratrooper `DropItems` list (the other three maps' `E4` hits were false positives — hex color codes, not the actor).
+- The Giant Ant's `AntFireball` weapon inherited from `FireballLauncher` for its base fire-weapon fields; re-pointed it directly at the shared `^FireWeapon` template both weapons already descended from, with the two fields it actually needed (`Projectile.TrailImage`/`Image`) copied in explicitly, so removing `FireballLauncher` doesn't break it.
+- E4's build prerequisite on `ftur` is moot since both are gone together; nothing else referenced either actor as a prerequisite.
+
+**Labels:** `type:content`, `type:bug`
+
+**Phase:** Not tied to a specific roadmap phase — a tone/content correction applicable regardless of phase.
+
+**Purpose:** Direct tone call: flamethrower/incendiary-against-infantry weapons don't fit the project regardless of roadmap phase.
+
+**Scope:**
+- Remove `E4`/`FTUR` actors, their weapons, sequences, and fluent strings.
+- Fix every list/dict that referenced either actor by id so nothing dangles (AI build/defense/protection lists, map drop tables, the Giant Ant's shared weapon base).
+- Out of scope: other fire-based weapons (e.g. `Napalm`, used by an airstrike-style support power) — only the two units named were in scope, not every incendiary effect in the ruleset.
+
+**Dependencies:** None.
+
+**Definition of done:** No `E4`/`FTUR` actor, weapon, or fluent-string reference remains anywhere in `mods/sungrid`; no other actor's `Inherits`/prerequisite/list membership was left dangling. **Met.** Still needs the same engine-build verification every other content change in this backlog is pending on (no build access in this environment).

@@ -232,50 +232,6 @@ E3R1:
 		Types: Veterancy
 		Prerequisites: techlevel.infonly
 
-E4:
-	Inherits: ^Soldier
-	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Buildable:
-		Queue: Infantry
-		BuildAtProductionType: Soldier
-		BuildPaletteOrder: 70
-		Prerequisites: ~barr, ftur, ~techlevel.low
-		Description: actor-e4.description
-	Valued:
-		Cost: 300
-	Tooltip:
-		Name: actor-e4.name
-	UpdatesPlayerStatistics:
-		AddToArmyValue: true
-	Health:
-		HP: 4000
-	Armament@PRIMARY:
-		Weapon: Flamer
-		LocalOffset: 700,0,500
-		FireDelay: 8
-	Armament@GARRISONED:
-		Name: garrisoned
-		Weapon: Flamer
-	TakeCover:
-		ProneOffset: 160,0,-288
-	FireWarheadsOnDeath:
-		Weapon: VisualExplode
-		EmptyWeapon: VisualExplode
-		Chance: 50
-	WithInfantryBody:
-		DefaultAttackSequence: shoot
-		RequiresCondition: !parachute
-	WithInfantryBody@PARACHUTE:
-		StandSequences: parachute
-		RequiresCondition: parachute
-		Palette: player-noshadow
-		IsPlayerPalette: true
-	ProducibleWithLevel:
-		Prerequisites: barracks.upgraded
-	WithProductionIconOverlay:
-		Types: Veterancy
-		Prerequisites: barracks.upgraded
-
 E6:
 	Inherits: ^Soldier
 	Inherits@selection: ^SelectableSupportUnit
