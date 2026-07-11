@@ -22,32 +22,47 @@
 		ImpactSounds: firebl3.aud
 		ImpactActors: false
 
-FireballLauncher:
-	Inherits: ^FireWeapon
+ArcDischarge:
+	ValidTargets: Ground, Water, GroundActor, WaterActor
+	ReloadDelay: 70
+	Range: 5c0
+	Report: turret1.aud
 	Burst: 2
 	BurstDelays: 20
 	Projectile: Bullet
 		Speed: 250
-		TrailImage: fb2
-		Image: FB1
+		Image: 120MM
 	Warhead@1Dam: SpreadDamage
+		Spread: 213
+		Damage: 15000
+		ValidTargets: GroundActor, WaterActor
 		Versus:
+			None: 90
+			Wood: 50
+			Tree: 50
 			Light: 50
+			Heavy: 25
+			Concrete: 20
+		DamageTypes: Prone50Percent, TriggerProne, ElectricityDeath
+	Warhead@2Smu: LeaveSmudge
+		SmudgeType: Crater
+		InvalidTargets: Structure, Wall
 
-Flamer:
-	Inherits: ^FireWeapon
+Disruptor:
+	ValidTargets: Ground, Water, GroundActor, WaterActor
 	ReloadDelay: 50
 	Burst: 15
 	BurstDelays: 1
+	Range: 5c0
 	Projectile: Bullet
 		Speed: 170
-		TrailImage: fb4
-		Image: fb3
+		Image: 120MM
 		LaunchAngle: 62
 		Inaccuracy: 853
 	Warhead@1Dam: SpreadDamage
 		Spread: 341
 		Damage: 1000
+		ValidTargets: GroundActor, WaterActor
 		Versus:
 			None: 70
 			Wood: 80
@@ -55,10 +70,10 @@ Flamer:
 			Light: 40
 			Heavy: 20
 			Concrete: 10
+		DamageTypes: Prone50Percent, TriggerProne, ElectricityDeath
 	Warhead@2Smu: LeaveSmudge
+		SmudgeType: Crater
 		Chance: 15
-	Warhead@3Eff: CreateEffect
-		Explosions: small_napalm
 
 Napalm:
 	Inherits: ^FireWeapon
@@ -206,7 +221,7 @@ MandibleHeavy:
 		DamageTypes: Prone50Percent, TriggerProne, BulletDeath
 
 AntFireball:
-	Inherits: FireballLauncher
+	Inherits: ^FireWeapon
 	Report: antbite.aud
 	ReloadDelay: 50
 	Burst: 2
@@ -214,6 +229,8 @@ AntFireball:
 	Range: 4c0
 	Projectile: Bullet
 		Speed: 200
+		TrailImage: fb2
+		Image: FB1
 	Warhead@1Dam: SpreadDamage
 		Spread: 213
 		Damage: 4000

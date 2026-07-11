@@ -880,18 +880,18 @@ GUN:
 	-BodyOrientation:
 	ClassicFacingBodyOrientation:
 
-FTUR:
+ARCT:
 	Inherits: ^Defense
 	Inherits@AUTOTARGET: ^AutoTargetGround
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 60
 		Prerequisites: barr, ~structures.soviet, ~techlevel.low
-		Description: actor-ftur.description
+		Description: actor-arct.description
 	Valued:
 		Cost: 600
 	Tooltip:
-		Name: actor-ftur.name
+		Name: actor-arct.name
 	Building:
 	Health:
 		HP: 40000
@@ -909,7 +909,7 @@ FTUR:
 		TurnSpeed: 512
 		Offset: 0,0,112
 	Armament:
-		Weapon: FireballLauncher
+		Weapon: ArcDischarge
 		LocalOffset: 512,0,0
 	AttackTurreted:
 		PauseOnCondition: build-incomplete
