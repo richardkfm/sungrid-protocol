@@ -55,4 +55,4 @@ Phase 0 is complete: the design doc set, this navigation file, a reframed `READM
 - Never edit or commit anything under `engine/` — it's fetched by `fetch-engine.sh` and gitignored. If a friction point genuinely needs an engine-level change, see `docs/ARCHITECTURE.md`'s guidance on pinning to a personal engine fork instead.
 - Prefer YAML/Lua trait composition in `mods/sungrid` over new C# traits in `OpenRA.Mods.Sungrid`; if a new trait seems necessary, check it against the "New C# traits" row in `docs/ARCHITECTURE.md` first.
 - Keep commits/PRs scoped to one phase/issue at a time — see `docs/CONTRIBUTING.md` for the full PR checklist and label taxonomy.
-- Never push directly to `bleed`; always branch + PR.
+- `main` is now the default/integration branch (previously `bleed`, which is kept in sync but is no longer the branch to target). Never push directly to `main`; always branch + PR.
