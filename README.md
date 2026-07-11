@@ -14,7 +14,7 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how this is structured as an OpenRA mod, and what's data-driven vs. engine-level.
 * [`docs/GAME_MODES.md`](docs/GAME_MODES.md) — full spec for the Grid Reserve economic victory mode.
 * [`docs/BUILDINGS.md`](docs/BUILDINGS.md) — the initial building roster.
-* [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: [Phase 5 building dossier](docs/concept-art/phase5-building-dossier.html) and its [pixel-mockup follow-up](docs/concept-art/phase5-pixel-mockups.html) (open directly in a browser).
+* [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/phase5-pixel-mockups.html">via githack</a> 
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 * [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) — license inheritance and EA non-affiliation.
 * [`docs/BACKLOG.md`](docs/BACKLOG.md) — first 10 engineering issues, held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
