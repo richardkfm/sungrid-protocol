@@ -434,4 +434,4 @@ Every reference updated to point at the new ids instead of dangling or disappear
 
 **Dependencies:** None blocking.
 
-**Definition of done:** CI green on both Linux and Windows jobs for a real PR. Local verification is done — `utility.sh --check-yaml` exits 0 with zero errors after applying the fixes, against the same commit's engine build — pending the actual re-triggered CI run to confirm. `docs/BACKLOG.md`'s and `CLAUDE.md`'s "CI has never run" language is now stale and updated accordingly.
+**Definition of done:** CI green on both Linux and Windows jobs for a real PR. **Met** — confirmed via the actual re-triggered CI run (both jobs completed with conclusion `success` on PR #27), not just the local `utility.sh --check-yaml` verification (also clean) that preceded it. `docs/BACKLOG.md`'s and `CLAUDE.md`'s "CI has never run" language is now stale and updated accordingly.
