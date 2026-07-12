@@ -407,3 +407,31 @@ Every reference updated to point at the new ids instead of dangling or disappear
 **Dependencies:** Builds directly on issue #17's engine-build/content-access recipe.
 
 **Definition of done for this pass:** The temperate tileset visibly reads as recolored toward the locked palette when composited (verified via `--dump-sheets` diff against stock), with tile geometry, water, and non-terrain sprite colors unaffected. **Met for the composited-sheet verification.** Not yet met: an actual live-client screenshot with a real camera view over a temperate map — attempted in this pass (Xvfb + a quick-loaded skirmish) but the viewport rendered black, most likely shroud/camera-position in the no-bots `Launch.Map` quick-load path rather than a rendering defect (sidebar/minimap chrome rendered correctly in the same screenshot), not conclusively resolved. Whoever picks this up next should confirm with a real bot-filled skirmish (see `docs/PLAYTESTING.md`'s `Launch.SkirmishBots` recipe) before treating this as fully closed, and then extend to snow/desert if the direction holds up.
+
+---
+
+### 19. GitHub Actions turns out not to be disabled — first real CI run found and fixed 4 latent bugs
+
+**Status:** Issue #17 flagged "CI has never actually run — worth confirming whether Actions is disabled repo-wide" as an open question. It wasn't disabled: a docs-only PR (#27) that happened to also touch `mod.config` and `.github/workflows/ci.yml` (outside `ci.yml`'s `paths-ignore: '*.md'` filter) triggered the very first Continuous Integration run in this repo's history, on both the Linux and Windows jobs. It found real problems immediately:
+
+- **4 analyzer errors** in `OpenRA.Mods.Sungrid/GridReserve/` (Phase 3/4 code, never compiled by anything but a manual one-off before — see issue #17): an unused `using OpenRA.Network;` in `GridReserveController.cs`, unused `using OpenRA.Traits;` in both `GridReserveHudLogic.cs` and `GridReserveStandingsLogic.cs` (`IDE0005`), and a manual `bool` field plus expression-bodied getter in `GridReserveController.cs` that should be an auto-property (`IDE0032`). Fixed by removing the dead imports and converting `Enabled` to `public bool Enabled { get; private set; }`.
+- **45 rules/map validation errors** (`make test`), all pre-existing content bugs invisible until `--check-yaml`/map-testing actually ran for the first time:
+  - `rules/misc.yaml`'s Soviet heavy-squad crate reward and all three `rules/ai.yaml` `UnitBuilderBotModule` tiers still referenced the removed `e4` (Flame Infantry, replaced by `disr`/Disruptor Trooper in issue #14) — that rename's own notes claimed every reference was updated, but crate rewards and AI unit-composition weights were missed. Fixed: `e4` → `disr` in both files.
+  - `SGDRN` (Drone Bay)'s `Prerequisites` referenced `oilb` — not a dangling id (a civilian neutral oil-derrick prop actor genuinely named `OILB` still exists on many maps), but the wrong id: it doesn't have a `Buildable` trait, so it can never satisfy a prerequisite. The actual Recycling Depot (renamed `OILB`→`RCYD` specifically to avoid colliding with this civilian prop, per an earlier fix referenced in issue #17) was the evident intended target. Fixed: `oilb` → `rcyd`.
+  - `SGTUR` (Grid Defense Turret) and `SGREL` (Smart Grid Relay) both listed `powr` (Solar Array's actor id) as a prerequisite, but `POWR`/`APWR` both carry a `ProvidesPrerequisite: Prerequisite: anypower` trait, which replaces rather than supplements the default auto-provided own-id prerequisite — so `powr` was never actually satisfiable, and every other power-gated building in the ruleset already correctly requires `anypower` instead. Fixed: `powr` → `anypower` in both.
+- Confirmed a real, previously undocumented SDK-patch-version divergence beyond issue #17's `CryptoUtil` finding: CI's `actions/setup-dotnet@v5`-installed SDK (`8.0.422`) does not hit that `CryptoUtil.SHA1Hash([])` ambiguity at all (the engine step built clean, 0 warnings/0 errors, no workaround needed) — it's specific to newer patch versions like the apt-installed `8.0.128` used in issue #17's manual verification. The reverse also showed up: a local `dotnet build -c Debug -warnaserror` against the same commit under `8.0.128` reported ~921 `IDE0055` formatting errors across vendored `engine/` source that CI's `8.0.422` never flags at all. Local verification under a different SDK patch version is not a reliable stand-in for CI's actual result in either direction.
+
+**Labels:** `type:bug`, `type:content`, `type:engine`
+
+**Phase:** Not tied to a specific roadmap phase — cross-cutting correctness fixes surfaced by CI running for the first time.
+
+**Purpose:** Resolves issue #17's open "is CI actually disabled" question (no — it just hadn't been triggered by anything since `paths-ignore` skips markdown-only changes and every prior PR happened to stay within that filter), and fixes every defect that first real run surfaced rather than treating a suddenly-working safety net as someone else's problem.
+
+**Scope:**
+- Fix the 4 analyzer findings and 45 rules/map validation errors listed above.
+- Document that CI actually works and was never disabled.
+- Out of scope: auditing for further latent bugs beyond what this one CI run surfaced (a full audit would need deliberately re-running CI against every historical PR, which is disproportionate); the `ENGINE_VERSION`/SDK-patch-version RFC issue #17 already flagged, still open.
+
+**Dependencies:** None blocking.
+
+**Definition of done:** CI green on both Linux and Windows jobs for a real PR. Local verification is done — `utility.sh --check-yaml` exits 0 with zero errors after applying the fixes, against the same commit's engine build — pending the actual re-triggered CI run to confirm. `docs/BACKLOG.md`'s and `CLAUDE.md`'s "CI has never run" language is now stale and updated accordingly.

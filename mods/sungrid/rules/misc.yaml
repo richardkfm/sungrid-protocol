@@ -100,7 +100,7 @@ CRATE:
 		TimeDelay: 4500
 	GiveUnitCrateAction@squadheavysoviet:
 		SelectionShares: 7
-		Units: e1,e1,e4,e4,e3,e3,e3,e6
+		Units: e1,e1,disr,disr,e3,e3,e3,e6
 		ValidFactions: soviet, russia, ukraine
 		TimeDelay: 4500
 	GrantExternalConditionCrateAction@invuln:
