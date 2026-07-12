@@ -75,6 +75,21 @@ Dragon:
 	Projectile: Missile
 		TrailImage: smokey
 
+DroneRocket:
+	Inherits: ^AntiGroundMissile
+	ReloadDelay: 80
+	Burst: 2
+	BurstDelays: 5
+	Projectile: Missile
+		TrailImage: smokey
+	Warhead@1Dam: SpreadDamage
+		Damage: 700
+
+DroneRocket.Strike:
+	Inherits: DroneRocket
+	Warhead@1Dam: SpreadDamage
+		Damage: 950
+
 HellfireAG:
 	Inherits: ^AntiGroundMissile
 	ReloadDelay: 34

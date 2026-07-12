@@ -2377,7 +2377,7 @@ SGDRN:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 202
-		Prerequisites: proc, rcyd, ~techlevel.medium
+		Prerequisites: proc, rcyd, ~structures.soviet, ~techlevel.medium
 		Description: actor-sgdrn.description
 	Valued:
 		Cost: 900
