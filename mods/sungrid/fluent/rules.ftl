@@ -1147,13 +1147,21 @@ actor-sgdai =
     .description =
     Racks of compute serving grid logistics and battlefield
     analytics. Modest passive income, wide sensor coverage,
-    and cloak detection.
+    and cloak detection. Its coordination is required to
+    build the most advanced structures and drone units.
 
 actor-sgdrn =
     .name = Drone Bay
     .description =
     Autonomous delivery drones speed up nearby friendly
     vehicles, easing logistics across a spread-out base.
+    Produces Recon Drones once a Datacenter for AI is built.
+
+actor-sgdro =
+    .name = Recon Drone
+    .description =
+    A fast, unarmed autonomous scout drone with wide sensor
+    range. Requires a Drone Bay and a Datacenter for AI.
 
 actor-sgtur =
     .name = Grid Defense Turret
