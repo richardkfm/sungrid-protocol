@@ -110,7 +110,15 @@ function build_platform()
 
 	TAG_TYPE="${TAG%%-*}"
 	TAG_VERSION="${TAG#*-}"
-	BACKWARDS_TAG="${TAG_VERSION}-${TAG_TYPE}"
+	if [ "${TAG_TYPE}" = "${TAG_VERSION}" ]; then
+		# Tag has no "type-version" separator (e.g. "alpha2"), so the swap
+		# below is a no-op and would leave a letter-led string. rcedit
+		# refuses to parse a product-version string that doesn't start
+		# with a digit, so fall back to a synthetic numeric prefix.
+		BACKWARDS_TAG="0-${TAG}"
+	else
+		BACKWARDS_TAG="${TAG_VERSION}-${TAG_TYPE}"
+	fi
 
 	# Create multi-resolution icon
 	convert "${ARTWORK_DIR}/icon_16x16.png" "${ARTWORK_DIR}/icon_24x24.png" "${ARTWORK_DIR}/icon_32x32.png" "${ARTWORK_DIR}/icon_48x48.png" "${ARTWORK_DIR}/icon_256x256.png" "${BUILTDIR}/${MOD_ID}.ico"

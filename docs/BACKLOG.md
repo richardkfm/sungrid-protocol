@@ -537,3 +537,29 @@ Ubuntu 22.04's distro-packaged `wine64` (6.0.3~repack) still depends on the `win
 **Labels:** `type:content`, `type:balance`, `area:economy`, `area:logistics`, `area:intelligence`
 
 **Phase:** 5 — Faction Flavor (follow-up correction to the original roster).
+
+---
+
+### 23. Windows packaging still fails after issue #21's fix: `rcedit` version string, not `wine32`, was the real cause — FIXED
+
+**Problem:** The user cut the `alpha2` release tag expecting issue #21's `wine32` fix to have resolved Windows packaging. It didn't: the `Windows Installers` job on the real `alpha2` run failed with the exact same crash as `alpha1` — `Fatal error: Unable to parse version string for ProductVersion` — even though `wine32` was installed correctly this time (confirmed in the job log: `wine32:i386` sets up cleanly, no multiarch complaint). The Linux AppImage job succeeded again, producing `SungridProtocol-alpha2-x86_64.AppImage`; the macOS job stayed stuck `queued` (same pre-existing GitHub-hosted `macos-13` capacity issue as before, unrelated to this repo — still out of scope).
+
+**Root cause (confirmed from the actual `alpha2` job log — issue #21's `wine32` diagnosis was an incorrect guess, made without a second data point):** `packaging/windows/buildpackage.sh` builds a "backwards" version string for `rcedit --set-product-version` because rcedit's version parser (`parse_version_string` in electron/rcedit, confirmed from its source) rejects any string that doesn't start with a digit — it's just `swscanf_s(str, "%hu.%hu...")` chains, no fallback for a letter-led string. The swap logic is:
+```sh
+TAG_TYPE="${TAG%%-*}"
+TAG_VERSION="${TAG#*-}"
+BACKWARDS_TAG="${TAG_VERSION}-${TAG_TYPE}"
+```
+This only produces a digit-led string when `TAG` has a `type-version` shape like `release-20240101` (giving `20240101-release`). This repo's actual release tags are `alpha1`/`alpha2` — no dash — so `${TAG%%-*}` and `${TAG#*-}` both leave `TAG` unchanged, and `BACKWARDS_TAG` becomes `alpha2-alpha2`: still letter-led. rcedit rejects it immediately, before doing anything wine/multiarch-related. Installing `wine32` (issue #21) fixed a real but unrelated warning in the same log region and made no difference to this crash — the `alpha2` run proves it.
+
+**Fix:** `packaging/windows/buildpackage.sh` now detects the no-dash case (`TAG_TYPE == TAG_VERSION` after the swap) and falls back to a synthetic digit-led string (`0-${TAG}`) instead of producing a letter-led one. Tags that do follow the `type-version` shape (`release-*`, `playtest-*`, `devtest-*`) are unaffected and keep the original backwards-swap behavior.
+
+**Scope:** `packaging/windows/buildpackage.sh` only. Out of scope: the macOS `queued` stall (unrelated, pre-existing, GitHub-hosted runner capacity — not a repo config problem); renaming the `alpha1`/`alpha2` tag convention itself (the fix makes the script tolerate the existing convention rather than requiring the tags to change).
+
+**Dependencies:** Builds on / corrects issue #21. `wine32` should stay installed — it's still needed for wine's own bootstrap — this just wasn't the blocking bug.
+
+**Definition of done:** `BACKWARDS_TAG` is guaranteed to start with a digit for both dashed (`release-20240101` → `20240101-release`) and non-dashed (`alpha2` → `0-alpha2`) tags — verified locally by running the substitution logic standalone. **A real release-tag push is still needed to confirm green end-to-end** (this session can't push tags itself); that's the same outstanding verification gap issue #21 also left open, now with the actual bug fixed underneath it.
+
+**Labels:** `type:build`, `type:ci`
+
+**Phase:** Cross-cutting build-tooling fix (release packaging, not tied to a specific content phase).
