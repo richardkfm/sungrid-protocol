@@ -435,3 +435,50 @@ Every reference updated to point at the new ids instead of dangling or disappear
 **Dependencies:** None blocking.
 
 **Definition of done:** CI green on both Linux and Windows jobs for a real PR. **Met** — confirmed via the actual re-triggered CI run (both jobs completed with conclusion `success` on PR #27), not just the local `utility.sh --check-yaml` verification (also clean) that preceded it. `docs/BACKLOG.md`'s and `CLAUDE.md`'s "CI has never run" language is now stale and updated accordingly.
+
+---
+
+### 20. RFC: Re-pin ENGINE_VERSION to a patched commit fixing the CryptoUtil ambiguity — AWAITING DECISION
+
+**Problem:** `mod.config`'s `ENGINE_VERSION` is pinned to `bf4102a029f132824d682069fce1105d56fc5e96`. That exact commit fails to compile under some `.NET 8` SDK patch versions with a `CS0121` ambiguous-overload error (`CryptoUtil.SHA1Hash([])` — the empty collection expression matches both the `byte[]` and `string` overloads). Confirmed behavior:
+- Fails under `8.0.128` (installable via `sudo apt-get install -y dotnet-sdk-8.0` on Ubuntu/Debian — a completely ordinary, likely-common local setup path).
+- Builds clean under `8.0.422` (what `actions/setup-dotnet@v5` currently resolves to on GitHub's hosted runners, hence CI itself has never hit this — see issue #19).
+
+This means the project currently only "works" by accident of which exact SDK patch version happens to be installed, with no visible error message pointing at the cause. Anyone building locally with a newer/different patch than CI's is likely to hit a hard, confusing compile failure on their very first `make`.
+
+**Why this needs an RFC:** Any `ENGINE_VERSION` change is `type:engine` per `docs/CONTRIBUTING.md`'s RFC workflow, gated on a design issue before implementation — this is that issue.
+
+**Proposed solution (validated, not just theorized):** Pin to a single cherry-picked fix on top of the exact same commit, rather than bumping to a newer upstream commit.
+
+- No external fork needed: `richardkfm/sungrid-protocol` started as a direct fork of the OpenRA engine, and `bf4102a...` — the exact pinned commit — is still fully present in this repo's own history (it's an ancestor of `main`, even though the old `bleed` branch pointer that used to name it directly was deleted per issue #17's cleanup).
+- A new branch, `engine-patch/bf4102a-cryptoutil-fix`, starts at that exact commit and adds one line on top (commit `83c2b72`): `CryptoUtil.SHA1Hash([])` → `CryptoUtil.SHA1Hash(Array.Empty<byte>())`, unambiguously resolving to the `byte[]` overload with identical behavior.
+- Verified end-to-end: the commit's GitHub archive URL (`https://github.com/richardkfm/sungrid-protocol/archive/83c2b72.../zip`) downloads successfully, and the resulting tree builds with **0 warnings, 0 errors** under `8.0.128` — the exact SDK version that fails against the current pin.
+
+**Concrete change, if approved:**
+```
+mod.config:
+  ENGINE_VERSION="83c2b72eec1ec493b9ed6e6b631bbab7f270929a"
+  AUTOMATIC_ENGINE_SOURCE="https://github.com/richardkfm/sungrid-protocol/archive/${ENGINE_VERSION}.zip"
+```
+(`AUTOMATIC_ENGINE_SOURCE` currently hardcodes `OpenRA/OpenRA`'s archive URL — it needs to point at this repo instead, since that's where the patched commit lives.)
+
+**Risk assessment:** Effectively zero behavioral drift. The change is a single disambiguating call rewrite with identical runtime output — not a real engine upgrade, and none of the months of intervening upstream OpenRA history that a genuine version bump would drag in (which could break the Grid Reserve traits and Phase 5 building YAML written against this exact commit's API surface, per `docs/ARCHITECTURE.md`'s original rationale for pinning in the first place).
+
+**Alternatives considered:**
+1. **Do nothing.** CI (`8.0.422`) isn't affected, so merges keep working. Rejected as the primary fix: leaves every future local contributor to rediscover this exact failure with no clear error pointing at the cause, indefinitely.
+2. **Document the workaround only** (already partly done in `docs/PLAYTESTING.md`, from issue #17's investigation). Zero risk, zero engineering cost, but doesn't fix the underlying fragility — still requires an active memory of "go read that one subsection" the first time someone hits it cold.
+3. **Bump `ENGINE_VERSION` to a current upstream commit.** Rejected for now: solves this one bug but reintroduces the exact migration-risk tradeoff `docs/ARCHITECTURE.md` deliberately avoided by pinning — real API drift across months of upstream changes, needing a full re-validation pass across Grid Reserve and the Phase 5 building roster. Disproportionate for a one-line compile fix; could be revisited separately if there's ever a reason to track upstream more closely.
+4. **Pin to a personal fork of `OpenRA/OpenRA` itself**, per `docs/ARCHITECTURE.md`'s originally-stated fallback for engine-level friction points. Works, but needs a separate repo to own and maintain — strictly more overhead than option in "Proposed solution" above for the same one-line result, now that it's confirmed this repo's own history already contains everything needed.
+
+**Labels:** `type:engine`, `type:design`, `risk:scope-trap`
+
+**Phase:** Not tied to a specific roadmap phase — cross-cutting build-tooling fix.
+
+**Scope:**
+- Decision needed: approve the re-pin above, or direct a different approach (see alternatives).
+- If approved: update `mod.config`'s `ENGINE_VERSION`/`AUTOMATIC_ENGINE_SOURCE` in a follow-up PR, confirm `fetch-engine.sh` still resolves/builds correctly against the new source, and remove or update the now-resolved workaround note in `docs/PLAYTESTING.md`.
+- Out of scope: any actual upstream engine version bump (alternative 3 above); creating/maintaining a separate personal fork repo (alternative 4).
+
+**Dependencies:** None blocking. Builds on issue #17's verification and the `engine-patch/bf4102a-cryptoutil-fix` branch already pushed.
+
+**Definition of done:** A recorded decision (approve the re-pin, or an explicit alternative) — this RFC issue is about the decision, not the implementation. Once approved, a follow-up PR makes the `mod.config` change and this issue's status updates accordingly.
