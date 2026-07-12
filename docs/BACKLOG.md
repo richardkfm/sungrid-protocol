@@ -382,3 +382,28 @@ Every reference updated to point at the new ids instead of dangling or disappear
 **Dependencies:** None blocking. Builds on the environment recipe `PLAYTESTING.md` already documented from #9/#10/#12.
 
 **Definition of done:** A real `.shp` cursor and a real `.tem` terrain tile both round-tripped through `utility.sh --extract`/`--png`/`--shp` without error, using a legitimately-obtained content package and a from-source engine build. **Met.** Two decisions are now ready for a human call rather than another engineering pass rediscovering the same blocker: (1) `ENGINE_VERSION` is pinned to a commit that doesn't compile under current `.NET 8` SDK patch versions — per `docs/CONTRIBUTING.md`'s RFC process for engine bumps, this needs either a documented required local patch step or a deliberate re-pin, not a silent per-session workaround; (2) CI has never actually run — worth confirming whether Actions is disabled repo-wide before assuming any future green check means anything.
+
+---
+
+### 18. Phase 6 temperate terrain reskin — FIRST PASS DONE, snow/desert + live-client verification still open
+
+**Status:** Recolored the temperate tileset toward `docs/ART_DIRECTION.md`'s locked palette via a **palette-only** edit, not by touching individual tile sprites. `mods/sungrid/bits/reskin_terrain_palette.py` reads the stock `temperat.pal` (extracted via `utility.sh --extract`, per issue #17's now-working recipe) and applies a piecewise hue remap — the dominant tan/dirt/rust band (hue 0-45°) shifts toward the locked green, a small set of near-pure bright highlights (ore/gem glint accents) shift toward the locked sun-gold hex instead so they stay visually distinct from the green ground, and blues (water)/grays (rock, roads) are left untouched. Output is a new file, `mods/sungrid/bits/sungrid-temperat-terrain.pal`, and `rules/palettes.yaml`'s `PaletteFromFile@terrain-temperat` now points at it instead of stock `temperat.pal`.
+
+**Why palette-only, and why it's safe:** `rules/palettes.yaml` already declares terrain (`Name: terrain`) and units/buildings (`Name: player`) as separate `PaletteFromFile` entries, even though both loaded from the same stock file before this change. Repointing only `terrain`'s `Filename` recolors terrain tiles and neutral scenery (trees/rocks, which render via the same `terrain` palette) without touching unit, building, or weapon-effect colors — those traits still load the unmodified stock `temperat.pal`. It also means zero risk to tile geometry/boundaries (the actual `.tem` sprite data is never touched, only the color each index maps to), sidestepping the exact risk `docs/ROADMAP.md`'s Phase 6 section calls out about individual tile-sprite edits.
+
+**First iteration was too subtle to matter:** a straight port of the chrome pass's hue band (±25° from red) only touched 12% of the tileset atlas's pixels at low magnitude — barely perceptible once composited. Widened to a 45° band (verified against the actual stock palette dump, not guessed) to catch the dominant tan "clear ground" tone; this touches ~22% of pixels with a visually obvious result, confirmed via `utility.sh --dump-sheets` (the same composited sprite-sheet-plus-palette code path the live game renders through) diffed against a stock-palette render of the same tileset.
+
+**Labels:** `phase:6`, `type:art`, `area:world`
+
+**Phase:** 6 — World & UI Visual Identity Overhaul (see `docs/ROADMAP.md`, `docs/ART_DIRECTION.md`)
+
+**Purpose:** `docs/ROADMAP.md`'s Phase 6 deliverables call for a reskinned temperate tileset with a "living, reclaimed industrial" look. This is a first pass toward that — same "programmatic first pass now, real artist pass later" approach issues #12/#13 used, adapted for terrain's palette-based rendering instead of per-sprite art.
+
+**Scope:**
+- Recolor the temperate tileset's terrain-only palette per the locked palette in `docs/ART_DIRECTION.md`, leaving tile geometry, water, and unit/building/effect colors untouched.
+- Verify via the actual composited sprite-sheet render (`--dump-sheets`), not just the raw palette swatch, since what matters is how it looks once tiles are drawn.
+- Out of scope: snow/desert tilesets (explicitly sequenced as a same-phase follow-up or Phase 7 per `docs/ROADMAP.md`), individual tile sprite/decoration art, cliffs/scenery actor sprites themselves (only their palette), live-client rendered verification with a real camera view (attempted in this pass but not completed — see below), the main-menu shellmap's own terrain (uses the `DESERT` tileset, not `TEMPERAT`, so this pass doesn't touch it).
+
+**Dependencies:** Builds directly on issue #17's engine-build/content-access recipe.
+
+**Definition of done for this pass:** The temperate tileset visibly reads as recolored toward the locked palette when composited (verified via `--dump-sheets` diff against stock), with tile geometry, water, and non-terrain sprite colors unaffected. **Met for the composited-sheet verification.** Not yet met: an actual live-client screenshot with a real camera view over a temperate map — attempted in this pass (Xvfb + a quick-loaded skirmish) but the viewport rendered black, most likely shroud/camera-position in the no-bots `Launch.Map` quick-load path rather than a rendering defect (sidebar/minimap chrome rendered correctly in the same screenshot), not conclusively resolved. Whoever picks this up next should confirm with a real bot-filled skirmish (see `docs/PLAYTESTING.md`'s `Launch.SkirmishBots` recipe) before treating this as fully closed, and then extend to snow/desert if the direction holds up.

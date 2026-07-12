@@ -12,7 +12,7 @@
 	PaletteFromFile@terrain-temperat:
 		Name: terrain
 		Tileset: TEMPERAT
-		Filename: temperat.pal
+		Filename: sungrid-temperat-terrain.pal
 		ShadowIndex: 3, 4
 	PaletteFromFile@terrain-desert:
 		Name: terrain
