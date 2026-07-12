@@ -270,6 +270,59 @@ TRAN:
 	Selectable:
 		DecorationBounds: 1706, 1536
 
+SGDRO:
+	Inherits: ^Helicopter
+	RenderSprites:
+		Image: tran
+	Buildable:
+		Queue: Aircraft
+		BuildAtProductionType: Helicopter
+		BuildPaletteOrder: 60
+		Prerequisites: sgdrn, sgdai, ~techlevel.high
+		Description: actor-sgdro.description
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: actor-sgdro.name
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Health:
+		HP: 6000
+	Armor:
+		Type: Light
+	RevealsShroud:
+		MinRange: 6c0
+		Range: 10c0
+		Type: GroundPosition
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 6c0
+		Type: GroundPosition
+	Aircraft:
+		TurnSpeed: 24
+		Speed: 170
+		AltitudeVelocity: 0c58
+	WithIdleOverlay@ROTOR1AIR:
+		Offset: 597,0,213
+		Sequence: rotor
+		RequiresCondition: airborne
+	WithIdleOverlay@ROTOR1GROUND:
+		Offset: 597,0,213
+		Sequence: slow-rotor
+		RequiresCondition: !airborne
+	WithIdleOverlay@ROTOR2AIR:
+		Offset: -597,0,341
+		Sequence: rotor2
+		RequiresCondition: airborne
+	WithIdleOverlay@ROTOR2GROUND:
+		Offset: -597,0,341
+		Sequence: slow-rotor2
+		RequiresCondition: !airborne
+	SpawnActorOnDeath:
+		Actor: TRAN.Husk
+	Selectable:
+		DecorationBounds: 1706, 1536
+
 HELI:
 	Inherits: ^Helicopter
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove

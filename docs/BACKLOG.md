@@ -540,6 +540,21 @@ Ubuntu 22.04's distro-packaged `wine64` (6.0.3~repack) still depends on the `win
 
 ---
 
+### 23. Recon Drone (SGDRO) drove on wheels — FIXED, now an actual flying unit
+
+**Problem:** Issue #22's `SGDRO` ("Recon Drone", built from the Drone Bay) was implemented as a ground vehicle (`Inherits: ^Vehicle`, reusing `JEEP`'s sprite) — the fastest way to get "a drone gets built" working, but a drone that drives on wheels doesn't match the fantasy at all.
+
+**Fix:** `SGDRO` moved from `mods/sungrid/rules/vehicles.yaml` to `mods/sungrid/rules/aircraft.yaml` and is now `Inherits: ^Helicopter`. Every existing flying unit in the roster is either an armed combat helicopter (`HELI`/`HIND`/`MH60`), a jet (`MIG`/`YAK`), or `TRAN` (Chinook transport, the only unarmed and fully-buildable helicopter) — no small "scout drone" sprite exists to reuse. `U2` ("Spy Plane") is the closer thematic match but is structurally unsuited: it's a `^NeutralPlane`-based, non-`Buildable` actor spawned only by a support power, with `-Selectable`/`-Voiced` stripped and no VTOL/hover — reusing it would mean undoing most of its overrides. `TRAN` was the better donor: already unarmed, already `^Helicopter`-based, so `SGDRO` reuses its sprite (`RenderSprites.Image: tran`), rotor animation overlays, and husk, but with stats scaled down (`HP: 6000` vs. `TRAN`'s 14000, `Speed: 170` vs. 128, `Cost: 500` vs. 900, no `Cargo`) and `RevealsShroud` widened (`Range: 10c0`) for a recon role. `SGDRN` (Drone Bay) now mirrors `HPAD`'s aircraft-production block (`Exit@1` geometry, `RallyPoint: ForceSetType: Helicopter`, `Production: Produces: Aircraft, Helicopter`, `Reservable`, `ProductionBar`) instead of `WEAP`'s vehicle one, since `SGDRN` already reuses `HPAD`'s sprite/footprint.
+
+**One real wrinkle avoided, worth recording:** issue #22's own follow-up fix (commit `c434a83`) had already broken CI once by referencing a `notmobile` condition nothing granted. Before writing this version, the `^Helicopter`/`^Plane`/`^NeutralPlane` inheritance chain (`mods/sungrid/rules/defaults.yaml:587-687`) was checked to confirm exactly which conditions it grants (`airborne`, `cruising`) — `SGDRO` only references those plus `being-captured` (granted by the base `CaptureManager`), and does not reference `notmobile` anywhere.
+
+**Scope:** `mods/sungrid/rules/aircraft.yaml` (new `SGDRO`), `mods/sungrid/rules/vehicles.yaml` (old `SGDRO` removed), `mods/sungrid/rules/structures.yaml` (`SGDRN`'s production block). No fluent text changes needed — `actor-sgdro`'s existing description never implied ground movement. No new C#, no new art.
+
+**Verification:** Same constraint as issue #22 — no engine/`dotnet` available in this sandbox, so `make test` couldn't run locally; CI on the pushed branch is the first real check. Manually verified: every `RequiresCondition`/`PauseOnCondition` on the new block resolves to a condition actually granted in the inheritance chain, `SGDRN`'s `Production: Produces:` list matches `SGDRO`'s `Buildable: BuildAtProductionType: Helicopter`, `TRAN.Husk` (referenced by `SpawnActorOnDeath`) exists, and `SGDRO` is defined exactly once across the ruleset. **A real engine build/YAML-check and a human playtest are both still needed post-merge.**
+
+**Labels:** `type:content`, `area:logistics`
+
+**Phase:** 5 — Faction Flavor (second follow-up correction to the Drone Bay/AI Data Center pairing).
 ### 23. Windows packaging still fails after issue #21's fix: `rcedit` version string, not `wine32`, was the real cause — FIXED
 
 **Problem:** The user cut the `alpha2` release tag expecting issue #21's `wine32` fix to have resolved Windows packaging. It didn't: the `Windows Installers` job on the real `alpha2` run failed with the exact same crash as `alpha1` — `Fatal error: Unable to parse version string for ProductVersion` — even though `wine32` was installed correctly this time (confirmed in the job log: `wine32:i386` sets up cleanly, no multiarch complaint). The Linux AppImage job succeeded again, producing `SungridProtocol-alpha2-x86_64.AppImage`; the macOS job stayed stuck `queued` (same pre-existing GitHub-hosted `macos-13` capacity issue as before, unrelated to this repo — still out of scope).

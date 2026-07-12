@@ -2403,15 +2403,19 @@ SGDRN:
 		ValidRelationships: Ally
 		Condition: dronebay-network
 	RallyPoint:
-		ForceSetType: Vehicle
+		ForceSetType: Helicopter
 	CommandBarBlacklist:
 		DisableStop: false
 	Exit@1:
 		RequiresCondition: !being-captured
-		SpawnOffset: 0,-128,0
-		ExitCell: 1,2
+		SpawnOffset: 0,-256,0
+		ExitCell: 0,0
+		Facing: 896
 	Production:
-		Produces: Vehicle
+		Produces: Aircraft, Helicopter
+	Reservable:
+	ProductionBar:
+		ProductionType: Aircraft
 	Power:
 		Amount: -20
 	ProvidesPrerequisite@buildingname:

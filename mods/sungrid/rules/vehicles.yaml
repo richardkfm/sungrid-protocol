@@ -457,36 +457,6 @@ JEEP:
 		Types: Veterancy
 		Prerequisites: vehicles.upgraded
 
-SGDRO:
-	Inherits: ^Vehicle
-	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	RenderSprites:
-		Image: jeep
-	Buildable:
-		Queue: Vehicle
-		BuildPaletteOrder: 430
-		Prerequisites: sgdrn, sgdai, ~techlevel.high
-		Description: actor-sgdro.description
-	Valued:
-		Cost: 600
-	Tooltip:
-		Name: actor-sgdro.name
-	UpdatesPlayerStatistics:
-		AddToArmyValue: true
-	Health:
-		HP: 12000
-	Armor:
-		Type: Light
-	Mobile:
-		TurnSpeed: 40
-		Speed: 180
-	RevealsShroud:
-		MinRange: 4c0
-		Range: 8c0
-		RevealGeneratedShroud: False
-	RevealsShroud@GAPGEN:
-		Range: 4c0
-
 APC:
 	Inherits: ^TrackedVehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
