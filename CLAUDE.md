@@ -9,7 +9,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 ## Directory map
 
 **Fetched engine dependency — never commit, never edit directly:**
-- `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, pin `ENGINE_VERSION` to a personal engine fork's commit instead of vendoring source into this repo (see `docs/ARCHITECTURE.md`).
+- `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, it usually does **not** need a separate personal fork repo: this repo's own pre-Phase-0 history already contains the full engine tree, so a fix can be pinned via an `engine-patch/*` branch built on the currently-pinned commit — see "Engine version pinning" below before touching `ENGINE_VERSION` or any `engine-patch/*` branch. Only reach for an actual personal fork of `OpenRA/OpenRA` if the needed base commit genuinely isn't already reachable in this repo's own history (see `docs/ARCHITECTURE.md`).
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
 - `mods/sungrid/` — **the Sungrid Protocol mod content** (rules/YAML, sequences, maps, chrome, fluent strings). Currently the SDK's example-mod template renamed to Sungrid branding — Phase 1's job is to replace this placeholder content with real gameplay forked from `mods/ra` (pulled from `engine/mods/ra` once fetched, or the public OpenRA/OpenRA repo).
@@ -52,7 +52,19 @@ Phases 0-3 and 5 are functionally complete and confirmed playable: `mods/sungrid
 
 ## Working conventions
 
-- Never edit or commit anything under `engine/` — it's fetched by `fetch-engine.sh` and gitignored. If a friction point genuinely needs an engine-level change, see `docs/ARCHITECTURE.md`'s guidance on pinning to a personal engine fork instead.
+- Never edit or commit anything under `engine/` — it's fetched by `fetch-engine.sh` and gitignored. If a friction point genuinely needs an engine-level change, see "Engine version pinning" below (usually an `engine-patch/*` branch, not a personal fork).
 - Prefer YAML/Lua trait composition in `mods/sungrid` over new C# traits in `OpenRA.Mods.Sungrid`; if a new trait seems necessary, check it against the "New C# traits" row in `docs/ARCHITECTURE.md` first.
 - Keep commits/PRs scoped to one phase/issue at a time — see `docs/CONTRIBUTING.md` for the full PR checklist and label taxonomy.
 - `main` is now the default/integration branch (previously `bleed`, inherited from the original OpenRA engine fork; `bleed` has since been deleted from the remote — its history lives on as `main`'s own ancestry, since `main` was built on top of it rather than starting fresh). Never push directly to `main`; always branch + PR.
+
+## Engine version pinning: how `ENGINE_VERSION` actually works (read before touching `engine-patch/*` branches)
+
+`mod.config`'s `ENGINE_VERSION` + `AUTOMATIC_ENGINE_SOURCE` do **not** point at a separate personal engine fork repo. They point at a specific commit SHA inside `richardkfm/sungrid-protocol`'s **own git history** — an ancestor of `main` predating the Phase 0 SDK migration (`e96d2ae`), from back when this repo still had the full vendored engine tree. `fetch-engine.sh` downloads that exact commit as a GitHub archive-by-SHA zip (`https://github.com/richardkfm/sungrid-protocol/archive/${ENGINE_VERSION}.zip`). See `docs/BACKLOG.md` issue #20 for the full history of why this exists (a `CS0121`/`CryptoUtil.SHA1Hash` overload ambiguity under some .NET 8 SDK patch versions, fixed with a one-line disambiguation plus a follow-up `IDE0301` suppression).
+
+**`engine-patch/*` branches (e.g. `engine-patch/bf4102a-cryptoutil-fix`) exist only to keep one specific pinned engine commit reachable for that archive-by-SHA fetch. They are not mod-content branches.**
+
+- **Never merge one into `main`.** Doing so would try to re-add the entire pre-SDK-migration vendored engine tree (`OpenRA.Game/`, `OpenRA.Mods.Common/`, etc.) that Phase 0 deliberately removed. GitHub will correctly report this as a conflicting/`dirty` merge — **that's expected, not a bug to fix or a conflict to resolve.**
+- **Never delete one.** Deleting the branch risks GitHub garbage-collecting the commit it points at (no longer reachable from any ref), silently breaking `fetch-engine.sh`/CI for every future build pinned to that SHA.
+- **This exact mistake has already happened twice**: once during issue #20's original implementation, and again as PR #33 ("Engine patch/bf4102a cryptoutil fix"), opened a second time against `main` and correctly showing `mergeable_state: dirty`. Investigation confirmed the fix it carried was already the pinned `ENGINE_VERSION` commit and already verified working — the PR was redundant, not a real conflict to resolve. **If you see a PR like this again: close it without merging, comment pointing at this section, and do not delete its source branch.**
+
+**To ship a *new* engine-level fix in the future:** branch from the currently-pinned `ENGINE_VERSION` commit, add the fix, and push it as a new `engine-patch/<description>` branch — never opened as a PR against `main`. Then open a normal mod-content PR that only updates `mod.config`'s `ENGINE_VERSION`/`AUTOMATIC_ENGINE_SOURCE` to the new SHA; that `mod.config` change is the only part of this process that goes through normal review and merges into `main`.
