@@ -12,7 +12,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.Common.Traits;
-using OpenRA.Network;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Sungrid.GridReserve
@@ -86,14 +85,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		readonly HashSet<Player> objectiveAdded = [];
 		readonly Dictionary<Player, int> lockdownRemaining = [];
 
-		bool enabled;
 		bool anyLockdownEverTriggered;
 		int elapsedTicks;
 		Player[] players;
 
 		// Exposes the resolved lobby toggle for HUD widgets (GridReserveHudLogic, GridReserveStandingsLogic)
 		// so they can hide themselves in matches where the mode is off, without re-parsing lobby options.
-		public bool Enabled => enabled;
+		public bool Enabled { get; private set; }
 
 		public GridReserveController(GridReserveControllerInfo info)
 		{
@@ -102,12 +100,12 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 		void INotifyCreated.Created(Actor self)
 		{
-			enabled = self.World.LobbyInfo.GlobalSettings.OptionOrDefault("gridreserve", info.CheckboxEnabled);
+			Enabled = self.World.LobbyInfo.GlobalSettings.OptionOrDefault("gridreserve", info.CheckboxEnabled);
 		}
 
 		void ITick.Tick(Actor self)
 		{
-			if (!enabled)
+			if (!Enabled)
 				return;
 
 			// Players and NonCombatants are fixed once the game starts, so this can be cached lazily.
