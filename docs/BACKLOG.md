@@ -490,3 +490,30 @@ mod.config:
 **Definition of done:** A recorded decision (approve the re-pin, or an explicit alternative) — this RFC issue is about the decision, not the implementation. **Met** — approved. Implemented: `mod.config`'s `ENGINE_VERSION`/`AUTOMATIC_ENGINE_SOURCE` now point at the patched commit per "Concrete change" above. Verified via the real `fetch-engine.sh`/`make` flow (not a manual workaround) under `8.0.128` — the exact SDK version that failed against the old pin — with 0 warnings/0 errors.
 
 **One real wrinkle during implementation, worth recording:** a PR was opened attempting to merge `engine-patch/bf4102a-cryptoutil-fix` directly into `main` (rather than just re-pointing `mod.config` at it). That's not how this is meant to work, and it doesn't merge cleanly: the branch is a snapshot of the *pre-SDK-migration* engine tree (`OpenRA.Game/`, etc. at the repo root, matching commit `bf4102a`'s original layout), while `main`'s own history deleted all of those root-level files as part of the SDK migration (engine content becomes a gitignored fetched dependency, not vendored source). Merging the two produces a modify/delete conflict on `Map.cs`, and force-resolving it in favor of the incoming side would resurrect the entire old engine tree as committed files in `main` — exactly what the Mod SDK pattern exists to avoid. That PR was closed unmerged. `engine-patch/bf4102a-cryptoutil-fix` is not meant to ever merge into `main` — it exists solely as a fetch target, downloaded by commit SHA via its GitHub archive URL, the same way `OpenRA/OpenRA` was downloaded from before.
+
+---
+
+### 21. Windows packaging job fails: missing `wine32`/multiarch breaks `rcedit` version-stamping — FIXED
+
+**Problem:** The user manually pushed the `alpha1` tag to test `packaging.yml`'s release flow. The Linux AppImage job succeeded (and is confirmed the correct downloadable artifact: `SungridProtocol-alpha1-x86_64.AppImage`), but the Windows Installers job failed, and the macOS Disk Image job never started (stuck `queued`, `runner_id: 0` — a GitHub-hosted `macos-13` runner availability/queueing issue, not a repo config problem; no action taken here).
+
+**Root cause (confirmed from the actual job log, not guessed):** `packaging/windows/buildpackage.sh` builds the Windows launcher `.exe` successfully, then shells out to `wine64 rcedit-x64.exe ... --set-product-version ...` to stamp version metadata and the icon onto it. The workflow's `Prepare Environment` step only installed `nsis wine64`. Wine's own first-run output says exactly what's wrong:
+```
+it looks like wine32 is missing, you should install it.
+multiarch needs to be enabled first.  as root, please
+execute "dpkg --add-architecture i386 && apt-get update &&
+apt-get install wine32"
+```
+Ubuntu 22.04's distro-packaged `wine64` (6.0.3~repack) still depends on the `wine32`/i386 multiarch component for its own registry/config initialization, even to run a 64-bit-only tool like `rcedit-x64.exe`. Without it, Wine's first-run config bootstrap fails partway through, `rcedit` gets fed a broken/empty environment, and crashes immediately with `Fatal error: Unable to parse version string for ProductVersion` (exit code 1) — a downstream symptom of the missing dependency, not a bug in the version string itself.
+
+**Fix:** `.github/workflows/packaging.yml`'s Windows job now runs `sudo dpkg --add-architecture i386` before `apt-get update`, and installs `wine32 wine64` (not just `wine64`).
+
+**Scope:** This one workflow file, one job. Out of scope: the macOS job's `queued` stall (looks like GitHub-hosted macOS runner capacity, not a repo bug — worth a retry, not a config change); a real second release-tag test to confirm the fix end-to-end (needs another manual tag push from the user, since this session can't push tags/trigger releases itself without being asked).
+
+**Dependencies:** None.
+
+**Definition of done:** `packaging.yml` installs `wine32` alongside `wine64` for the Windows job. **Met.** Full green confirmation (re-running the release workflow against a new tag) is still pending — that's the user's call on when to cut the next test tag.
+
+**Labels:** `type:build`, `type:ci`
+
+**Phase:** Cross-cutting build-tooling fix (release packaging, not tied to a specific content phase).
