@@ -283,7 +283,17 @@ namespace OpenRA
 
 				// Take the SHA1
 				if (streams.Count == 0)
+				{
+					// [] is ambiguous between CryptoUtil.SHA1Hash(byte[]) and (string) under some
+					// .NET 8 SDK patch versions (CS0121; see docs/BACKLOG.md issue #20 in
+					// richardkfm/sungrid-protocol). Array.Empty<byte>() disambiguates, but newer SDK
+					// patch versions' IDE0301 wants to simplify it back to the very syntax that's
+					// ambiguous on older ones - suppressed here rather than picking a spelling that
+					// only satisfies one toolchain.
+#pragma warning disable IDE0301 // Simplify collection initialization
 					return CryptoUtil.SHA1Hash(Array.Empty<byte>());
+#pragma warning restore IDE0301
+				}
 
 				var merged = streams[0];
 				for (var i = 1; i < streams.Count; i++)
