@@ -517,3 +517,23 @@ Ubuntu 22.04's distro-packaged `wine64` (6.0.3~repack) still depends on the `win
 **Labels:** `type:build`, `type:ci`
 
 **Phase:** Cross-cutting build-tooling fix (release packaging, not tied to a specific content phase).
+
+---
+
+### 22. Datacenter for AI and Drone Bay had no real tech-tree/logistics identity — FIXED
+
+**Problem:** Design review of the two Phase 5 buildings found that despite their names and flavor text, neither did what it implied. `SGDAI` ("Datacenter for AI... battlefield analytics") only trickled a little cash and gave vision/cloak detection — it had the standard auto-provided `sgdai` prerequisite id, but nothing in the ruleset actually required it, so it never functioned as a tech gate the way `dome`/`atek`/`stek` do. `SGDRN` ("Drone Bay... autonomous delivery drones") produced no drones at all — it was purely a `ProximityExternalCondition` vehicle speed aura, a deliberate Phase 5 descope noted in `docs/BUILDINGS.md` at the time.
+
+**Fix:**
+- `SGDAI` is now a real tech gate: `PDOX` (Chronosphere), `IRON` (Iron Curtain), and `MSLO` (Missile Silo) all require `sgdai` in addition to their existing `atek`/`stek`/`techcenter` + `~techlevel.unrestricted` gates.
+- `SGDRN` gained `Production`/`Exit`/`RallyPoint` traits (Vehicle queue), mirroring `WEAP`'s existing pattern, and now builds a new unit: `SGDRO` ("Recon Drone") in `mods/sungrid/rules/vehicles.yaml` — a fast, unarmed, wide-vision scout, `Inherits: ^Vehicle`, reusing `JEEP`'s sprite (`RenderSprites.Image: jeep`) per the same placeholder-art-reuse precedent as the rest of the Phase 5 roster. `SGDRO` requires both `sgdrn` and `sgdai`, so the AI Data Center is literally what unlocks the Drone Bay's drone production — tying the two buildings' fantasies together.
+- The existing `CashTrickler`/`RevealsShroud`/`DetectCloaked` on `SGDAI` and the speed aura on `SGDRN` were kept as-is rather than removed, so the buildings still fill their original economy/logistics role in addition to the new gating role.
+- Fluent descriptions for `actor-sgdai` and `actor-sgdrn` updated to mention the new tech-gate/production relationship; `actor-sgdro` added.
+
+**Scope:** `mods/sungrid/rules/structures.yaml` (`SGDAI`, `SGDRN`, `PDOX`, `IRON`, `MSLO`), `mods/sungrid/rules/vehicles.yaml` (new `SGDRO`), `mods/sungrid/fluent/rules.ftl`. No new C# — same stock-trait-composition approach (`Production`, `Exit`, `RallyPoint`) already used by `WEAP`/`HPAD`.
+
+**Verification:** Could not run `make test` (`./utility.sh --check-yaml`) in this environment — no fetched engine/`dotnet` available, the same constraint noted in issue #11. Manually verified: tab-consistent indentation matching surrounding YAML, no actor id collisions (`SGDRO` is unique), and every new `Prerequisites:` reference (`sgdai`, `sgdrn`) resolves to an actual actor definition. **A real engine build/YAML-check and a human playtest are both still needed post-merge** — same outstanding gap as the rest of the Phase 5 roster.
+
+**Labels:** `type:content`, `type:balance`, `area:economy`, `area:logistics`, `area:intelligence`
+
+**Phase:** 5 — Faction Flavor (follow-up correction to the original roster).

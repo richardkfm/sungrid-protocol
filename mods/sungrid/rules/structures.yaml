@@ -11,7 +11,7 @@ MSLO:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 140
-		Prerequisites: techcenter, ~techlevel.unrestricted
+		Prerequisites: techcenter, sgdai, ~techlevel.unrestricted
 		BuildLimit: 1
 		Description: actor-mslo.description
 	Building:
@@ -400,7 +400,7 @@ IRON:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 130
-		Prerequisites: stek, ~structures.soviet, ~techlevel.unrestricted
+		Prerequisites: stek, sgdai, ~structures.soviet, ~techlevel.unrestricted
 		BuildLimit: 1
 		Description: actor-iron.description
 	Valued:
@@ -473,7 +473,7 @@ PDOX:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 120
-		Prerequisites: atek, ~structures.allies, ~techlevel.unrestricted
+		Prerequisites: atek, sgdai, ~structures.allies, ~techlevel.unrestricted
 		BuildLimit: 1
 		Description: actor-pdox.description
 	Valued:
@@ -2402,6 +2402,16 @@ SGDRN:
 		Range: 8c0
 		ValidRelationships: Ally
 		Condition: dronebay-network
+	RallyPoint:
+		ForceSetType: Vehicle
+	CommandBarBlacklist:
+		DisableStop: false
+	Exit@1:
+		RequiresCondition: !being-captured
+		SpawnOffset: 0,-128,0
+		ExitCell: 1,2
+	Production:
+		Produces: Vehicle
 	Power:
 		Amount: -20
 	ProvidesPrerequisite@buildingname:

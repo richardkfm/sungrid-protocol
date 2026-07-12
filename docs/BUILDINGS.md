@@ -63,7 +63,7 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Prerequisites:** Tech Center-equivalent, Solar Array.
 - **Likely counters:** High-value raid target once its intelligence bonus is felt on the battlefield; power denial reduces its effect the same way as Cryptominer.
 - **Implementation complexity:** Low, in practice — composes stock `CashTrickler`, `RevealsShroud`, and `DetectCloaked` (confirmed as the safer, already-verified-in-repo choice over the support-power-style periodic pulse originally described).
-- **Staging:** Implemented (Phase 5) as `SGDAI`.
+- **Staging:** Implemented (Phase 5) as `SGDAI`. **Revised (issue #22):** the original implementation had the `sgdai` prerequisite id auto-provided but never consumed anywhere, so it didn't actually function as a tech gate despite the "brains behind smart-grid coordination" fantasy. It now genuinely gates content: `PDOX`/`IRON`/`MSLO` (the three superweapons) require `sgdai` in addition to their existing tech-center gates, and it's a required prerequisite (alongside `sgdrn`) for the new `SGDRO` Recon Drone unit — see building #6 below. The passive cash/vision/detection effects are unchanged.
 
 ### 6. Drone Bay
 - **Category:** Logistics
@@ -72,7 +72,7 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Prerequisites:** Construction Yard, Recycling Depot or equivalent economy building.
 - **Likely counters:** Anti-air, since drone traffic is the obvious vulnerability; destroying the Drone Bay itself halts the logistics network.
 - **Implementation complexity:** Low, in practice — scoped down deliberately per this doc's own friction-point flag. Rather than genuinely novel routing/logistics logic, implemented as a `ProximityExternalCondition` aura granting nearby friendly vehicles a `SpeedMultiplier` bonus ("drone-assisted logistics network"). No new unit, no new C#, no novel routing behavior.
-- **Staging:** Implemented (Phase 5) as `SGDRN`.
+- **Staging:** Implemented (Phase 5) as `SGDRN`. **Revised (issue #22):** the "no new unit" descope above meant the building had no actual drone identity — the speed aura is retained, but `SGDRN` now also has `Production`/`Exit`/`RallyPoint` (mirroring `WEAP`'s existing Vehicle-producer pattern) and builds a new unit, `SGDRO` ("Recon Drone", `mods/sungrid/rules/vehicles.yaml`) — a fast, unarmed, wide-vision scout reusing `JEEP`'s sprite. `SGDRO` requires both `sgdrn` and `sgdai`, so the AI Data Center is what unlocks it. Still no new C#.
 
 ### 7. Grid Defense Turret
 - **Category:** Defense
