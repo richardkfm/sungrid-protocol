@@ -2377,7 +2377,7 @@ SGDRN:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 202
-		Prerequisites: proc, oilb, ~techlevel.medium
+		Prerequisites: proc, rcyd, ~techlevel.medium
 		Description: actor-sgdrn.description
 	Valued:
 		Cost: 900
@@ -2421,7 +2421,7 @@ SGTUR:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 145
-		Prerequisites: powr, ~techlevel.medium
+		Prerequisites: anypower, ~techlevel.medium
 		Description: actor-sgtur.description
 	Valued:
 		Cost: 900
@@ -2491,7 +2491,7 @@ SGREL:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 205
-		Prerequisites: powr, ~techlevel.medium
+		Prerequisites: anypower, ~techlevel.medium
 		Description: actor-sgrel.description
 	Valued:
 		Cost: 600

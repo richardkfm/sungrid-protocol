@@ -13,7 +13,6 @@ using System;
 using System.Globalization;
 using OpenRA.Mods.Common.Widgets;
 using OpenRA.Primitives;
-using OpenRA.Traits;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.Sungrid.GridReserve

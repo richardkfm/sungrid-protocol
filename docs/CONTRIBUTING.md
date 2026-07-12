@@ -15,7 +15,7 @@ CLAUDE.md                            # navigation map for AI-assisted sessions
 
 ## Branch strategy
 
-- `main` — default/integration branch, always playable. Nothing merges here that doesn't at least build. (This repo started life forked from the OpenRA engine's own `bleed` branch; `main` became the default/integration branch once the Mod SDK migration was underway. `bleed` still exists on the remote but is no longer the branch to target — see `CLAUDE.md`'s "Working conventions".)
+- `main` — default/integration branch, always playable. Nothing merges here that doesn't at least build. (This repo started life forked from the OpenRA engine's own `bleed` branch; `main` became the default/integration branch once the Mod SDK migration was underway. `bleed` has since been deleted from the remote — see `CLAUDE.md`'s "Working conventions".)
 - `claude/*` or `feature/*` — short-lived branches per issue/phase item. Named after the issue where possible (e.g. `feature/grid-reserve-vault`).
 - No direct pushes to `main` — everything goes through a PR, even for a solo-founder-plus-Claude workflow, so the diff history stays reviewable.
 - Tag releases off `main` once a phase's exit criteria (per `docs/ROADMAP.md`) are met.
