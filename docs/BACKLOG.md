@@ -438,7 +438,7 @@ Every reference updated to point at the new ids instead of dangling or disappear
 
 ---
 
-### 20. RFC: Re-pin ENGINE_VERSION to a patched commit fixing the CryptoUtil ambiguity — AWAITING DECISION
+### 20. RFC: Re-pin ENGINE_VERSION to a patched commit fixing the CryptoUtil ambiguity — APPROVED AND IMPLEMENTED
 
 **Problem:** `mod.config`'s `ENGINE_VERSION` is pinned to `bf4102a029f132824d682069fce1105d56fc5e96`. That exact commit fails to compile under some `.NET 8` SDK patch versions with a `CS0121` ambiguous-overload error (`CryptoUtil.SHA1Hash([])` — the empty collection expression matches both the `byte[]` and `string` overloads). Confirmed behavior:
 - Fails under `8.0.128` (installable via `sudo apt-get install -y dotnet-sdk-8.0` on Ubuntu/Debian — a completely ordinary, likely-common local setup path).
@@ -481,4 +481,6 @@ mod.config:
 
 **Dependencies:** None blocking. Builds on issue #17's verification and the `engine-patch/bf4102a-cryptoutil-fix` branch already pushed.
 
-**Definition of done:** A recorded decision (approve the re-pin, or an explicit alternative) — this RFC issue is about the decision, not the implementation. Once approved, a follow-up PR makes the `mod.config` change and this issue's status updates accordingly.
+**Definition of done:** A recorded decision (approve the re-pin, or an explicit alternative) — this RFC issue is about the decision, not the implementation. **Met** — approved. Implemented: `mod.config`'s `ENGINE_VERSION`/`AUTOMATIC_ENGINE_SOURCE` now point at the patched commit per "Concrete change" above. Verified via the real `fetch-engine.sh`/`make` flow (not a manual workaround) under `8.0.128` — the exact SDK version that failed against the old pin — with 0 warnings/0 errors.
+
+**One real wrinkle during implementation, worth recording:** a PR was opened attempting to merge `engine-patch/bf4102a-cryptoutil-fix` directly into `main` (rather than just re-pointing `mod.config` at it). That's not how this is meant to work, and it doesn't merge cleanly: the branch is a snapshot of the *pre-SDK-migration* engine tree (`OpenRA.Game/`, etc. at the repo root, matching commit `bf4102a`'s original layout), while `main`'s own history deleted all of those root-level files as part of the SDK migration (engine content becomes a gitignored fetched dependency, not vendored source). Merging the two produces a modify/delete conflict on `Map.cs`, and force-resolving it in favor of the incoming side would resurrect the entire old engine tree as committed files in `main` — exactly what the Mod SDK pattern exists to avoid. That PR was closed unmerged. `engine-patch/bf4102a-cryptoutil-fix` is not meant to ever merge into `main` — it exists solely as a fetch target, downloaded by commit SHA via its GitHub archive URL, the same way `OpenRA/OpenRA` was downloaded from before.
