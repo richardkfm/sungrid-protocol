@@ -129,7 +129,7 @@ Full detail — fantasy, gameplay purpose, prerequisites, likely counters, imple
 Full detail in [`CONTRIBUTING.md`](CONTRIBUTING.md). Summary:
 
 - **Repo structure:** engine fetched/pinned under `engine/` (gitignored, never committed); `mods/sungrid` + `OpenRA.Mods.Sungrid` as the active mod; `docs/` for design docs.
-- **Branch strategy:** `main` is the protected integration branch (the repo's original `bleed`, inherited from the OpenRA engine fork, still exists on the remote but is no longer the branch to target); short-lived `feature/*`/`claude/*` branches per issue; no direct pushes to `main`.
+- **Branch strategy:** `main` is the protected integration branch (the repo's original `bleed`, inherited from the OpenRA engine fork, has since been deleted from the remote); short-lived `feature/*`/`claude/*` branches per issue; no direct pushes to `main`.
 - **Milestones:** one per roadmap phase (`P0: Bootstrap` through `P8: Diplomacy (conditional)`).
 - **Label taxonomy:** `phase:0`-`phase:8`, `type:design`/`content`/`engine`/`docs`/`bug`, `area:economy`/`energy`/`defense`/`intelligence`/`logistics`/`grid-reserve`, `risk:scope-trap`, `good-first-issue`.
 - **RFC workflow:** any `type:engine` change, or any change to a rule already documented in `GAME_MODES.md`/`BUILDINGS.md`, gets a `type:design` issue first; docs update in the same PR as (or immediately before) the implementation.
@@ -195,7 +195,7 @@ The full 10-building roster, both victory modes (destruction default, Grid Reser
 - [x] Write and merge the full `docs/` design doc set (`VISION`, `ROADMAP`, `ARCHITECTURE`, `GAME_MODES`, `BUILDINGS`, `ART_DIRECTION`, `CONTRIBUTING`, `LICENSE_NOTES`, `BLUEPRINT`, `BACKLOG`) and `CLAUDE.md`.
 - [x] Reframe root `README.md` around Sungrid Protocol while preserving OpenRA attribution/license requirements.
 - [x] Migrate the repo onto the OpenRAModSDK pattern (`mod.config`, `fetch-engine.sh`, `mods/sungrid`/`OpenRA.Mods.Sungrid` renamed from the SDK's example template, CI updated) instead of the original full engine fork.
-- [ ] Create GitHub milestones `P0`-`P6` matching `ROADMAP.md`.
+- [ ] Create GitHub milestones `P0`-`P8` matching `ROADMAP.md`.
 - [ ] Create the label taxonomy from `docs/CONTRIBUTING.md`.
 - [ ] Enable GitHub Issues and open the first 10 issues (`docs/BACKLOG.md`).
 - [x] Merge this PR to `bleed` (historical — `bleed` was the integration branch at Phase 0; `main` has been the integration branch since the Mod SDK migration completed, see `CLAUDE.md`).
