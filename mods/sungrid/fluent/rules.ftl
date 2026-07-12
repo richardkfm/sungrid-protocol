@@ -1153,15 +1153,24 @@ actor-sgdai =
 actor-sgdrn =
     .name = Drone Bay
     .description =
-    Autonomous delivery drones speed up nearby friendly
-    vehicles, easing logistics across a spread-out base.
-    Produces Recon Drones once a Datacenter for AI is built.
+    Assembly infrastructure. Autonomous delivery drones speed
+    up nearby friendly vehicles, easing logistics across a
+    spread-out base. Produces Recon Drones once a Datacenter
+    for AI is built.
 
 actor-sgdro =
     .name = Recon Drone
     .description =
-    A fast, unarmed autonomous scout drone with wide sensor
-    range. Requires a Drone Bay and a Datacenter for AI.
+    A cheap, fast Assembly scout drone armed with small
+    rockets. Wide sensor range, very light armour. Requires
+    a Drone Bay and a Datacenter for AI.
+
+actor-sgdrs =
+    .name = Strike Drone
+    .description =
+    A pricier, harder-hitting Consortium counterpart to the
+    Assembly's Recon Drone. Still very light armour. Requires
+    a Helipad and a Datacenter for AI.
 
 actor-sgtur =
     .name = Grid Defense Turret

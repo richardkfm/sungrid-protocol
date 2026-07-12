@@ -281,13 +281,13 @@ SGDRO:
 		Prerequisites: sgdrn, sgdai, ~techlevel.high
 		Description: actor-sgdro.description
 	Valued:
-		Cost: 500
+		Cost: 350
 	Tooltip:
 		Name: actor-sgdro.name
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 6000
+		HP: 3000
 	Armor:
 		Type: Light
 	RevealsShroud:
@@ -302,6 +302,10 @@ SGDRO:
 		TurnSpeed: 24
 		Speed: 170
 		AltitudeVelocity: 0c58
+	Armament:
+		Weapon: DroneRocket
+		LocalOffset: 0,0,-85
+	AttackAircraft:
 	WithIdleOverlay@ROTOR1AIR:
 		Offset: 597,0,213
 		Sequence: rotor
@@ -601,3 +605,49 @@ MH60:
 	WithProductionIconOverlay:
 		Types: Veterancy
 		Prerequisites: aircraft.upgraded
+
+SGDRS:
+	Inherits: ^Helicopter
+	RenderSprites:
+		Image: mh60
+	Buildable:
+		Queue: Aircraft
+		BuildAtProductionType: Helicopter
+		BuildPaletteOrder: 70
+		Prerequisites: ~hpad, sgdai, ~techlevel.high
+		Description: actor-sgdrs.description
+	Valued:
+		Cost: 600
+	Tooltip:
+		Name: actor-sgdrs.name
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Health:
+		HP: 3500
+	Armor:
+		Type: Light
+	RevealsShroud:
+		MinRange: 6c0
+		Range: 10c0
+		Type: GroundPosition
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 6c0
+		Type: GroundPosition
+	Aircraft:
+		TurnSpeed: 20
+		Speed: 150
+	Armament:
+		Weapon: DroneRocket.Strike
+		LocalOffset: 0,0,-85
+	AttackAircraft:
+	WithIdleOverlay@ROTORAIR:
+		Sequence: rotor
+		RequiresCondition: airborne
+	WithIdleOverlay@ROTORGROUND:
+		Sequence: slow-rotor
+		RequiresCondition: !airborne
+	SpawnActorOnDeath:
+		Actor: MH60.Husk
+	Selectable:
+		DecorationBounds: 1621, 1365

@@ -578,3 +578,24 @@ This only produces a digit-led string when `TAG` has a `type-version` shape like
 **Labels:** `type:build`, `type:ci`
 
 **Phase:** Cross-cutting build-tooling fix (release packaging, not tied to a specific content phase).
+
+---
+
+### 24. Drones were unarmed/faction-neutral — gave each faction its own, balanced
+
+**Problem:** Issue #23 made `SGDRO` ("Recon Drone") an actual flying unit, but left it unarmed, faction-neutral, and only moderately fragile (`HP: 6000`, cost 500) — not the cheap, weakly-armed, very-fragile asymmetric harasser the fiction implied, and with no faction identity behind it.
+
+**Fix:**
+- `SGDRN` (Drone Bay) is now Assembly-exclusive: `~structures.soviet` added to its `Buildable.Prerequisites`, matching the exact idiom `AGUN`/`SAM` already use. `SGDRO` needed no direct faction tag — it's transitively gated once only the Assembly can build `sgdrn`, the same relationship `TRAN`/`HELI` have to the Consortium-exclusive `HPAD`. Doc research (`docs/BACKLOG.md` issue #15's "scarcity-adapted, improvisational" characterization of The Assembly vs. The Consortium's "capital/technocratic" one, plus `docs/ART_DIRECTION.md`'s unassigned "decentralized/drone-based" faction axis) supports this assignment.
+- `SGDRO` tuned down: `Cost: 500 → 350`, `HP: 6000 → 3000`, armed with a new weak weapon `DroneRocket` (`mods/sungrid/weapons/missiles.yaml`, `Inherits: ^AntiGroundMissile`, `Burst: 2` small rockets at `Damage: 700` each, slower `ReloadDelay: 80` than any existing ground missile) via `Armament`/`AttackAircraft`.
+- Added a Consortium counterpart, `SGDRS` ("Strike Drone", `mods/sungrid/rules/aircraft.yaml`), built from the existing Consortium-exclusive `HPAD` rather than a new building (`Prerequisites: ~hpad, sgdai, ~techlevel.high`, mirroring `SGDRO`'s `sgdrn, sgdai, ~techlevel.high` structure). Reuses `MH60`'s (Black Hawk) sprite/rotor-overlay/husk rather than `TRAN`'s, so it reads as visually distinct. Pricier (`Cost: 600`) and slightly harder-hitting (new weapon `DroneRocket.Strike`, `Inherits: DroneRocket` with `Damage: 950`) than the Assembly's drone, but kept close rather than a different tier, and still `Armor: Type: Light` / low `HP: 3500` — "still very easy to take down," per the request.
+- No new dedicated counter unit was added on either side: both drones stay `Light`-armored, and the existing faction-neutral `E3` Rocket Soldier (300 cost, `RedEye` weapon does 100% damage versus `Light`) already answers either one decisively, as does each side's own `AGUN`/`SAM` AA structure.
+- Fluent text updated for `actor-sgdrn`/`actor-sgdro`; `actor-sgdrs` added.
+
+**Scope:** `mods/sungrid/rules/structures.yaml` (`SGDRN`), `mods/sungrid/rules/aircraft.yaml` (`SGDRO` tuned, new `SGDRS`), `mods/sungrid/weapons/missiles.yaml` (new `DroneRocket`/`DroneRocket.Strike`), `mods/sungrid/fluent/rules.ftl`. No new C#, no new building, no new art (both drones reuse existing helicopter sprites).
+
+**Verification:** Same constraint as issues #22/#23 — no engine/`dotnet` available in this sandbox, so `make test` couldn't run locally; CI on the pushed branch is the first real check. Manually verified: `SGDRS`/`DroneRocket`/`DroneRocket.Strike` don't collide with existing ids, `SGDRN`'s new `~structures.soviet` tag doesn't drop its existing `proc`/`rcyd` prerequisites, both `Armament.Weapon` references resolve, `MH60.Husk` (referenced by `SGDRS`'s `SpawnActorOnDeath`) exists, and `SGDRS`'s single-pair `WithIdleOverlay@ROTORAIR`/`@ROTORGROUND` block matches `MH60`'s own pattern (not `TRAN`/`SGDRO`'s dual-rotor one). **A real engine build/YAML-check and a human playtest (balance feel, not just correctness) are both still needed post-merge.**
+
+**Labels:** `type:content`, `type:balance`, `area:logistics`
+
+**Phase:** 5 — Faction Flavor (third follow-up correction to the Drone Bay/AI Data Center pairing).
