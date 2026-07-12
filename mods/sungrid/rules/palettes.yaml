@@ -2,7 +2,7 @@
 	PaletteFromFile@terrain-snow:
 		Name: terrain
 		Tileset: SNOW
-		Filename: snow.pal
+		Filename: sungrid-snow-terrain.pal
 		ShadowIndex: 3, 4
 	PaletteFromFile@terrain-interior:
 		Name: terrain
@@ -17,7 +17,7 @@
 	PaletteFromFile@terrain-desert:
 		Name: terrain
 		Tileset: DESERT
-		Filename: desert.pal
+		Filename: sungrid-desert-terrain.pal
 		ShadowIndex: 3, 4
 	PaletteFromFile@player:
 		Name: player

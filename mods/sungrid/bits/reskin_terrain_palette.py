@@ -74,7 +74,7 @@ def hue_deg(rgb_arr):
     return h * 360.0
 
 
-def recolor_red_to_green(rgb01: np.ndarray) -> np.ndarray:
+def recolor_red_to_green(rgb01: np.ndarray, max_recolor_value: float | None = None) -> np.ndarray:
     """Wider than reskin_chrome.py's recolor_red_to_green (which only caught
     stock RA's saturated reddish-maroon UI chrome): terrain's dominant "clear
     ground" color is a desaturated tan/khaki around hue 10-45, well outside
@@ -87,7 +87,18 @@ def recolor_red_to_green(rgb01: np.ndarray) -> np.ndarray:
     KEEP distinct from the green base) and nudging those toward the locked
     sun-gold hex instead of green, so terrain still reads as two distinct
     tones (living green ground, gold highlights) rather than a flat green
-    wash."""
+    wash.
+
+    max_recolor_value: desert's dominant "clear ground" color itself sits in
+    this same warm band across a wide range of brightness (unlike temperate/
+    snow, where it's a smaller, mostly-darker accent) - even a gradual
+    brightness-based taper still visibly washes the whole surface green and
+    erases the desert identity, since so much of what reads as "sand" spans
+    that range. A hard cutoff (only recolor entries at or below this value)
+    proved the only thing that actually preserved "desert with mossy
+    crevices" instead of "green field": verified visually via --dump-sheets,
+    not just by the entry count. Leave as None (no cutoff) for temperate/snow,
+    where the full-strength shift already reads correctly."""
     maxc = rgb01.max(axis=-1)
     minc = rgb01.min(axis=-1)
     v = maxc
@@ -98,6 +109,8 @@ def recolor_red_to_green(rgb01: np.ndarray) -> np.ndarray:
     in_warm_band = (h_deg <= 45) | (h_deg >= 330)
     is_bright_glint = (s > 0.85) & (v > 0.85)  # preserve existing sun-gold highlight accents
     touch_green = in_warm_band & (s > 0.12) & (v > 0.03) & ~is_bright_glint
+    if max_recolor_value is not None:
+        touch_green = touch_green & (v < max_recolor_value)
     touch_gold = in_warm_band & is_bright_glint
 
     target_h = GREEN_TARGET_HUE * 360.0
@@ -123,11 +136,18 @@ def recolor_red_to_green(rgb01: np.ndarray) -> np.ndarray:
 
 
 def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <path/to/stock/temperat.pal>", file=sys.stderr)
+    args = list(sys.argv[1:])
+    max_value = None
+    for a in list(args):
+        if a.startswith("--max-value="):
+            max_value = float(a.split("=", 1)[1])
+            args.remove(a)
+    if len(args) not in (1, 2):
+        print(f"Usage: {sys.argv[0]} <path/to/stock/tileset.pal> [output-filename] [--max-value=0.5]", file=sys.stderr)
         sys.exit(1)
 
-    src = sys.argv[1]
+    src = args[0]
+    out_name = args[1] if len(args) == 2 else "sungrid-temperat-terrain.pal"
     data = open(src, "rb").read()
     if len(data) != 768:
         print(f"Expected a 768-byte (256x3, 6-bit VGA) .pal file, got {len(data)} bytes", file=sys.stderr)
@@ -137,13 +157,13 @@ def main():
     raw = np.frombuffer(data, dtype=np.uint8).reshape(256, 3).astype(np.float64)
     rgb01 = np.clip(raw * 4.0, 0, 255) / 255.0
 
-    out01 = recolor_red_to_green(rgb01)
+    out01 = recolor_red_to_green(rgb01, max_recolor_value=max_value)
 
     # Narrow back to 6-bit by matching the engine's own widening (x << 2 == x * 4),
     # so the round trip is exact for untouched entries.
     out6 = np.clip(np.round(out01 * 255.0 / 4.0), 0, 63).astype(np.uint8)
 
-    dest = os.path.join(HERE, "sungrid-temperat-terrain.pal")
+    dest = os.path.join(HERE, out_name)
     with open(dest, "wb") as f:
         f.write(out6.tobytes())
 

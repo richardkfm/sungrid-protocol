@@ -59,3 +59,7 @@ update.log
 
 # IntelliJ files
 .idea
+
+# Python (asset pipeline scripts under mods/sungrid/bits/)
+__pycache__/
+*.pyc
