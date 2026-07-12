@@ -4,6 +4,8 @@ Step-by-step instructions to build, launch, and play a local Sungrid Protocol sk
 
 The mod is playable today: `mods/sungrid` holds real Red Alert-derived gameplay (not the SDK's placeholder example content), including the full Phase 2/5 building roster and the Grid Reserve economic victory mode. See `CLAUDE.md`'s "Current status" for where the project stands.
 
+This guide is for building from source. If you just want to play, download the pre-built package for your platform from the [Releases](https://github.com/richardkfm/sungrid-protocol/releases) page instead — no build step required.
+
 ## Prerequisites
 
 - **.NET SDK** matching the engine's target (currently `net8.0`). If your distro only ships a newer major version (common on rolling-release distros like Arch/CachyOS, which track only the latest .NET), see the roll-forward workaround below rather than assuming you need to downgrade.

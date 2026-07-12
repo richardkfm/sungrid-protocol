@@ -29,6 +29,10 @@ EA has not endorsed and does not support this product. See [`docs/LICENSE_NOTES.
 
 <img width="1024" height="1280" alt="ra-sungrid_visual" src="https://github.com/user-attachments/assets/31a89549-de39-42be-add0-bf962f9ca148" />
 
+### Download
+
+You don't need to build from source to try it — pre-built Windows installers, macOS disk images, and Linux AppImages are published on the [Releases](https://github.com/richardkfm/sungrid-protocol/releases) page for each tagged version. Grab the package for your platform and run it; building (below) is only needed if you want the latest `main` or plan to make changes.
+
 ## Building
 
 This repo uses the OpenRA Mod SDK build flow — the engine is not vendored, it's fetched on demand:
