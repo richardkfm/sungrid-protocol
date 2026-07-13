@@ -13,7 +13,7 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 * [`docs/ROADMAP.md`](docs/ROADMAP.md) — phase-by-phase deliverables, exit criteria, and explicit non-goals.
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how this is structured as an OpenRA mod, and what's data-driven vs. engine-level.
 * [`docs/GAME_MODES.md`](docs/GAME_MODES.md) — full spec for the Grid Reserve economic victory mode.
-* [`docs/BUILDINGS.md`](docs/BUILDINGS.md) — the initial building roster.
+* [`docs/BUILDINGS.md`](docs/BUILDINGS.md) — the initial building roster. Full unit/building roster by faction, plus a makeover-vs-new-mechanic breakdown and parity flags: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/faction-roster-dossier.html">via githack</a>
 * [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) — step-by-step build/launch/troubleshooting instructions to actually run a local match.
 * [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/phase5-pixel-mockups.html">via githack</a> 
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
