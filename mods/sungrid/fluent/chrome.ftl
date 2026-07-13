@@ -39,7 +39,7 @@ button-command-bar-deploy =
      - MCVs will unpack into a Construction Yard
      - Construction Yards will re-pack into a MCV
      - Transports will unload their passengers
-     - Demolition Trucks and MAD Tanks will self-destruct
+     - Demolition Trucks and Tremor Tanks will self-destruct
      - Minelayers will deploy a mine
      - Aircraft will return to base
 

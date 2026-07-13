@@ -135,7 +135,7 @@ actor-hind =
       Strong vs Infantry and Light armor
       Weak vs Tanks and Aircraft
 
-actor-u2-name = Spy Plane
+actor-u2-name = Recon Plane
 
 actor-mh60 =
     .name = Black Hawk
@@ -290,7 +290,7 @@ actor-mig-husk-name = MiG Attack Plane
 actor-yak-husk-name = Yak Attack Plane
 actor-heli-husk-name = Longbow
 actor-hind-husk-name = Hind
-actor-u2-husk-name = Husk (Spy Plane)
+actor-u2-husk-name = Husk (Recon Plane)
 actor-mh60-husk-name = Black Hawk
 
 ## infantry.yaml
@@ -679,9 +679,9 @@ actor-afld =
     .name = Airfield
     .description =
     Produces and reloads aircraft.
-      Special Ability: Spy Plane
+      Special Ability: Recon Plane
       Special Ability: Paratroopers
-    .airstrikepower-spyplane-name = Spy Plane
+    .airstrikepower-spyplane-name = Recon Plane
     .airstrikepower-spyplane-description = Reveals an area of the map.
     .paratrooperspower-paratroopers-name = Paratroopers
     .paratrooperspower-paratroopers-description = A Badger drops a squad of infantry
@@ -692,7 +692,7 @@ actor-afld =
 
 actor-afld-ukraine-description =
     Produces and reloads aircraft.
-      Special Ability: Spy Plane
+      Special Ability: Recon Plane
       Special Ability: Paratroopers
       Special Ability: Parabombs
 
@@ -774,7 +774,7 @@ actor-anypower-name = Any Power Generation
 
 ## vehicles.yaml
 actor-v2rl =
-    .name = V2 Rocket Launcher
+    .name = Surge Rocket Launcher
     .description =
     Long-range rocket artillery.
       Strong vs Infantry and Buildings
@@ -908,7 +908,7 @@ actor-ctnk =
       Special ability: Can teleport
 
 actor-qtnk =
-    .name = MAD Tank
+    .name = Tremor Tank
     .generic-name = Tank
     .description =
     Deals seismic damage to nearby vehicles
