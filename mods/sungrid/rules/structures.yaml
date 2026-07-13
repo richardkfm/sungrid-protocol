@@ -1809,9 +1809,6 @@ SGWND:
 	Targetable:
 		TargetTypes: GroundActor, Structure, C4, DetonateAttack, SpyInfiltrate
 	ScalePowerWithHealth:
-	WithDeathAnimation:
-		DeathSequence: dead
-		UseDeathTypeSuffix: false
 
 SGHYD:
 	Inherits: ^Building
@@ -2545,7 +2542,6 @@ SGDRA:
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
 		Range: 4c0
-	WithBuildingBib:
 	ProximityExternalCondition@DRONENETWORK:
 		Range: 8c0
 		ValidRelationships: Ally
