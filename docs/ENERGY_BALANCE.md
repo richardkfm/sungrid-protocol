@@ -93,31 +93,48 @@ Infantry → Disruptor Trooper (issue #14):
 No new art — same stock sprites, matching the fact that Phase 7 (unit/vehicle sprite work, per
 `docs/ROADMAP.md`) hasn't started yet.
 
-## Suggestions only: Phase 7 reskin candidates
+## Phase 7 reskin candidates
 
-The broader "which 90s-style units need a full identity pass" question is out of scope for this data-only
-change — `docs/ROADMAP.md` explicitly flags Phase 7 (core unit/vehicle sprite and identity work) as not yet
-started and as having "no natural stopping point" if scope isn't capped. The infantry/vehicle roster
-(`mods/sungrid/rules/infantry.yaml`, `vehicles.yaml`) is almost entirely unmodified stock Red Alert content —
-this is the real target for that phase, not attempted here. Candidates worth scoping when Phase 7 starts,
-in rough priority order (most tone-clashing first):
+The broader "which 90s-style units need a full identity pass" question is out of scope for the energy
+rebalance above — `docs/ROADMAP.md` explicitly flags Phase 7 (core unit/vehicle sprite and identity work) as
+not yet started and as having "no natural stopping point" if scope isn't capped. The infantry/vehicle roster
+(`mods/sungrid/rules/infantry.yaml`, `vehicles.yaml`) is almost entirely unmodified stock Red Alert content.
+A follow-up pass split the candidates below into what's actually executable now (pure fluent renames, zero
+art/mechanics/sub-faction risk) versus what's genuinely blocked pending bigger decisions:
 
-- **`TTNK` Tesla Tank** — very Cold War-coded; could pair naturally with the already-renamed
-  Disruptor Trooper/Arc Turret electric theme (issue #14) rather than staying literally "Tesla."
-- **`DTRK` Demolition Truck** — currently flavored around "nuclear explosives"; could become a grid-overload/
-  eco-hazard framing instead (dumping a lethal energy surge rather than a nuclear charge).
-- **`QTNK` MAD Tank / `CTNK` Chrono Tank** — both already fairly unique mechanically; lowest priority for a
-  fantasy rework, but their Cold War sci-fi names (seismic "MAD," time-travel "Chrono") are candidates for
-  renaming once art work starts.
-- **`U2` Spy Plane** — a literal real-world Cold War reconnaissance aircraft name; straightforward rename
-  candidate with no mechanical change needed.
-- **`E1`/`E2`/`E3` core infantry** ("Rifle Infantry", "Grenadier", "Rocket Soldier") — the biggest volume of
-  unmodified content, but also the riskiest to touch first (every player's most-seen units) — probably the
-  last thing to reskin once the visual identity direction is proven on lower-visibility units above.
-- **`1TNK`–`4TNK` generic tank line** — currently just "Light/Medium/Heavy/Mammoth Tank" with "Consortium"/
-  "Assembly" bolted into 2TNK/3TNK's flavor text (issue #15). A full pass would need faction-differentiated
-  silhouettes, not just adjectives, to actually deliver on the "decentralized drone-based vs. centralized
-  hardened grid" identity axis this doc and `docs/ART_DIRECTION.md` describe for buildings.
+**Done — data-only fluent renames, no mechanical or art changes:**
+
+- **`V2RL`** "V2 Rocket Launcher" (a literal WWII rocket designation) → **"Surge Rocket Launcher"**.
+- **`QTNK`** "MAD Tank" (Cold War nuclear-doctrine acronym) → **"Tremor Tank"**, matching its existing seismic
+  mechanic.
+- **`U2`** "Spy Plane" (a real Cold War reconnaissance aircraft) → **"Recon Plane"**, matching the mod's
+  existing recon vocabulary (Sensor Array, Recon Drone).
+
+All three were confirmed faction-general (no `~vehicles.<sub-faction>` gate) before touching them, and the
+entire change was confined to `mods/sungrid/fluent/rules.ftl`/`chrome.ftl` — no actor id, weapon, or sprite
+changed.
+
+**Deferred — touches sub-faction identity, needs its own decision first:**
+
+- **`TTNK` Tesla Tank** (Russia-gated) and **`DTRK` Demolition Truck** (Ukraine-gated) — real-world-coded
+  sub-faction special units, exactly the category `docs/BACKLOG.md` issue #15 flagged as "a separate, larger
+  creative decision... shouldn't be assumed" when the Allies→Consortium/Soviet→Assembly rename deliberately
+  left sub-faction identity untouched. Explicitly not reskinned in this pass — bundle with that larger
+  Russia/Ukraine-naming decision rather than touching piecemeal.
+- **`CTNK` Chrono Tank** (Germany-gated) — same category, same deferral.
+
+**Blocked — needs a real art/audio pipeline, not just YAML/fluent edits:**
+
+- **`E1`/`E2`/`E3` core infantry** and **`1TNK`–`4TNK` generic tank line** — the biggest-volume, highest-
+  visibility content, and genuinely need new sprite art or faction-differentiated silhouettes, not name swaps.
+  `docs/ART_DIRECTION.md`'s asset-pipeline note requires sprite resolution/frame conventions/a shared palette
+  file to be locked before art work starts; nothing equivalent exists yet for units (only building art has had
+  even a first pass, and that's flagged as needing a real artist too). No image-generation tooling is
+  available in this environment that could produce game-ready indexed-palette sprite sheets matching OpenRA's
+  frame/facing conventions, so this genuinely can't be done as a text-editing pass — it needs a `type:design`
+  RFC (per `docs/CONTRIBUTING.md`) to settle the pipeline question first.
+- The announcer voice set and in-game ambient music pass from Phase 7's roadmap deliverables — same blocker,
+  needs real audio assets.
 
 These are proposals for scoping a future phase, not commitments — expect this list to change once Phase 6's
 visual identity work (terrain, chrome, cursors) is fully wrapped and Phase 7 actually starts.

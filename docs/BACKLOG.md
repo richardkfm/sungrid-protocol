@@ -674,3 +674,57 @@ still needed post-merge — this pass is untested for actual match-length energy
 
 **Phase:** Not tied to a specific roadmap phase — a rebalance/faction-identity pass following up on the
 Phase 5 building roster.
+
+---
+
+### 27. Phase 7 first wave: three unit renames, and an honest map of what's still blocked
+
+**Problem:** `docs/ENERGY_BALANCE.md`'s "Phase 7 reskin candidates" section listed several 90s-style unit
+names as suggestions only. `docs/ROADMAP.md` flags Phase 7 (core unit/vehicle sprite and audio identity) as
+not started and as the roadmap's biggest scope-creep risk ("no natural stopping point... cap scope to the
+core skirmish roster before declaring the phase done") — so the goal here was to turn a few of those
+suggestions into an actual scoped, capped, low-risk first wave rather than attempt the whole phase at once.
+
+**Fix:**
+- Renamed three units via `mods/sungrid/fluent/rules.ftl` (plus one matching update in `chrome.ftl`) —
+  `V2RL` "V2 Rocket Launcher" → "Surge Rocket Launcher", `QTNK` "MAD Tank" → "Tremor Tank" (matches its
+  existing seismic mechanic), `U2` "Spy Plane" → "Recon Plane" (matches the mod's existing recon vocabulary —
+  Sensor Array, Recon Drone). Also updated the `SpyPlane` support power's own display name
+  (`.airstrikepower-spyplane-name`) and its two mentions inside `AFLD`'s description text, the `U2` husk name,
+  and `chrome.ftl`'s deploy-tooltip line that named "MAD Tanks."
+- Confirmed all three are faction-general (no `~vehicles.<sub-faction>` gate) before touching them — this
+  was a deliberate filter, not an oversight: `TTNK` (Tesla Tank, Russia-gated) and `DTRK` (Demolition Truck,
+  Ukraine-gated) were also strong candidates but are exactly the kind of real-world-coded sub-faction special
+  unit issue #15 flagged as "a separate, larger creative decision... shouldn't be assumed." Asked the user
+  directly whether to include them; they confirmed **defer**. `CTNK` (Chrono Tank, Germany-gated) was left
+  alone for the same reason without needing to ask again, same category.
+- None of the three renamed units needed a weapon/warhead change (unlike the `DISR`/`ARCT` precedent from
+  issue #14) — their underlying mechanics already fit the setting, only the literal real-world Cold War names
+  were the clash. So the entire change is confined to fluent text: no `rules/*.yaml`, no `sequences/*.yaml`,
+  no new weapon file, no actor id change.
+- Documented what's genuinely blocked rather than pretending it's done: core roster sprite work
+  (`E1`/`E2`/`E3`, `1TNK`–`4TNK`) and the announcer voice/ambient music pass need real new art or audio
+  assets, or a locked generation pipeline — neither exists yet. `docs/ART_DIRECTION.md`'s asset-pipeline note
+  requires sprite resolution/frame conventions/a shared palette file to be locked before art work starts, and
+  there's no image-generation tooling in this environment that could produce game-ready indexed-palette
+  sprite sheets matching OpenRA's frame/facing conventions. Recommended a `type:design` RFC (per
+  `docs/CONTRIBUTING.md`'s workflow) to settle the pipeline question before any of that work starts, rather
+  than attempting it blind.
+
+**Scope:** `mods/sungrid/fluent/rules.ftl` (`actor-v2rl`, `actor-qtnk`, `actor-u2-name`, `actor-u2-husk-name`,
+`actor-afld`'s two Special Ability mentions and `.airstrikepower-spyplane-name`, `actor-afld-ukraine-description`),
+`mods/sungrid/fluent/chrome.ftl` (one deploy-tooltip line), `docs/ENERGY_BALANCE.md` (candidates list updated
+to reflect done/deferred/blocked), `docs/BACKLOG.md` (this entry). No `rules/*.yaml`, no `sequences/*.yaml`,
+no new C#, no new art.
+
+**Verification:** Grepped the whole `mods/sungrid/` tree for the old display strings ("V2 Rocket Launcher",
+"MAD Tank", "Spy Plane") after editing to confirm no other file hardcoded the literal text outside the fluent
+keys changed — found and fixed two more mentions inside `AFLD`'s own description block and one in
+`chrome.ftl` that a narrower first pass would have missed. Confirmed no duplicate fluent keys introduced. No
+engine/`dotnet` available in this sandbox; CI's rules/map validator is the primary correctness gate on the
+pushed branch, though there's little for it to catch here since no actor id/weapon/sequence changed.
+
+**Labels:** `type:content`, `area:units`
+
+**Phase:** 7 — Unit & Audio Identity (first wave; the bulk of the phase — core roster sprites, sub-faction
+units, audio — remains explicitly unstarted, see `docs/ENERGY_BALANCE.md`).
