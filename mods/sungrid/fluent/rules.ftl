@@ -399,19 +399,19 @@ actor-shok =
       Weak vs Aircraft
 
 actor-zombie =
-    .name = Zombie
+    .name = Blighted
     .description =
-    Slow-moving undead that attack in close combat.
+    Scavenger consumed by grid contamination, drawn to close combat.
 
 actor-ant =
-    .name = Giant Ant
-    .generic-name = Ant
+    .name = Swarmling
+    .generic-name = Swarmling
     .description =
-    Irradiated insect that grew to an abnormally large size.
+    Insect fauna mutated to an abnormal size by leaking grid energy.
 
-actor-fireant-name = Fire Ant
-actor-scoutant-name = Scout Ant
-actor-warriorant-name = Warrior Ant
+actor-fireant-name = Cinderling
+actor-scoutant-name = Scoutling
+actor-warriorant-name = Bulwarkling
 
 ## misc.yaml
 notification-sonar-pulse-ready = Sonar pulse ready.
@@ -707,7 +707,21 @@ actor-apwr =
     .name = Advanced Solar Array
     .description =
     Provides double the power of a standard
-    Solar Array.
+    Solar Array, at a steeper cost per watt.
+
+actor-sgwnd =
+    .name = Wind Turbine Array
+    .description =
+    Assembly power infrastructure. Cheap, early and
+    individually fragile turbines - scale power by spreading
+    them out rather than turtling a single plant.
+
+actor-sghyd =
+    .name = Hydrogen Plant
+    .description =
+    Consortium power infrastructure. An expensive, hardened,
+    late-tech consolidation of grid supply into a single
+    high-output plant - and a single very high-value target.
 
 actor-stek =
     .name = Assembly Tech Center
@@ -927,9 +941,9 @@ actor-miss =
     .capturable-desc = Capture to give visual range.
 
 actor-bio =
-    .name = Biological Lab
-    .captured-desc = Provides prerequisite for Bio-Lab units.
-    .capturable-desc = Capture to produce Bio-Lab units.
+    .name = Containment Ruins
+    .captured-desc = A leaking containment site. Provides prerequisite for grid-mutated fauna.
+    .capturable-desc = Capture to produce grid-mutated fauna.
 
 actor-oilb =
     .name = Oil Derrick
@@ -1146,9 +1160,11 @@ actor-sgdai =
     .name = Datacenter for AI
     .description =
     Racks of compute serving grid logistics and battlefield
-    analytics. Modest passive income, wide sensor coverage,
-    and cloak detection. Its coordination is required to
-    build the most advanced structures and drone units.
+    analytics. Enormous, constant power draw. Income and
+    cloak detection both fall away once the grid is strained,
+    and stop outright under critical power. Its coordination
+    is required to build the most advanced structures and
+    drone units.
 
 actor-sgdrn =
     .name = Drone Bay
@@ -1156,21 +1172,32 @@ actor-sgdrn =
     Assembly infrastructure. Autonomous delivery drones speed
     up nearby friendly vehicles, easing logistics across a
     spread-out base. Produces Recon Drones once a Datacenter
-    for AI is built.
+    for AI is built. Drones lose their weapons fleet-wide
+    once the grid drops to critical power.
 
 actor-sgdro =
     .name = Recon Drone
     .description =
     A cheap, fast Assembly scout drone armed with small
     rockets. Wide sensor range, very light armour. Requires
-    a Drone Bay and a Datacenter for AI.
+    a Drone Bay and a Datacenter for AI. Weapons cut out if
+    the Assembly's grid falls to critical power.
 
 actor-sgdrs =
     .name = Strike Drone
     .description =
     A pricier, harder-hitting Consortium counterpart to the
     Assembly's Recon Drone. Still very light armour. Requires
-    a Helipad and a Datacenter for AI.
+    an Aerial Fabrication Bay and a Datacenter for AI. Weapons
+    cut out if the Consortium's grid falls to critical power.
+
+actor-sgdra =
+    .name = Aerial Fabrication Bay
+    .description =
+    Consortium infrastructure. The Consortium's dedicated
+    counterpart to the Assembly's Drone Bay: autonomous
+    delivery drones speed up nearby friendly vehicles.
+    Produces Strike Drones once a Datacenter for AI is built.
 
 actor-sgtur =
     .name = Grid Defense Turret

@@ -615,3 +615,62 @@ This only produces a digit-led string when `TAG` has a `type-version` shape like
 **Phase:** Not tied to a specific roadmap phase — follow-up correctness fix to issue #14.
 
 **Verification:** Confirmed via a full-repo grep for bare `e4`/`E4`/`ftur`/`FTUR` tokens across `mods/sungrid/**/*.yaml` (excluding compiled `.oramap` binaries and the legitimate `e4.shp`/`ftur.shp` art-filename reuse noted in #14) — no remaining dangling references. No engine/`dotnet` available in this sandbox, so `make test`/a real client launch couldn't be run locally; CI and a human playtest on the pushed branch are the real checks.
+
+---
+
+### 26. Energy economy rebalance, faction power identity, and Ant/Zombie replacement
+
+**Problem:** Power was too easy to solve once — `APWR` (Advanced Solar Array) was a strictly better
+power-per-credit investment than `POWR` (Solar Array), and `SGDAI` (Datacenter for AI) drained only -60 power
+with zero power-state interaction despite gating both factions' drone units. Both factions also shared a
+single universal power building line with no faction-specific identity, and the Consortium's Strike Drone
+(`SGDRS`) was bolted onto the Helipad rather than getting its own dedicated Drone Bay like the Assembly's
+`SGDRN`. Separately, the neutral capturable "Bio-Research Lab" (`bio` prerequisite, used by the `chernobyl`
+map's Creeps player) unlocked literal `Zombie`/`Ant` units — classic "It Came from Red Alert" B-movie
+easter-egg content that reads as 90s filler rather than fitting the grid-contamination tone.
+
+**Fix:**
+- `APWR.Valued.Cost`: 500 → 1000 (power stays +200) — flips it from a strict upgrade into a real tradeoff.
+- `SGCRY` (Cryptominer): `Power.Amount` -120 → -150; `GrantConditionOnPowerState@STRAINED.ValidPowerStates`
+  `Low` → `Low, Critical`, closing a gap where income silently dropped to 0 instead of the intended reduced
+  rate at Critical power.
+- `SGDAI` (Datacenter for AI): `Power.Amount` -60 → -140; added `GrantConditionOnPowerState@NORMAL`/`@STRAINED`
+  (matching `SGCRY`'s pattern) gating a new split `CashTrickler@NORMAL`/`@STRAINED` (20→8/tick) and
+  `DetectCloaked` (`RequiresCondition: grid-normal` — cloak detection cuts out entirely below Normal power).
+- `SGDRO`/`SGDRS`: added `GrantConditionOnPowerState@NORMAL`/`@STRAINED` on each drone itself (confirmed via
+  this repo's own pre-SDK-migration git history that the trait only needs `Owner.PlayerActor`, not a
+  `Building`, so it works on aircraft) gating their own `Armament.RequiresCondition` — drones lose their
+  weapons fleet-wide once their owner's grid drops to Critical power, not just those near a building.
+- Two new faction-exclusive power buildings in `structures.yaml`: `SGWND` ("Wind Turbine Array", Assembly —
+  cheap/early/fragile: `Cost: 400`, `Power: +70`, `HP: 30000`, `~techlevel.low`) and `SGHYD` ("Hydrogen Plant",
+  Consortium — expensive/late/hardened: `Cost: 1200`, `Power: +350`, `HP: 90000`, `Armor: Heavy`,
+  `dome, atek, ~techlevel.high`). Both additive alongside `POWR`/`APWR`, not replacements.
+- New `SGDRA` ("Aerial Fabrication Bay", Consortium) mirrors `SGDRN` mechanically with faction-flipped
+  prerequisites; `SGDRS.Buildable.Prerequisites` moved from `~hpad, sgdai` to `sgdra, sgdai`.
+- `Zombie`/`Ant`/`FireAnt`/`ScoutAnt`/`WarriorAnt` and the `bio` neutral building reflavored in place (actor
+  ids and the `bio` prerequisite token unchanged — `desert-shellmap/rules.yaml` overrides `Ant`'s
+  prerequisites directly and the `chernobyl` map references the neutral actor by id): `Zombie` → "Blighted",
+  `Ant` line → "Swarmling"/"Cinderling"/"Scoutling"/"Bulwarkling", `bio` → "Containment Ruins". Same
+  "reskin the fluff, keep the chassis" pattern as issue #14's Flame Infantry → Disruptor Trooper.
+- Full rationale, exact numbers, and a suggestions-only list of further Phase 7 reskin candidates (not
+  implemented in this pass) written up in the new `docs/ENERGY_BALANCE.md`.
+
+**Scope:** `mods/sungrid/rules/structures.yaml` (`APWR`, `SGCRY`, `SGDAI` retuned; new `SGWND`, `SGHYD`,
+`SGDRA`), `mods/sungrid/rules/aircraft.yaml` (`SGDRO`/`SGDRS` power gating, `SGDRS` prerequisites),
+`mods/sungrid/fluent/rules.ftl` (new/updated fluent for all of the above plus `actor-zombie`/`actor-ant`/
+`actor-bio`), `docs/BUILDINGS.md`, `docs/ENERGY_BALANCE.md` (new), `docs/concept-art/faction-roster-dossier.html`.
+No new C#, no new art (new buildings reuse existing placeholder sprites per the established Phase 5
+convention; Ant/Zombie keep their existing sprites).
+
+**Verification:** No engine/`dotnet` available in this sandbox, so `make test`/a real client launch couldn't
+be run locally; CI's rules/map validator (confirmed active per issue #19) is the primary correctness gate on
+the pushed branch. Manually grepped for every new/changed actor id and prerequisite token (`SGWND`, `SGHYD`,
+`SGDRA`, `sgdra` replacing `hpad` on `SGDRS`) across `mods/sungrid/` to confirm nothing else referenced the
+old wiring, and cross-checked every `GrantConditionOnPowerState`/`RequiresCondition` condition-name pair for
+exact string matches (a mismatch is a silent no-op, not a CI error). **A human playtest for balance feel is
+still needed post-merge — this pass is untested for actual match-length energy pressure and faction parity.**
+
+**Labels:** `type:balance`, `type:content`, `area:economy`
+
+**Phase:** Not tied to a specific roadmap phase — a rebalance/faction-identity pass following up on the
+Phase 5 building roster.

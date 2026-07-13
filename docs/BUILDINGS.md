@@ -1,16 +1,16 @@
 # Sungrid Protocol — Building Plan
 
-Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fantasy/name here as a strong starting point, not a locked final design — expect iteration once these hit a playtest.
+Ten buildings, staged across the roadmap in `docs/ROADMAP.md`, plus a follow-up energy-identity/scarcity pass (see `docs/ENERGY_BALANCE.md`) that added three more: Wind Turbine Array, Hydrogen Plant, and Aerial Fabrication Bay. Treat every fantasy/name here as a strong starting point, not a locked final design — expect iteration once these hit a playtest.
 
 ## Category map
 
 | Category | Buildings |
 |---|---|
-| Energy | Solar Array, Battery Bank (Vault), Smart Grid Relay |
+| Energy | Solar Array, Battery Bank (Vault), Smart Grid Relay, Wind Turbine Array (Assembly), Hydrogen Plant (Consortium) |
 | Economy | Recycling Depot, Cryptominer, Datacenter for AI |
 | Defense | Grid Defense Turret, Resilience Shelter |
 | Intelligence | Sensor Array, Datacenter for AI (dual-category) |
-| Logistics | Drone Bay |
+| Logistics | Drone Bay (Assembly), Aerial Fabrication Bay (Consortium) |
 
 **Art note (Phase 5):** buildings 4-10 below ship with placeholder art — each reuses an existing structure's sprite (`RenderSprites.Image` override) chosen for rough thematic fit, not a dedicated sprite. This mirrors Phase 2's "recolored/retextured existing art is acceptable" approach, extended to full sprite reuse since no unused building art exists in the current asset set. See `docs/ART_DIRECTION.md`'s Phase 5 asset pipeline note — a real distinct-art pass is still a separate, tracked follow-up, not done in this pass. `docs/concept-art/phase5-building-dossier.html` has non-canonical silhouette/palette sketches for these 7 as a discussion starting point ahead of that pass, and `docs/concept-art/phase5-pixel-mockups.html` follows up with a blocky faux-pixel-art pass at the same roster.
 
@@ -50,7 +50,7 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`. Treat every fanta
 - **Prerequisites:** Solar Array (needs power headroom to be worth building), Tech Center-equivalent.
 - **Likely counters:** Power denial (destroy Solar Arrays and the Cryptominer goes offline or throttles), it's a high-value/low-defense target for raids given its output.
 - **Implementation complexity:** Low, in practice — stock `GrantConditionOnPowerState` (per-player Normal/Low/Critical tiers) plus two `CashTrickler` instances gated on those conditions gives power-scaled income with no new C#. Originally estimated Medium (assumed a custom trait was needed); revised down once implemented.
-- **Staging:** Implemented (Phase 5) as `SGCRY`.
+- **Staging:** Implemented (Phase 5) as `SGCRY`. **Revised (energy rebalance pass, see `docs/ENERGY_BALANCE.md`):** power draw raised from -120 to -150 (one of the two heaviest single drains in the game, alongside the Datacenter for AI), and the Critical-power tier of its `GrantConditionOnPowerState@STRAINED` now includes `Critical` (previously `Low` only), so income degrades to the reduced rate instead of silently dropping to zero at Critical power.
 
 ### 4a. Note on power-scaled buildings (Cryptominer, Grid Defense Turret)
 
@@ -63,7 +63,7 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Prerequisites:** Tech Center-equivalent, Solar Array.
 - **Likely counters:** High-value raid target once its intelligence bonus is felt on the battlefield; power denial reduces its effect the same way as Cryptominer.
 - **Implementation complexity:** Low, in practice — composes stock `CashTrickler`, `RevealsShroud`, and `DetectCloaked` (confirmed as the safer, already-verified-in-repo choice over the support-power-style periodic pulse originally described).
-- **Staging:** Implemented (Phase 5) as `SGDAI`. **Revised (issue #22):** the original implementation had the `sgdai` prerequisite id auto-provided but never consumed anywhere, so it didn't actually function as a tech gate despite the "brains behind smart-grid coordination" fantasy. It now genuinely gates content: `PDOX`/`IRON`/`MSLO` (the three superweapons) require `sgdai` in addition to their existing tech-center gates, and it's a required prerequisite (alongside `sgdrn`) for the new `SGDRO` Recon Drone unit — see building #6 below. The passive cash/vision/detection effects are unchanged.
+- **Staging:** Implemented (Phase 5) as `SGDAI`. **Revised (issue #22):** the original implementation had the `sgdai` prerequisite id auto-provided but never consumed anywhere, so it didn't actually function as a tech gate despite the "brains behind smart-grid coordination" fantasy. It now genuinely gates content: `PDOX`/`IRON`/`MSLO` (the three superweapons) require `sgdai` in addition to their existing tech-center gates, and it's a required prerequisite (alongside `sgdrn`/`sgdra`) for both drone units — see buildings #6 and #11 below. **Revised again (energy rebalance pass, see `docs/ENERGY_BALANCE.md`):** power draw raised from -60 to -140 (matching `SGCRY`'s order of magnitude — this building was previously the weakest link in the power story despite gating both factions' drones). It now also carries the same `GrantConditionOnPowerState` NORMAL/STRAINED pattern as `SGCRY`/`SGTUR`: its `CashTrickler` degrades under strain (20→8/tick) and its `DetectCloaked` cuts out entirely below Normal power — the "AI" genuinely stops working, it doesn't just get cheaper to run.
 
 ### 6. Drone Bay
 - **Category:** Logistics
@@ -72,7 +72,7 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Prerequisites:** Construction Yard, Recycling Depot or equivalent economy building.
 - **Likely counters:** Anti-air, since drone traffic is the obvious vulnerability; destroying the Drone Bay itself halts the logistics network.
 - **Implementation complexity:** Low, in practice — scoped down deliberately per this doc's own friction-point flag. Rather than genuinely novel routing/logistics logic, implemented as a `ProximityExternalCondition` aura granting nearby friendly vehicles a `SpeedMultiplier` bonus ("drone-assisted logistics network"). No new unit, no new C#, no novel routing behavior.
-- **Staging:** Implemented (Phase 5) as `SGDRN`. **Revised (issue #22):** the "no new unit" descope above meant the building had no actual drone identity — the speed aura is retained, but `SGDRN` now also has `Production`/`Exit`/`RallyPoint` (originally mirroring `WEAP`'s Vehicle-producer pattern) and builds a new unit, `SGDRO` ("Recon Drone") — a fast, unarmed, wide-vision scout. `SGDRO` requires both `sgdrn` and `sgdai`, so the AI Data Center is what unlocks it. **Revised again (issue #23):** a "drone" that drove on wheels didn't fit — `SGDRO` moved from `mods/sungrid/rules/vehicles.yaml` to `mods/sungrid/rules/aircraft.yaml` as an actual flying unit (`Inherits: ^Helicopter`, reusing `TRAN`'s Chinook sprite/rotor animation rather than `JEEP`'s), and `SGDRN` now mirrors `HPAD`'s aircraft-production block (`Produces: Aircraft, Helicopter`, `Reservable`, `ProductionBar`) instead of `WEAP`'s vehicle one. Still no new C#, no new art. **Revised again (issue #24):** `SGDRN` is now Assembly-exclusive (`~structures.soviet` added to its prerequisites, matching `AGUN`/`SAM`'s idiom), and `SGDRO` is a cheap (350), fragile (`HP: 3000`), lightly-armed (`DroneRocket`, 2×700 damage) harasser rather than an unarmed scout. The Consortium gets its own counterpart, `SGDRS` ("Strike Drone") — pricier (600), slightly harder-hitting (`DroneRocket.Strike`, 2×950 damage), similarly fragile (`HP: 3500`), built from the Consortium's existing `HPAD` (reusing `MH60`'s Black Hawk sprite) rather than a new building, gated on the same `sgdai` AI Data Center prerequisite. Both stay `Light`-armored, so the existing neutral `E3` Rocket Soldier (100% damage versus Light) remains a strong counter to either side's drone — no new dedicated counter unit was added.
+- **Staging:** Implemented (Phase 5) as `SGDRN`. **Revised (issue #22):** the "no new unit" descope above meant the building had no actual drone identity — the speed aura is retained, but `SGDRN` now also has `Production`/`Exit`/`RallyPoint` (originally mirroring `WEAP`'s Vehicle-producer pattern) and builds a new unit, `SGDRO` ("Recon Drone") — a fast, unarmed, wide-vision scout. `SGDRO` requires both `sgdrn` and `sgdai`, so the AI Data Center is what unlocks it. **Revised again (issue #23):** a "drone" that drove on wheels didn't fit — `SGDRO` moved from `mods/sungrid/rules/vehicles.yaml` to `mods/sungrid/rules/aircraft.yaml` as an actual flying unit (`Inherits: ^Helicopter`, reusing `TRAN`'s Chinook sprite/rotor animation rather than `JEEP`'s), and `SGDRN` now mirrors `HPAD`'s aircraft-production block (`Produces: Aircraft, Helicopter`, `Reservable`, `ProductionBar`) instead of `WEAP`'s vehicle one. Still no new C#, no new art. **Revised again (issue #24):** `SGDRN` is now Assembly-exclusive (`~structures.soviet` added to its prerequisites, matching `AGUN`/`SAM`'s idiom), and `SGDRO` is a cheap (350), fragile (`HP: 3000`), lightly-armed (`DroneRocket`, 2×700 damage) harasser rather than an unarmed scout. The Consortium gets its own counterpart, `SGDRS` ("Strike Drone") — pricier (600), slightly harder-hitting (`DroneRocket.Strike`, 2×950 damage), similarly fragile (`HP: 3500`), gated on the same `sgdai` AI Data Center prerequisite. Both stay `Light`-armored, so the existing neutral `E3` Rocket Soldier (100% damage versus Light) remains a strong counter to either side's drone — no new dedicated counter unit was added. **Revised again (energy rebalance pass, see `docs/ENERGY_BALANCE.md`):** `SGDRS` no longer builds from `HPAD` — the Consortium now has its own dedicated mirror building, `SGDRA` ("Aerial Fabrication Bay", building #11 below), for true Drone Bay parity between factions. Both `SGDRO` and `SGDRS` now also carry `GrantConditionOnPowerState` gating their own `Armament` (`RequiresCondition: drone-uplink || drone-uplink-degraded`) — drones fleet-wide lose their weapons outright once their owner's grid drops to Critical power, regardless of proximity to any building.
 
 ### 7. Grid Defense Turret
 - **Category:** Defense
@@ -109,3 +109,30 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Likely counters:** High-value raid/airstrike target once its intelligence value is evident; doesn't defend itself.
 - **Implementation complexity:** Low — composes stock `RevealsShroud`, `DetectCloaked`, and `RenderDetectionCircle`, as expected.
 - **Staging:** Implemented (Phase 5) as `SGSNS`. Pulled forward from "post-Phase 5" for the same reason as Smart Grid Relay above.
+
+### 11. Wind Turbine Array (Assembly)
+- **Category:** Energy
+- **Fantasy:** Cheap, mass-producible turbines suited to the Assembly's decentralized, improvisational infrastructure philosophy (`docs/ART_DIRECTION.md`).
+- **Gameplay purpose:** An early, cheap, individually fragile alternative/supplement to Solar Array — rewards spreading power generation out across a base rather than concentrating it, so raiding and map pressure stay relevant on the power layer.
+- **Prerequisites:** Any existing power source, `~techlevel.low` (a tier earlier than Advanced Solar Array).
+- **Likely counters:** Individually low HP (30000, the lowest of any power building) makes each turbine an easy kill; the tradeoff is there are cheaply many of them.
+- **Implementation complexity:** Low — same `Power`/`ScalePowerWithHealth` composition as Solar Array, just retuned numbers and an earlier/faction-gated prerequisite. No new traits.
+- **Staging:** Implemented as `SGWND`, part of the energy rebalance pass — see `docs/ENERGY_BALANCE.md`.
+
+### 12. Hydrogen Plant (Consortium)
+- **Category:** Energy
+- **Fantasy:** A hardened, centralized power-generation facility matching the Consortium's capital-technocratic infrastructure philosophy.
+- **Gameplay purpose:** An expensive, late-game power consolidation building — the highest single power output in the game, at the cost of being one large, very high-value raid target instead of many small ones.
+- **Prerequisites:** Radar Dome, Consortium Tech Center, `~techlevel.high`.
+- **Likely counters:** Its concentration of power output into one hardened building is itself the weakness — losing it is a much bigger swing than losing any one Solar Array.
+- **Implementation complexity:** Low — same composition as Solar Array/Wind Turbine Array, just retuned numbers, higher armor, and a late tech gate. No new traits.
+- **Staging:** Implemented as `SGHYD`, part of the energy rebalance pass — see `docs/ENERGY_BALANCE.md`.
+
+### 13. Aerial Fabrication Bay (Consortium)
+- **Category:** Logistics
+- **Fantasy:** The Consortium's dedicated counterpart to the Assembly's Drone Bay.
+- **Gameplay purpose:** Gives the Consortium a proper, symmetric drone-production structure instead of bolting Strike Drone production onto the Helipad — closes a faction-parity gap.
+- **Prerequisites:** Materials Refinery, Recycling Depot, `~structures.allies`, `~techlevel.medium` — an exact mirror of Drone Bay's Assembly prerequisites.
+- **Likely counters:** Same as Drone Bay — anti-air against drone traffic, direct destruction of the building halts Strike Drone production.
+- **Implementation complexity:** Low — a direct mechanical mirror of `SGDRN` (same `ProximityExternalCondition` speed aura, `Production`/`Exit`/`RallyPoint`), just faction-flipped prerequisites and a different placeholder sprite.
+- **Staging:** Implemented as `SGDRA`, part of the energy rebalance pass — see `docs/ENERGY_BALANCE.md`.

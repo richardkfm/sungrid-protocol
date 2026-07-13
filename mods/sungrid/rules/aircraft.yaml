@@ -302,9 +302,16 @@ SGDRO:
 		TurnSpeed: 24
 		Speed: 170
 		AltitudeVelocity: 0c58
+	GrantConditionOnPowerState@NORMAL:
+		Condition: drone-uplink
+		ValidPowerStates: Normal
+	GrantConditionOnPowerState@STRAINED:
+		Condition: drone-uplink-degraded
+		ValidPowerStates: Low
 	Armament:
 		Weapon: DroneRocket
 		LocalOffset: 0,0,-85
+		RequiresCondition: drone-uplink || drone-uplink-degraded
 	AttackAircraft:
 	WithIdleOverlay@ROTOR1AIR:
 		Offset: 597,0,213
@@ -614,7 +621,7 @@ SGDRS:
 		Queue: Aircraft
 		BuildAtProductionType: Helicopter
 		BuildPaletteOrder: 70
-		Prerequisites: ~hpad, sgdai, ~techlevel.high
+		Prerequisites: sgdra, sgdai, ~techlevel.high
 		Description: actor-sgdrs.description
 	Valued:
 		Cost: 600
@@ -637,9 +644,16 @@ SGDRS:
 	Aircraft:
 		TurnSpeed: 20
 		Speed: 150
+	GrantConditionOnPowerState@NORMAL:
+		Condition: drone-uplink
+		ValidPowerStates: Normal
+	GrantConditionOnPowerState@STRAINED:
+		Condition: drone-uplink-degraded
+		ValidPowerStates: Low
 	Armament:
 		Weapon: DroneRocket.Strike
 		LocalOffset: 0,0,-85
+		RequiresCondition: drone-uplink || drone-uplink-degraded
 	AttackAircraft:
 	WithIdleOverlay@ROTORAIR:
 		Sequence: rotor
