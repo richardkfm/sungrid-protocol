@@ -446,17 +446,17 @@ footer.sourcing p { max-width: 74ch; }
   </header>
 
   <div class="stats">
-    <div class="stat -total"><div class="n">89</div><div class="l">Buildable actors</div></div>
-    <div class="stat -consortium"><div class="n">31</div><div class="l">Consortium-only</div></div>
-    <div class="stat -assembly"><div class="n">30</div><div class="l">Assembly-only</div></div>
+    <div class="stat -total"><div class="n">92</div><div class="l">Buildable actors</div></div>
+    <div class="stat -consortium"><div class="n">33</div><div class="l">Consortium-only</div></div>
+    <div class="stat -assembly"><div class="n">31</div><div class="l">Assembly-only</div></div>
     <div class="stat -shared"><div class="n">28</div><div class="l">Shared / neutral</div></div>
-    <div class="stat"><div class="n">13</div><div class="l">Not a stock RA reskin</div></div>
+    <div class="stat"><div class="n">14</div><div class="l">Not a stock RA reskin</div></div>
     <div class="stat"><div class="n">1</div><div class="l">New C# trait in play</div></div>
   </div>
 
   <!-- ============ BUILDINGS ============ -->
   <details class="category" id="buildings" open>
-    <summary>Buildings <span class="qcount">28 actors · 5 Consortium / 15 shared / 8 Assembly</span></summary>
+    <summary>Buildings <span class="qcount">31 actors · 7 Consortium / 15 shared / 9 Assembly</span></summary>
     <div class="lanes">
       <div class="lane lane-consortium">
         <div class="lane-head"><span class="swatch consortium"></span>Consortium-only</div>
@@ -466,6 +466,8 @@ footer.sourcing p { max-width: 74ch; }
           <tr><td><div class="rname">Consortium Barracks</div><div class="rid">TENT</div></td><td class="rmeta">500c<br>anypower</td><td class="rrole">Trains Consortium-lineage infantry</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Helipad</div><div class="rid">HPAD</div></td><td class="rmeta">500c<br>dome</td><td class="rrole">Produces/reloads helicopters</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Sandbag Wall</div><div class="rid">SBAG</div></td><td class="rmeta">30c<br>fact</td><td class="rrole">Cheap infantry / light-vehicle barrier</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
+          <tr><td><div class="rname">Hydrogen Plant</div><div class="rid">SGHYD</div></td><td class="rmeta">1200c<br>dome, atek, high</td><td class="rrole">Big late-game power consolidation (+350); hardened, single point of failure</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
+          <tr><td><div class="rname">Aerial Fabrication Bay</div><div class="rid">SGDRA</div></td><td class="rmeta">900c<br>proc, rcyd</td><td class="rrole">Speed aura for nearby vehicles; produces Strike Drone (SGDRS) — Consortium's Drone Bay mirror</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
         </tbody></table>
       </div>
       <div class="lane lane-shared">
@@ -477,11 +479,11 @@ footer.sourcing p { max-width: 74ch; }
           <tr><td><div class="rname">Radar Dome</div><div class="rid">DOME</div></td><td class="rmeta">1500c<br>proc</td><td class="rrole">Radar / battlefield overview</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Service Depot</div><div class="rid">FIX</div></td><td class="rmeta">1200c<br>weap</td><td class="rrole">Repairs vehicles for credits</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Solar Array</div><div class="rid">POWR</div></td><td class="rmeta">300c<br>none</td><td class="rrole">Base power generation — the mod's namesake building; own dedicated sprite art (Phase 5)</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
-          <tr><td><div class="rname">Advanced Solar Array</div><div class="rid">APWR</div></td><td class="rmeta">500c<br>dome</td><td class="rrole">Double power generation; own dedicated sprite art</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
+          <tr><td><div class="rname">Advanced Solar Array</div><div class="rid">APWR</div></td><td class="rmeta">1000c<br>dome</td><td class="rrole">Double power generation, at double-plus the cost — now a real tradeoff, not a strict upgrade; own dedicated sprite art</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Concrete Wall</div><div class="rid">BRIK</div></td><td class="rmeta">200c<br>fact</td><td class="rrole">Blocks units and enemy fire</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Recycling Depot</div><div class="rid">RCYD</div></td><td class="rmeta">600c<br>anypower</td><td class="rrole">Passive credit trickle from battlefield scrap; reuses OILB sprite</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
-          <tr><td><div class="rname">Cryptominer</div><div class="rid">SGCRY</div></td><td class="rmeta">1800c<br>dome, high</td><td class="rrole">High income, throttles under grid strain</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
-          <tr><td><div class="rname">Datacenter for AI</div><div class="rid">SGDAI</div></td><td class="rmeta">1600c<br>dome, high</td><td class="rrole">Income + wide vision + cloak detection; gates MSLO/IRON/PDOX &amp; both drones</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
+          <tr><td><div class="rname">Cryptominer</div><div class="rid">SGCRY</div></td><td class="rmeta">1800c<br>dome, high</td><td class="rrole">High income, -150 power; throttles under grid strain including at Critical</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
+          <tr><td><div class="rname">Datacenter for AI</div><div class="rid">SGDAI</div></td><td class="rmeta">1600c<br>dome, high</td><td class="rrole">-140 power; income &amp; cloak detection both fall away under grid strain. Gates MSLO/IRON/PDOX &amp; both drones</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
           <tr><td><div class="rname">Smart Grid Relay</div><div class="rid">SGREL</div></td><td class="rmeta">600c<br>anypower</td><td class="rrole">Secondary flat power source</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
           <tr><td><div class="rname">Resilience Shelter</div><div class="rid">SGSHL</div></td><td class="rmeta">1200c<br>fact, dome<br>(limit 1)</td><td class="rrole">Aura: nearby structures take reduced damage while powered</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
           <tr><td><div class="rname">Sensor Array</div><div class="rid">SGSNS</div></td><td class="rmeta">800c<br>dome, high</td><td class="rrole">Wide vision + cloak detection</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
@@ -498,6 +500,7 @@ footer.sourcing p { max-width: 74ch; }
           <tr><td><div class="rname">Airfield (Ukraine)</div><div class="rid">AFLD.Ukraine</div></td><td class="rmeta">500c<br>dome, medium</td><td class="rrole">Same, plus Parabombs support power</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Wire Fence</div><div class="rid">FENC</div></td><td class="rmeta">30c<br>fact</td><td class="rrole">Cheap infantry / light-vehicle barrier</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Drone Bay</div><div class="rid">SGDRN</div></td><td class="rmeta">900c<br>proc, rcyd</td><td class="rrole">Speed aura for nearby vehicles; produces Recon Drone (SGDRO)</td><td class="rtag"><span class="badge -composed">New building</span></td></tr>
+          <tr><td><div class="rname">Wind Turbine Array</div><div class="rid">SGWND</div></td><td class="rmeta">400c<br>anypower, low</td><td class="rrole">Cheap, early, fragile power (+70, 30000 HP) — spread it out rather than turtle it</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
         </tbody></table>
       </div>
     </div>
@@ -558,8 +561,8 @@ footer.sourcing p { max-width: 74ch; }
           <tr><td><div class="rname">Rifle Infantry</div><div class="rid">E1</div></td><td class="rmeta">100c<br>barracks</td><td class="rrole">General-purpose infantry</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Rocket Soldier</div><div class="rid">E3</div></td><td class="rmeta">300c<br>barracks</td><td class="rrole">Anti-tank/anti-air — the stock counter to <strong>every</strong> Light-armored unit, including both new drones (see Parity flags)</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Engineer</div><div class="rid">E6</div></td><td class="rmeta">400c<br>barracks</td><td class="rrole">Infiltrates/captures enemy structures, unarmed</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
-          <tr><td><div class="rname">Zombie</div><div class="rid">Zombie</div></td><td class="rmeta">100c<br>barracks, bio</td><td class="rrole">Slow undead melee — Chernobyl map only, gated by a neutral "bio" actor, not standard tech</td><td class="rtag"><span class="badge -map">Map-only</span></td></tr>
-          <tr><td><div class="rname">Giant Ant</div><div class="rid">Ant</div></td><td class="rmeta">300c<br>barracks, bio</td><td class="rrole">Melee bio-lab creature — same Chernobyl-only gate as Zombie</td><td class="rtag"><span class="badge -map">Map-only</span></td></tr>
+          <tr><td><div class="rname">Blighted</div><div class="rid">Zombie</div></td><td class="rmeta">100c<br>barracks, bio</td><td class="rrole">Grid-contaminated scavenger melee — Chernobyl map only, gated by a neutral "Containment Ruins" actor, not standard tech. Reflavored from "Zombie"</td><td class="rtag"><span class="badge -map">Map-only</span></td></tr>
+          <tr><td><div class="rname">Swarmling</div><div class="rid">Ant</div></td><td class="rmeta">300c<br>barracks, bio</td><td class="rrole">Grid-mutated insect fauna, melee — same Chernobyl-only gate as Blighted. Reflavored from "Giant Ant"</td><td class="rtag"><span class="badge -map">Map-only</span></td></tr>
         </tbody></table>
       </div>
       <div class="lane lane-assembly">
@@ -627,7 +630,7 @@ footer.sourcing p { max-width: 74ch; }
           <tr><td><div class="rname">Chinook</div><div class="rid">TRAN</div></td><td class="rmeta">900c<br>hpad</td><td class="rrole">Fast infantry transport helicopter, unarmed</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Longbow</div><div class="rid">HELI</div></td><td class="rmeta">2000c<br>hpad, atek</td><td class="rrole">Multi-purpose missile gunship</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Black Hawk</div><div class="rid">MH60</div></td><td class="rmeta">1500c<br>hpad</td><td class="rrole">Dual chain-gun gunship</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
-          <tr><td><div class="rname">Strike Drone</div><div class="rid">SGDRS</div></td><td class="rmeta">600c<br>hpad, sgdai</td><td class="rrole">HP 3500 · 2×950 DroneRocket.Strike · Light armor. Reuses MH60 sprite; built from the existing Helipad, no dedicated building</td><td class="rtag"><span class="badge -new">New unit</span></td></tr>
+          <tr><td><div class="rname">Strike Drone</div><div class="rid">SGDRS</div></td><td class="rmeta">600c<br>sgdra, sgdai</td><td class="rrole">HP 3500 · 2×950 DroneRocket.Strike · Light armor. Reuses MH60 sprite; built from the Aerial Fabrication Bay. Weapon cuts out at Critical grid power</td><td class="rtag"><span class="badge -new">New unit</span></td></tr>
         </tbody></table>
       </div>
       <div class="lane lane-shared">
@@ -641,7 +644,7 @@ footer.sourcing p { max-width: 74ch; }
         <table class="roster"><tbody>
           <tr><td><div class="rname">MiG Attack Plane</div><div class="rid">MIG</div></td><td class="rmeta">2000c<br>afld, stek</td><td class="rrole">Fast ground-attack plane</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
           <tr><td><div class="rname">Yak Attack Plane</div><div class="rid">YAK</div></td><td class="rmeta">1350c<br>afld</td><td class="rrole">Dual machine-gun attack plane</td><td class="rtag"><span class="badge -reskin">Stock reskin</span></td></tr>
-          <tr><td><div class="rname">Recon Drone</div><div class="rid">SGDRO</div></td><td class="rmeta">350c<br>sgdrn, sgdai</td><td class="rrole">HP 3000 · 2×700 DroneRocket · Light armor. Reuses TRAN sprite; requires the Assembly-exclusive Drone Bay</td><td class="rtag"><span class="badge -new">New unit</span></td></tr>
+          <tr><td><div class="rname">Recon Drone</div><div class="rid">SGDRO</div></td><td class="rmeta">350c<br>sgdrn, sgdai</td><td class="rrole">HP 3000 · 2×700 DroneRocket · Light armor. Reuses TRAN sprite; requires the Assembly-exclusive Drone Bay. Weapon cuts out at Critical grid power</td><td class="rtag"><span class="badge -new">New unit</span></td></tr>
         </tbody></table>
       </div>
     </div>
@@ -708,10 +711,9 @@ footer.sourcing p { max-width: 74ch; }
     <h2 class="h">Parity flags</h2>
     <p class="intro">Specific asymmetries worth a look before calling the two sides "even," in order of how much they're actually Sungrid's doing versus inherited from Red Alert.</p>
     <div class="flags">
-      <div class="flag -open">
-        <h3>Drone Bay is a one-sided cost <span class="status">Worth deciding</span></h3>
-        <p><strong>SGDRN</strong> (Drone Bay, 900c) is Assembly-exclusive and is the only new building in the whole Phase&nbsp;5 roster that isn't shared — every other new building (SGCRY, SGDAI, SGREL, SGSHL, SGSNS, SGTUR, RCYD) is buildable by both sides. The Consortium's equivalent unit, SGDRS, is produced from the Helipad it already has, so Assembly pays a whole extra structure to reach parity in drone access that Consortium gets for free off existing infrastructure.</p>
-        <p>Could be intentional — Assembly's "scavenged/improvised" identity fits needing dedicated new infrastructure where Consortium's "already-networked" identity doesn't — but it should be a deliberate call, not an accident of implementation order (see <code style="font-family:var(--font-mono);font-size:11px">docs/BACKLOG.md</code> issue #22–24's revision history for how SGDRN/SGDRO/SGDRS arrived at their current split).</p>
+      <div class="flag -ok">
+        <h3>Drone Bay is a one-sided cost <span class="status">Resolved</span></h3>
+        <p><strong>SGDRN</strong> (Drone Bay, 900c) was Assembly-exclusive with no Consortium counterpart building — SGDRS was produced from the Helipad the Consortium already had, so Assembly paid a whole extra structure to reach parity in drone access that Consortium got for free off existing infrastructure. The energy rebalance pass (<code style="font-family:var(--font-mono);font-size:11px">docs/ENERGY_BALANCE.md</code>) closed this: the Consortium now has its own dedicated mirror, <strong>SGDRA</strong> (Aerial Fabrication Bay, 900c), and SGDRS's prerequisites moved from the Helipad to it.</p>
       </div>
       <div class="flag -ok">
         <h3>Both drones already have a valid counterpart <span class="status">Already covered</span></h3>
@@ -729,9 +731,9 @@ footer.sourcing p { max-width: 74ch; }
         <h3>Superweapons and the tech gate stay symmetric <span class="status">Confirmed even</span></h3>
         <p>PDOX/Chronosphere and IRON/Iron Curtain are a clean 1:1 pair, and both now share the same added <code style="font-family:var(--font-mono);font-size:11px">sgdai</code> prerequisite (Datacenter for AI) alongside their original tech-center gate — the Phase&nbsp;5 revision that made SGDAI "actually gate something" (backlog issue #22) landed identically on both factions' superweapons plus the shared MSLO. No asymmetry introduced here.</p>
       </div>
-      <div class="flag">
-        <h3>Zombie / Giant Ant aren't standard roster content <span class="status">Just a note</span></h3>
-        <p>Both require a <code style="font-family:var(--font-mono);font-size:11px">bio</code> prerequisite token that no building in the standard tech tree grants — it's only provided by a neutral <code style="font-family:var(--font-mono);font-size:11px">bio</code> actor placed on the Chernobyl map. They're map-specific bonus content, not part of either faction's normal build order, so they were excluded from the 89-actor headline count and the parity comparisons above.</p>
+      <div class="flag -ok">
+        <h3>Blighted / Swarmling (ex-Zombie/Giant Ant) aren't standard roster content <span class="status">Reflavored</span></h3>
+        <p>Both require a <code style="font-family:var(--font-mono);font-size:11px">bio</code> prerequisite token that no building in the standard tech tree grants — it's only provided by a neutral "Containment Ruins" actor placed on the Chernobyl map. They're map-specific bonus content, not part of either faction's normal build order, so they're excluded from the headline actor count and the parity comparisons above. The energy rebalance pass (<code style="font-family:var(--font-mono);font-size:11px">docs/ENERGY_BALANCE.md</code>) dropped the literal "Zombie"/"Giant Ant" B-movie framing in favor of grid-contamination fauna fitting the setting — same chassis/stats, new fluff, matching the Disruptor Trooper precedent.</p>
       </div>
     </div>
   </section>
@@ -752,6 +754,7 @@ footer.sourcing p { max-width: 74ch; }
       <div><code>barr</code> / <code>tent</code> faction Barracks</div>
       <div><code>barracks</code> either Barracks</div>
       <div><code>hpad</code> / <code>afld</code> faction air production</div>
+      <div><code>sgdrn</code> / <code>sgdra</code> faction Drone Bay</div>
       <div><code>~structures/vehicles.X</code> faction lineage gate</div>
       <div><code>low/medium/high/unrestricted</code> lobby tech level</div>
     </div>

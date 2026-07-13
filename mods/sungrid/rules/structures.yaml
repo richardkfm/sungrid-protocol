@@ -1746,7 +1746,7 @@ APWR:
 		Prerequisites: dome, ~techlevel.medium
 		Description: actor-apwr.description
 	Valued:
-		Cost: 500
+		Cost: 1000
 	Tooltip:
 		Name: actor-apwr.name
 	ProvidesPrerequisite:
@@ -1767,6 +1767,81 @@ APWR:
 	WithBuildingBib:
 	Power:
 		Amount: 200
+	Targetable:
+		TargetTypes: GroundActor, Structure, C4, DetonateAttack, SpyInfiltrate
+	ScalePowerWithHealth:
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
+
+SGWND:
+	Inherits: ^Building
+	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
+	Inherits@shape: ^2x2Shape
+	RenderSprites:
+		Image: sam
+	Selectable:
+		Bounds: 2048, 2048
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 111
+		Prerequisites: anypower, ~structures.soviet, ~techlevel.low
+		Description: actor-sgwnd.description
+	Valued:
+		Cost: 400
+	Tooltip:
+		Name: actor-sgwnd.name
+	ProvidesPrerequisite:
+		Prerequisite: anypower
+	Building:
+		Footprint: xx xx ==
+		Dimensions: 2,3
+		LocalCenterOffset: 0,-512,0
+	Health:
+		HP: 30000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4c0
+	WithBuildingBib:
+	Power:
+		Amount: 70
+	Targetable:
+		TargetTypes: GroundActor, Structure, C4, DetonateAttack, SpyInfiltrate
+	ScalePowerWithHealth:
+
+SGHYD:
+	Inherits: ^Building
+	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
+	Inherits@shape: ^3x2Shape
+	RenderSprites:
+		Image: proc
+	Selectable:
+		Bounds: 3072, 2048
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 112
+		Prerequisites: dome, atek, ~structures.allies, ~techlevel.high
+		Description: actor-sghyd.description
+	Valued:
+		Cost: 1200
+	Tooltip:
+		Name: actor-sghyd.name
+	ProvidesPrerequisite:
+		Prerequisite: anypower
+	Building:
+		Footprint: xxx Xxx ===
+		Dimensions: 3,3
+		LocalCenterOffset: 0,-512,0
+	Health:
+		HP: 90000
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		Range: 5c0
+	WithBuildingBib:
+	Power:
+		Amount: 350
 	Targetable:
 		TargetTypes: GroundActor, Structure, C4, DetonateAttack, SpyInfiltrate
 	ScalePowerWithHealth:
@@ -2300,7 +2375,7 @@ SGCRY:
 		ValidPowerStates: Normal
 	GrantConditionOnPowerState@STRAINED:
 		Condition: grid-strained
-		ValidPowerStates: Low
+		ValidPowerStates: Low, Critical
 	CashTrickler@NORMAL:
 		RequiresCondition: grid-normal
 		Interval: 50
@@ -2314,7 +2389,7 @@ SGCRY:
 		Amount: 15
 		ShowTicks: True
 	Power:
-		Amount: -120
+		Amount: -150
 	ProvidesPrerequisite@buildingname:
 
 SGDAI:
@@ -2353,15 +2428,29 @@ SGDAI:
 	RevealsShroud@GAPGEN:
 		Range: 5c0
 	WithBuildingBib:
-	CashTrickler:
+	GrantConditionOnPowerState@NORMAL:
+		Condition: grid-normal
+		ValidPowerStates: Normal
+	GrantConditionOnPowerState@STRAINED:
+		Condition: grid-strained
+		ValidPowerStates: Low, Critical
+	CashTrickler@NORMAL:
+		RequiresCondition: grid-normal
 		Interval: 100
 		InitialDelay: 50
 		Amount: 20
 		ShowTicks: True
+	CashTrickler@STRAINED:
+		RequiresCondition: grid-strained
+		Interval: 100
+		InitialDelay: 50
+		Amount: 8
+		ShowTicks: True
 	DetectCloaked:
+		RequiresCondition: grid-normal
 		Range: 6c0
 	Power:
-		Amount: -60
+		Amount: -140
 	ProvidesPrerequisite@buildingname:
 
 SGDRN:
@@ -2398,6 +2487,61 @@ SGDRN:
 	RevealsShroud@GAPGEN:
 		Range: 4c0
 	WithBuildingBib:
+	ProximityExternalCondition@DRONENETWORK:
+		Range: 8c0
+		ValidRelationships: Ally
+		Condition: dronebay-network
+	RallyPoint:
+		ForceSetType: Helicopter
+	CommandBarBlacklist:
+		DisableStop: false
+	Exit@1:
+		RequiresCondition: !being-captured
+		SpawnOffset: 0,-256,0
+		ExitCell: 0,0
+		Facing: 896
+	Production:
+		Produces: Aircraft, Helicopter
+	Reservable:
+	ProductionBar:
+		ProductionType: Aircraft
+	Power:
+		Amount: -20
+	ProvidesPrerequisite@buildingname:
+
+SGDRA:
+	Inherits: ^Building
+	Inherits@shape: ^2x2Shape
+	RenderSprites:
+		Image: afld
+	Selectable:
+		Bounds: 2048, 2048
+	HitShape:
+		UseTargetableCellsOffsets: false
+		TargetableOffsets: 0,0,0, 768,-512,0, 768,512,0, -281,-512,0, -630,512,0
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 206
+		Prerequisites: proc, rcyd, ~structures.allies, ~techlevel.medium
+		Description: actor-sgdra.description
+	Valued:
+		Cost: 900
+	Tooltip:
+		Name: actor-sgdra.name
+	Building:
+		Footprint: xx xx ==
+		Dimensions: 2,3
+		LocalCenterOffset: 0,-512,0
+	Health:
+		HP: 70000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		MinRange: 4c0
+		Range: 6c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 4c0
 	ProximityExternalCondition@DRONENETWORK:
 		Range: 8c0
 		ValidRelationships: Ally
