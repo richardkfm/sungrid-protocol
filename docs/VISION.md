@@ -6,6 +6,8 @@ Sungrid Protocol is a solarpunk reinterpretation of the classic Red Alert RTS fo
 
 The project's first real design innovation is not the art direction, it's the **economic victory mode**: an optional win condition that makes *saving* money a legitimate alternative to spending it on offense or defense, without turning the game into a passive economy race.
 
+<img width="1024" height="1280" alt="620400473-31a89549-de39-42be-add0-bf962f9ca148" src="https://github.com/user-attachments/assets/fe6875e5-6922-4f87-8945-5418e4d09742" />
+
 ## Design pillars
 
 1. **Classic RTS legibility first.** Every unit, building, and system must read clearly on screen at a glance — silhouette, color, and UI legibility are not sacrificed for theme.
