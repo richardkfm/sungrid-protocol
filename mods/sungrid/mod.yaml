@@ -62,7 +62,7 @@ FileSystem: ContentInstallerFileSystem
 		content|expand/mwrench1.aud
 		content|expand/myeehaw1.aud
 		content|expand/myes1.aud
-	ContentInstallerMod: ra-content
+	ContentInstallerMod: sungrid-content
 
 MapFolders:
 	sungrid|maps: System
