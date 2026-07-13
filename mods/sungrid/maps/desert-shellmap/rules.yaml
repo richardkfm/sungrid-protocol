@@ -58,7 +58,7 @@ MISS:
 
 APC:
 	Cargo:
-		InitialUnits: e1, e1, e2, e3, e4
+		InitialUnits: e1, e1, e2, e3, disr
 
 Ant:
 	Buildable:

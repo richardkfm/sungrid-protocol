@@ -599,3 +599,19 @@ This only produces a digit-led string when `TAG` has a `type-version` shape like
 **Labels:** `type:content`, `type:balance`, `area:logistics`
 
 **Phase:** 5 — Faction Flavor (third follow-up correction to the Drone Bay/AI Data Center pairing).
+
+---
+
+### 25. Shellmap APC still dropped `e4` — third missed reference from issue #14's rename — FIXED
+
+**Problem:** A real-build playtest reported seeing the game's Solar Array buildings (expected) but no new units, and Flame Infantry still present — despite issue #14 replacing it with `DISR` (Disruptor Trooper). `mods/sungrid/maps/desert-shellmap/rules.yaml`'s `APC` override still had `Cargo.InitialUnits: e1, e1, e2, e3, e4` — a third leftover reference to the removed `E4` actor in the very same file, distinct from the two already caught and fixed in the same rename: the `ParatroopersPower.DropItems` line 11 lines below it (fixed in #14 itself) and the six `ftur` map-actor placements in the sibling `map.yaml` (fixed in #16). This `InitialUnits` line sits in the shellmap's own `APC`'s passenger list — the animated main-menu background battle — so it's exactly the kind of thing a player would notice within seconds of launching the game, and exactly the kind of reference `--check-yaml`/`make test` should catch as a dangling actor id.
+
+**Fix:** `e4` → `disr` in that one line, matching the lowercase-id convention the rest of the `InitialUnits` list already uses (`e1, e1, e2, e3`).
+
+**Root cause:** Three independent references to the same removed actor id, spread across two files, all introduced or left behind by the same rename. Each was found and fixed in a separate pass (#14 itself, #16, and now this one) rather than all at once — grepping for a bare `e4`/`E4` token across `mods/sungrid` (not just the specific lines the original commit message called out) would have caught all three at once.
+
+**Labels:** `type:bug`, `type:content`
+
+**Phase:** Not tied to a specific roadmap phase — follow-up correctness fix to issue #14.
+
+**Verification:** Confirmed via a full-repo grep for bare `e4`/`E4`/`ftur`/`FTUR` tokens across `mods/sungrid/**/*.yaml` (excluding compiled `.oramap` binaries and the legitimate `e4.shp`/`ftur.shp` art-filename reuse noted in #14) — no remaining dangling references. No engine/`dotnet` available in this sandbox, so `make test`/a real client launch couldn't be run locally; CI and a human playtest on the pushed branch are the real checks.
