@@ -20,6 +20,7 @@
 			Bridge: 111
 			Ore: 89
 			Gems: 89
+			Scrap: 89
 			Beach: 89
 	Locomotor@WHEELED:
 		Name: wheeled
@@ -31,6 +32,7 @@
 			Bridge: 125
 			Ore: 88
 			Gems: 88
+			Scrap: 88
 			Beach: 50
 	Locomotor@HEAVYWHEELED:
 		Name: heavywheeled
@@ -42,6 +44,7 @@
 			Bridge: 125
 			Ore: 88
 			Gems: 88
+			Scrap: 88
 			Beach: 50
 	Locomotor@LIGHTTRACKED:
 		Name: lighttracked
@@ -53,6 +56,7 @@
 			Bridge: 125
 			Ore: 88
 			Gems: 88
+			Scrap: 88
 			Beach: 88
 	Locomotor@TRACKED:
 		Name: tracked
@@ -64,6 +68,7 @@
 			Bridge: 125
 			Ore: 88
 			Gems: 88
+			Scrap: 88
 			Beach: 88
 	Locomotor@HEAVYTRACKED:
 		Name: heavytracked
@@ -75,6 +80,7 @@
 			Bridge: 125
 			Ore: 88
 			Gems: 88
+			Scrap: 88
 			Beach: 88
 	Locomotor@NAVAL:
 		Name: naval
@@ -156,6 +162,10 @@
 				Sequences: gem01, gem02, gem03, gem04
 				Palette: player
 				Name: resource-minerals
+			Scrap:
+				Sequences: scrap01, scrap02, scrap03, scrap04
+				Palette: player
+				Name: resource-scrap
 
 World:
 	Inherits: ^BaseWorld
@@ -210,6 +220,11 @@ World:
 				TerrainType: Gems
 				AllowedTerrainTypes: Clear, Road
 				MaxDensity: 3
+			Scrap:
+				ResourceIndex: 3
+				TerrainType: Scrap
+				AllowedTerrainTypes: Clear, Road
+				MaxDensity: 6
 	ResourceClaimLayer:
 	WithResourceAnimation@GEMS:
 		Types: Gems
@@ -321,6 +336,11 @@ EditorWorld:
 				TerrainType: Gems
 				AllowedTerrainTypes: Clear, Road
 				MaxDensity: 3
+			Scrap:
+				ResourceIndex: 3
+				TerrainType: Scrap
+				AllowedTerrainTypes: Clear, Road
+				MaxDensity: 6
 	LoadWidgetAtGameStart:
 	EditorActionManager:
 	BuildableTerrainOverlay:
