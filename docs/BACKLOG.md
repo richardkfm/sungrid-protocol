@@ -768,3 +768,37 @@ per #14's "same chassis art, different actor id" design) and unrelated hex color
 `make test`/a real client launch couldn't be run locally; CI and a human playtest on the pushed branch are the
 real checks — this fix should be re-verified against an actual alpha8-equivalent build before considering the
 shellmap's `e4`/`ftur` cleanup finished for real.
+
+---
+
+### 29. Every release since alpha1 has shipped without a macOS build — the packaging job never runs — FIXED
+
+**Problem:** None of the alpha1–alpha7 GitHub releases have a `.dmg` asset, despite `.github/workflows/packaging.yml`
+having a `macos` job and `packaging/macos/buildpackage.sh` being a complete, working OpenRA Mod SDK macOS
+packaging script (universal x86_64+arm64 launcher, codesigning/notarization support if secrets are set, disk
+image assembly). The macOS job in every one of the seven `Release Packaging` workflow runs to date shows
+`conclusion: cancelled`, `runner_id: 0`, and zero steps ever started — it sat queued for exactly 24 hours before
+GitHub auto-cancelled it, never once acquiring a runner. The Windows and Linux jobs in the same runs all
+succeeded normally.
+
+**Root cause:** The job was pinned to `runs-on: macos-13`. GitHub began deprecating the macOS 13 runner image on
+2025-09-22 and fully retired it by 2025-12-08 (see
+[github.blog/changelog/2025-09-19-github-actions-macos-13-runner-image-is-closing-down](https://github.blog/changelog/2025-09-19-github-actions-macos-13-runner-image-is-closing-down/)).
+By the time of this repo's first tagged release (alpha1, 2026-07-12), `macos-13` was no longer a schedulable
+runner label at all, so every job requesting it queued forever instead of failing fast — the eventual 24-hour
+auto-cancellation looks like a hang, not a clear error, which is why this went unnoticed across seven releases.
+
+**Fix:** `runs-on: macos-13` → `runs-on: macos-14` in `.github/workflows/packaging.yml`. No changes needed to
+`packaging/macos/buildpackage.sh` — it already cross-compiles both the x86_64 and arm64 launcher/mod assemblies
+via `dotnet publish -r osx-x64`/`osx-arm64` and `clang -target x86_64-apple-macos.../arm64-apple-macos...`, so it
+does not depend on the runner's own host architecture (macos-14 runners are Apple Silicon/arm64).
+
+**Labels:** `type:bug`, `type:engine`
+
+**Phase:** Not tied to a specific roadmap phase — release infrastructure fix.
+
+**Verification:** Confirmed via the GitHub Actions API that the `macOS Disk Image` job in the workflow runs
+backing releases alpha1 through alpha7 all show `runner_id: 0` and no job steps, consistent with never being
+scheduled. This fix should be confirmed by watching the next tag's `Release Packaging` run and checking the
+resulting release for a `SungridProtocol-<tag>.dmg` asset (unsigned/unnotarized, since no
+`MACOS_DEVELOPER_*` secrets are configured in this repo — that's expected and does not block the build itself).
