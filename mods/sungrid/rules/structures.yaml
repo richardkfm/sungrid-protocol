@@ -1434,12 +1434,29 @@ RCYD:
 		Interval: 125
 		Amount: 25
 		ShowTicks: true
+	Refinery:
+	DockHost:
+		Type: Unload
+		DockAngle: 256
+		DockOffset: 0, 700, 0
+	StoresPlayerResources:
+		Capacity: 1000
+	FreeActor:
+		Actor: SGHAU
+		SpawnOffset: 1,1
+		Facing: 256
 	Power:
 		Amount: -20
 	FireWarheadsOnDeath:
 		Weapon: SmallBuildingExplode
 		EmptyWeapon: SmallBuildingExplode
 	ProvidesPrerequisite@buildingname:
+	WithResourceStoragePipsDecoration:
+		Position: BottomLeft
+		Margin: 4, 3
+		RequiresSelection: true
+		PipCount: 5
+		FullSequence: pip-green
 
 HPAD:
 	Inherits: ^Building

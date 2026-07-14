@@ -934,6 +934,22 @@ resources:
 		Filename: gem04.tem
 		TilesetFilenames:
 			SNOW: gem04.sno
+	scrap01:
+		Filename: gold01.tem
+		TilesetFilenames:
+			SNOW: gold01.sno
+	scrap02:
+		Filename: gold02.tem
+		TilesetFilenames:
+			SNOW: gold02.sno
+	scrap03:
+		Filename: gold03.tem
+		TilesetFilenames:
+			SNOW: gold03.sno
+	scrap04:
+		Filename: gold04.tem
+		TilesetFilenames:
+			SNOW: gold04.sno
 
 shroud:
 	shroud:

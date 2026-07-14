@@ -42,6 +42,7 @@ options-starting-units =
     .heavy-support = Heavy Support
 
 resource-minerals = Valuable Minerals
+resource-scrap = Reclaimed Scrap
 
 map-generator-classic = Map Generator
 map-generator-clear = Clear Terrain
@@ -826,6 +827,14 @@ actor-harv =
     .description =
     Collects Ore and Gems for
     processing.
+      Unarmed
+
+actor-sghau =
+    .name = Hauler Drone
+    .generic-name = Hauler
+    .description =
+    Collects small amounts of Scrap
+    for recycling at a Recycling Depot.
       Unarmed
 
 actor-mcv =

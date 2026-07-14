@@ -368,6 +368,63 @@ HARV:
 			Ore: pip-yellow
 			Gems: pip-red
 
+SGHAU:
+	Inherits: ^Vehicle
+	Inherits@selection: ^SelectableEconomicUnit
+	RenderSprites:
+		Image: harv
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 115
+		Prerequisites: rcyd, ~techlevel.infonly
+		Description: actor-sghau.description
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: actor-sghau.name
+		GenericName: actor-sghau.generic-name
+	Selectable:
+		DecorationBounds: 1792, 1792
+	Harvester:
+		Resources: Scrap
+		BaleUnloadDelay: 1
+		SearchFromProcRadius: 15
+		SearchFromHarvesterRadius: 8
+		HarvestFacings: 8
+		EmptyCondition: no-scrap
+	StoresResources:
+		Capacity: 8
+		Resources: Scrap
+	DockClientManager:
+	Health:
+		HP: 22000
+	Armor:
+		Type: Light
+	RevealsShroud:
+		Range: 4c0
+	WithHarvestAnimation:
+	WithDockingAnimation:
+	GpsDot:
+		String: Harvester
+	SpawnActorOnDeath:
+		Actor: HARV.EmptyHusk
+	HarvesterHuskModifier:
+		FullHuskActor: HARV.FullHusk
+		FullnessThreshold: 50
+	FireWarheadsOnDeath:
+		RequiresCondition: !no-scrap
+		Weapon: OreExplosion
+	WithHarvesterSpriteBody:
+		ImageByFullness: harvempty, harvhalf, harv
+	-WithFacingSpriteBody:
+	WithStoresResourcesPipsDecoration:
+		Position: BottomLeft
+		Margin: 4, 3
+		RequiresSelection: true
+		PipCount: 3
+		ResourceSequences:
+			Scrap: pip-green
+
 MCV:
 	Inherits: ^Vehicle
 	Inherits@selection: ^SelectableSupportUnit
