@@ -400,6 +400,8 @@ SGHAU:
 		HP: 22000
 	Armor:
 		Type: Light
+	Mobile:
+		Speed: 72
 	RevealsShroud:
 		Range: 4c0
 	WithHarvestAnimation:

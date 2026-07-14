@@ -217,7 +217,7 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | ID | Name | Faction | Tech | Cost | HP | Armor | Speed | Weapon(s) | Prereqs | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | HARV | Ore Truck | Both | inf | 1100 | 60000 | Heavy | 72 | — | proc | |
-| SGHAU | Hauler Drone | Both | inf | 500 | 22000 | Light | **unset (=1)** | — | rcyd | **Bug — effectively immobile, see gap G1** |
+| SGHAU | Hauler Drone | Both | inf | 500 | 22000 | Light | 72 | — | rcyd | Speed was unset (=1, effectively immobile) when first surveyed — see gap G1, since fixed |
 | MCV | Mobile Construction Vehicle | Both | med | 2000 | 60000 | Light | 60 | — | fix | |
 | TRUK | Supply Truck | Both | low | 500 | 11000 | Light | 113 | — | — | |
 | JEEP | Ranger | Consortium | low | 500 | 15000 | Light | 164 | M60mg | — | |
@@ -266,7 +266,7 @@ Campaign-only / non-skirmish actors, listed for completeness: `Zombie` (Blighted
 
 ### Gaps found
 
-- **G1 — `SGHAU` has no `Mobile.Speed` (bug).** It inherits `^Vehicle`, whose `Mobile` sets only `Locomotor`/`TurnSpeed`, and never sets `Speed` itself. The engine default (`MobileInfo.Speed`, verified in the pinned `ENGINE_VERSION` commit) is **1** — the Hauler Drone moves at 1/72nd of an Ore Truck's speed, i.e. is effectively immobile. Undetected so far because no shipped map has Scrap painted (see building #3), so the free Hauler never has anywhere to drive.
+- **G1 — `SGHAU` had no `Mobile.Speed` (bug, since fixed).** It inherits `^Vehicle`, whose `Mobile` sets only `Locomotor`/`TurnSpeed`, and never set `Speed` itself. The engine default (`MobileInfo.Speed`, verified in the pinned `ENGINE_VERSION` commit) is **1** — the Hauler Drone moved at 1/72nd of an Ore Truck's speed, i.e. was effectively immobile. Undetected because no shipped map has Scrap painted (see building #3), so the free Hauler never had anywhere to drive. **Fixed: `Mobile: Speed: 72` (matching HARV) in the follow-up to the survey PR.**
 - **G2 — Battery Bank doc/rules drift.** The Grid Reserve Vault is implemented on `SILO` (display name already "Battery Bank"), but entry #2 above never says so, and its listed prerequisites ("Solar Array, Refinery-equivalent") don't match the YAML (`proc` only, cost 150). The vault's actual numbers live in C# defaults, invisible to YAML readers: capacity 8000, deposit 30/tick, 50% reserve drain + 50% attacker reward on destruction (`OpenRA.Mods.Sungrid/GridReserve/GridReserveVault.cs`). `SILO` also retains RA's `InfiltrateForCash` (Thief steals 50% of **stored spendable** credits) — deposited Reserve is held by `GridReserveManager` so it isn't stealable, but that interaction is documented nowhere.
 - **G3 — Wind Turbine Array is strictly dominated by Solar Array.** Same 2×3 footprint, but SGWND costs more (400 vs 300), generates less (+70 vs +100), has less HP (30000 vs 40000), is faction-gated, and needs an existing power source. There is currently no situation where building one is correct.
 - **G4 — Smart Grid Relay is the worst power-per-credit in the game** (10.0 cr/power vs POWR's 3.0). Its real differentiators — 1×1 footprint, Heavy armor, vision 7 — probably don't carry a 2× premium per power point.
@@ -279,7 +279,7 @@ Campaign-only / non-skirmish actors, listed for completeness: `Zombie` (Blighted
 
 ### Suggestions
 
-1. **Fix G1 now** — one line: `Mobile: Speed: 72` on `SGHAU` (match HARV; or ~85 if the light, fragile hauler should feel nimbler). Worth pairing with the Scrap-map follow-up from `docs/BACKLOG.md` issue #5 so the loop is actually exercisable.
+1. ~~**Fix G1 now** — one line: `Mobile: Speed: 72` on `SGHAU`~~ **Done** (matching HARV). The Scrap-map follow-up from `docs/BACKLOG.md` issue #5 is still open, and is what would actually exercise the Hauler in a real game.
 2. **Close the G2 doc gap** — update entry #2 above to name `SILO` as the implementation, state the C# defaults, and note the Thief/Reserve interaction explicitly.
 3. **G3:** either drop SGWND to ~250 cr, raise it to +90–100 power, or shrink its footprint below POWR's — it needs at least one column it wins.
 4. **G4:** price SGREL at ~350–400, or keep 600 and give it a small utility effect (its deferred grid fantasy invites e.g. a minor `ProximityExternalCondition` repair/discount aura).
