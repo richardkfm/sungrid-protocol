@@ -405,7 +405,7 @@ SGHAU:
 	WithHarvestAnimation:
 	WithDockingAnimation:
 	GpsDot:
-		String: Hauler
+		String: Harvester
 	SpawnActorOnDeath:
 		Actor: HARV.EmptyHusk
 	HarvesterHuskModifier:
