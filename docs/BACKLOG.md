@@ -771,7 +771,7 @@ shellmap's `e4`/`ftur` cleanup finished for real.
 
 ---
 
-### 29. Every release since alpha1 has shipped without a macOS build — the packaging job never runs — FIXED
+### 29. Every release since alpha1 has shipped without a macOS build — the packaging job never runs — PARTIALLY FIXED, see #30
 
 **Problem:** None of the alpha1–alpha7 GitHub releases have a `.dmg` asset, despite `.github/workflows/packaging.yml`
 having a `macos` job and `packaging/macos/buildpackage.sh` being a complete, working OpenRA Mod SDK macOS
@@ -799,6 +799,50 @@ does not depend on the runner's own host architecture (macos-14 runners are Appl
 
 **Verification:** Confirmed via the GitHub Actions API that the `macOS Disk Image` job in the workflow runs
 backing releases alpha1 through alpha7 all show `runner_id: 0` and no job steps, consistent with never being
-scheduled. This fix should be confirmed by watching the next tag's `Release Packaging` run and checking the
-resulting release for a `SungridProtocol-<tag>.dmg` asset (unsigned/unnotarized, since no
-`MACOS_DEVELOPER_*` secrets are configured in this repo — that's expected and does not block the build itself).
+scheduled. This fix was confirmed to solve the *scheduling* half of the problem: alpha8's `macos` job actually
+acquired a `macos-14` runner and ran for the first time ever — but it then failed for an unrelated reason,
+tracked separately as issue #30, so alpha8 still shipped without a `.dmg`.
+
+---
+
+### 30. macOS packaging job now runs (issue #29) but fails: `buildpackage.sh` references engine files the pinned engine commit doesn't have — FIXED
+
+**Problem:** With issue #29's runner fix landed, alpha8's `Release Packaging` run gave the `macOS Disk Image` job
+a real `macos-14` runner for the first time in this repo's history — engine fetch and compile both succeeded —
+but the "Package Disk Image" step then failed after 19 seconds:
+
+```
+clang: error: no such file or directory:
+'.../packaging/macos/../..//./engine/packaging/macos/apphost-mono.c'
+```
+
+**Root cause:** This repo's `packaging/macos/buildpackage.sh` (mod-SDK-level, not engine) compiles a "mono"
+fallback launcher variant, expecting `apphost-mono.c` and `checkmono.c` to exist under
+`${ENGINE_DIRECTORY}/packaging/macos/` and installing a third `osx-x64`+`mono` assembly set alongside the native
+x86_64/arm64 ones. The pinned `ENGINE_VERSION` commit (`461c7c73c6565f1e2ba557701ad58766d734a428`, itself an
+ancestor of this repo's own pre-Phase-0 history — see `CLAUDE.md`'s "Engine version pinning" section) predates
+that engine-side mono-fallback feature: its `packaging/macos/` directory only has `Info.plist.in`, `apphost.c`,
+`buildpackage.sh` (the engine's own, unused old vendored-fork-era script — superseded by this repo's SDK-level
+one), `entitlements.plist`, `launcher.m`, and `utility.m` — no `apphost-mono.c`, no `checkmono.c`. Checked
+`launcher.m` at that pinned commit directly: it only ever dispatches to `apphost-arm64`/`apphost-x86_64` (grepped
+for "mono", zero hits), confirming the mono fallback path is entirely unused/unreachable dead weight for this
+engine version, not a required capability that's merely missing a source file.
+
+**Fix:** Simplified `packaging/macos/buildpackage.sh` to match what the pinned engine actually supports and what
+its own historical vendored script already did (confirmed by inspecting that commit's own now-unused
+`buildpackage.sh`, which also only ever builds+installs x86_64 and arm64 native variants):
+- Dropped the `mono` assembly directory, the `apphost-mono.c`/`checkmono.c` clang compile steps, and the
+  `mono`-target `install_assemblies`/`install_mod_assemblies` calls.
+- Raised `MINIMUM_SYSTEM_VERSION` in `Info.plist` from `10.11` to `10.15` and the `Launcher-x86_64` apphost's
+  clang `-target` from `x86_64-apple-macos10.11` to `x86_64-apple-macos10.15`, since `10.15` is the actual floor
+  for native (non-mono) .NET on macOS and matches what the engine's own historical script set.
+
+**Labels:** `type:bug`
+
+**Phase:** Not tied to a specific roadmap phase — release infrastructure fix, follow-up to issue #29.
+
+**Verification:** Confirmed via the GitHub Actions API that `apphost-mono.c`/`checkmono.c` are absent from the
+pinned engine commit's tree (`git ls-tree` against a direct fetch of that SHA) and that `launcher.m` at the same
+commit has no mono-related code path. No macOS host available in this sandbox to run `buildpackage.sh` directly;
+this fix should be confirmed by watching the next tag's `Release Packaging` run end-to-end and checking the
+resulting release for a `SungridProtocol-<tag>.dmg` asset.
