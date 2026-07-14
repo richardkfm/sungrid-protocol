@@ -24,15 +24,15 @@ if DateTime.CurrentMonth == 10 and DateTime.CurrentDay == 31 then
 	}
 else
 	UnitTypes = { "3tnk", "ftrk", "ttnk", "apc" }
-	BeachUnitTypes = { "e1", "e2", "e3", "e4", "e1", "e2", "e3", "e4", "e1", "e2", "e3", "e4", "e1", "e2", "e3", "e4" }
+	BeachUnitTypes = { "e1", "e2", "e3", "disr", "e1", "e2", "e3", "disr", "e1", "e2", "e3", "disr", "e1", "e2", "e3", "disr" }
 	ProxyType = "powerproxy.paratroopers"
 	ProducedUnitTypes =
 	{
 		{ factory = AlliedBarracks1,   types = { "e1", "e3" } },
 		{ factory = AlliedBarracks2,   types = { "e1", "e3" } },
-		{ factory = SovietBarracks1,   types = { "dog", "e1", "e2", "e3", "e4", "shok" } },
-		{ factory = SovietBarracks2,   types = { "dog", "e1", "e2", "e3", "e4", "shok" } },
-		{ factory = SovietBarracks3,   types = { "dog", "e1", "e2", "e3", "e4", "shok" } },
+		{ factory = SovietBarracks1,   types = { "dog", "e1", "e2", "e3", "disr", "shok" } },
+		{ factory = SovietBarracks2,   types = { "dog", "e1", "e2", "e3", "disr", "shok" } },
+		{ factory = SovietBarracks3,   types = { "dog", "e1", "e2", "e3", "disr", "shok" } },
 		{ factory = AlliedWarFactory1, types = { "jeep", "1tnk", "2tnk", "arty", "ctnk" } },
 		{ factory = SovietWarFactory1, types = { "3tnk", "4tnk", "v2rl", "ttnk", "apc" } }
 	}

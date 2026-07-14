@@ -728,3 +728,43 @@ pushed branch, though there's little for it to catch here since no actor id/weap
 
 **Phase:** 7 — Unit & Audio Identity (first wave; the bulk of the phase — core roster sprites, sub-faction
 units, audio — remains explicitly unstarted, see `docs/ENERGY_BALANCE.md`).
+
+---
+
+### 28. Shellmap Lua still spawned `e4` — a fourth missed reference from issue #14's rename, in a file type no prior audit checked — FIXED
+
+**Problem:** Reported from an actual Windows alpha7 playtest: Flame Infantry was still visibly present in the
+main-menu shellmap battle, despite issue #14 replacing it with `DISR` (Disruptor Trooper) and issues #16/#25
+each fixing a leftover `e4`/`ftur` reference in the shellmap's `map.yaml`/`rules.yaml`. Root cause:
+`mods/sungrid/maps/desert-shellmap/desert-shellmap.lua` — the script that actually drives the shellmap's
+animated background battle — still spawned `"e4"` in four places: `BeachUnitTypes` (the beach-landing wave
+sent via `SendSovietUnits(Entry7.Location, BeachUnitTypes, 15)`) and all three Soviet barracks'
+`ProducedUnitTypes` lists (`SovietBarracks1`/`2`/`3`, each producing `dog, e1, e2, e3, e4, shok` on a loop via
+`ProduceUnits`). This is the actual mechanism that puts units on screen in the shellmap — `map.yaml`'s static
+actor placements (fixed in #16) and `rules.yaml`'s APC cargo (fixed in #25) are one-shot; the Lua script's
+recurring production/reinforcement loops are what a player watching the main menu for more than a few seconds
+actually sees.
+
+**Why this was missed three times over:** Every prior `e4`/`ftur` audit (#14's own fix, #16, #25) explicitly
+scoped its verification grep to `mods/sungrid/**/*.yaml` — none of them checked `.lua`. This repo has exactly
+two Lua scripts (`mods/sungrid/scripts/campaign.lua`, clean, and this one), so the blind spot was narrow but
+exactly where it mattered: the one script that runs every time the game launches.
+
+**Fix:** `e4` → `disr` in all four spots in `desert-shellmap.lua`, matching the established replacement.
+
+**Root cause:** Same as #25's: a rename covered by grepping one file type, re-verified by grepping the same
+file type again. Fourth instance of the same missed reference, in a fourth distinct location, across three
+separate follow-up passes.
+
+**Labels:** `type:bug`, `type:content`
+
+**Phase:** Not tied to a specific roadmap phase — follow-up correctness fix to issue #14.
+
+**Verification:** Grepped the entire `mods/sungrid/` tree (not just `.yaml`) for bare `e4`/`E4`/`ftur`/`FTUR`
+tokens, this time explicitly including `.lua`, `.ftl`, and every other extension — confirmed the only
+remaining hits are legitimate art-filename reuse (`e4.shp`/`ftur.shp`/`fturmake.shp`/`fturicon.shp`,
+per #14's "same chassis art, different actor id" design) and unrelated hex color codes
+(`E4E4E4`, `ABB7E4`) that happen to contain the substring. No engine/`dotnet` available in this sandbox, so
+`make test`/a real client launch couldn't be run locally; CI and a human playtest on the pushed branch are the
+real checks — this fix should be re-verified against an actual alpha8-equivalent build before considering the
+shellmap's `e4`/`ftur` cleanup finished for real.
