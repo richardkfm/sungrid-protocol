@@ -138,3 +138,152 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Likely counters:** Same as Drone Bay — anti-air against drone traffic, direct destruction of the building halts Strike Drone production.
 - **Implementation complexity:** Low — a direct mechanical mirror of `SGDRN` (same `ProximityExternalCondition` speed aura, `Production`/`Exit`/`RallyPoint`), just faction-flipped prerequisites and a different placeholder sprite.
 - **Staging:** Implemented as `SGDRA`, part of the energy rebalance pass — see `docs/ENERGY_BALANCE.md`.
+
+## Roster stat survey — all buildings and units (July 2026)
+
+Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits` chains resolved (so inherited HP/armor/etc. are included). Numbers are engine-internal units: HP is 100× the displayed value, Speed is the `Mobile`/`Aircraft` speed integer, Vision is `RevealsShroud.Range` in cells. Power: positive = generates, negative = drains. Faction names: Consortium = `allies`-gated, Assembly = `soviet`-gated. Tech = the `~techlevel.*` lobby gate (`inf` = available even at infantry-only, `unr` = unrestricted-only). Prereqs omit the techlevel gate.
+
+### Buildings — production, economy, tech (Building queue)
+
+| ID | Name | Faction | Tech | Cost | HP | Armor | Power | Prereqs | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| FACT | Construction Yard | Both | — | 2000 | 150000 | Wood | 0 | (MCV deploy only) | |
+| POWR | Solar Array | Both | inf | 300 | 40000 | Wood | +100 | — | Best cr/power ratio in game (3.0) |
+| APWR | Advanced Solar Array | Both | med | 1000 | 70000 | Wood | +200 | dome | 5.0 cr/power |
+| SGWND | Wind Turbine Array | Assembly | low | 400 | 30000 | Wood | +70 | anypower | 5.7 cr/power, same 2×3 footprint as POWR — see gap G3 |
+| SGHYD | Hydrogen Plant | Consortium | high | 1200 | 90000 | Heavy | +350 | dome, atek | 3.4 cr/power; only Heavy-armored power source |
+| SGREL | Smart Grid Relay | Both | med | 600 | 50000 | Heavy | +60 | anypower | 10.0 cr/power but 1×1 footprint, Heavy, vision 7 — see gap G4 |
+| PROC | Materials Refinery | Both | inf | 1400 | 90000 | Wood | −30 | anypower | Comes with free HARV |
+| RCYD | Recycling Depot | Both | inf | 600 | 40000 | Wood | −20 | anypower | Free SGHAU; baseline trickle 25 cr/125 ticks |
+| BARR | Assembly Barracks | Assembly | inf | 500 | 60000 | Wood | −20 | anypower | |
+| TENT | Consortium Barracks | Consortium | inf | 500 | 60000 | Wood | −20 | anypower | |
+| KENN | Kennel | Assembly | inf | 200 | 30000 | Wood | −10 | anypower | |
+| WEAP | War Factory | Both | low | 2000 | 150000 | Wood | −30 | proc | |
+| DOME | Radar Dome | Both | med | 1500 | 100000 | Wood | −40 | proc | Vision 10 |
+| HPAD | Helipad | Consortium | med | 500 | 80000 | Wood | −10 | dome | |
+| AFLD | Airfield | Assembly | med | 500 | 100000 | Wood | −20 | dome | Ukraine variant available to all |
+| SPEN | Sub Pen | Assembly | low | 800 | 100000 | Wood | −20 | anypower | |
+| SYRD | Naval Yard | Consortium | low | 1000 | 100000 | Wood | −20 | anypower | |
+| FIX | Service Depot | Both | med | 1200 | 80000 | Wood | −30 | weap | |
+| ATEK | Consortium Tech Center | Consortium | high | 1500 | 60000 | Wood | −200 | weap, dome | |
+| STEK | Assembly Tech Center | Assembly | high | 1500 | 80000 | Wood | −100 | weap, dome | Note asymmetry vs ATEK: +20000 HP, half the power drain |
+| SGCRY | Cryptominer | Both | high | 1800 | 80000 | Wood | −150 | dome | Income 45 cr/50 ticks Normal, 15 Strained — see gap G8 |
+| SGDAI | Datacenter for AI | Both | high | 1600 | 80000 | Wood | −140 | dome | 20 cr/100 ticks Normal, 8 Strained; DetectCloaked off below Normal; gates superweapons + drones |
+| SGDRN | Drone Bay | Assembly | med | 900 | 70000 | Wood | −20 | proc, rcyd | Vehicle speed aura + builds SGDRO |
+| SGDRA | Aerial Fabrication Bay | Consortium | med | 900 | 70000 | Wood | −20 | proc, rcyd | Exact SGDRN mirror; builds SGDRS |
+| SGSHL | Resilience Shelter | Both | high | 1200 | 90000 | Wood | −50 | fact, dome | Damage-mitigation aura to nearby structures |
+| SGSNS | Sensor Array | Both | high | 800 | 40000 | Wood | −30 | dome | Vision 10 + DetectCloaked |
+
+### Buildings — defense, storage, walls, superweapons (Defense queue)
+
+| ID | Name | Faction | Tech | Cost | HP | Armor | Power | Weapon | Prereqs | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| SILO | Battery Bank | Both | inf | 150 | 30000 | Wood | −10 | — | proc | **The Grid Reserve Vault** (`GridReserveVault`: capacity 8000, deposit 30/tick, 50% drain / 50% attacker reward on destruction) — see gap G2 |
+| PBOX | Pillbox | Consortium | low | 600 | 40000 | Heavy | −20 | (garrisoned E1, included) | tent | |
+| HBOX | Camo Pillbox | Consortium | med | 750 | 40000 | Heavy | −20 | (garrisoned E1, cloaked) | tent | |
+| GUN | Turret | Consortium | med | 800 | 40000 | Heavy | −40 | TurretGun | tent | Same weapon as SGTUR — see gap G5 |
+| ARCT | Arc Turret | Assembly | low | 600 | 40000 | Heavy | −20 | ArcDischarge | barr | Also prereq for DISR |
+| TSLA | Tesla Coil | Assembly | med | 1200 | 40000 | Heavy | −80 | TeslaZap | weap | |
+| SGTUR | Grid Defense Turret | Both | med | 900 | 40000 | Heavy | −40 | TurretGun | anypower | 125% firepower at Normal power; 70% + 130% reload when strained; never powers down |
+| AGUN | AA Gun | Consortium | med | 800 | 40000 | Heavy | −50 | ZSU-23 | dome | |
+| SAM | SAM Site | Assembly | med | 700 | 40000 | Heavy | −40 | Nike | dome | |
+| GAP | Gap Generator | Consortium | high | 800 | 50000 | Heavy | −60 | — | atek | |
+| SBAG | Sandbag Wall | Consortium | low | 30 | 15000 | Wood | — | — | fact | |
+| FENC | Wire Fence | Assembly | low | 30 | 15000 | Wood | — | — | fact | |
+| BRIK | Concrete Wall | Both | med | 200 | 40000 | Concrete | — | — | fact | |
+| MSLO | Missile Silo | Both | unr | 2500 | 100000 | Wood | −150 | — | techcenter, sgdai | sgdai gate confirmed in YAML (issue #22) |
+| IRON | Iron Curtain | Assembly | unr | 2000 | 100000 | Wood | −200 | — | stek, sgdai | sgdai gate confirmed |
+| PDOX | Chronosphere | Consortium | unr | 1500 | 100000 | Wood | −200 | — | atek, sgdai | sgdai gate confirmed |
+
+### Infantry
+
+| ID | Name | Faction | Tech | Cost | HP | Speed | Weapon(s) | Prereqs | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| E1 | Rifle Infantry | Both | inf | 100 | 5000 | 54 | M1Carbine | barracks | |
+| E2 | Grenadier | Assembly | inf | 150 | 5000 | 68 | Grenade | barr | |
+| E3 | Rocket Soldier | Both | inf | 300 | 4500 | 54 | Dragon, RedEye | barracks | Designated anti-drone counter (100% vs Light) |
+| DISR | Disruptor Trooper | Assembly | low | 300 | 4000 | 54 | Disruptor | barr, arct | No Consortium counterpart — see gap G10 |
+| DOG | Attack Dog | Assembly | inf | 200 | 1800 | 100 | DogJaw | kenn | |
+| E6 | Engineer | Both | inf | 400 | 2500 | 54 | — | barracks | |
+| MEDI | Medic | Consortium | inf | 200 | 6000 | 49 | Heal | tent | |
+| MECH | Mechanic | Consortium | med | 500 | 8000 | 49 | Repair | tent, fix | |
+| SPY | Spy | Consortium | med | 500 | 2500 | 54 | SilencedPPK | tent, dome | England variant costs 250 |
+| THF | Thief | Assembly | med | 500 | 8000 | 72 | — | barr, dome | Steals 50% of stored credits — incl. from SILO, see gap G2 |
+| SHOK | Shock Trooper | Assembly (Russia) | high | 350 | 5000 | 54 | PortaTesla | barr, stek, tsla | |
+| E7 | Tanya | Consortium | high | 1800 | 10000 | 68 | Colt45 | tent, atek | |
+
+### Vehicles
+
+| ID | Name | Faction | Tech | Cost | HP | Armor | Speed | Weapon(s) | Prereqs | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| HARV | Ore Truck | Both | inf | 1100 | 60000 | Heavy | 72 | — | proc | |
+| SGHAU | Hauler Drone | Both | inf | 500 | 22000 | Light | **unset (=1)** | — | rcyd | **Bug — effectively immobile, see gap G1** |
+| MCV | Mobile Construction Vehicle | Both | med | 2000 | 60000 | Light | 60 | — | fix | |
+| TRUK | Supply Truck | Both | low | 500 | 11000 | Light | 113 | — | — | |
+| JEEP | Ranger | Consortium | low | 500 | 15000 | Light | 164 | M60mg | — | |
+| APC | Armored Personnel Carrier | Assembly | low | 850 | 35000 | Heavy | 128 | M60mg | — | |
+| FTRK | Mobile Flak | Assembly | low | 600 | 15000 | Light | 113 | FLAK-23 AA/AG | — | |
+| 1TNK | Light Tank | Consortium | low | 700 | 23000 | Heavy | 113 | 25mm | — | |
+| 2TNK | Medium Tank | Consortium | med | 850 | 46000 | Heavy | 72 | 90mm | fix | |
+| 3TNK | Heavy Tank | Assembly | med | 1150 | 60000 | Heavy | 64 | 105mm | fix | |
+| 4TNK | Mammoth Tank | Assembly | high | 2000 | 90000 | Heavy | 43 | 120mm, MammothTusk | fix, stek | |
+| ARTY | Artillery | Consortium | med | 850 | 10000 | Light | 72 | 155mm | dome | |
+| V2RL | Surge Rocket Launcher | Assembly | med | 900 | 20000 | Light | 72 | SCUD | dome | |
+| MNLY | Minelayer | Both | med | 800 | 30000 | Heavy | 113 | — | fix | |
+| MGG | Mobile Gap Generator | Consortium (England) | high | 1000 | 22000 | Heavy | 72 | — | atek | |
+| MRJ | Mobile Radar Jammer | Consortium | high | 1000 | 22000 | Heavy | 68 | — | atek | |
+| TTNK | Tesla Tank | Assembly (Russia) | high | 1350 | 40000 | Light | 92 | TTankZap | tsla, stek | |
+| CTNK | Chrono Tank | Consortium (Germany) | high | 1350 | 40000 | Light | 86 | APTusk | atek | |
+| STNK | Phase Transport | Consortium (France) | high | 1000 | 35000 | Light | 128 | APTusk.stnk | atek | |
+| QTNK | Tremor Tank | Assembly | high | 2000 | 90000 | Heavy | 46 | (quake) | fix, stek | |
+| DTRK | Demolition Truck | Assembly (Ukraine) | high | 2500 | 2800 | Light | 67 | DemoTruck | stek | |
+
+### Aircraft
+
+| ID | Name | Faction | Tech | Cost | HP | Speed | Weapon(s) | Prereqs | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| YAK | Yak Attack Plane | Assembly | med | 1350 | 6000 | 178 | ChainGun.Yak | afld | |
+| MIG | MiG Attack Plane | Assembly | high | 2000 | 8000 | 223 | Maverick | afld, stek | |
+| TRAN | Chinook | Consortium | med | 900 | 14000 | 128 | — | hpad | |
+| MH60 | Black Hawk | Consortium | med | 1500 | 10000 | 112 | ChainGun | hpad | |
+| HELI | Longbow | Consortium | high | 2000 | 12000 | 149 | Hellfire AA/AG | hpad, atek | |
+| HIND | Hind | — | (disabled) | 1500 | 10000 | 112 | ChainGun | ~disabled | Dead content — see gap G6 |
+| SGDRO | Recon Drone | Assembly | high | 350 | 3000 | 170 | DroneRocket (2×700) | sgdrn, sgdai | Weapon disabled at Critical power |
+| SGDRS | Strike Drone | Consortium | high | 600 | 3500 | 150 | DroneRocket.Strike (2×950) | sgdra, sgdai | Weapon disabled at Critical power — see gap G7 |
+
+### Ships
+
+| ID | Name | Faction | Tech | Cost | HP | Armor | Speed | Weapon(s) | Prereqs | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| SS | Submarine | Assembly | low | 950 | 25000 | Light | 78 | TorpTube | spen | Stock RA identity — see gap G9 |
+| MSUB | Missile Submarine | Assembly | high | 2000 | 40000 | Light | 44 | SubMissile (+AA) | spen, stek | |
+| PT | Gunboat | Consortium | low | 500 | 20000 | Heavy | 142 | 2Inch, DepthCharge | syrd | |
+| DD | Destroyer | Consortium | med | 1000 | 40000 | Heavy | 92 | Stinger (+AA), DepthCharge | syrd, dome | |
+| CA | Cruiser | Consortium | high | 2400 | 80000 | Heavy | 44 | 8Inch | syrd, atek | |
+| LST | Transport | Both | low | 500 | 40000 | Heavy | 115 | — | — | |
+
+Campaign-only / non-skirmish actors, listed for completeness: `Zombie` (Blighted), `Ant` (Swarmling) — `~bio`-gated; `FireAnt`/`ScoutAnt`/`WarriorAnt` (Cinderling/Scoutling/Bulwarkling) — `~disabled`; `AFLD.Ukraine`, `SPY.England` — subfaction variants of actors above.
+
+### Gaps found
+
+- **G1 — `SGHAU` has no `Mobile.Speed` (bug).** It inherits `^Vehicle`, whose `Mobile` sets only `Locomotor`/`TurnSpeed`, and never sets `Speed` itself. The engine default (`MobileInfo.Speed`, verified in the pinned `ENGINE_VERSION` commit) is **1** — the Hauler Drone moves at 1/72nd of an Ore Truck's speed, i.e. is effectively immobile. Undetected so far because no shipped map has Scrap painted (see building #3), so the free Hauler never has anywhere to drive.
+- **G2 — Battery Bank doc/rules drift.** The Grid Reserve Vault is implemented on `SILO` (display name already "Battery Bank"), but entry #2 above never says so, and its listed prerequisites ("Solar Array, Refinery-equivalent") don't match the YAML (`proc` only, cost 150). The vault's actual numbers live in C# defaults, invisible to YAML readers: capacity 8000, deposit 30/tick, 50% reserve drain + 50% attacker reward on destruction (`OpenRA.Mods.Sungrid/GridReserve/GridReserveVault.cs`). `SILO` also retains RA's `InfiltrateForCash` (Thief steals 50% of **stored spendable** credits) — deposited Reserve is held by `GridReserveManager` so it isn't stealable, but that interaction is documented nowhere.
+- **G3 — Wind Turbine Array is strictly dominated by Solar Array.** Same 2×3 footprint, but SGWND costs more (400 vs 300), generates less (+70 vs +100), has less HP (30000 vs 40000), is faction-gated, and needs an existing power source. There is currently no situation where building one is correct.
+- **G4 — Smart Grid Relay is the worst power-per-credit in the game** (10.0 cr/power vs POWR's 3.0). Its real differentiators — 1×1 footprint, Heavy armor, vision 7 — probably don't carry a 2× premium per power point.
+- **G5 — `SGTUR` and `GUN` share the same `TurretGun` weapon.** SGTUR costs 100 more but is available to both factions, needs only `anypower` (no barracks), and fires at 125% under Normal power — for the Consortium, GUN is close to dead content.
+- **G6 — `HIND` is `~disabled` dead content**, and with `MH60`/`TRAN`/`HELI` all on the Consortium's Helipad, the Assembly has no helicopter at all (fixed-wing only).
+- **G7 — Drone cost/performance skew.** Strike Drone pays +71% cost over Recon Drone (600 vs 350) for +17% HP, +36% damage, and −12% speed. Reasonable as faction flavor, but the Assembly likely gets more per credit.
+- **G8 — Cryptominer payback is short and raid-proof.** 45 cr/50 ticks ≈ 1,350 cr/min at normal speed: the 1800 build cost (plus ~600 of power infrastructure for its −150 drain) pays back in roughly 2 minutes, after which it's income that — unlike a Harvester — never leaves the base.
+- **G9 — No Sungrid identity pass on naval or several stock names.** Ships plus Chinook/MiG/Yak/Black Hawk/Tesla-branded content are untouched stock RA tone (cf. the Phase 6/7 identity work in `docs/ROADMAP.md`).
+- **G10 — Disruptor Trooper has no Consortium counterpart** — all Consortium-unique infantry are stock RA (Medic/Mechanic/Spy/Tanya). Minor, and consistent with RA's own asymmetry, but worth a line in the faction-identity pass.
+
+### Suggestions
+
+1. **Fix G1 now** — one line: `Mobile: Speed: 72` on `SGHAU` (match HARV; or ~85 if the light, fragile hauler should feel nimbler). Worth pairing with the Scrap-map follow-up from `docs/BACKLOG.md` issue #5 so the loop is actually exercisable.
+2. **Close the G2 doc gap** — update entry #2 above to name `SILO` as the implementation, state the C# defaults, and note the Thief/Reserve interaction explicitly.
+3. **G3:** either drop SGWND to ~250 cr, raise it to +90–100 power, or shrink its footprint below POWR's — it needs at least one column it wins.
+4. **G4:** price SGREL at ~350–400, or keep 600 and give it a small utility effect (its deferred grid fantasy invites e.g. a minor `ProximityExternalCondition` repair/discount aura).
+5. **G5:** give SGTUR a distinct energy-flavored weapon (the power-scaling identity invites it) or move GUN's niche elsewhere; alternatively raise SGTUR's prereq above bare `anypower`.
+6. **G6:** delete the HIND block or rebrand it as an Assembly drone-carrier/gunship if the Assembly should get rotary air.
+7. **G7/G8:** no rules change yet — flag both for the next playtest (`docs/PLAYTESTING.md`): drone cost-efficiency by faction, and Cryptominer opportunity-cost vs a second Harvester + refinery.
+8. **G9/G10:** fold into the existing Phase 6/7 visual/audio identity scope rather than one-off renames now.
