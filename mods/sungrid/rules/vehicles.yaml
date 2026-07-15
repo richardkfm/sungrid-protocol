@@ -372,7 +372,7 @@ SGHAU:
 	Inherits: ^Vehicle
 	Inherits@selection: ^SelectableEconomicUnit
 	RenderSprites:
-		Image: harv
+		Image: sghau
 	Buildable:
 		Queue: Vehicle
 		BuildPaletteOrder: 115
@@ -417,7 +417,7 @@ SGHAU:
 		RequiresCondition: !no-scrap
 		Weapon: OreExplosion
 	WithHarvesterSpriteBody:
-		ImageByFullness: harvempty, harvhalf, harv
+		ImageByFullness: sghauempty, sghauhalf, sghau
 	-WithFacingSpriteBody:
 	WithStoresResourcesPipsDecoration:
 		Position: BottomLeft
