@@ -61,7 +61,6 @@ sghau:
 		UseClassicFacings: True
 	harvest:
 		Start: 32
-		Length: 8
 		Facings: 8
 	dock:
 		Start: 40

@@ -942,3 +942,17 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Phase:** 5/6 follow-up (closes the "placeholder art" gap `docs/BUILDINGS.md` flagged for buildings 4-13, plus the drone half of the Phase 7 roster-art gap `docs/BACKLOG.md` issue #27 documented as blocked).
 
 **Definition of done:** Every building/unit in this list, including `SGHAU`, renders a sprite distinct from any other actor's, in the locked `docs/ART_DIRECTION.md` palette, with no regression to any trait's behavior. **Met by this pass** for the distinctness/readability bar (verified via composited NEAREST-upscaled preview renders of every sheet, every rotation set, every fullness variant, and every icon -- no engine/live-client access in this environment, same constraint issue #12's own first pass had). A real artist pass (hand-painted indexed-palette pixel art, proper build-up animations) remains open follow-up work, same status as Solar Array's own remaining gap.
+
+### 35. SGHAU's `harvest` sequence crashed the game on load — FIXED
+
+**Problem:** A real local build/launch (alpha11, CachyOS Linux, reported directly from a user's terminal) crashed immediately on shellmap load with `System.InvalidOperationException: sungrid|sequences/vehicles.yaml:58: sghau.png does not contain frames: 55,56,...,95`. Issue #34's SGHAU follow-up copied HARV's own `harvest: Start:32, Length:8, Facings:8` sequence block verbatim, but never accounted for how OpenRA's `SpriteCache` actually resolves a sequence that sets both `Length` and `Facings`: total frames consumed is `Length x Facings` (facing-major layout), not `Length` alone -- that's exactly why HARV's real `harv.shp` has its own `dock` starting at frame 96 (32 + 8x8 = 96), not 40. `sghau.png` was only ever generated with a self-contained 55-frame layout (idle 32 + harvest 8 + dock 8 + dock-loop 7), so the sequence definition was asking for 64 frames of `harvest` alone -- frames 55-95 straight out of bounds -- when only 8 were ever drawn (one static "scoop" pose per facing, no per-facing animation loop). This was invisible to CI, which validates rules/map references but doesn't load sprites through a real renderer.
+
+**Fix:** Dropped the erroneous `Length: 8` from `sghau`'s `harvest:` block in `mods/sungrid/sequences/vehicles.yaml`, leaving `Start: 32` / `Facings: 8` (default `Length: 1`, matching the `1tnk`/`v2rl`-style facings-only convention used everywhere else in this file for a single static frame per facing). That correctly consumes just 8 frames (32-39), leaving `dock` at 40 and `dock-loop` at 48 valid against the real 55-frame `sghau.png`/`sghauhalf.png`/`sghauempty.png` sheets -- no art regeneration needed, since the already-generated `harvest` frames were always a per-facing pose set, not a per-facing animation.
+
+**Scope:** `mods/sungrid/sequences/vehicles.yaml` only (one line removed). No art, rules, or trait changes.
+
+**Labels:** `type:bug`, `area:units`
+
+**Phase:** 5/6 follow-up (regression from issue #34's SGHAU follow-up).
+
+**Definition of done:** `sghau`/`sghauhalf`/`sghauempty` load without a frame-count exception. Verified by re-deriving the exact frame math against the real generated PNG's `FrameAmount: 55` metadata; not yet re-verified against a real client launch in this environment (no engine/live-client access here -- same constraint as issue #34's own art verification), so this should be treated as fixed-by-inspection until confirmed on the next real local build.
