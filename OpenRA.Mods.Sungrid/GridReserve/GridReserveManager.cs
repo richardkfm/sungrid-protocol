@@ -47,10 +47,15 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[VerifySync]
 		public int Target { get; private set; }
 
-		// Cross-multiplied instead of dividing to keep the comparison exact in integer math.
-		public bool BeaconActive => Target > 0 && TotalReserve * 100 >= Target * info.MinimapRevealPercent;
+		// Resolved once from the "gridreserve" lobby checkbox. Vaults must not deposit Credits into
+		// Reserve at all when the mode is off, since deposits are irreversible and off-mode games have
+		// no UI, win condition, or way to ever get that money back.
+		public bool Enabled { get; private set; }
 
-		public bool LockdownEligible => Target > 0 && TotalReserve >= Target;
+		// Cross-multiplied instead of dividing to keep the comparison exact in integer math.
+		public bool BeaconActive => Enabled && Target > 0 && TotalReserve * 100 >= Target * info.MinimapRevealPercent;
+
+		public bool LockdownEligible => Enabled && Target > 0 && TotalReserve >= Target;
 
 		public GridReserveManager(GridReserveManagerInfo info)
 		{
@@ -59,6 +64,8 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 		void IWorldLoaded.WorldLoaded(World w, WorldRenderer wr)
 		{
+			Enabled = w.LobbyInfo.GlobalSettings.OptionOrDefault("gridreserve", false);
+
 			var activePlayers = w.Players.Count(p => !p.NonCombatant && p.Playable);
 			if (activePlayers <= 0)
 			{

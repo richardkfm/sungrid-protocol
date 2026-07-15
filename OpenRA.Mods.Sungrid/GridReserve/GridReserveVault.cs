@@ -61,6 +61,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 		void ITick.Tick(Actor self)
 		{
+			if (!manager.Enabled)
+				return;
+
 			if (CurrentReserve < info.Capacity)
 			{
 				var room = info.Capacity - CurrentReserve;
