@@ -1,3 +1,6 @@
+## mainmenu.yaml
+label-main-menu-title = Sungrid Protocol
+
 ## ingame-observer.yaml
 label-economy-stats-harvesters-header = Harvesters
 label-economy-stats-derricks-header = Oil Derricks

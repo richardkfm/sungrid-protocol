@@ -34,7 +34,7 @@
 		AllowModifiers: false
 	PaletteFromFile@cursor:
 		Name: cursor
-		Filename: temperat.pal
+		Filename: sungrid-cursor.pal
 		AllowModifiers: false
 		CursorPalette: true
 	PaletteFromFile@effect:
