@@ -1805,7 +1805,7 @@ SGWND:
 		Prerequisites: anypower, ~structures.soviet, ~techlevel.low
 		Description: actor-sgwnd.description
 	Valued:
-		Cost: 400
+		Cost: 250
 	Tooltip:
 		Name: actor-sgwnd.name
 	ProvidesPrerequisite:
@@ -2669,7 +2669,7 @@ SGREL:
 		Prerequisites: anypower, ~techlevel.medium
 		Description: actor-sgrel.description
 	Valued:
-		Cost: 600
+		Cost: 400
 	Tooltip:
 		Name: actor-sgrel.name
 	Health:
