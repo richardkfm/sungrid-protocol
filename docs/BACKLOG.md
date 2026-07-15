@@ -848,3 +848,44 @@ pinned engine commit's tree (`git ls-tree` against a direct fetch of that SHA) a
 commit has no mono-related code path. No macOS host available in this sandbox to run `buildpackage.sh` directly;
 this fix should be confirmed by watching the next tag's `Release Packaging` run end-to-end and checking the
 resulting release for a `SungridProtocol-<tag>.dmg` asset.
+
+---
+
+### 31. Roster survey gaps G7/G8 (drone cost skew, Cryptominer payback) — flagged for playtest, no rules change yet
+
+**Problem:** `docs/BUILDINGS.md`'s July 2026 roster survey found two possible balance issues that don't have an obvious correct fix without real match data:
+
+- **G7 — Drone cost/performance skew.** The Consortium's Strike Drone (`SGDRS`) pays +71% cost over the Assembly's Recon Drone (`SGDRO`, 600 vs 350) for +17% HP, +36% damage, and −12% speed. Could be reasonable faction flavor (Consortium's centralized/hardened identity vs. Assembly's decentralized/scarcity-adapted one), or could mean the Assembly gets strictly more value per credit.
+- **G8 — Cryptominer payback is short and raid-proof.** `SGCRY`'s 45 cr/50 ticks (≈1,350 cr/min at normal speed) pays back its 1800 build cost plus ~600 of supporting power infrastructure in roughly 2 minutes — after which, unlike a Harvester, that income never leaves the base to be raided.
+
+**Why no rules change:** Both gaps are plausibly-fine-as-is per each faction's declared identity (`docs/ART_DIRECTION.md`), and retuning either without seeing how they play out in a real 3+ player match would just be substituting one guess for another — the same reasoning the roster survey itself gave when it flagged these for playtest rather than proposing numbers.
+
+**Action:** Tracked here so it isn't lost as a one-line doc suggestion. Both should be evaluated against a real skirmish/Grid Reserve playtest (`docs/PLAYTESTING.md`, and the existing 3+ player structured-playtest task in issue #9) — specifically: does the Assembly's drone economy noticeably underperform the Consortium's at matching investment, and does a Cryptominer-heavy build order measurably outperform Harvester-based econ once raiding is a real threat.
+
+**Labels:** `type:balance`, `needs:playtest`
+
+**Phase:** 5 — Faction Flavor (follow-up to the roster survey; no phase work blocked on this).
+
+**Verification:** N/A — no code/rules change in this issue by design. Resolved when a playtest either confirms the current numbers are fine or a follow-up issue lands a specific retune backed by observed match data.
+
+---
+
+### 32. Roster survey gaps G5/G6: SGTUR shared GUN's weapon, HIND was disabled dead content — FIXED
+
+**Problem:** Two more findings from the July 2026 roster survey (`docs/BUILDINGS.md`):
+
+- **G5** — `SGTUR` (Grid Defense Turret, buildable by both factions off bare `anypower`) fired the exact same `TurretGun` weapon as `GUN` (Consortium-only Turret, needs `tent`). Since `SGTUR` was cheaper to reach and available to both sides, `GUN` was close to dead content for the Consortium.
+- **G6** — `HIND` carried `~disabled` in its `Buildable.Prerequisites` (inherited as-is from stock RA) and was gated to the Consortium's `~hpad`, so it was unreachable dead content — and with `MH60`/`TRAN`/`HELI` all on the Consortium's Helipad, the Assembly had no helicopter at all (fixed-wing only via `AFLD`).
+
+**Fix:**
+- Added a new weapon, `GridPulseCannon` (`mods/sungrid/weapons/ballistics.yaml`), identical to `TurretGun` in damage/reload/range so `SGTUR`'s existing cost/prereq tradeoff is unchanged, but reflavored as an energy weapon (`ElectricityDeath` instead of `ExplosionDeath`) with an inverted armor profile: 100% vs Light armor (drones, scouts, light vehicles), only 55% vs Heavy — vs. `TurretGun`'s 75%/100%. `SGTUR.Armament.Weapon` now points at it. `SGTUR` is the shared, power-scaled anti-harassment turret; `GUN` keeps its niche as the Consortium's harder-hitting anti-armor gun.
+- `HIND` (`mods/sungrid/rules/aircraft.yaml`): dropped `~disabled` and `~hpad`; re-gated to `~afld, ~techlevel.medium`. `AFLD` (`mods/sungrid/rules/structures.yaml`) gained `Helicopter` in its `Production.Produces` (was `Aircraft, Plane` only) to allow it. No stat or weapon changes — still `Cost: 1500`, `HP: 10000`, `ChainGun`.
+- Renamed via fluent (`actor-hind` in `mods/sungrid/fluent/rules.ftl`) from "Hind" — a real-world Mi-24 NATO reporting name — to **"Wasp Gunship"**, matching the Assembly's decentralized/drone-based identity and the same "drop the real-world Cold War designation" pattern already applied to `V2RL`/`QTNK`/`U2` (issue #27). Husk tooltip name updated to match.
+
+**Scope:** `mods/sungrid/weapons/ballistics.yaml` (new `GridPulseCannon`), `mods/sungrid/rules/structures.yaml` (`SGTUR.Armament`, `AFLD.Production`), `mods/sungrid/rules/aircraft.yaml` (`HIND.Buildable.Prerequisites`), `mods/sungrid/fluent/rules.ftl` (`actor-hind`, `actor-hind-husk-name`). No new C#, no new art — `HIND` reuses its existing stock sprite/sequences/husk, already present in `mods/sungrid/sequences/aircraft.yaml` and `mods/sungrid/rules/husks.yaml`.
+
+**Labels:** `type:balance`, `type:content`
+
+**Phase:** 5 — Faction Flavor (roster survey follow-up).
+
+**Verification:** Confirmed `ai.yaml`'s four `ModularBot@*` entries already list `hind` in their generic `AirUnitsTypes` wishlist (dead weight until now, since bots only build what's actually reachable) — no AI-side change needed to make bots use it. Confirmed no other reference to `~disabled`/`~hpad` remained on `HIND`, and that `GridPulseCannon` doesn't collide with an existing weapon id. No engine/`dotnet` available in this sandbox, so `make test`/a real client launch couldn't be run locally — CI and a human playtest on the pushed branch are the real checks.

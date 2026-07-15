@@ -1588,7 +1588,7 @@ AFLD:
 	CommandBarBlacklist:
 		DisableStop: false
 	Production:
-		Produces: Aircraft, Plane
+		Produces: Aircraft, Plane, Helicopter
 	Reservable:
 	ProvidesPrerequisite@soviet:
 		Factions: soviet, russia, ukraine
@@ -2626,7 +2626,7 @@ SGTUR:
 		RequiresCondition: !build-incomplete
 		Recoils: false
 	Armament:
-		Weapon: TurretGun
+		Weapon: GridPulseCannon
 		LocalOffset: 0,0,320
 		MuzzleSequence: muzzle
 	AttackTurreted:
