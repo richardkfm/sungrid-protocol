@@ -130,9 +130,9 @@ actor-heli =
       Weak vs Infantry
 
 actor-hind =
-    .name = Hind
+    .name = Wasp Gunship
     .description =
-    Helicopter gunship with dual chain guns.
+    Assembly rotary gunship with dual chain guns.
       Strong vs Infantry and Light armor
       Weak vs Tanks and Aircraft
 
@@ -290,7 +290,7 @@ actor-badr-husk-name = Badger
 actor-mig-husk-name = MiG Attack Plane
 actor-yak-husk-name = Yak Attack Plane
 actor-heli-husk-name = Longbow
-actor-hind-husk-name = Hind
+actor-hind-husk-name = Wasp Gunship
 actor-u2-husk-name = Husk (Recon Plane)
 actor-mh60-husk-name = Black Hawk
 

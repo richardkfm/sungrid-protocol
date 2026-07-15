@@ -423,7 +423,7 @@ HIND:
 		Queue: Aircraft
 		BuildAtProductionType: Helicopter
 		BuildPaletteOrder: 20
-		Prerequisites: ~disabled, ~hpad, ~techlevel.medium
+		Prerequisites: ~afld, ~techlevel.medium
 		Description: actor-hind.description
 	Valued:
 		Cost: 1500

@@ -88,6 +88,21 @@ TurretGun:
 			None: 20
 			Wood: 50
 
+GridPulseCannon:
+	Inherits: ^Cannon
+	ReloadDelay: 30
+	Range: 6c512
+	Report: turret1.aud
+	Warhead@1Dam: SpreadDamage
+		Damage: 6000
+		Versus:
+			None: 20
+			Wood: 50
+			Light: 100
+			Heavy: 55
+			Concrete: 50
+		DamageTypes: Prone50Percent, TriggerProne, ElectricityDeath
+
 ^Artillery:
 	Inherits: ^Cannon
 	ReloadDelay: 85

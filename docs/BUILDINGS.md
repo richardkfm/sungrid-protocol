@@ -83,7 +83,7 @@ Both buildings originally assumed they'd need a small custom trait for power-sca
 - **Prerequisites:** Solar Array.
 - **Likely counters:** Power denial (destroy power plants to weaken the turret before assaulting), standard artillery/air counters to static defense.
 - **Implementation complexity:** Low, in practice — see the Cryptominer note above; `GrantConditionOnPowerState` gating `FirepowerMultiplier`/`ReloadDelayMultiplier` covers it with no new trait. Deliberately does **not** inherit `DisableOnLowPowerOrPowerDown` — the design calls for "weaker when strained," not "offline," so it stays combat-capable at low power rather than being paused like most power-consuming defenses.
-- **Staging:** Implemented (Phase 5) as `SGTUR`.
+- **Staging:** Implemented (Phase 5) as `SGTUR`. **Revised (roster survey gap G5):** originally fired the same `TurretGun` weapon as the Consortium-only `GUN`, making `GUN` close to dead content — now fires its own weapon, `GridPulseCannon` (identical damage/reload/range, so the cost/prereq tradeoff is unchanged), reflavored as an energy weapon that's strong vs Light armor and weak vs Heavy, the inverse of `TurretGun`'s profile. `SGTUR` is the shared, power-scaled anti-harassment turret; `GUN` keeps its niche as the Consortium's harder-hitting anti-armor gun.
 
 ### 8. Smart Grid Relay
 - **Category:** Energy / Logistics
@@ -181,10 +181,10 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | SILO | Battery Bank | Both | inf | 150 | 30000 | Wood | −10 | — | proc | **The Grid Reserve Vault** (`GridReserveVault`: capacity 8000, deposit 30/tick, 50% drain / 50% attacker reward on destruction) — see gap G2 |
 | PBOX | Pillbox | Consortium | low | 600 | 40000 | Heavy | −20 | (garrisoned E1, included) | tent | |
 | HBOX | Camo Pillbox | Consortium | med | 750 | 40000 | Heavy | −20 | (garrisoned E1, cloaked) | tent | |
-| GUN | Turret | Consortium | med | 800 | 40000 | Heavy | −40 | TurretGun | tent | Same weapon as SGTUR — see gap G5 |
+| GUN | Turret | Consortium | med | 800 | 40000 | Heavy | −40 | TurretGun | tent | Higher flat damage, better vs Heavy — see gap G5, since fixed |
 | ARCT | Arc Turret | Assembly | low | 600 | 40000 | Heavy | −20 | ArcDischarge | barr | Also prereq for DISR |
 | TSLA | Tesla Coil | Assembly | med | 1200 | 40000 | Heavy | −80 | TeslaZap | weap | |
-| SGTUR | Grid Defense Turret | Both | med | 900 | 40000 | Heavy | −40 | TurretGun | anypower | 125% firepower at Normal power; 70% + 130% reload when strained; never powers down |
+| SGTUR | Grid Defense Turret | Both | med | 900 | 40000 | Heavy | −40 | GridPulseCannon | anypower | 125% firepower at Normal power; 70% + 130% reload when strained; own weapon now — strong vs Light, weak vs Heavy (was TurretGun, identical to GUN — see gap G5, since fixed) |
 | AGUN | AA Gun | Consortium | med | 800 | 40000 | Heavy | −50 | ZSU-23 | dome | |
 | SAM | SAM Site | Assembly | med | 700 | 40000 | Heavy | −40 | Nike | dome | |
 | GAP | Gap Generator | Consortium | high | 800 | 50000 | Heavy | −60 | — | atek | |
@@ -247,9 +247,9 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | TRAN | Chinook | Consortium | med | 900 | 14000 | 128 | — | hpad | |
 | MH60 | Black Hawk | Consortium | med | 1500 | 10000 | 112 | ChainGun | hpad | |
 | HELI | Longbow | Consortium | high | 2000 | 12000 | 149 | Hellfire AA/AG | hpad, atek | |
-| HIND | Hind | — | (disabled) | 1500 | 10000 | 112 | ChainGun | ~disabled | Dead content — see gap G6 |
+| HIND | Wasp Gunship | Assembly | med | 1500 | 10000 | 112 | ChainGun | afld | Rebranded as the Assembly's rotary counterpart to Consortium's HPAD helicopters (was disabled dead content — see gap G6, since fixed) |
 | SGDRO | Recon Drone | Assembly | high | 350 | 3000 | 170 | DroneRocket (2×700) | sgdrn, sgdai | Weapon disabled at Critical power |
-| SGDRS | Strike Drone | Consortium | high | 600 | 3500 | 150 | DroneRocket.Strike (2×950) | sgdra, sgdai | Weapon disabled at Critical power — see gap G7 |
+| SGDRS | Strike Drone | Consortium | high | 600 | 3500 | 150 | DroneRocket.Strike (2×950) | sgdra, sgdai | Weapon disabled at Critical power — see gap G7 (tracked, issue #31) |
 
 ### Ships
 
@@ -270,10 +270,10 @@ Campaign-only / non-skirmish actors, listed for completeness: `Zombie` (Blighted
 - **G2 — Battery Bank doc/rules drift (since fixed).** The Grid Reserve Vault is implemented on `SILO` (display name already "Battery Bank"), but entry #2 above originally never said so, and its listed prerequisites ("Solar Array, Refinery-equivalent") didn't match the YAML (`proc` only, cost 150). The vault's actual numbers live in C# defaults, invisible to YAML readers: capacity 8000, deposit 30/tick, 50% reserve drain + 50% attacker reward on destruction (`OpenRA.Mods.Sungrid/GridReserve/GridReserveVault.cs`). `SILO` also retains RA's `InfiltrateForCash` (Thief steals 50% of **stored spendable** credits) — deposited Reserve is held by `GridReserveManager` so it isn't stealable. **Fixed: entry #2's prerequisites and staging notes now record all of this.**
 - **G3 — Wind Turbine Array was strictly dominated by Solar Array (since retuned).** Same 2×3 footprint, but SGWND cost more (400 vs 300), generates less (+70 vs +100), has less HP (30000 vs 40000), is faction-gated, and needs an existing power source — no situation where building one was correct. **Fixed: cost dropped 400 → 250**, making it the cheapest power building in the game (3.6 cr/power vs POWR's 3.0) — it now wins on absolute price and increment size, matching its "cheaply many of them" identity, while POWR keeps the better ratio and HP.
 - **G4 — Smart Grid Relay was the worst power-per-credit in the game (since retuned)** (10.0 cr/power vs POWR's 3.0). Its real differentiators — 1×1 footprint, Heavy armor, vision 7 — didn't carry a 2× premium per power point. **Fixed: cost dropped 600 → 400** (6.7 cr/power): still a premium over POWR, but one plausibly worth paying for the smallest-footprint, hardest-to-kill power increment.
-- **G5 — `SGTUR` and `GUN` share the same `TurretGun` weapon.** SGTUR costs 100 more but is available to both factions, needs only `anypower` (no barracks), and fires at 125% under Normal power — for the Consortium, GUN is close to dead content.
-- **G6 — `HIND` is `~disabled` dead content**, and with `MH60`/`TRAN`/`HELI` all on the Consortium's Helipad, the Assembly has no helicopter at all (fixed-wing only).
-- **G7 — Drone cost/performance skew.** Strike Drone pays +71% cost over Recon Drone (600 vs 350) for +17% HP, +36% damage, and −12% speed. Reasonable as faction flavor, but the Assembly likely gets more per credit.
-- **G8 — Cryptominer payback is short and raid-proof.** 45 cr/50 ticks ≈ 1,350 cr/min at normal speed: the 1800 build cost (plus ~600 of power infrastructure for its −150 drain) pays back in roughly 2 minutes, after which it's income that — unlike a Harvester — never leaves the base.
+- **G5 — `SGTUR` and `GUN` share the same `TurretGun` weapon (since fixed).** SGTUR cost 100 more but was available to both factions, needed only `anypower` (no barracks), and fired at 125% under Normal power — for the Consortium, GUN was close to dead content. **Fixed: `SGTUR` now fires a new weapon, `GridPulseCannon` (`mods/sungrid/weapons/ballistics.yaml`) — same damage/reload/range as `TurretGun` so its cost/prereq tradeoff is unchanged, but reflavored as an energy weapon (`ElectricityDeath`) with a flipped armor profile: 100% vs Light (drones, scouts, light vehicles) but only 55% vs Heavy, versus `TurretGun`'s 75%/100%. SGTUR is now the power-scaled anti-harassment specialist available to both factions; GUN stays the Consortium's harder-hitting anti-armor gun.**
+- **G6 — `HIND` was `~disabled` dead content (since fixed)**, and with `MH60`/`TRAN`/`HELI` all on the Consortium's Helipad, the Assembly had no helicopter at all (fixed-wing only). **Fixed: `HIND` is enabled and re-gated to the Assembly's own `AFLD`** (`Prerequisites: ~afld, ~techlevel.medium`, dropping `~disabled` and the Consortium-side `~hpad` gate) — `AFLD`'s `Production.Produces` gained `Helicopter` alongside its existing `Aircraft, Plane` to allow it. Also renamed via fluent (`actor-hind`) from "Hind" — a real-world Mi-24 NATO reporting name, the same category of Cold War designation already retired for `V2RL`/`QTNK`/`U2` — to **"Wasp Gunship"**, matching the Assembly's decentralized/drone-based identity (`docs/ART_DIRECTION.md`). No mechanical changes beyond the prereq/production gating; stats and weapon (`ChainGun`) untouched.
+- **G7 — Drone cost/performance skew (tracked, not fixed).** Strike Drone pays +71% cost over Recon Drone (600 vs 350) for +17% HP, +36% damage, and −12% speed. Reasonable as faction flavor, but the Assembly likely gets more per credit. No rules change here — a numeric retune without match data would just be a different guess. **Tracked as `docs/BACKLOG.md` issue #31**, to be resolved from real 3+ player Grid Reserve/skirmish playtest data (`docs/PLAYTESTING.md`) rather than blind.
+- **G8 — Cryptominer payback is short and raid-proof (tracked, not fixed).** 45 cr/50 ticks ≈ 1,350 cr/min at normal speed: the 1800 build cost (plus ~600 of power infrastructure for its −150 drain) pays back in roughly 2 minutes, after which it's income that — unlike a Harvester — never leaves the base. Same reasoning as G7: needs opportunity-cost data (vs a second Harvester + refinery) before touching numbers. **Tracked as `docs/BACKLOG.md` issue #31.**
 - **G9 — No Sungrid identity pass on naval or several stock names.** Ships plus Chinook/MiG/Yak/Black Hawk/Tesla-branded content are untouched stock RA tone (cf. the Phase 6/7 identity work in `docs/ROADMAP.md`).
 - **G10 — Disruptor Trooper has no Consortium counterpart** — all Consortium-unique infantry are stock RA (Medic/Mechanic/Spy/Tanya). Minor, and consistent with RA's own asymmetry, but worth a line in the faction-identity pass.
 
@@ -283,7 +283,7 @@ Campaign-only / non-skirmish actors, listed for completeness: `Zombie` (Blighted
 2. ~~**Close the G2 doc gap** — update entry #2 above to name `SILO` as the implementation, state the C# defaults, and note the Thief/Reserve interaction explicitly.~~ **Done.**
 3. ~~**G3:** either drop SGWND to ~250 cr, raise it to +90–100 power, or shrink its footprint below POWR's — it needs at least one column it wins.~~ **Done** — cost dropped to 250.
 4. ~~**G4:** price SGREL at ~350–400, or keep 600 and give it a small utility effect.~~ **Done** — cost dropped to 400; the utility-aura idea stays available if playtests want more.
-5. **G5:** give SGTUR a distinct energy-flavored weapon (the power-scaling identity invites it) or move GUN's niche elsewhere; alternatively raise SGTUR's prereq above bare `anypower`.
-6. **G6:** delete the HIND block or rebrand it as an Assembly drone-carrier/gunship if the Assembly should get rotary air.
-7. **G7/G8:** no rules change yet — flag both for the next playtest (`docs/PLAYTESTING.md`): drone cost-efficiency by faction, and Cryptominer opportunity-cost vs a second Harvester + refinery.
+5. ~~**G5:** give SGTUR a distinct energy-flavored weapon (the power-scaling identity invites it) or move GUN's niche elsewhere; alternatively raise SGTUR's prereq above bare `anypower`.~~ **Done** — new `GridPulseCannon` weapon, strong vs Light/weak vs Heavy.
+6. ~~**G6:** delete the HIND block or rebrand it as an Assembly drone-carrier/gunship if the Assembly should get rotary air.~~ **Done** — rebranded and enabled as the Assembly's `AFLD`-built "Wasp Gunship."
+7. **G7/G8:** no rules change yet — flagged for the next playtest (`docs/PLAYTESTING.md`) via `docs/BACKLOG.md` issue #31: drone cost-efficiency by faction, and Cryptominer opportunity-cost vs a second Harvester + refinery.
 8. **G9/G10:** fold into the existing Phase 6/7 visual/audio identity scope rather than one-off renames now.
