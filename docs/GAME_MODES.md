@@ -78,10 +78,29 @@ This section records the concrete trait design implemented for Phase 3, supersed
 Three traits, `OpenRA.Mods.Sungrid/GridReserve/`:
 
 - **`GridReserveVault`** (on the Battery Bank actor). `ITick` deposits `min(DepositRate, remaining Capacity, player's Cash+Resources)` from `PlayerResources` into a per-Vault `CurrentReserve` counter every tick — the per-tick cap is what makes deposits "a sustained commitment, not a last-second reflex." `INotifyKilled` drains `DestructionDrainPercent` (default 50%) of `CurrentReserve` from the owner's total, of which `DestructionRewardPercent` (default 50%, so 25% of the Vault's holdings by default) is paid to the attacker as Credits; the undrained remainder is not refunded anywhere, it is simply lost with the building. `INotifyRemovedFromWorld` covers every other removal path (selling, etc.) as a full, reward-free loss — consistent with deposits being irreversible, this closes off "sell the Vault to launder Reserve back" as an escape hatch.
-- **`GridReserveManager`** (per-`Player` actor). Pure bookkeeping: sums `TotalReserve` across the player's registered Vaults, computes the Reserve `Target` once at `WorldLoaded` from active player count, and exposes `BeaconActive`/`LockdownEligible` as threshold checks. All arithmetic is integer-only (cross-multiplication instead of division for percentage comparisons) to avoid any float non-determinism in lockstep.
+- **`GridReserveManager`** (per-`Player` actor). Pure bookkeeping: sums `TotalReserve` across the player's registered Vaults, computes the Reserve `Target` once at `WorldLoaded` from active player count, and exposes `BeaconActive`/`LockdownEligible` as threshold checks. All arithmetic is integer-only (cross-multiplication instead of division for percentage comparisons) to avoid any float non-determinism in lockstep. It also resolves its own `Enabled` flag from the `gridreserve` lobby checkbox at `WorldLoaded`, mirroring `GridReserveController` — `BeaconActive` and `LockdownEligible` both short-circuit false when disabled, and `GridReserveVault.Tick` (below) checks `manager.Enabled` before doing anything at all. This was a real bug (see `docs/BACKLOG.md` issue #37): before this gate existed, every Vault deposited Credits into Reserve unconditionally, including in ordinary destruction-victory matches with the checkbox off.
 - **`GridReserveController`** (world actor, one instance). Owns the `gridreserve` lobby checkbox (`ILobbyOptions`, off by default), the Grid Lockdown countdown state machine per player, Grid Decay, and the win hook.
 
 **Target formula.** `Target = BaseTargetPerPlayer * activePlayers * (1000 - discountPerMille) / 1000`, where the discount is `min(1000, 75 * max(0, activePlayers - 2))` per-mille — i.e. roughly 7.5% cheaper per player past the second. With the default `BaseTargetPerPlayer = 15000` this approximates (not exactly matches) the example target table above; both constants are map/mod YAML-overridable and are expected to move after issue #9's playtests.
+
+**Current shipped defaults.** The prose above and the example target table describe the design; these are the literal trait field defaults actually shipped in `OpenRA.Mods.Sungrid/GridReserve/` today (all YAML-overridable per map/mod, and — like the Target constants above — provisional pending issue #9's playtests). Tick counts are converted assuming Normal game speed (25 ticks/second); real time will differ at other speeds.
+
+| Trait | Field | Default | ~Real time (Normal speed) |
+|---|---|---|---|
+| `GridReserveVaultInfo` | `Capacity` | 8000 Reserve per Vault | — |
+| `GridReserveVaultInfo` | `DepositRate` | 30 Credits/tick per Vault | 750 Credits/second per Vault |
+| `GridReserveVaultInfo` | `DestructionDrainPercent` | 50% | — |
+| `GridReserveVaultInfo` | `DestructionRewardPercent` | 50% (of the drained amount, so 25% of the Vault's holdings) | — |
+| `GridReserveManagerInfo` | `BaseTargetPerPlayer` | 15000 | — |
+| `GridReserveManagerInfo` | `TargetDiscountPerMillePerExtraPlayer` | 75 per-mille | — |
+| `GridReserveManagerInfo` | `MinimapRevealPercent` | 50% of Target | — |
+| `GridReserveControllerInfo` | `CheckboxEnabled` | `false` | — |
+| `GridReserveControllerInfo` | `LockdownDurationTicks` | 2250 ticks | 90 seconds |
+| `GridReserveControllerInfo` | `DecayGraceTicks` | 45000 ticks | 30 minutes |
+| `GridReserveControllerInfo` | `DecayIntervalTicks` | 1500 ticks | 60 seconds |
+| `GridReserveControllerInfo` | `DecayPercent` | 1% of each Vault's Reserve per interval | — |
+
+At these defaults, a single Vault (8000 capacity) can never reach even the cheapest 2-player Target (~30000): reaching Target always requires multiple Vaults, which is the intended anti-turtle property, not an incidental side effect of the numbers.
 
 **Minimap reveal reuses the stock `RevealsShroud` trait**, not new rendering code: the Vault has `RevealsShroud@GridReserveBeacon` with `ValidRelationships: Enemy` and `RequiresCondition: gridreserve-beacon`. `GridReserveVault` grants/revokes that condition each tick based on `GridReserveManager.BeaconActive` (Reserve ≥ 50% of target). This is the same condition-gated trait pattern already used throughout the engine (e.g. `GrantConditionOnDamageState`), so the reveal itself carries no bespoke visibility/rendering risk.
 
