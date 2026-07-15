@@ -1796,7 +1796,7 @@ SGWND:
 	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
-		Image: sam
+		Image: sgwnd
 	Selectable:
 		Bounds: 2048, 2048
 	Buildable:
@@ -1832,7 +1832,7 @@ SGHYD:
 	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
 	Inherits@shape: ^3x2Shape
 	RenderSprites:
-		Image: proc
+		Image: sghyd
 	Selectable:
 		Bounds: 3072, 2048
 	Buildable:
@@ -2358,7 +2358,7 @@ SGCRY:
 	Inherits: ^ScienceBuilding
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
-		Image: atek
+		Image: sgcry
 	Selectable:
 		Bounds: 2048, 2048
 	Buildable:
@@ -2413,7 +2413,7 @@ SGDAI:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
-		Image: dome
+		Image: sgdai
 	Selectable:
 		Bounds: 2048, 2048
 	HitShape:
@@ -2474,7 +2474,7 @@ SGDRN:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
-		Image: hpad
+		Image: sgdrn
 	Selectable:
 		Bounds: 2048, 2048
 	HitShape:
@@ -2530,7 +2530,7 @@ SGDRA:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
-		Image: afld
+		Image: sgdra
 	Selectable:
 		Bounds: 2048, 2048
 	HitShape:
@@ -2586,7 +2586,7 @@ SGTUR:
 	Inherits@AUTOTARGET: ^AutoTargetGround
 	Inherits@shape: ^2x1Shape
 	RenderSprites:
-		Image: sam
+		Image: sgtur
 	Selectable:
 		Bounds: 2048, 1024
 	HitShape:
@@ -2655,7 +2655,7 @@ SGTUR:
 SGREL:
 	Inherits: ^Building
 	RenderSprites:
-		Image: gap
+		Image: sgrel
 	Selectable:
 		Bounds: 1024, 1024
 		DecorationBounds: 1024, 2048, 0, -512
@@ -2697,7 +2697,7 @@ SGSHL:
 	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDown
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
-		Image: iron
+		Image: sgshl
 	Selectable:
 		Bounds: 2048, 2133, 0, -170
 	Buildable:
@@ -2746,7 +2746,7 @@ SGSNS:
 	Inherits: ^Building
 	Inherits@shape: ^1x1Shape
 	RenderSprites:
-		Image: kenn
+		Image: sgsns
 	Selectable:
 		Bounds: 1024, 1024
 	Buildable:
