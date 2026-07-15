@@ -119,3 +119,45 @@ mh60:
 		Facings: 8
 	icon:
 		Filename: mh60icon.shp
+
+# First-pass custom art (docs/BACKLOG.md issue #34) replacing the borrowed
+# tran/mh60 rotor-craft bodies with dedicated small-drone silhouettes -- see
+# gen_concept_art.py. Rotor overlays stay on the shared generic lrotor/rrotor/
+# yrotorlg.shp assets (a blurred rotor disc isn't part of either drone's
+# distinct identity, same "shared generic FX asset" convention bib decals use).
+sgdro:
+	idle:
+		Filename: sgdro.png
+		Facings: 32
+		UseClassicFacings: True
+	rotor:
+		Filename: lrotor.shp
+		Length: 4
+	rotor2:
+		Filename: rrotor.shp
+		Length: 4
+	slow-rotor:
+		Filename: lrotor.shp
+		Start: 4
+		Length: 8
+	slow-rotor2:
+		Filename: rrotor.shp
+		Start: 4
+		Length: 8
+	icon:
+		Filename: sgdroicon.png
+
+sgdrs:
+	idle:
+		Filename: sgdrs.png
+		Facings: 32
+		UseClassicFacings: True
+	rotor:
+		Filename: yrotorlg.shp
+		Length: 4
+	slow-rotor:
+		Filename: yrotorlg.shp
+		Start: 4
+		Length: 8
+	icon:
+		Filename: sgdrsicon.png

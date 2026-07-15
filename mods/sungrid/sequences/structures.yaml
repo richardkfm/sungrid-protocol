@@ -258,6 +258,201 @@ sgapwr:
 	icon:
 		Filename: sgapwricon.png
 
+# First-pass custom art (docs/BACKLOG.md issue #34) for the rest of the roster
+# that has no mods/ra equivalent and previously reused an unrelated existing
+# building's sprite wholesale -- see gen_concept_art.py for how these PNGs
+# were generated and docs/ART_DIRECTION.md for the palette they follow. Each
+# reuses the bib/minibib decal already wired for whichever building it used
+# to borrow art from, same "shared generic decal" convention KENN/GAP/SAM/etc
+# already use amongst themselves.
+sgcry:
+	Defaults:
+		Filename: sgcry.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+	icon:
+		Filename: sgcryicon.png
+
+sgdai:
+	Defaults:
+		Filename: sgdai.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+	icon:
+		Filename: sgdaiicon.png
+
+sgdrn:
+	Defaults:
+		Filename: sgdrn.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	icon:
+		Filename: sgdrnicon.png
+
+sgdra:
+	Defaults:
+		Filename: sgdra.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	icon:
+		Filename: sgdraicon.png
+
+sgtur: # Empty first frame reusing gunmake.shp, same workaround/convention `sam:` uses above --
+	idle: # WithSpriteBody needs a placeholder default sequence for the (shared, unmodified) base pad.
+		Filename: gunmake.shp
+	turret:
+		Filename: sgturturret.png
+		Facings: 32
+		UseClassicFacings: True
+	damaged-turret:
+		Filename: sgturturret.png
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
+	make:
+		Filename: gunmake.shp
+		Length: *
+	muzzle:
+		Filename: samfire.shp
+		Length: 18
+		Facings: 8
+		Offset: -1,6
+	bib:
+		TilesetFilenames:
+			SNOW: mbSAM.sno
+			INTERIOR: mbSAM.int
+			TEMPERAT: mbSAM.tem
+			DESERT: mbSAM.des
+		Length: *
+	icon:
+		Filename: sgturicon.png
+
+sgrel:
+	Defaults:
+		Filename: sgrel.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	bib:
+		TilesetFilenames:
+			SNOW: mbGAP.sno
+			INTERIOR: mbGAP.int
+			TEMPERAT: mbGAP.tem
+			DESERT: mbGAP.des
+		Length: *
+	icon:
+		Filename: sgrelicon.png
+
+sgshl:
+	Defaults:
+		Filename: sgshl.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	bib:
+		TilesetFilenames:
+			SNOW: mbIRON.sno
+			INTERIOR: mbIRON.int
+			TEMPERAT: mbIRON.tem
+			DESERT: mbIRON.des
+		Length: *
+		Offset: 0,-2
+	icon:
+		Filename: sgshlicon.png
+
+sgsns:
+	Defaults:
+		Filename: sgsns.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	bib:
+		TilesetFilenames:
+			SNOW: mbSILO.sno
+			INTERIOR: mbSILO.int
+			TEMPERAT: mbSILO.tem
+			DESERT: mbSILO.des
+		Length: *
+	icon:
+		Filename: sgsnsicon.png
+
+sgwnd:
+	Defaults:
+		Filename: sgwnd.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+	icon:
+		Filename: sgwndicon.png
+
+sghyd:
+	Defaults:
+		Filename: sghyd.png
+	idle:
+	damaged-idle:
+		Start: 1
+	make:
+		Start: 0
+		Length: 1
+	dead:
+		Filename: apwrdead.shp
+		Tick: 800
+		Offset: 0,-10
+	bib:
+		Filename: bib2.tem
+		TilesetFilenames:
+			SNOW: bib2.sno
+			DESERT: bib2.des
+		Length: *
+	icon:
+		Filename: sghydicon.png
+
 barr:
 	Defaults:
 		Filename: barr.shp

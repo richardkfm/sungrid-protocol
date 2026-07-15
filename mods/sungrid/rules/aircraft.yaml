@@ -273,7 +273,7 @@ TRAN:
 SGDRO:
 	Inherits: ^Helicopter
 	RenderSprites:
-		Image: tran
+		Image: sgdro
 	Buildable:
 		Queue: Aircraft
 		BuildAtProductionType: Helicopter
@@ -313,20 +313,20 @@ SGDRO:
 		LocalOffset: 0,0,-85
 		RequiresCondition: drone-uplink || drone-uplink-degraded
 	AttackAircraft:
-	WithIdleOverlay@ROTOR1AIR:
-		Offset: 597,0,213
+	WithIdleOverlay@ROTOR1AIR: # Offsets scaled down from tran's (597,0,213/-597,0,341) to match
+		Offset: 350,0,130      # sgdro.png's much smaller quadcopter-drone body (docs/BACKLOG.md issue #34).
 		Sequence: rotor
 		RequiresCondition: airborne
 	WithIdleOverlay@ROTOR1GROUND:
-		Offset: 597,0,213
+		Offset: 350,0,130
 		Sequence: slow-rotor
 		RequiresCondition: !airborne
 	WithIdleOverlay@ROTOR2AIR:
-		Offset: -597,0,341
+		Offset: -350,0,200
 		Sequence: rotor2
 		RequiresCondition: airborne
 	WithIdleOverlay@ROTOR2GROUND:
-		Offset: -597,0,341
+		Offset: -350,0,200
 		Sequence: slow-rotor2
 		RequiresCondition: !airborne
 	SpawnActorOnDeath:
@@ -616,7 +616,7 @@ MH60:
 SGDRS:
 	Inherits: ^Helicopter
 	RenderSprites:
-		Image: mh60
+		Image: sgdrs
 	Buildable:
 		Queue: Aircraft
 		BuildAtProductionType: Helicopter
