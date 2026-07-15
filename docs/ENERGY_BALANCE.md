@@ -37,7 +37,7 @@ keeping power a constant spend-vs-save decision (`docs/VISION.md` #3) rather tha
 
 ### Wind Turbine Array (`SGWND`) — Assembly
 
-Cheap (400), early (`~techlevel.low`, a tier before Advanced Solar Array), individually fragile (30000 HP —
+Cheap (250 — retuned from the original 400 after the `docs/BUILDINGS.md` roster survey found it strictly dominated by Solar Array at that price), early (`~techlevel.low`, a tier before Advanced Solar Array), individually fragile (30000 HP —
 the lowest of any power building). Rewards spreading turbines out across a base rather than turtling one big
 plant, keeping raiding and map pressure relevant on the power layer (`docs/VISION.md` #4 "pressure never
 disappears"). Fits the Assembly's already-declared "decentralized/scarcity-adapted/improvisational"
