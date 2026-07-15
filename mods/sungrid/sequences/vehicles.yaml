@@ -53,6 +53,35 @@ harvhalf:
 	Defaults:
 		Filename: harvhalf.shp
 
+sghau:
+	Defaults:
+		Filename: sghau.png
+	idle:
+		Facings: 32
+		UseClassicFacings: True
+	harvest:
+		Start: 32
+		Length: 8
+		Facings: 8
+	dock:
+		Start: 40
+		Length: 8
+	dock-loop:
+		Start: 48
+		Length: 7
+	icon:
+		Filename: sghauicon.png
+
+sghauhalf:
+	Inherits: sghau
+	Defaults:
+		Filename: sghauhalf.png
+
+sghauempty:
+	Inherits: sghau
+	Defaults:
+		Filename: sghauempty.png
+
 hhusk:
 	idle:
 		Filename: hhusk.shp

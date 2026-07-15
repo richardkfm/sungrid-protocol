@@ -9,12 +9,15 @@ readability bug under docs/ART_DIRECTION.md's "every actor must have a
 distinct silhouette" rule, not just missing flavor (e.g. SGTUR, SGWND, and
 the stock SAM Site all rendered the *same* sprite before this pass).
 
-Deliberately NOT touched here, per the "don't redraw what's roughly the same
-or easy to adapt" scoping call: SGHAU (Hauler Drone) keeps HARV's chassis --
-it's mechanically and thematically just a small wheeled resource hauler, the
-same "reuse the chassis, only the identity changed" call already made for
-DISR/ARCT reusing E4/FTUR's models in issue #14. Stock-RA-derived units
-(tanks, infantry, aircraft, ships) are out of scope for the same reason --
+SGHAU (Hauler Drone) also gets dedicated art here, reversing an earlier scoping
+call to leave it on HARV's (Ore Truck) chassis: the two rendered identically,
+which caused real gameplay confusion (a Hauler Drone reads as an idle/broken
+Ore Truck since it never appears to collect Ore -- it collects Scrap). It
+needs three parallel image variants (empty/half/full cargo, matching
+WithHarvesterSpriteBody.ImageByFullness) with identical idle/harvest/dock/
+dock-loop frame layouts across all three -- see sghau_frames()/SGHAU_* below.
+
+Stock-RA-derived units (tanks, infantry, aircraft, ships) are out of scope --
 see docs/ART_DIRECTION.md's Phase 7 section for that larger, separately
 tracked effort.
 
@@ -369,6 +372,70 @@ def sgdrs_body_draw(d, w, h):
     d.point((cx, cy - 7), fill=SUN_GOLD)
 
 
+# ---------------------------------------------------------------------------
+# Hauler Drone (SGHAU): a small hex-chassis cargo sled, deliberately NOT a
+# truck silhouette so it can never again be mistaken for HARV (Ore Truck) --
+# see docs/BACKLOG.md issue #34's SGHAU follow-up. Needs three parallel
+# fullness-state images (empty/half/full) with an identical idle(32)/
+# harvest(8)/dock(8)/dock-loop(7) frame layout across all three, matching
+# WithHarvesterSpriteBody.ImageByFullness: harvempty, harvhalf, harv's
+# convention -- the fullness itself is which image is active, not an
+# animation baked into any one image's frames.
+# ---------------------------------------------------------------------------
+
+SGHAU_W, SGHAU_H = 34, 28
+SGHAU_FULLNESS_FRAC = {"empty": 0.0, "half": 0.5, "full": 1.0}
+
+
+def sghau_draw(d, w, h, fullness="full", pose="idle", light_on=True):
+    cx, cy = w // 2, h // 2
+    # Low hex chassis on a sled base -- reads as a cargo sled, not a truck bed.
+    d.polygon(
+        [(cx, cy - 10), (cx + 9, cy - 4), (cx + 9, cy + 6), (cx, cy + 11), (cx - 9, cy + 6), (cx - 9, cy - 4)],
+        fill=LEGACY_GRAY, outline=LEGACY_GRAY_DARK,
+    )
+    # Front magnetic scoop, lowered during the harvest pose.
+    scoop_cy = cy - 8 if pose == "idle" else cy - 4
+    d.arc([cx - 7, scoop_cy - 4, cx + 7, scoop_cy + 4], 200, 340, fill=GREEN_ACCENT, width=2)
+    # Rear cargo canister -- fill level reads the fullness state directly, the
+    # same "show the cargo" grammar HARV's own bed uses.
+    can_x0, can_x1 = cx - 5, cx + 5
+    can_y0, can_y1 = cy + 1, cy + 9
+    d.rectangle([can_x0, can_y0, can_x1, can_y1], fill=PANEL_BLUEBLACK, outline=SUN_GOLD)
+    frac = SGHAU_FULLNESS_FRAC[fullness]
+    if frac > 0:
+        fill_y0 = can_y1 - round((can_y1 - can_y0) * frac)
+        d.rectangle([can_x0 + 1, fill_y0, can_x1 - 1, can_y1 - 1], fill=GREEN_ACCENT)
+    if light_on:
+        d.point((cx, cy - 10), fill=SUN_GOLD)
+
+
+def _frame_list_rotated(draw_fn, w, h, n):
+    base = canvas(w, h)
+    draw_fn(ImageDraw.Draw(base), w, h)
+    return [base.rotate(i * (360.0 / n), resample=Image.BICUBIC, center=(w / 2, h / 2)) for i in range(n)]
+
+
+def sghau_frames(fullness):
+    """One fullness variant's full frame list: idle(32) + harvest(8) +
+    dock(8) + dock-loop(7) = 55 frames, in that order (matching the Start
+    offsets wired in sequences/vehicles.yaml)."""
+    idle = _frame_list_rotated(lambda d, w, h: sghau_draw(d, w, h, fullness, "idle"), SGHAU_W, SGHAU_H, 32)
+    harvest = _frame_list_rotated(lambda d, w, h: sghau_draw(d, w, h, fullness, "scoop"), SGHAU_W, SGHAU_H, 8)
+    dock = []
+    for i in range(8):
+        pose = "idle" if i % 2 == 0 else "scoop"
+        f = canvas(SGHAU_W, SGHAU_H)
+        sghau_draw(ImageDraw.Draw(f), SGHAU_W, SGHAU_H, fullness, pose)
+        dock.append(f)
+    dock_loop = []
+    for i in range(7):
+        f = canvas(SGHAU_W, SGHAU_H)
+        sghau_draw(ImageDraw.Draw(f), SGHAU_W, SGHAU_H, fullness, "idle", light_on=(i % 2 == 0))
+        dock_loop.append(f)
+    return idle + harvest + dock + dock_loop
+
+
 def main():
     flat_buildings = [
         ("sgcry", sgcry_draw, FAM23_W, FAM23_H),
@@ -419,6 +486,21 @@ def main():
         sheet = rotated_frames(draw_fn, fw, fh, n=32)
         save_pngsheet(sheet, f"{name}.png", fw, fh, 32)
         save_pngsheet(make_icon(draw_fn, fw, fh), f"{name}icon.png", 32, 24, 1)
+
+    # Hauler Drone (SGHAU): three parallel fullness-state images, identical
+    # 55-frame layout (idle 32 + harvest 8 + dock 8 + dock-loop 7), plus one
+    # shared icon (fullness has no icon variant, matching harv/harvempty/
+    # harvhalf's own Inherits: harv icon reuse).
+    for fullness, filename in (("full", "sghau.png"), ("half", "sghauhalf.png"), ("empty", "sghauempty.png")):
+        frames = sghau_frames(fullness)
+        sheet = canvas(SGHAU_W * len(frames), SGHAU_H)
+        for i, f in enumerate(frames):
+            sheet.paste(f, (i * SGHAU_W, 0), f)
+        save_pngsheet(sheet, filename, SGHAU_W, SGHAU_H, len(frames))
+    save_pngsheet(
+        make_icon(lambda d, w, h: sghau_draw(d, w, h, "full", "idle"), SGHAU_W, SGHAU_H),
+        "sghauicon.png", 32, 24, 1,
+    )
 
     print("done")
 
