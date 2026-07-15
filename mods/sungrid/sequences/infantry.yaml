@@ -207,7 +207,7 @@ e3:
 
 disr:
 	Defaults:
-		Filename: e4.shp
+		Filename: disr.png
 	stand:
 		Facings: 8
 	stand2:
@@ -222,34 +222,49 @@ disr:
 		Start: 64
 		Length: 16
 		Facings: 8
-	parachute:
-		Start: 528
+	prone-run:
+		Start: 192
+		Length: 4
+		Facings: 8
+		Tick: 120
+	prone-stand:
+		Start: 192
+		Stride: 4
+		Facings: 8
+	prone-stand2:
+		Start: 192
+		Stride: 4
+		Facings: 8
+	prone-shoot:
+		Start: 224
+		Length: 16
+		Facings: 8
 	idle1:
-		Start: 384
+		Start: 352
 		Length: 14
 		Tick: 120
 	idle2:
-		Start: 399
+		Start: 366
 		Length: 16
 		Tick: 120
 	die1:
-		Start: 416
+		Start: 382
 		Length: 8
 		Tick: 80
 	die2:
-		Start: 424
+		Start: 390
 		Length: 8
 		Tick: 80
 	die3:
-		Start: 432
+		Start: 398
 		Length: 8
 		Tick: 80
 	die4:
-		Start: 440
+		Start: 406
 		Length: 12
 		Tick: 80
 	die5:
-		Start: 452
+		Start: 418
 		Length: 18
 		Tick: 80
 	die6:
@@ -266,25 +281,10 @@ disr:
 		Length: 6
 		Tick: 1600
 		ZOffset: -511
-	prone-stand:
-		Start: 208
-		Stride: 4
-		Facings: 8
-	prone-stand2:
-		Start: 208
-		Stride: 4
-		Facings: 8
-	prone-run:
-		Start: 208
-		Length: 4
-		Facings: 8
-		Tick: 120
-	prone-shoot:
-		Start: 256
-		Length: 16
-		Facings: 8
+	parachute:
+		Start: 436
 	icon:
-		Filename: e4icon.shp
+		Filename: disricon.png
 
 e6:
 	Defaults:

@@ -268,6 +268,26 @@ def sgrel_draw(d, w=SG1x1_W, h=SG1x1_H):
     return {"blotches": [(cx, node_y + 8, 2)]}
 
 
+def arct_draw(d, w=SG1x1_W, h=SG1x1_H):
+    """Arc Turret: a squat discharge base with a forked electrode, deliberately
+    NOT a nozzle/fuel-tank silhouette so it reads as "electric discharge"
+    rather than "flamethrower" -- see docs/BACKLOG.md issue #36 (reverses the
+    FTUR chassis reuse issue #14 left in place)."""
+    ground_y0, ground_y1 = h - 8, h
+    draw_ground_strip(d, 2, w - 2, ground_y0, ground_y1, seed=10)
+    cx = w // 2
+    base_top = ground_y0 - 10
+    d.rounded_rectangle([cx - 9, base_top, cx + 9, ground_y0], radius=4, fill=PANEL_BLUEBLACK, outline=GREEN_ACCENT)
+    rod_top = base_top - 12
+    d.line([(cx, base_top), (cx, rod_top)], fill=LEGACY_GRAY_DARK, width=2)
+    # Forked electrode + a small arc bridging the two prongs -- a discharge
+    # gap, not a flame nozzle.
+    d.line([(cx, rod_top), (cx - 5, rod_top - 6)], fill=SUN_GOLD, width=2)
+    d.line([(cx, rod_top), (cx + 5, rod_top - 6)], fill=SUN_GOLD, width=2)
+    d.line([(cx - 3, rod_top - 3), (cx + 3, rod_top - 4)], fill=GREEN_ACCENT)
+    return {"blotches": [(cx, base_top + 2, 2)]}
+
+
 def sgtur_base_draw(d, w, h):
     """Non-rotating reference frame, used only to derive the icon."""
     cx, cy = w // 2, h // 2 + 4
@@ -436,6 +456,161 @@ def sghau_frames(fullness):
     return idle + harvest + dock + dock_loop
 
 
+# ---------------------------------------------------------------------------
+# Disruptor Trooper (DISR): dedicated infantry art, reversing the "leave it
+# on E4's (Flame Infantry) chassis" call issue #14 made -- same rationale as
+# SGHAU's reversal above (see docs/BACKLOG.md issue #36): the sprite still
+# visually read as a flamethrower trooper after the name/weapon swap to an
+# Arc Turret-style electric discharge, which is exactly the kind of
+# silhouette/identity mismatch docs/ART_DIRECTION.md rules out.
+#
+# Self-contained new sheet covering every sequence disr: actually needs:
+# stand/stand2/run/shoot/prone-run/prone-shoot (all facing-dependent, laid
+# out facing-major -- Start + facing*Length + pose, see docs/BACKLOG.md
+# issue #35 for why) plus idle1/idle2/die1-5/parachute (single-direction, no
+# Facings key). prone-stand/prone-stand2 reuse prone-run's own frames via
+# Stride in the sequence YAML, matching e1/e4's own convention, so they need
+# no separate art here. die6 (electro zap) and die-crushed (corpse) stay on
+# the shared generic FX assets, unchanged -- same "shared generic FX asset"
+# convention rotor blur and bib decals already use elsewhere in this file.
+# ---------------------------------------------------------------------------
+
+DISR_W, DISR_H = 20, 26
+
+
+def disr_pose(d, w, h, stance="stand", phase=0.0):
+    cx, cy = w // 2, h // 2 + 2
+    leg_swing = 0
+    arm_forward = False
+    spark = False
+    crouch = 0
+    if stance == "walk":
+        leg_swing = round(3 * math.sin(phase * 2 * math.pi))
+    elif stance in ("shoot", "prone-shoot"):
+        arm_forward = True
+        spark = phase < 0.5
+    elif stance == "stand2":
+        arm_forward = True
+    elif stance == "prone-walk":
+        leg_swing = round(2 * math.sin(phase * 2 * math.pi))
+
+    if stance in ("prone-walk", "prone-shoot"):
+        crouch = 8
+
+    hip_y = cy + 6 - crouch
+    leg_len = 8 - crouch // 2
+    d.line([(cx - 2 - leg_swing, hip_y), (cx - 2 - leg_swing, hip_y + leg_len)], fill=LEGACY_GRAY_DARK, width=2)
+    d.line([(cx + 2 + leg_swing, hip_y), (cx + 2 + leg_swing, hip_y + leg_len)], fill=LEGACY_GRAY_DARK, width=2)
+    # Torso.
+    torso_top = hip_y - 10
+    d.rectangle([cx - 4, torso_top, cx + 4, hip_y], fill=LEGACY_GRAY, outline=GREEN_ACCENT)
+    # Backpack discharge cell -- the "Disruptor" identity signal, replacing
+    # E4's fuel tank.
+    d.rectangle([cx - 3, torso_top - 2, cx + 3, torso_top + 4], fill=PANEL_BLUEBLACK, outline=SUN_GOLD)
+    d.point((cx, torso_top), fill=SUN_GOLD)
+    # Head.
+    head_y = torso_top - 4
+    d.ellipse([cx - 3, head_y - 3, cx + 3, head_y + 3], fill=LEGACY_GRAY)
+    # Weapon rod, forward when aiming.
+    if arm_forward:
+        wx0, wy0 = cx + 4, torso_top + 3
+        wx1, wy1 = cx + 10, torso_top + 1
+    else:
+        wx0, wy0 = cx + 3, torso_top + 4
+        wx1, wy1 = cx + 6, torso_top + 8
+    d.line([(wx0, wy0), (wx1, wy1)], fill=GREEN_ACCENT, width=2)
+    if spark:
+        d.point((wx1 + 1, wy1 - 1), fill=SUN_GOLD)
+        d.point((wx1 + 2, wy1), fill=SUN_GOLD)
+
+
+def _facing_major_frames(pose_fn, w, h, n_facings, n_poses):
+    """Facing-major layout: n_poses consecutive frames per facing, matching
+    how a sequence with both Length and Facings consumes Length x Facings
+    frames (see docs/BACKLOG.md issue #35)."""
+    poses = []
+    for p in range(n_poses):
+        base = canvas(w, h)
+        pose_fn(ImageDraw.Draw(base), w, h, p / max(1, n_poses))
+        poses.append(base)
+    frames = []
+    for facing in range(n_facings):
+        angle = facing * (360.0 / n_facings)
+        for base in poses:
+            frames.append(base.rotate(angle, resample=Image.BICUBIC, center=(w / 2, h / 2)))
+    return frames
+
+
+def disr_die_frame(w, h, angle_deg, fade=1.0):
+    base = canvas(w, h)
+    disr_pose(ImageDraw.Draw(base), w, h, "stand")
+    frame = base.rotate(angle_deg, resample=Image.BICUBIC, center=(w / 2, h / 2 + 2))
+    if fade < 1.0:
+        alpha = frame.split()[3].point(lambda a: int(a * fade))
+        frame.putalpha(alpha)
+    return frame
+
+
+def disr_die_frames(n, max_angle, fade_from=None):
+    out = []
+    for i in range(n):
+        t = i / max(1, n - 1)
+        angle = max_angle * t
+        fade = 1.0
+        if fade_from is not None and t > fade_from:
+            fade = max(0.0, 1.0 - (t - fade_from) / (1.0 - fade_from))
+        out.append(disr_die_frame(DISR_W, DISR_H, angle, fade))
+    return out
+
+
+def disr_parachute_frame(w, h):
+    f = canvas(w, h)
+    dd = ImageDraw.Draw(f)
+    disr_pose(dd, w, h, "stand")
+    dd.arc([w // 2 - 9, 0, w // 2 + 9, 14], 200, 340, fill=SUN_GOLD, width=2)
+    dd.line([(w // 2 - 8, 8), (w // 2 - 2, 14)], fill=SUN_GOLD)
+    dd.line([(w // 2 + 8, 8), (w // 2 + 2, 14)], fill=SUN_GOLD)
+    return f
+
+
+def disr_frames():
+    w, h = DISR_W, DISR_H
+    frames = []
+
+    def single(stance, phase=0.0):
+        f = canvas(w, h)
+        disr_pose(ImageDraw.Draw(f), w, h, stance, phase)
+        return f
+
+    # stand / stand2: 1 pose x 8 facings each.
+    frames += _facing_major_frames(lambda d, w, h, ph: disr_pose(d, w, h, "stand"), w, h, 8, 1)
+    frames += _facing_major_frames(lambda d, w, h, ph: disr_pose(d, w, h, "stand2"), w, h, 8, 1)
+    # run: 6 walk-cycle poses x 8 facings.
+    frames += _facing_major_frames(lambda d, w, h, ph: disr_pose(d, w, h, "walk", ph), w, h, 8, 6)
+    # shoot: 16 poses x 8 facings.
+    frames += _facing_major_frames(lambda d, w, h, ph: disr_pose(d, w, h, "shoot", ph), w, h, 8, 16)
+    # prone-run: 4 poses x 8 facings (prone-stand/prone-stand2 reuse these via Stride).
+    frames += _facing_major_frames(lambda d, w, h, ph: disr_pose(d, w, h, "prone-walk", ph), w, h, 8, 4)
+    # prone-shoot: 16 poses x 8 facings.
+    frames += _facing_major_frames(lambda d, w, h, ph: disr_pose(d, w, h, "prone-shoot", ph), w, h, 8, 16)
+    # idle1/idle2: single-direction breathing loops, no facings.
+    for i in range(14):
+        frames.append(single("stand", i / 14))
+    for i in range(16):
+        frames.append(single("stand2", i / 16))
+    # die1-5: a simple topple-and-fade, single direction. Lengths match the
+    # sequence's own Length values; die4/die5 fall further and fade out more.
+    frames += disr_die_frames(8, 70)
+    frames += disr_die_frames(8, -70)
+    frames += disr_die_frames(8, 90, fade_from=0.6)
+    frames += disr_die_frames(12, 100, fade_from=0.5)
+    frames += disr_die_frames(18, 110, fade_from=0.35)
+    # parachute: single static frame.
+    frames.append(disr_parachute_frame(w, h))
+
+    return frames
+
+
 def main():
     flat_buildings = [
         ("sgcry", sgcry_draw, FAM23_W, FAM23_H),
@@ -447,6 +622,7 @@ def main():
         ("sgrel", sgrel_draw, SG1x1_W, SG1x1_H),
         ("sgwnd", sgwnd_draw, FAM23_W, FAM23_H),
         ("sghyd", sghyd_draw, FAM33_W, FAM33_H),
+        ("arct", arct_draw, SG1x1_W, SG1x1_H),
     ]
 
     for name, draw_fn, w, h in flat_buildings:
@@ -500,6 +676,17 @@ def main():
     save_pngsheet(
         make_icon(lambda d, w, h: sghau_draw(d, w, h, "full", "idle"), SGHAU_W, SGHAU_H),
         "sghauicon.png", 32, 24, 1,
+    )
+
+    # Disruptor Trooper (DISR): one self-contained 437-frame sheet, plus icon.
+    disr_all = disr_frames()
+    disr_sheet = canvas(DISR_W * len(disr_all), DISR_H)
+    for i, f in enumerate(disr_all):
+        disr_sheet.paste(f, (i * DISR_W, 0), f)
+    save_pngsheet(disr_sheet, "disr.png", DISR_W, DISR_H, len(disr_all))
+    save_pngsheet(
+        make_icon(lambda d, w, h: disr_pose(d, w, h, "stand"), DISR_W, DISR_H),
+        "disricon.png", 32, 24, 1,
     )
 
     print("done")

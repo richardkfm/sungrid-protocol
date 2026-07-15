@@ -840,16 +840,13 @@ agun:
 
 arct:
 	Defaults:
-		Filename: ftur.shp
+		Filename: arct.png
 	idle:
-		Offset: 0,-2
 	damaged-idle:
 		Start: 1
-		Offset: 0,-2
 	make:
-		Filename: fturmake.shp
-		Length: *
-		Offset: 0,-2
+		Start: 0
+		Length: 1
 	bib:
 		TilesetFilenames:
 			SNOW: mbFTUR.sno
@@ -858,7 +855,7 @@ arct:
 			DESERT: mbFTUR.des
 		Length: *
 	icon:
-		Filename: fturicon.shp
+		Filename: arcticon.png
 
 sam:
 	idle: # Empty first frame (sammake has no empty frames). We need WithSpriteBody for the make anim, and WSB needs at least a placeholder default sequence to work
