@@ -313,8 +313,10 @@ SGDRO:
 		LocalOffset: 0,0,-85
 		RequiresCondition: drone-uplink || drone-uplink-degraded
 	AttackAircraft:
-	WithIdleOverlay@ROTOR1AIR: # Offsets scaled down from tran's (597,0,213/-597,0,341) to match
-		Offset: 350,0,130      # sgdro.png's much smaller quadcopter-drone body (docs/BACKLOG.md issue #34).
+	# Offsets scaled down from tran's (597,0,213 / -597,0,341) to match sgdro.png's
+	# much smaller quadcopter-drone body (docs/BACKLOG.md issue #34).
+	WithIdleOverlay@ROTOR1AIR:
+		Offset: 350,0,130
 		Sequence: rotor
 		RequiresCondition: airborne
 	WithIdleOverlay@ROTOR1GROUND:

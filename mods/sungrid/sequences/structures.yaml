@@ -310,6 +310,12 @@ sgdrn:
 	make:
 		Start: 0
 		Length: 1
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
 	icon:
 		Filename: sgdrnicon.png
 
