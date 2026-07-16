@@ -40,6 +40,73 @@ Container@PLAYER_WIDGETS:
 					Contrast: true
 					TooltipContainer: TOOLTIP_CONTAINER
 					TooltipTemplate: SIMPLE_TOOLTIP
+		Container@GRID_RESERVE_BRIEFING:
+			Logic: GridReserveBriefingLogic
+			Width: 520
+			Height: 240
+			X: (WINDOW_WIDTH - WIDTH) / 2
+			Y: (WINDOW_HEIGHT - HEIGHT) / 2
+			Children:
+				Background@BORDER:
+					Width: PARENT_WIDTH
+					Height: PARENT_HEIGHT
+					Background: dialog
+				Label@TITLE:
+					X: 20
+					Y: 16
+					Width: PARENT_WIDTH - 40
+					Height: 25
+					Font: BigBold
+					Align: Center
+					Text: label-grid-reserve-briefing-title
+				Label@LINE1:
+					X: 20
+					Y: 56
+					Width: PARENT_WIDTH - 40
+					Height: 18
+					Font: Regular
+					Align: Center
+					Text: label-grid-reserve-briefing-line1
+				Label@LINE2:
+					X: 20
+					Y: 78
+					Width: PARENT_WIDTH - 40
+					Height: 18
+					Font: Regular
+					Align: Center
+					Text: label-grid-reserve-briefing-line2
+				Label@LINE3:
+					X: 20
+					Y: 100
+					Width: PARENT_WIDTH - 40
+					Height: 18
+					Font: Regular
+					Align: Center
+					Text: label-grid-reserve-briefing-line3
+				Label@LINE4:
+					X: 20
+					Y: 122
+					Width: PARENT_WIDTH - 40
+					Height: 18
+					Font: Regular
+					Align: Center
+					Text: label-grid-reserve-briefing-line4
+				Label@LINE5:
+					X: 20
+					Y: 144
+					Width: PARENT_WIDTH - 40
+					Height: 18
+					Font: Regular
+					Align: Center
+					Text: label-grid-reserve-briefing-line5
+				Button@CLOSE_BUTTON:
+					X: (PARENT_WIDTH - 160) / 2
+					Y: PARENT_HEIGHT - 44
+					Width: 160
+					Height: 25
+					Background: button
+					Text: button-grid-reserve-briefing-close
+					Font: Bold
 		Container@SUPPORT_POWERS:
 			Logic: SupportPowerBinLogic
 			X: 10
