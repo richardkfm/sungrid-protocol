@@ -1023,3 +1023,32 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Phase:** 3 follow-up.
 
 **Definition of done:** A fresh lobby has the Grid Reserve checkbox checked by default and can still be unchecked normally. Starting a match with it on shows the rules popup once, dismissible, without blocking play; starting with it off shows nothing. Not yet verified against a real client launch in this environment (no engine/live-client access here, same constraint noted on every other Chrome-touching entry in this backlog) -- the widget hierarchy and `IsVisible`/`OnClick` wiring were built by directly mirroring `GridReserveHudLogic`'s already-proven pattern rather than guessed at blind, but text line lengths/wrapping against the actual font metrics and the popup's on-screen layout should be confirmed on the next real local build, same as issue #38's coupled balance concern.
+
+### 40. Quality pass over all programmatic sprite art (shading, damage states, unit outlines, cameo icons) — DONE
+
+**Request:** "Go through all graphics we produced and make a better one" — a second, across-the-board quality pass on the full programmatically-generated sprite set from issues #12/#34/#36 (all 12 flat buildings including Solar Array/Advanced Solar Array, the Grid Defense Turret, both drones, the Hauler Drone's three fullness variants, and the Disruptor Trooper's full 437-frame sheet, plus all 17 sidebar icons).
+
+**What the first pass got wrong / left flat, found by rendering a scaled-up contact sheet of every sheet+icon:**
+- Everything was a single flat fill per shape: no light source, no edge shading, no depth anywhere.
+- **The damaged building frames were pixel-identical to the idle frames** — a real bug, not just a style gap: `two_frame_sheet()` read each building's damage-blotch list *before* the draw function that produces it had run, so the scorch pass always received an empty list. Every building in the game showed zero visual damage feedback at low HP.
+- Facing rotations (turret, drones, hauler, all 400+ DISR facings) were rotated at native sprite resolution with BICUBIC, smearing 1-2px details into mush.
+- Icons were transparent whole-frame LANCZOS downscales: the motif (already small in-frame) ended up ~15px wide floating on transparency, unreadably muddy in the sidebar.
+- Units had no readability outline, so silhouettes bled into terrain (docs/ART_DIRECTION.md's own silhouette rule).
+- DISR's trooper was a uniform gray blob — head, torso, and legs all `LEGACY_GRAY` with no arms.
+
+**Fix (all in `mods/sungrid/bits/gen_concept_art.py`, one commit, no YAML/rules changes — every sheet keeps its exact first-pass frame size, count, and layout order, so the sequences wired in issues #34/#36 are untouched):**
+- Everything now draws 4x supersampled through a coordinate-scaling `SD` wrapper and LANCZOS-downscales, so curves/diagonals/rotations resolve cleanly. Facing rotation happens at 4x *before* the downscale.
+- One consistent top-left key light: `box3d`/`dome3d`/`vcyl` shading helpers give every mass lit top/left and shaded bottom/right edges; ground strips and gold conduit bands got edge shading, expansion seams, and irregular grass tufts instead of solid bars.
+- Damaged frames are real now: each building redraws itself with `damaged=True` — status lights go dark, a solar panel cracks, a turbine stops, the Datacenter's data line flickers out — plus soft scorch blotches and rust streaks (`scorch()`).
+- All unit frames (turret, drones, hauler, every DISR frame) get a 1px dark readability outline (`outline_sprite`, alpha-dilation based) applied per-frame after downscale; verified against both green (temperate) and tan (desert) backdrops.
+- Icons are proper sidebar cameos (`make_icon`): motif rendered at 4x, cropped to content, fitted onto a shaded blue-black panel with a border and ground line — matching how RA's own .shp cameos are opaque cards, not floating cutouts.
+- DISR redrawn: distinct pale helmet with gold visor, green suit with belt and lit shoulder line, actual arms (counter-swinging in the walk cycle, extended when aiming), two-tone legs with boots, walk bob, idle breathing, and a proper spark-star muzzle flash on the discharge prod.
+- Solar Array/Advanced Solar Array (`sgpwr`/`sgapwr`) folded into this generator with the same treatment — issue #12's original generator script was never committed, so this also closes that regenerability gap; the whole set now comes from one script.
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py` (rewrite) + regenerated `sgpwr/sgapwr/sgcry/sgdai/sgdrn/sgdra/sgshl/sgsns/sgrel/sgwnd/sghyd/arct/sgturturret/sgdro/sgdrs/sghau{,half,empty}/disr` PNGs and all 17 `*icon.png` cameos. No sequence/rules/chrome changes.
+
+**Labels:** `type:art`, `area:mod-content`
+
+**Phase:** 5/6 follow-up (still "first-pass programmatic art, not final production art" — a real artist pass remains open, same status as before).
+
+**Definition of done:** Regenerating via `python3 gen_concept_art.py` reproduces every file; all sheets keep first-pass frame metadata (verified: same FrameSize/FrameAmount on every output); damaged-idle frames are visibly distinct from idle for all 12 flat buildings; units carry outlines and read against both light and dark terrain in composite renders. Not yet verified against a real client launch in this environment (no engine/live-client access here, same constraint as issues #34/#36) — frame layouts are byte-compatible with what already rendered correctly in-game, so the risk surface is visual quality only, not loading.
