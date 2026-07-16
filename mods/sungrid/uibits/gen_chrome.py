@@ -276,11 +276,19 @@ def gen_sidebar():
         d.line((2, y + 25, 235, y + 25), fill=mix(accent, PANEL, 0.35))
         d.rectangle((4, y + 6, 9, y + 21), outline=mix(accent, PANEL, 0.15), width=1)
 
-    # production tab row (0,116,238,47)
-    pv_grid(im, 0, 116, 238, 47, base=lift(PANEL, 2), cell=12, line=-6, alt=2)
-    d.line((0, 116, 237, 116), fill=BLACKLINE)
-    d.line((0, 117, 237, 117), fill=GREEN_MID)
-    d.line((0, 162, 237, 162), fill=BLACKLINE)
+    # background-iconrow (0,116,238,47): this is the PALETTE_FOREGROUND overlay
+    # drawn ON TOP of the production icons (its widget is listed after
+    # ProductionPalette in ingame-player.yaml), tiled once per icon row. It MUST
+    # stay transparent over the icon cells — a solid fill here hides every
+    # buildable and empties the build menu. Draw only thin cell frames; leave
+    # the cell interiors fully transparent so the icons underneath show through.
+    ir_y, ir_h = 116, 47
+    im.paste((0, 0, 0, 0), (0, ir_y, 238, ir_y + ir_h))
+    # icon columns align with ProductionPalette (X:42 in the widget, 62px cells,
+    # 1px margin -> column origins 42, 105, 168)
+    for cx in (42, 105, 168):
+        d.rectangle((cx - 1, ir_y, cx + 62, ir_y + ir_h - 1), outline=GREEN_MID, width=1)
+        d.line((cx - 1, ir_y, cx + 62, ir_y), fill=GREEN_ACCENT)  # lit top edge
 
     # thin trims: background-bottom (0,166,238,8), observer-bottom (0,176,238,8)
     for y in (166, 176):
