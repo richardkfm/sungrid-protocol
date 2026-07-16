@@ -9,6 +9,7 @@
  */
 #endregion
 
+using OpenRA.Mods.Common.Widgets;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.Sungrid.GridReserve
