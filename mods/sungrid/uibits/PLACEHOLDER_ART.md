@@ -1,58 +1,52 @@
-# Placeholder art in this folder — read before touching these files
+# Programmatic chrome art in this folder — read before touching these files
 
-Everything below is **scripted placeholder art**, not final design work. It exists so the
-mod stops shipping stock Red Alert branding while a human designer does the real Phase 6
-art pass (`docs/WORLD_UI_IDENTITY.md`). Treat every file listed here as "good enough to not
-be embarrassing, not good enough to ship."
+Everything thematic in this folder (`dialog.png`, `sidebar.png`, `loadscreen*.png`) plus the
+mod icons one level up (`../icon.png`, `../icon-2x.png`, `../icon-3x.png`) is **generated from
+scratch by `gen_chrome.py`** — original programmatic art in the locked palette
+(`docs/ART_DIRECTION.md`), containing zero pixels derived from stock OpenRA/RA chrome.
 
-## Quick answer: what should I replace first?
+This replaced the earlier first-pass reskin (`docs/BACKLOG.md` issue #13), which hue-shifted
+the stock RA art in place and so still visually read as recolored OpenRA. That pass's script
+(`reskin_chrome.py`) is deleted; the full redesign is `docs/BACKLOG.md` issue #41.
 
-**`sidebar.png`** and **`loadscreen.png`/`loadscreen-2x.png`/`loadscreen-3x.png`** — specifically
-the gold hexagon/sun icon in each. That icon is a stand-in for the **literal stock Allied chevron
-and Soviet hammer-and-sickle logos** that used to be baked into this art (see "Why this exists"
-below). It's programmer art (drawn with basic shape primitives, not a designer), and it's the
-single most visible placeholder in the mod — it's on the sidebar every match and on the loading
-screen every launch.
+Status: **good first-pass identity work, still not a human-designer pass.** It's clean
+geometric rendering, not hand-crafted art — a real designer pass over the chrome and the
+emblem remains open follow-up, same status as the programmatic sprite set in
+`mods/sungrid/bits/gen_concept_art.py`.
 
 ## File-by-file
 
-| File | What changed | Where to look |
-|---|---|---|
-| `dialog.png` | Recolored maroon panel + swatch grid to the locked green palette | Whole image; no logo/emblem here |
-| `sidebar.png` | Recolored red/navy bars; **placeholder emblem drawn over both radar-placeholder regions** | Emblem is at pixel rects `(290,67)-(512,289)` and `(290,290)-(512,512)` in the 512×512 image — these are `chrome.yaml`'s `sidebar-allies`/`sidebar-soviet` `radar:` regions (the "no radar built yet" minimap placeholder) |
-| `loadscreen.png` | Recolored panel border; **placeholder emblem drawn over the left half** | Emblem occupies roughly the left 50% width, full height, of the 512×256 image |
-| `loadscreen-2x.png` | Same as `loadscreen.png`, scaled 2x (1024×512) | Same relative position, 2x coordinates |
-| `loadscreen-3x.png` | Same as `loadscreen.png`, scaled 4x — note the "3x" filename is inherited from stock and is actually a 4x-scale image (2048×1024); don't be surprised by the ratio, it predates this pass | Same relative position, 4x coordinates |
-| `glyphs.png` / `glyphs-2x.png` / `glyphs-3x.png` | **Untouched** — this is the bitmap font atlas, not thematic art | N/A |
+| File | Contents |
+|---|---|
+| `dialog.png` (1024×512) | Dialog background + border strips/corners, every button/checkbox/scrollpanel state block, tooltip panel, black tile, main-menu border frame |
+| `sidebar.png` (512×512) | Command bar, faction moneybin strips, production tab row, sidebar body with icon-slot/support-power recesses, all 13 sidebar button state blocks, both 222×222 radar-placeholder emblem panels |
+| `loadscreen.png` / `-2x` / `-3x` (512×256 / 1024×512 / 2048×1024) | Emblem badge (the `logos` region) + tileable stripe. The "3x" file is actually 4x scale — filename inherited from stock, predates this repo |
+| `glyphs.png` / `glyphs-2x.png` / `glyphs-3x.png` | **Untouched stock** — bitmap font atlas + small functional glyphs (order/production/stance icons etc.), not thematic art. Redesigning these is open follow-up |
+| `../icon*.png` (32/64/96) | Window/taskbar/mod-chooser icon — the emblem on transparency |
 
-## Why this exists
+## Hard constraints if you touch any of this
 
-While doing the Phase 6 chrome reskin, the stock `sidebar.png` radar-placeholder art and
-`loadscreen.png` turned out to contain the actual Allied chevron and Soviet hammer-and-sickle
-logos as pixel art — not just an unstyled color scheme, but literal faction IP shipped inside
-this mod's own committed assets. That felt like a bigger gap than "needs a palette pass," so it
-got replaced immediately with a placeholder rather than left in place until a full art pass.
-Full context: `docs/BACKLOG.md` issue #13.
+1. **Never change a canvas size and never move content within it.** `mods/sungrid/chrome.yaml`
+   addresses every band, button block, and emblem panel by absolute pixel rect
+   (`Regions:`/`PanelRegion:`). All of those rects are re-derived from `chrome.yaml` and
+   hard-coded in `gen_chrome.py` — that script is the authoritative map of what lives where.
+2. Panel center regions are tiled/stretched by the engine — keep them flat or tileable
+   (the loadscreen stripe's texture period is chosen to divide its 253px width exactly).
+3. `dialog5` (the "completely black tile" at 580,388) must stay pure black.
 
-## How to replace the placeholder emblem (or any of this) with real art
+## How to iterate
 
-1. Open the file in an image editor and paint over it directly. The only hard constraint:
-   **keep every file's exact current canvas size** (`dialog.png` 1024×512, `sidebar.png` 512×512,
-   `loadscreen.png` 512×256, `-2x` 1024×512, `-3x` 2048×1024). `mods/sungrid/chrome.yaml`'s
-   `Regions:`/`PanelRegion:` entries reference pixel coordinates directly, so resizing the canvas
-   or shifting content within it will misalign those regions.
-2. For the emblem specifically, the exact regions to paint into are listed in the table above —
-   you can ignore everything outside them if you only want to replace the logo.
-3. If you'd rather tweak parameters and regenerate than hand-paint: edit the constants at the top
-   of `reskin_chrome.py` (palette hex values) or the `draw_sungrid_emblem` function (the actual
-   shape), then run `pip install pillow numpy && python3 reskin_chrome.py` from this directory.
-   Re-running is safe — it's idempotent against its own prior output.
-4. Once real art lands, delete `reskin_chrome.py` and this file, and update
-   `docs/BACKLOG.md` issue #13 to mark the chrome deliverable done.
+Edit `gen_chrome.py` (palette constants at the top, `emblem()` for the mark, per-file
+`gen_*` functions) and re-run:
+
+    pip install pillow
+    python3 gen_chrome.py
+
+Output depends only on the script, so re-running is always safe. A human designer replacing
+this outright can instead paint the PNGs directly — respect the constraints above, then
+delete `gen_chrome.py` and this file and update `docs/BACKLOG.md` issue #41.
 
 ## What this doesn't cover
 
-Cursors (`cursors.yaml`) and terrain tilesets (`mods/sungrid/tilesets/*.yaml`) are still
-completely stock — they're Westwood `.shp` sprite sheets that need OpenRA's built `utility` tool
-to touch, which wasn't available when this placeholder pass was done. See `docs/BACKLOG.md`
-issues #13/#14/#16.
+Cursors (`cursors.yaml`) and the main-menu shellmap are still stock content
+(see `docs/BACKLOG.md` issues #17/#33), and `glyphs*.png` is stock as noted above.

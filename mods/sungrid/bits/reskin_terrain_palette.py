@@ -2,8 +2,9 @@
 """Phase 6 terrain palette reskin tool (see ../../../docs/ART_DIRECTION.md).
 
 Recolors the temperate tileset's *terrain*-only palette toward the locked
-Sungrid Protocol palette, using the same piecewise hue remap already proven
-for the Phase 6 chrome pass (reskin_chrome.py): only the reddish/rust stock
+Sungrid Protocol palette, using the same piecewise hue remap first
+proven by the retired first-pass chrome recolor (reskin_chrome.py, since
+replaced by the from-scratch uibits/gen_chrome.py): only the reddish/rust stock
 hue band shifts toward the locked green target hue; blues (water), grays
 (roads/cliffs/rock), and already-green pixels (grass/foliage) are left alone.
 
@@ -33,9 +34,8 @@ Writes sungrid-temperat-terrain.pal next to this script (768 bytes, same
 6-bit-per-channel VGA .pal format OpenRA's PaletteFromFile trait expects --
 see engine/OpenRA.Game/Graphics/Palette.cs's `reader.ReadByte() << 2`).
 
-Re-running is safe/idempotent for the same reason reskin_chrome.py's is:
-the hue remap only touches the original stock reddish band, and green
-pixels from a prior run aren't in that band.
+Re-running is safe/idempotent: the hue remap only touches the original
+stock reddish band, and green pixels from a prior run aren't in that band.
 """
 import sys
 import os
@@ -44,7 +44,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# Locked palette (docs/ART_DIRECTION.md) -- same targets reskin_chrome.py uses.
+# Locked palette (docs/ART_DIRECTION.md) -- same targets uibits/gen_chrome.py uses.
 GREEN_MID = (0x2E, 0x7D, 0x46)
 SUN_GOLD = (0xE8, 0xA9, 0x3D)
 GREEN_TARGET_HUE = colorsys.rgb_to_hsv(*[c / 255 for c in GREEN_MID])[0]  # ~0.35
