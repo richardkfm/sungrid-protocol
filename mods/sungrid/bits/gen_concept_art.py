@@ -64,7 +64,7 @@ Writes all PNGs directly into this directory (mods/sungrid/bits/).
 """
 import os
 import math
-from PIL import Image, ImageDraw, ImageChops, ImageFilter, PngImagePlugin
+from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageFont, PngImagePlugin
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -1138,8 +1138,106 @@ def two_frame_sheet(draw_fn, frame_w, frame_h):
 
 ICON_W, ICON_H = 64, 48
 
+# Baked-in cameo name labels, matching the stock RA cameos in the same build
+# menu (BARRACKS / SUB PEN / ORE REFINERY etc.), which carry the actor name in
+# the sprite itself -- without them the Sungrid-original cameos read as
+# inconsistent next to the ported stock ones. Text mirrors the in-game display
+# names in mods/sungrid/fluent/rules.ftl (kept in sync by hand; the label is
+# cosmetic, not a FluentReference the engine resolves).
+ICON_LABELS = {
+    "sgpwr": "Solar Array",
+    "sgapwr": "Advanced Solar Array",
+    "sgcry": "Cryptominer",
+    "sgdai": "Datacenter for AI",
+    "sgdrn": "Drone Bay",
+    "sgdra": "Aerial Fabrication Bay",
+    "sgshl": "Resilience Shelter",
+    "sgsns": "Sensor Array",
+    "sgrel": "Smart Grid Relay",
+    "sgwnd": "Wind Turbine Array",
+    "sghyd": "Hydrogen Plant",
+    "arct": "Arc Turret",
+    "sgtur": "Grid Defense Turret",
+    "sgdro": "Recon Drone",
+    "sgdrs": "Strike Drone",
+    "sghau": "Hauler Drone",
+    "disr": "Disruptor Trooper",
+}
 
-def make_icon(draw_fn, frame_w, frame_h, *args, **kwargs):
+# The build menu draws cameo tooltips/labels in FreeSansBold (see
+# mods/sungrid/mod.chrome.yaml Fonts), so bake the cameo name in the same
+# family for typographic consistency. Fall back through common system paths,
+# then PIL's default bitmap font, so the generator stays runnable anywhere.
+_FONT_CANDIDATES = [
+    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+]
+
+
+def _load_label_font(size):
+    for path in _FONT_CANDIDATES:
+        if os.path.exists(path):
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default()
+
+
+def _wrap_to_width(d, text, font, max_w):
+    """Greedy word-wrap; returns (lines, total_w, total_h) for the given font."""
+    words = text.split()
+    lines, cur = [], ""
+    for w in words:
+        trial = (cur + " " + w).strip()
+        if cur and d.textlength(trial, font=font) > max_w:
+            lines.append(cur)
+            cur = w
+        else:
+            cur = trial
+    if cur:
+        lines.append(cur)
+    widths = [d.textlength(ln, font=font) for ln in lines]
+    asc, desc = font.getmetrics()
+    lh = asc + desc
+    return lines, (max(widths) if widths else 0), lh * len(lines)
+
+
+def draw_icon_label(icon, text):
+    """Bake an uppercase name across the bottom of a cameo, the way the stock
+    RA cameos carry theirs. Picks the largest FreeSansBold size (down to 7px)
+    whose word-wrapped lines fit the width and a ~20px bottom band, darkens a
+    gradient strip behind the text for legibility over any motif, and draws a
+    1px shadow under pale text."""
+    text = text.upper()
+    d = ImageDraw.Draw(icon, "RGBA")
+    max_w = ICON_W - 4
+    max_band = 20
+    for size in (10, 9, 8, 7):
+        font = _load_label_font(size)
+        lines, _, total_h = _wrap_to_width(d, text, font, max_w)
+        if total_h <= max_band and all(d.textlength(ln, font=font) <= max_w for ln in lines):
+            break
+    asc, desc = font.getmetrics()
+    lh = asc + desc
+    band_top = ICON_H - total_h - 2
+    # Darken a gradient strip behind the text so it reads over bright motifs.
+    strip = Image.new("RGBA", (ICON_W, ICON_H - band_top), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(strip, "RGBA")
+    for i in range(strip.height):
+        a = int(150 * (i / max(1, strip.height - 1)) + 40)
+        sd.line([(0, i), (ICON_W, i)], fill=PANEL_BLUEBLACK + (min(210, a),))
+    icon.alpha_composite(strip, (0, band_top))
+    text_col = mix(GREEN_ACCENT, (255, 255, 255), 0.65) + (255,)
+    y = band_top + 1
+    for ln in lines:
+        w = d.textlength(ln, font=font)
+        x = (ICON_W - w) / 2
+        d.text((x + 1, y + 1), ln, font=font, fill=(0, 0, 0, 210))  # shadow
+        d.text((x, y), ln, font=font, fill=text_col)
+        y += lh
+    return icon
+
+
+def make_icon(draw_fn, frame_w, frame_h, *args, label=None, **kwargs):
     """Sidebar cameo: the motif cropped tight and fitted onto a shaded panel
     with a border, instead of a transparent whole-frame downscale."""
     # Render the motif at SS resolution and crop to content for a crisp fit.
@@ -1165,6 +1263,10 @@ def make_icon(draw_fn, frame_w, frame_h, *args, **kwargs):
     # Border: dark outer frame with a lit top edge.
     d.rectangle([0, 0, ICON_W - 1, ICON_H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
     d.line([(1, 1), (ICON_W - 2, 1)], fill=lit(LEGACY_GRAY, 0.05))
+    if label:
+        draw_icon_label(icon, label)
+        # Redraw the border so the label strip doesn't bleed over the frame.
+        d.rectangle([0, 0, ICON_W - 1, ICON_H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
     return icon
 
 
@@ -1187,7 +1289,7 @@ def main():
     for name, draw_fn, w, h in flat_buildings:
         sheet = two_frame_sheet(draw_fn, w, h)
         save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
-        icon = make_icon(draw_fn, w, h)
+        icon = make_icon(draw_fn, w, h, label=ICON_LABELS.get(name))
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
 
     # Turret: 32 idle-facing frames + 32 damaged-facing frames, single strip.
@@ -1195,7 +1297,7 @@ def main():
     damaged_rot = rotated_frames(sgtur_turret_draw, 48, 44, 32, damaged=True)
     all_frames = idle_rot + damaged_rot
     save_pngsheet(sheet_of(all_frames, 48, 44), "sgturturret.png", 48, 44, len(all_frames), indexed=True)
-    save_pngsheet(make_icon(sgtur_base_draw, 48, 44), "sgturicon.png", ICON_W, ICON_H, 1)
+    save_pngsheet(make_icon(sgtur_base_draw, 48, 44, label=ICON_LABELS["sgtur"]), "sgturicon.png", ICON_W, ICON_H, 1)
 
     # Drones: 32-facing body only (no damaged state, matching tran/mh60/heli).
     for name, draw_fn, fw, fh in (
@@ -1204,7 +1306,7 @@ def main():
     ):
         frames = rotated_frames(draw_fn, fw, fh, n=32)
         save_pngsheet(sheet_of(frames, fw, fh), f"{name}.png", fw, fh, 32, indexed=True)
-        save_pngsheet(make_icon(draw_fn, fw, fh), f"{name}icon.png", ICON_W, ICON_H, 1)
+        save_pngsheet(make_icon(draw_fn, fw, fh, label=ICON_LABELS.get(name)), f"{name}icon.png", ICON_W, ICON_H, 1)
 
     # Hauler Drone (SGHAU): three parallel fullness-state images, identical
     # 55-frame layout (idle 32 + harvest 8 + dock 8 + dock-loop 7), plus one
@@ -1214,7 +1316,7 @@ def main():
         frames = sghau_frames(fullness)
         save_pngsheet(sheet_of(frames, SGHAU_W, SGHAU_H), filename, SGHAU_W, SGHAU_H, len(frames), indexed=True)
     save_pngsheet(
-        make_icon(sghau_draw, SGHAU_W, SGHAU_H, "full", "idle"),
+        make_icon(sghau_draw, SGHAU_W, SGHAU_H, "full", "idle", label=ICON_LABELS["sghau"]),
         "sghauicon.png", ICON_W, ICON_H, 1,
     )
 
@@ -1222,7 +1324,7 @@ def main():
     disr_all = disr_frames()
     save_pngsheet(sheet_of(disr_all, DISR_W, DISR_H), "disr.png", DISR_W, DISR_H, len(disr_all), indexed=True)
     save_pngsheet(
-        make_icon(disr_pose, DISR_W, DISR_H, "stand2"),
+        make_icon(disr_pose, DISR_W, DISR_H, "stand2", label=ICON_LABELS["disr"]),
         "disricon.png", ICON_W, ICON_H, 1,
     )
 
