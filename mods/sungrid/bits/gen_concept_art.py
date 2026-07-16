@@ -163,13 +163,89 @@ def outline_sprite(img, color=OUTLINE_DARK):
     return Image.alpha_composite(ol, img)
 
 
-def save_pngsheet(img, name, frame_w, frame_h, frame_amount):
+# ---------------------------------------------------------------------------
+# Team-color indexing (docs/BACKLOG.md issue #43).
+#
+# The Sungrid-original roster used to ship as truecolor PngSheets with a fixed
+# sun-gold accent. Truecolor sprites don't participate in OpenRA's player-color
+# remap, so those buildings/units ignored ownership entirely -- a fixed gold
+# touch next to every stock building's team-colored (default red) touch. Fix:
+# emit *indexed* sprites on the stock RA player palette (temperat.pal). OpenRA
+# loads an indexed PNG as an Indexed8 sprite and renders it through the trait's
+# palette (the default `player` palette here), so PlayerColorPalette's remap of
+# indices 80-95 now applies. We map the gold "grid-live" accent onto that remap
+# ramp (so it becomes the owner's colour) and everything else onto its nearest
+# fixed palette entry. No rules/sequence changes are needed -- the bodies
+# already render on `player`. temperat.pal is the stock RA player palette (a
+# byte copy committed alongside this script for reproducibility; its 80-95
+# ramp matches the canonical RA player-remap ramp).
+_PAL_RAW = open(os.path.join(HERE, "temperat.pal"), "rb").read()
+PLAYER_PAL = [(_PAL_RAW[i * 3] << 2, _PAL_RAW[i * 3 + 1] << 2, _PAL_RAW[i * 3 + 2] << 2)
+              for i in range(256)]
+REMAP_LO, REMAP_HI = 80, 95          # PlayerColorPalette remap ramp (palettes.yaml)
+TRANSPARENT_IDX, SHADOW_IDX = 0, 4   # player palette: index 0 transparent, ShadowIndex 4
+_BODY_IDX = [i for i in range(1, 256)
+             if not (REMAP_LO <= i <= REMAP_HI) and i != SHADOW_IDX]
+# Reference ramp for the gold accent (its own dim..lit shades), used to tell
+# "gold accent" pixels apart from incidental warm body tones (dirt/rust) by
+# nearest-reference rather than a brittle hue gate.
+_GOLD_REFS = ([dim(SUN_GOLD, f) for f in (0.6, 0.4, 0.2)] + [SUN_GOLD]
+              + [lit(SUN_GOLD, f) for f in (0.2, 0.4, 0.5)])
+
+
+def _d2(a, b):
+    return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
+
+
+_IDX_CACHE = {}
+
+
+def _index_for(rgb):
+    hit = _IDX_CACHE.get(rgb)
+    if hit is not None:
+        return hit
+    nb = min(_BODY_IDX, key=lambda i: _d2(rgb, PLAYER_PAL[i]))
+    db = _d2(rgb, PLAYER_PAL[nb])
+    dg = min(_d2(rgb, g) for g in _GOLD_REFS)
+    if dg < db and dg < 2500:            # closer to the gold ramp than to any body tone
+        lum = 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2]
+        idx = REMAP_LO + round((1 - lum / 255) * (REMAP_HI - REMAP_LO))
+    else:
+        idx = nb
+    _IDX_CACHE[rgb] = idx
+    return idx
+
+
+def to_indexed(img):
+    """RGBA sprite -> indexed 'P' image on the player palette (gold -> remap
+    ramp 80-95, transparent -> 0, else nearest fixed entry). 1-bit alpha, as
+    indexed sprites require."""
+    img = img.convert("RGBA")
+    w, h = img.size
+    out = Image.new("P", (w, h), TRANSPARENT_IDX)
+    flat = []
+    for c in PLAYER_PAL:
+        flat += list(c)
+    out.putpalette(flat)
+    src, dst = img.load(), out.load()
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = src[x, y]
+            dst[x, y] = TRANSPARENT_IDX if a < 128 else _index_for((r, g, b))
+    return out
+
+
+def save_pngsheet(img, name, frame_w, frame_h, frame_amount, indexed=False):
     meta = PngImagePlugin.PngInfo()
     meta.add_text("FrameSize", f"{frame_w},{frame_h}")
     meta.add_text("FrameAmount", str(frame_amount))
     path = os.path.join(HERE, name)
-    img.save(path, pnginfo=meta)
-    print(f"wrote {name}  {img.size}  frame={frame_w}x{frame_h} x{frame_amount}")
+    if indexed:
+        to_indexed(img).save(path, pnginfo=meta, transparency=TRANSPARENT_IDX)
+    else:
+        img.save(path, pnginfo=meta)
+    print(f"wrote {name}  {img.size}  frame={frame_w}x{frame_h} x{frame_amount}"
+          f"{'  [indexed/team-color]' if indexed else ''}")
 
 
 def canvas(w, h):
@@ -1060,7 +1136,7 @@ def two_frame_sheet(draw_fn, frame_w, frame_h):
     return sheet_of([idle, damaged], frame_w, frame_h)
 
 
-ICON_W, ICON_H = 32, 24
+ICON_W, ICON_H = 64, 48
 
 
 def make_icon(draw_fn, frame_w, frame_h, *args, **kwargs):
@@ -1110,7 +1186,7 @@ def main():
 
     for name, draw_fn, w, h in flat_buildings:
         sheet = two_frame_sheet(draw_fn, w, h)
-        save_pngsheet(sheet, f"{name}.png", w, h, 2)
+        save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
         icon = make_icon(draw_fn, w, h)
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
 
@@ -1118,7 +1194,7 @@ def main():
     idle_rot = rotated_frames(sgtur_turret_draw, 48, 44, 32, damaged=False)
     damaged_rot = rotated_frames(sgtur_turret_draw, 48, 44, 32, damaged=True)
     all_frames = idle_rot + damaged_rot
-    save_pngsheet(sheet_of(all_frames, 48, 44), "sgturturret.png", 48, 44, len(all_frames))
+    save_pngsheet(sheet_of(all_frames, 48, 44), "sgturturret.png", 48, 44, len(all_frames), indexed=True)
     save_pngsheet(make_icon(sgtur_base_draw, 48, 44), "sgturicon.png", ICON_W, ICON_H, 1)
 
     # Drones: 32-facing body only (no damaged state, matching tran/mh60/heli).
@@ -1127,7 +1203,7 @@ def main():
         ("sgdrs", sgdrs_body_draw, 36, 32),
     ):
         frames = rotated_frames(draw_fn, fw, fh, n=32)
-        save_pngsheet(sheet_of(frames, fw, fh), f"{name}.png", fw, fh, 32)
+        save_pngsheet(sheet_of(frames, fw, fh), f"{name}.png", fw, fh, 32, indexed=True)
         save_pngsheet(make_icon(draw_fn, fw, fh), f"{name}icon.png", ICON_W, ICON_H, 1)
 
     # Hauler Drone (SGHAU): three parallel fullness-state images, identical
@@ -1136,7 +1212,7 @@ def main():
     # harvhalf's own Inherits: harv icon reuse).
     for fullness, filename in (("full", "sghau.png"), ("half", "sghauhalf.png"), ("empty", "sghauempty.png")):
         frames = sghau_frames(fullness)
-        save_pngsheet(sheet_of(frames, SGHAU_W, SGHAU_H), filename, SGHAU_W, SGHAU_H, len(frames))
+        save_pngsheet(sheet_of(frames, SGHAU_W, SGHAU_H), filename, SGHAU_W, SGHAU_H, len(frames), indexed=True)
     save_pngsheet(
         make_icon(sghau_draw, SGHAU_W, SGHAU_H, "full", "idle"),
         "sghauicon.png", ICON_W, ICON_H, 1,
@@ -1144,7 +1220,7 @@ def main():
 
     # Disruptor Trooper (DISR): one self-contained 437-frame sheet, plus icon.
     disr_all = disr_frames()
-    save_pngsheet(sheet_of(disr_all, DISR_W, DISR_H), "disr.png", DISR_W, DISR_H, len(disr_all))
+    save_pngsheet(sheet_of(disr_all, DISR_W, DISR_H), "disr.png", DISR_W, DISR_H, len(disr_all), indexed=True)
     save_pngsheet(
         make_icon(disr_pose, DISR_W, DISR_H, "stand2"),
         "disricon.png", ICON_W, ICON_H, 1,

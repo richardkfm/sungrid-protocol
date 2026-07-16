@@ -1083,3 +1083,19 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:bug`, `area:chrome`
 
 **Phase:** 6 (issue #41 follow-up).
+
+### 43. Sungrid-original roster ignored player/team color (fixed gold instead of the house-color touch); cameos were half-resolution — FIXED
+
+**Reported from a playtest:** every Sungrid-original building carried a fixed **sun-gold** accent while the ported RA buildings carried a **red** touch — the player's team/house color. The mismatch made the custom roster read as "not integrated." Separately, the build-menu cameos looked soft next to legacy ones.
+
+**Root cause (color):** the custom roster shipped as **truecolor** PngSheets. Truecolor sprites don't participate in OpenRA's player-color remap at all, so they showed their literal gold regardless of owner — no team color, next to stock buildings whose remap band (indices 80–95 of the `player` palette) shows the owner's color. **Root cause (cameos):** the cameos were authored at 32×24 and upscaled ~2× into the 62×46 sidebar slot, so they were half the source resolution of legacy 64×48 cameos.
+
+**Fix (all in `mods/sungrid/bits/gen_concept_art.py`; regenerated PNGs; no rules/sequence changes):**
+- The generator now emits every building/unit sheet as an **indexed** sprite on the stock RA player palette (`temperat.pal`, committed alongside the script). OpenRA loads an indexed PNG as an `Indexed8` sprite and renders it through the trait's palette — which for these actors is already the default `player` palette — so `PlayerColorPalette`'s remap of indices 80–95 now applies. The gold "grid-live" accent is mapped onto that remap ramp (by luminance) so it becomes the **owner's color**; every other pixel maps to its nearest fixed palette entry. Buildings, the Grid Defense Turret, both drones, the Hauler Drone (all fullness states), the Disruptor Trooper and Arc Turret all now carry the house-color touch like stock actors. Confirmed the mechanism by reading the engine's own `PngSheetLoader`/`Png`/`SheetBuilder` from this repo's pre-Phase-0 history (indexed frames go to the indexed sheet and sample the game palette; the embedded PLTE is metadata only, not baked in), and by simulating the 80–95 remap offline against a red player ramp.
+- Cameos are regenerated at full **64×48** (was 32×24), matching legacy cameo resolution; they stay truecolor (cameos render on the fixed `chrome` palette and aren't team-colored, same as stock).
+
+**Trade-off accepted:** indexed sprites are 1-bit alpha, so the issue #40 anti-aliased edges/soft glows harden — which actually reads as *more* consistent with the stock RA indexed sprites, i.e. the "seamless integration" that was asked for. The locked-green tones shift slightly to their nearest RA-palette entries (the "signature green" constraint was explicitly dropped as outdated).
+
+**Labels:** `type:bug`, `type:art`, `area:mod-content`
+
+**Phase:** 6/7 (still first-pass programmatic art; a real-artist pass remains open). Not yet verified in a live client here (no engine access), but the PNG format (`Indexed8`, colortype 3, FrameSize/FrameAmount tEXt preserved) and the 80–95 remap are validated statically against the engine source and offline simulation.
