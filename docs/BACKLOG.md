@@ -1071,3 +1071,15 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Phase:** 6 (still programmatic first-pass art — a human-designer pass remains open follow-up, but the "derived from stock RA art" status is now fully closed for chrome).
 
 **Definition of done:** `python3 mods/sungrid/uibits/gen_chrome.py` reproduces every file; no output derives from stock pixels; all `chrome.yaml` rects unchanged; `PLACEHOLDER_ART.md` rewritten to describe the new state.
+
+### 42. Chrome redesign (issue #41) emptied the build menu: opaque `background-iconrow` overlay hid every production icon — FIXED
+
+**Found in a live playtest** right after issue #41 merged: the production/build palette rendered completely empty (nothing buildable visible), though hovering and clicking the invisible slots still worked — a dead giveaway that the icons were present but painted over. The category-tab navigation strip also read as "overlapping"/embedded in a solid green panel.
+
+**Root cause:** in `mods/sungrid/chrome/ingame-player.yaml`, the `PALETTE_FOREGROUND` widget (which draws the `background-iconrow` region) is listed *after* `ProductionPalette` inside `SIDEBAR_PRODUCTION`, so the engine renders it *on top of* the buildable icons, once per icon row. In stock RA that overlay is transparent over the icon cells (it only supplies thin cell frames). Issue #41's `gen_chrome.py` rewrite mistook `background-iconrow` (`0,116,238,47`) for a "production tab row" background and filled it with an opaque photovoltaic panel — so every row's overlay completely covered the icons beneath it. The tabs (drawn last, in front) stayed visible but looked embedded in the opaque fill.
+
+**Fix (one region in `mods/sungrid/uibits/gen_chrome.py`, `sidebar.png` regenerated):** `background-iconrow` is now cleared to fully transparent and draws only thin 1px cell frames (green with a lit top edge) aligned to the three `ProductionPalette` icon columns (X:42/105/168, 62px cells). Icons show through cleanly again; the tabs sit in front on their own backing. No YAML, no `chrome.yaml` rects, no other region touched — verified by compositing the exact widget stack (iconbg backing → icons → iconrow overlay → tabs) offline.
+
+**Labels:** `type:bug`, `area:chrome`
+
+**Phase:** 6 (issue #41 follow-up).
