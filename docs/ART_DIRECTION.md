@@ -38,6 +38,10 @@ Before more than one contributor (human or AI-assisted) produces art, lock: spri
 
 **Follow-up: quality pass over the whole programmatic set (see `docs/BACKLOG.md` issue #40).** All of the above — the full issue #12/#34/#36 roster, Solar Array included — got a second, uniform rendering pass in `mods/sungrid/bits/gen_concept_art.py`: 4x supersampled drawing, one consistent top-left key light with lit/shaded edges on every mass, 1px dark readability outlines on all unit frames, genuinely distinct damaged frames (the first pass had a bug that made every building's damaged frame pixel-identical to idle), and sidebar icons rebuilt as opaque cameo cards instead of transparent whole-frame downscales. Frame sizes/counts/layouts are unchanged from the first pass, and it's still programmatic geometry in the locked palette — the real-artist-pass status above is unaffected.
 
+![Contact sheet of the full post-issue-#40 sprite set, 3x scaled: every flat building's idle/damaged pair, the Grid Defense Turret and drone facings, Hauler Drone fullness states, the Disruptor Trooper's stand/run/shoot/prone/idle/die frames, and all 17 sidebar icons.](concept-art/issue40-sprite-contact-sheet.png)
+
+![Unit readability check: Disruptor Trooper, Hauler Drone, Recon Drone, Strike Drone, and Grid Defense Turret facings composited against both green (temperate) and tan (desert) terrain, confirming the new 1px outlines hold up on both.](concept-art/issue40-terrain-readability-check.png)
+
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.
 
 ## Beyond building art: full visual identity (Phase 6/7)
