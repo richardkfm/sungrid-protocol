@@ -1052,3 +1052,22 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Phase:** 5/6 follow-up (still "first-pass programmatic art, not final production art" — a real artist pass remains open, same status as before).
 
 **Definition of done:** Regenerating via `python3 gen_concept_art.py` reproduces every file; all sheets keep first-pass frame metadata (verified: same FrameSize/FrameAmount on every output); damaged-idle frames are visibly distinct from idle for all 12 flat buildings; units carry outlines and read against both light and dark terrain in composite renders. Not yet verified against a real client launch in this environment (no engine/live-client access here, same constraint as issues #34/#36) — frame layouts are byte-compatible with what already rendered correctly in-game, so the risk surface is visual quality only, not loading.
+
+### 41. Chrome redesign: original UI art replacing the recolored stock chrome — FIRST PASS DONE
+
+**Context:** Issue #13's chrome pass was explicitly a stopgap: a scripted hue-remap (`reskin_chrome.py`) of the stock RA `dialog.png`/`sidebar.png`/`loadscreen*.png`, plus a crude placeholder emblem. Every pixel of chrome was still derived from stock art, so the UI kept reading as "recolored OpenRA" — the exact "reskinned RA" problem `docs/ART_DIRECTION.md`'s Phase 6/7 section names as the biggest remaining identity gap.
+
+**What changed:** All chrome is now generated from scratch by a new `mods/sungrid/uibits/gen_chrome.py` — zero stock-derived pixels remain in `dialog.png`, `sidebar.png`, `loadscreen.png`(+`-2x`/`-3x`), or the mod icons (`mods/sungrid/icon*.png`). `reskin_chrome.py` is deleted (its input assumption — stock art on disk — no longer holds; the new generator is idempotent by construction, depending only on itself).
+
+- **Visual language ("grid-glass"):** solar-panel blue-black surfaces with a faint photovoltaic cell-grid texture, living-green structural frames with the same top-left lit-edge convention as the issue #40 sprite pass, and sun-gold strictly for highlighted/active states, filaments, and the emblem. Deliberately flat/clean — no brushed-metal noise, the single most recognizable stock-RA chrome tell.
+- **Faction accents** follow the established identities (issue #34): Consortium (allies chrome ids) = gold, Assembly (soviet ids) = green; observer chrome is neutral. Applies to sidebar button states, moneybin strips, icon-slot recesses, and the radar-placeholder accent line.
+- **Emblem redesigned** (supersampled, replacing the first-pass placeholder): a sun rising over a two-tone living-green horizon inside a hexagonal grid cell, vertex nodes and filaments feeding an outer ring — "the sun feeds the grid." Used in both radar placeholders, the loadscreen badge, and the window/taskbar icons.
+- **Geometry contract intact:** every canvas size and every `chrome.yaml` `Regions`/`PanelRegion` rect is unchanged (button blocks, dialog borders/corners drawn as tileable cross-section profiles, `dialog5`'s pure-black tile, the 253px-wide loadscreen stripe drawn on a 23px period so it tiles seamlessly, etc.). No YAML changes anywhere.
+
+**Verification:** all rects re-derived from `chrome.yaml` and hard-coded in the generator; a mock sidebar assembled by cropping the exact region coordinates confirms bands, insets, button states, and emblems land where the engine will sample them. Not yet verified in a live client (same constraint as issues #34/#36/#40) — geometry is byte-compatible with what already rendered, so the risk surface is visual quality only, not loading.
+
+**Labels:** `type:art`, `area:chrome`
+
+**Phase:** 6 (still programmatic first-pass art — a human-designer pass remains open follow-up, but the "derived from stock RA art" status is now fully closed for chrome).
+
+**Definition of done:** `python3 mods/sungrid/uibits/gen_chrome.py` reproduces every file; no output derives from stock pixels; all `chrome.yaml` rects unchanged; `PLACEHOLDER_ART.md` rewritten to describe the new state.
