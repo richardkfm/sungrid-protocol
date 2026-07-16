@@ -1000,6 +1000,26 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 
 **Labels:** `type:balance`, `needs:playtest`, `area:grid-reserve`, `area:economy`
 
-**Phase:** 3 follow-up (surfaced immediately after issue #37 restored normal Grid Reserve behavior; no phase work blocked on this since the mode is off by default).
+**Phase:** 3 follow-up (surfaced immediately after issue #37 restored normal Grid Reserve behavior). Originally logged as non-blocking on the assumption the mode stayed off by default; issue #39 flips that default to on, so this balance gap now affects every standard match rather than only opt-in ones and should be prioritized for the next real playtest accordingly.
 
 **Verification:** N/A -- no code/rules change in this issue by design. Resolved when a playtest either confirms the current `DepositRate` is survivable against real income rates, or a follow-up issue lands a specific retune (or floor mechanism) backed by observed match data.
+
+---
+
+### 39. Grid Reserve enabled by default, plus a one-time in-match rules popup
+
+**Request:** Grid Reserve is the mode that differentiates Sungrid Protocol's economy from vanilla RA, so it should be the standard lobby experience rather than an opt-in extra players have to discover. Paired requirement: since most players will now hit the mode without ever having read `docs/GAME_MODES.md`, the game itself needs to explain the core rules somewhere, rather than relying on the existing sidebar Reserve bar (which shows *progress* but not *what it means* or *why Credits stopped being spendable*).
+
+**Change:**
+- `GridReserveControllerInfo.CheckboxEnabled` flipped from `false` to `true` in `mods/sungrid/rules/world.yaml`'s `GridReserveController:` block. The checkbox remains a normal, host-toggleable lobby option -- this only changes what a fresh lobby starts with. Destruction victory is unaffected either way (per `docs/VISION.md` pillar 7, Grid Reserve has always been additive, never a replacement).
+- New `GridReserveBriefingLogic` (`OpenRA.Mods.Sungrid/GridReserve/GridReserveBriefingLogic.cs`) attached to a new `Container@GRID_RESERVE_BRIEFING` in `mods/sungrid/chrome/ingame-player.yaml`: a small (520x240), non-blocking dialog centered on screen, summarizing the Core Rules (automatic deposits, irreversibility, multi-Vault requirement, destruction/sale forfeiture, 50%-of-target minimap reveal) with a "Got it" dismiss button. Follows the exact same `controller.Enabled`-gated `IsVisible` pattern already proven in `GridReserveHudLogic`/`GridReserveStandingsLogic` -- hides itself entirely (no code path touches `PlayerResources` or anything gameplay-relevant) when the lobby checkbox is off. New fluent keys added to `mods/sungrid/fluent/chrome.ftl` (`label-grid-reserve-briefing-title/line1-5`, `button-grid-reserve-briefing-close`); no C# needed for the static text itself since `Label`/`Button` widgets resolve `Text:` as a fluent key directly, same as the existing `gamesave-loading.yaml` screen.
+- Not a true modal: it doesn't cover the full screen and doesn't block input to the rest of the game, matching the "small popup" framing this was asked for as -- a player can ignore or click past it and keep playing immediately.
+- Also corrected two stale claims found in `docs/GAME_MODES.md`'s "Technical design" section while editing it: the per-player Reserve sidebar bar and the observer Reserve-totals scoreboard were listed as an open issue #8 follow-up, but both (`GridReserveHudLogic`/`GridReserveStandingsLogic`) were already fully implemented and wired in-tree.
+
+**Scope:** `mods/sungrid/rules/world.yaml` (one field), `mods/sungrid/chrome/ingame-player.yaml` (new container), `mods/sungrid/fluent/chrome.ftl` (new keys), new file `OpenRA.Mods.Sungrid/GridReserve/GridReserveBriefingLogic.cs`, plus `docs/GAME_MODES.md` and `CLAUDE.md` updated to match (per the RFC workflow in `docs/CONTRIBUTING.md` -- this changes a documented rule, the default-on toggle).
+
+**Labels:** `type:content`, `type:engine`, `area:grid-reserve`
+
+**Phase:** 3 follow-up.
+
+**Definition of done:** A fresh lobby has the Grid Reserve checkbox checked by default and can still be unchecked normally. Starting a match with it on shows the rules popup once, dismissible, without blocking play; starting with it off shows nothing. Not yet verified against a real client launch in this environment (no engine/live-client access here, same constraint noted on every other Chrome-touching entry in this backlog) -- the widget hierarchy and `IsVisible`/`OnClick` wiring were built by directly mirroring `GridReserveHudLogic`'s already-proven pattern rather than guessed at blind, but text line lengths/wrapping against the actual font metrics and the popup's on-screen layout should be confirmed on the next real local build, same as issue #38's coupled balance concern.
