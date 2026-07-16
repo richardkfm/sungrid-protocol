@@ -42,6 +42,8 @@ Before more than one contributor (human or AI-assisted) produces art, lock: spri
 
 ![Unit readability check: Disruptor Trooper, Hauler Drone, Recon Drone, Strike Drone, and Grid Defense Turret facings composited against both green (temperate) and tan (desert) terrain, confirming the new 1px outlines hold up on both.](concept-art/issue40-terrain-readability-check.png)
 
+**Follow-up: team/house color, and full-resolution cameos (see `docs/BACKLOG.md` issue #43).** The whole programmatic roster now ships as **indexed** sprites on the stock RA player palette instead of truecolor, so it finally obeys this document's own ownership guardrail above ("faction/player color must remain the dominant ownership signal"): the gold "grid-live" accent is mapped onto the player-color remap ramp (palette indices 80–95), so it recolors to each owner's team color exactly like the ported stock buildings, rather than a fixed gold that ignored ownership. This needs no rules/sequence changes — the actors already render on the default `player` palette; only the sprite pixel format changed. Cameos were also regenerated at full 64×48 (from 32×24). The 1-bit alpha of indexed sprites hardens the issue #40 anti-aliasing, which reads as more consistent with the stock RA indexed sprites; the earlier "signature green" emphasis was dropped as outdated, so the locked-green tones landing on their nearest RA-palette entries is acceptable. Still first-pass programmatic art — a real artist/`.shp` pass remains the open baseline this section calls for.
+
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.
 
 ## Beyond building art: full visual identity (Phase 6/7)
