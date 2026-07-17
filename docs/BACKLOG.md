@@ -1202,3 +1202,15 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Phase:** 6 — World & UI Visual Identity Overhaul.
 
 **Definition of done:** Cursors, main menu chrome, and music no longer derive from or point at stock/upstream OpenRA content; `--check-yaml` clean (one expected/explained warning); all changes verified in a real live client via Xvfb screenshots, not just offline renders. **Met** for cursors/menu/music. The `Launch.SkirmishBots` live-camera-view goal remains open, tracked above and in `docs/PLAYTESTING.md` rather than re-closed prematurely.
+
+### 50. Stray decorative rectangle baked into the sidebar money-bin background, right next to the live cash icon — FIXED
+
+**Player report** (with an in-game screenshot of the build sidebar): a small gold-outlined box rendering immediately left of the "$" cash readout, looking like a rendering glitch.
+
+**Cause:** `gen_chrome.py`'s `gen_sidebar()` (issue #41) drew a purely decorative "recessed credit readout" accent rectangle (`d.rectangle((4, y + 6, 9, y + 21), ...)`) into both money-bin background variants (`background-moneybin` at y=54 Assembly-green / y=85 Consortium-gold in `sidebar.png`). That band of the background is not actually static art — `chrome/ingame-player.yaml`'s `Image@SIDEBAR_MONEYBIN` draws the live `GameTimerLogic` label and, inside `LabelWithTooltip@CASH`, a real `Image@CASH_ICON` (`cash-icons`/`cash-normal`, sourced from stock `glyphs.png`, byte-identical and correctly positioned — not itself at fault) on top of this exact region at runtime. The baked rectangle sat a few pixels to the left of that live icon with nothing connecting them, reading as an orphaned, unexplained shape rather than intentional decoration.
+
+**Fix (`mods/sungrid/uibits/gen_chrome.py` only; regenerated `sidebar.png`; no other atlas or rules/sequence changes):** removed the stray `d.rectangle(...)` accent from the money-bin loop for both faction variants, leaving the recessed panel background (`inset(...)`) and the bottom baseline underline (which sits clear of the icon/timer band) as the only background decoration — the live cash/power icons and timer now render into a clean background with nothing behind them fighting for the same space.
+
+**Labels:** `type:art`, `area:ui`, `phase:6`
+
+**Phase:** 6/7. Verified via before/after crops of both money-bin variants at the exact `background-moneybin` region coordinates; not re-verified in a live client in this pass (the issue and fix are both purely in the static background atlas, unrelated to the still-open `Launch.SkirmishBots` live-viewport blocker in issue #49).

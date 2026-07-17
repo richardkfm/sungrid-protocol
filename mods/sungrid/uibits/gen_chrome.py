@@ -270,11 +270,16 @@ def gen_sidebar():
     d.line((0, 43, 433, 43), fill=BLACKLINE)
 
     # moneybin strips: soviet/Assembly (0,54) green accent, allies/Consortium
-    # (0,85) gold accent — recessed credit readouts
+    # (0,85) gold accent — recessed credit readouts.
+    # NB: the real cash/power icons (glyphs.png, cash-icons/power-icons in
+    # chrome.yaml) and the game-timer label are drawn by the engine ON TOP
+    # of this background at runtime (see Image@CASH_ICON/@POWER_ICON in
+    # chrome/ingame-player.yaml) — leave that band clear of decoration so a
+    # baked shape doesn't collide with the live cash icon and read as a
+    # stray glitch next to the money counter (docs/BACKLOG.md issue #50).
     for y, accent in ((54, GREEN_ACCENT), (85, SUN_GOLD)):
         inset(im, 0, y, 238, 28, fill=PANEL_DEEP, frame=GREEN_DIM)
         d.line((2, y + 25, 235, y + 25), fill=mix(accent, PANEL, 0.35))
-        d.rectangle((4, y + 6, 9, y + 21), outline=mix(accent, PANEL, 0.15), width=1)
 
     # background-iconrow (0,116,238,47): this is the PALETTE_FOREGROUND overlay
     # drawn ON TOP of the production icons (its widget is listed after
