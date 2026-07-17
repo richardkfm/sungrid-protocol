@@ -1,5 +1,6 @@
 ## mainmenu.yaml
 label-main-menu-title = Sungrid Protocol
+label-main-menu-tagline = A solarpunk reinterpretation of the classic RTS formula
 
 ## ingame-observer.yaml
 label-economy-stats-harvesters-header = Harvesters

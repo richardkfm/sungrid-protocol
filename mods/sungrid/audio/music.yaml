@@ -17,6 +17,7 @@ hell226m: Hell March
 intro: Intro
 	Hidden: true
 	VolumeModifier: 0.9
+	Extension: wav
 map: Map
 	Hidden: true
 	VolumeModifier: 0.6
