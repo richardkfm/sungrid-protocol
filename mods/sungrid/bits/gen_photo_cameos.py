@@ -44,20 +44,29 @@ CROPS = {
     "sgapwr": ("desert-base.png", (330, 195, 485, 320)),   # concentrator dish + panels
     "sgcry":  ("desert-base.png", (0, 300, 300, 485)),     # server racks
     "sgdai":  ("desert-base.png", (575, 235, 735, 330)),   # stacked compute modules
-    "sghyd":  ("desert-base.png", (950, 115, 1145, 345)),  # H2 tanks
-    "sgsns":  ("desert-base.png", (748, 165, 872, 345)),   # lattice antenna tower + dish
-    "sgrel":  ("desert-base.png", (745, 285, 865, 365)),   # power-routing / relay gear
-    "sgdra":  ("desert-base.png", (995, 315, 1280, 485)),  # solar-frame hangar + aircraft
-    "sgshl":  ("desert-base.png", (415, 335, 675, 505)),   # SUNGRID PROTOCOL bunker dome
-    "arct":   ("desert-base.png", (295, 325, 435, 495)),   # purple arc-discharge turret
-    "sgtur":  ("desert-base.png", (900, 195, 988, 285)),   # gatling defense turret
     "sgdro":  ("desert-base.png", (875, 465, 1065, 575)),  # airborne recon quadcopter
-    "sgdrs":  ("desert-base.png", (855, 560, 1075, 695)),  # armed strike quadcopter
     "sgdrn":  ("desert-base.png", (785, 545, 1105, 755)),  # octagonal landing bay
+    # --- desert_base2.png (wider, higher-quality re-render of the same base) ---
+    "sghyd":  ("desert_base2.png", (95, 85, 235, 320)),     # H2 tanks
+    "sgshl":  ("desert_base2.png", (5, 455, 330, 628)),     # SUNGRID PROTOCOL bunker
+    "sgwnd":  ("desert_base2.png", (975, 90, 1190, 215)),   # wind turbines
+    "sgsns":  ("desert_base2.png", (693, 348, 802, 485)),   # lattice antenna tower + dish
+    "sgdrs":  ("desert_base2.png", (928, 396, 1072, 480)),  # armed strike quadcopter
+    "sgtur":  ("desert_base2.png", (1073, 298, 1207, 396)), # gatling defense turret
+    "sgdra":  ("desert_base2.png", (418, 193, 828, 326)),   # solar-frame fabrication hangar
+    "arct":   ("desert_base2.png", (438, 488, 582, 606)),   # purple arc-discharge turret
+    "sgrel":  ("desert_base2.png", (683, 450, 807, 525)),   # power-routing / relay gear
     "sghau":  ("desert_base2.png", (812, 528, 1044, 704)),  # 6-wheel unmanned scrap rover
-    "sgwnd":  ("desert-base.png", (685, 65, 835, 150)),    # wind turbines
     # --- grid-scene.png (the NOVAYA ZARYA hero scene) ---
     "disr":   ("grid-scene.png", (470, 880, 640, 1080)),   # the two engineers
+}
+
+# Shorter baked cameo labels where the full in-game name (ICON_LABELS, mirroring
+# rules.ftl) is too long to read cleanly at 64px. Cameo-only cosmetic text; the
+# hover tooltip still shows the full name.
+LABEL_OVERRIDES = {
+    "sgdai": "AI Datacenter",
+    "sgdra": "Aerial Fab",
 }
 
 
@@ -94,7 +103,8 @@ def make_photo_icon(source, box, label):
 
 def main():
     for name, (source, box) in CROPS.items():
-        icon = make_photo_icon(source, box, ICON_LABELS.get(name))
+        label = LABEL_OVERRIDES.get(name, ICON_LABELS.get(name))
+        icon = make_photo_icon(source, box, label)
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
     print("done")
 
