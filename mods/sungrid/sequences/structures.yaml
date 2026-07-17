@@ -71,6 +71,30 @@ oilb:
 		Length: *
 		Offset: 0,0
 
+# The Recycling Depot (RCYD) reuses the stock oilb.shp derrick for its in-world
+# sprite, but needs its own build-menu cameo (the scrap-heap photo cameo). It
+# gets a dedicated `rcyd` image mirroring oilb's world sequences so the civilian
+# OILB derrick keeps the stock icon -- only the cameo differs. See
+# gen_photo_cameos.py and docs/BACKLOG.md issue #47.
+rcyd:
+	Defaults:
+		Filename: oilb.shp
+		Offset: 0,-6
+	idle:
+	damaged-idle:
+		Start: 1
+		Length: *
+	make:
+	icon:
+		Filename: rcydicon.png
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+		Offset: 0,0
+
 fact:
 	Defaults:
 		Filename: fact.shp

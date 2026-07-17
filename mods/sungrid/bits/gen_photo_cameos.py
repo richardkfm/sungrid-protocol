@@ -57,6 +57,7 @@ CROPS = {
     "arct":   ("desert_base2.png", (438, 488, 582, 606)),   # purple arc-discharge turret
     "sgrel":  ("desert_base2.png", (683, 450, 807, 525)),   # power-routing / relay gear
     "sghau":  ("desert_base2.png", (812, 528, 1044, 704)),  # 6-wheel unmanned scrap rover
+    "rcyd":   ("desert-base.png",  (250, 556, 398, 668)),   # bin of reclaimed scrap metal
     # --- grid-scene.png (the NOVAYA ZARYA hero scene) ---
     "disr":   ("grid-scene.png", (470, 880, 640, 1080)),   # the two engineers
 }
@@ -74,6 +75,7 @@ LABEL_OVERRIDES = {
     "disr": "Disruptor",
     "sgtur": "Grid Turret",
     "sgrel": "Grid Relay",
+    "rcyd": "Recycling Dpt",
 }
 
 

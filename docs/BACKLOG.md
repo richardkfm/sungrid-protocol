@@ -1146,3 +1146,17 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:art`, `area:mod-content`
 
 **Phase:** 6/7. Verified offline via a 6× contact-sheet render of all 17 (single-line, white, legibility); not yet checked in a live client here (no engine access).
+
+### 47. Recycling Depot (RCYD) was the one Sungrid-original building missed by the photo-cameo pass — FIXED
+
+**Player request** (with an in-game screenshot): the Recycling Depot had no dedicated cameo graphic or name subtitle like the rest of the roster.
+
+**Cause:** RCYD renders its in-world sprite by reusing the stock `oilb.shp` derrick (`RenderSprites: Image: oilb`), so its build-menu cameo inherited `oilb`'s stock icon and it was never part of the 17-actor photo-cameo set (issues #45/#46).
+
+**Fix (cameo + wiring only; no gameplay/stat changes):**
+- Added an 18th photo cameo `rcydicon.png` to `gen_photo_cameos.py` — a bin of reclaimed scrap metal cut from `desert-base.png` (the clearest "reclaims scrap → credits" read, and visually distinct from every other cameo), with the baked white label "RECYCLING DPT" (`LABEL_OVERRIDES["rcyd"]`; the `rules.ftl` tooltip name stays "Recycling Depot").
+- Gave RCYD its own `rcyd` sequence image that mirrors `oilb`'s world sequences (idle/damaged/make/bib all from `oilb.shp`) so the **in-world derrick is unchanged**, and only its `icon` points at the new cameo. This keeps the shared civilian `OILB` derrick on the stock icon rather than overriding `oilb` globally. `RCYD`'s `RenderSprites.Image` switched `oilb`→`rcyd`.
+
+**Labels:** `type:art`, `area:mod-content`
+
+**Phase:** 6/7. Verified offline via a cameo render; not yet checked in a live client here (no engine access).
