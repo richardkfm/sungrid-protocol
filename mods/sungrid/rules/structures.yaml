@@ -1406,7 +1406,7 @@ SILO:
 RCYD:
 	Inherits: ^Building
 	RenderSprites:
-		Image: oilb
+		Image: rcyd
 	Selectable:
 		Bounds: 1024, 1024
 	Buildable:
