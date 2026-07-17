@@ -1112,3 +1112,21 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:art`, `area:mod-content`
 
 **Phase:** 6/7 (first-pass programmatic art). Verified offline via a 4× contact-sheet render of all 17 cameos (labels legible, in-frame, consistent with the stock baked-in style); not yet checked in a live client here (no engine access).
+
+### 45. Photographic "real-style" cameos cut from concept-art scenes — DONE (first pass)
+
+**Player request:** the programmatic geometric cameos read as flat next to the ported stock RA cameos (which are rendered building shots). Asked for cameos closer to the legacy look, offering rendered concept-art scenes to cut from.
+
+**Source art:** two author-supplied concept renders committed under `docs/concept-art/cameo-sources/` (`desert-base.png` — a "spec sheet" desert base covering most of the roster; `grid-scene.png` — the NOVAYA ZARYA hero scene; `desert_base2.png` — a wider desert render used for the Hauler Drone). See `docs/LICENSE_NOTES.md` for provenance/placeholder status. All 17 Sungrid-original actors mapped cleanly across these, so this became a complete photographic cameo set rather than the partial POC first scoped — no mixed-style menu.
+
+**Implementation (new `mods/sungrid/bits/gen_photo_cameos.py`; regenerated the 17 `*icon.png`; no rules/sequence changes):**
+- A `CROPS` map holds each actor's `(source, box)`; the script cover-fits the crop to the 64×48 cameo frame, adds a subtle edge vignette, and reuses `gen_concept_art.py`'s border recipe + `draw_icon_label` so the baked uppercase name label is identical to the programmatic cameos.
+- Only cameos change — the in-world sprite sheets (indexed, team-colored) are untouched, and cameos stay truecolor (they render on the fixed `chrome` palette, not team-colored). Same filenames/frame, so no sequence YAML changes.
+- `gen_concept_art.py` is retained as the programmatic fallback generator.
+- The Hauler Drone was reframed to the cab-less 6-wheeled rover in `desert_base2.png` (the `desert-base.png` hauler had a driver cab and read as a manned truck).
+
+**Known-soft first-pass crops** (flagged, not blocking): Wind Turbine Array (hazy/distant source), Datacenter for AI (dark, conceptually close to Cryptominer). Recon vs Strike Drone are both quadcopters (airborne vs landed) by nature.
+
+**Labels:** `type:art`, `area:mod-content`
+
+**Phase:** 6/7. Verified offline via a 4× contact-sheet render of all 17 (framing + label legibility); not yet checked in a live client here (no engine access).
