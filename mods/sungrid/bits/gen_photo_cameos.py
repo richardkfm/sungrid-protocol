@@ -54,7 +54,7 @@ CROPS = {
     "sgdro":  ("desert-base.png", (875, 465, 1065, 575)),  # airborne recon quadcopter
     "sgdrs":  ("desert-base.png", (855, 560, 1075, 695)),  # armed strike quadcopter
     "sgdrn":  ("desert-base.png", (785, 545, 1105, 755)),  # octagonal landing bay
-    "sghau":  ("desert-base.png", (165, 535, 475, 725)),   # HAULER-7 scrap hauler
+    "sghau":  ("desert_base2.png", (812, 528, 1044, 704)),  # 6-wheel unmanned scrap rover
     "sgwnd":  ("desert-base.png", (685, 65, 835, 150)),    # wind turbines
     # --- grid-scene.png (the NOVAYA ZARYA hero scene) ---
     "disr":   ("grid-scene.png", (470, 880, 640, 1080)),   # the two engineers
