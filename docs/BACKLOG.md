@@ -1160,3 +1160,19 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:art`, `area:mod-content`
 
 **Phase:** 6/7. Verified offline via a cameo render; not yet checked in a live client here (no engine access).
+
+### 48. In-world sprite quality pass, batch 1 of N: Solar Array / Advanced Solar Array / Cryptominer — DONE (first three)
+
+**Player request:** after the photographic cameo work landed, asked what it would take to bring the same quality bar to the low-level in-world sprites (not just build-menu cameos) for the Sungrid-original roster. In-world sprites can't reuse the cameo approach (photo crops don't survive team-color palette indexing or the game's fixed overhead camera angle — see the write-up in this conversation), so the agreed plan is an incremental quality pass on the existing `gen_concept_art.py` programmatic pipeline (frame sizes/counts held constant, so no sequence YAML churn), starting with three buildings as a test batch before committing to the rest of the roster.
+
+**Fix (`mods/sungrid/bits/gen_concept_art.py` only; regenerated `sgpwr.png`/`sgapwr.png`/`sgcry.png` in-world sheets; `*icon.png` cameos, rules, and sequences untouched):**
+- Replaced the flat front-elevation `_solar_panel` helper with `tilted_collector`: the cell surface is now a shallow parallelogram tilted back-and-up (matching the game's overhead dimetric angle), with a top-down sky-gleam ramp, cell mullions following the shear, and a lit aluminium frame — panels read as angled collectors catching the sky instead of flat vertical rectangles.
+- Added a `capped_box` helper (lit top face + shaded side face + front face) and used it for Advanced Solar Array's ground-level storage cell and Cryptominer's server-rack blocks, replacing the flat-front `box3d` reuse with genuine volume; Cryptominer's racks now draw back-row-then-front-row so overlaps read correctly.
+- The gold conduit band (the team-color remap element, indices 80–95) was deliberately left on the existing flat `draw_gold_band`/`contact_shadow` grammar — an earlier iteration tried a cast-shadow effect that darkened/notched the band and muddied the team-color read, so that was reverted.
+- Frame sizes/counts are byte-identical to before (sgpwr/sgcry 66×54×2, sgapwr 90×60×2), so `sequences/structures.yaml` needed no changes.
+
+**Deferred:** the rest of the roster (Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Grid Defense Turret, Smart Grid Relay, Resilience Shelter, Sensor Array, Wind Turbine Array, Hydrogen Plant, Arc Turret, the drones, Disruptor Trooper, and Recycling Depot's still-stock in-world sprite) is explicitly out of scope for this pass — planned as follow-up batches using the same `tilted_collector`/`capped_box` vocabulary where applicable. Stock-RA-derived units are a separate, larger Phase 7 effort (see `docs/ART_DIRECTION.md`).
+
+**Labels:** `type:art`, `area:mod-content`
+
+**Phase:** 6/7 (first-pass programmatic art, quality iteration). Verified offline via before/after contact-sheet renders and a simulated team-color (palette-remap) preview confirming the gold conduit band still recolors correctly per owner; not yet checked in a live client here (no engine access).

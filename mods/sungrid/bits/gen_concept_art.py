@@ -357,71 +357,103 @@ SGSHL_W, SGSHL_H = 72, 50   # 2x2 footprint
 SG1x1_W, SG1x1_H = 40, 36   # 1x1 footprint
 
 
-def _solar_panel(sd, x0, y0, x1, y1, damaged_crack=False):
-    """One tilted-read solar collector: dark cell field with a sky-gleam ramp,
-    thin lit frame, cell grid."""
-    sd.rect([x0, y0, x1, y1], fill=PANEL_BLUEBLACK)
-    # Sky reflection: brighter toward the top of the panel.
-    sd.rect([x0, y0, x1, y0 + (y1 - y0) * 0.3], fill=lit(PANEL_BLUEBLACK, 0.35))
-    sd.rect([x0, y0 + (y1 - y0) * 0.3, x1, y0 + (y1 - y0) * 0.6], fill=lit(PANEL_BLUEBLACK, 0.15))
-    # Cell grid.
-    cols = max(2, round((x1 - x0) / 6))
-    rows = max(2, round((y1 - y0) / 7))
+def capped_box(sd, x0, y0, x1, y1, fill, depth=3.0, edge=0.34):
+    """A box seen from the game's front-above angle: lit top face receding
+    up-and-right, a shaded right side face, then the front face on top --
+    gives ground-level equipment (battery cells, rack blocks) real volume
+    instead of a flat front elevation."""
+    dx, dy = depth, depth * 0.6
+    sd.poly([(x0, y0), (x1, y0), (x1 + dx, y0 - dy), (x0 + dx, y0 - dy)], fill=lit(fill, edge))
+    sd.line([(x0 + dx, y0 - dy), (x1 + dx, y0 - dy)], fill=lit(fill, edge + 0.2), width=0.5)
+    sd.poly([(x1, y0), (x1, y1), (x1 + dx, y1 - dy), (x1 + dx, y0 - dy)], fill=dim(fill, edge))
+    sd.rect([x0, y0, x1, y1], fill=fill)
+    sd.line([(x0, y0), (x1, y0)], fill=lit(fill, edge * 0.5))
+    sd.line([(x0, y0), (x0, y1)], fill=lit(fill, edge * 0.3))
+    sd.line([(x0, y1), (x1, y1)], fill=dim(fill, edge))
+
+
+def tilted_collector(sd, x0, y0, x1, y1, depth=6.0, damaged_crack=False):
+    """A solar collector seen from front-above: the cell surface is a shallow
+    parallelogram tilted back-and-up so it reads as an angled panel catching
+    the sky, with a bright top sky-gleam fading toward the bottom, cell
+    mullions following the shear, and a lit aluminium frame."""
+    dx = depth * 0.45
+    top_y = y0 - depth
+    n = 9
+    for i in range(n):
+        t0, t1 = i / n, (i + 1) / n
+        yA = top_y + (y1 - top_y) * t0
+        yB = top_y + (y1 - top_y) * t1
+        xa, xb = dx * (1 - t0), dx * (1 - t1)
+        b = 0.55 * (1 - t0) ** 1.3
+        sd.poly([(x0 + xb, yB), (x1 + xb, yB), (x1 + xa, yA), (x0 + xa, yA)], fill=lit(PANEL_BLUEBLACK, b))
+    # Cell mullions, following the shear.
+    cols = max(3, round((x1 - x0) / 6))
     for c in range(1, cols):
-        gx = x0 + (x1 - x0) * c / cols
-        sd.line([(gx, y0), (gx, y1)], fill=dim(PANEL_BLUEBLACK, 0.5))
-    for r in range(1, rows):
-        gy = y0 + (y1 - y0) * r / rows
-        sd.line([(x0, gy), (x1, gy)], fill=dim(PANEL_BLUEBLACK, 0.5))
-    # Diagonal gleam.
-    sd.line([(x0 + 2, y1 - 2), (x1 - 2, y0 + 2)], fill=lit(PANEL_BLUEBLACK, 0.6), width=0.5)
-    # Lit aluminum frame.
-    sd.rect([x0, y0, x1, y1], outline=lit(LEGACY_GRAY, 0.35), width=0.5)
+        f = c / cols
+        gx = x0 + (x1 - x0) * f
+        sd.line([(gx + dx, top_y), (gx, y1)], fill=dim(PANEL_BLUEBLACK, 0.55), width=0.4)
+    midy = (top_y + y1) / 2
+    sd.line([(x0 + dx * 0.5, midy - depth * 0.25), (x1 + dx * 0.5, midy - depth * 0.25)],
+            fill=dim(PANEL_BLUEBLACK, 0.5), width=0.4)
+    # Aluminium frame, top edge lit.
+    fbl, fbr = (x0, y1), (x1, y1)
+    btl, btr = (x0 + dx, top_y), (x1 + dx, top_y)
+    sd.line([btl, btr], fill=lit(LEGACY_GRAY, 0.45), width=0.6)
+    sd.line([fbl, btl], fill=lit(LEGACY_GRAY, 0.2), width=0.5)
+    sd.line([fbr, btr], fill=dim(LEGACY_GRAY, 0.1), width=0.5)
+    sd.line([fbl, fbr], fill=dim(LEGACY_GRAY, 0.25), width=0.5)
+    # Soft sky glint near the top-left of the surface.
+    sd.line([(x0 + dx * 0.7, top_y + depth * 0.2), (x0 + (x1 - x0) * 0.4 + dx * 0.4, midy)],
+            fill=lit(PANEL_BLUEBLACK, 0.7) + (150,), width=0.5)
     if damaged_crack:
-        sd.line([(x0 + (x1 - x0) * 0.3, y0), ((x0 + x1) / 2, (y0 + y1) / 2), (x0 + (x1 - x0) * 0.4, y1)],
-                fill=lit(PANEL_BLUEBLACK, 0.8), width=0.5)
+        cxm = (x0 + x1) / 2
+        sd.line([(cxm - 3 + dx * 0.6, top_y + 2), (cxm + dx * 0.3, midy), (cxm + 2, y1 - 1)],
+                fill=lit(PANEL_BLUEBLACK, 0.85), width=0.5)
 
 
 def sgpwr_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     """Solar Array: two collector panels over the shared conduit band --
-    issue #12's motif, redrawn with the quality-pass shading."""
+    issue #12's motif, redrawn with volumetric (tilted, top-lit) panels."""
     ground_y0, ground_y1 = h - 12, h
     gold_y0, gold_y1 = ground_y0 - 8, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=11)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
-    panel_y0, panel_y1 = 8, gold_y0 - 8
-    for i, (px0, px1) in enumerate(((7, 31), (35, 59))):
-        contact_shadow(sd, (px0 + px1) / 2, gold_y0 - 1.5, (px1 - px0) / 2, 2)
-        # Support poles.
-        for px in (px0 + 4, px1 - 4):
-            sd.line([(px, panel_y1), (px, gold_y0)], fill=POLE_DARK, width=1)
-            sd.line([(px - 0.5, panel_y1), (px - 0.5, gold_y0)], fill=lit(POLE_DARK, 0.3), width=0.3)
-        _solar_panel(sd, px0, panel_y0, px1, panel_y1, damaged_crack=(damaged and i == 0))
-    # Status light on the conduit.
-    if not damaged:
-        sd.px(w // 2, gold_y0 + 2, lit(GREEN_ACCENT, 0.3))
+    panel_y0, panel_y1 = 10, gold_y0 - 7
+    for i, (px0, px1) in enumerate(((6, 30), (35, 59))):
+        contact_shadow(sd, (px0 + px1) / 2, gold_y0 - 1, (px1 - px0) / 2, 2)
+        # Support struts down to the conduit.
+        for px in (px0 + 5, px1 - 3):
+            sd.line([(px, panel_y1 - 1), (px + 2, gold_y0)], fill=POLE_DARK, width=1.1)
+            sd.line([(px - 0.4, panel_y1 - 1), (px + 1.6, gold_y0)], fill=lit(POLE_DARK, 0.35), width=0.4)
+        tilted_collector(sd, px0, panel_y0, px1, panel_y1, depth=6, damaged_crack=(damaged and i == 0))
+        if not damaged:
+            sd.px(px0 + 2, panel_y0 - 5, lit(GREEN_ACCENT, 0.3))
     if damaged:
-        scorch(sd, [(20, panel_y1 - 4, 3.5), (w - 18, gold_y0 + 3, 2.5)])
+        scorch(sd, [(20, panel_y1 - 3, 3.5), (w - 18, gold_y0 + 3, 2.5)])
 
 
 def sgapwr_draw(sd, w=FAM33_W, h=FAM33_H, damaged=False):
     """Advanced Solar Array: three collectors + a storage cell, on the 3x3
-    footprint."""
+    footprint -- redrawn with volumetric panels and a capped storage box."""
     ground_y0, ground_y1 = h - 13, h
     gold_y0, gold_y1 = ground_y0 - 9, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=12)
     draw_gold_band(sd, 5, w - 5, gold_y0, gold_y1)
-    panel_y0, panel_y1 = 7, gold_y0 - 9
-    for i, (px0, px1) in enumerate(((6, 30), (33, 57), (60, 84))):
-        contact_shadow(sd, (px0 + px1) / 2, gold_y0 - 1.5, (px1 - px0) / 2, 2)
-        for px in (px0 + 4, px1 - 4):
-            sd.line([(px, panel_y1), (px, gold_y0)], fill=POLE_DARK, width=1)
-            sd.line([(px - 0.5, panel_y1), (px - 0.5, gold_y0)], fill=lit(POLE_DARK, 0.3), width=0.3)
-        _solar_panel(sd, px0, panel_y0, px1, panel_y1, damaged_crack=(damaged and i == 1))
-    # Ground-level storage cell between the middle poles.
-    box3d(sd, 38, gold_y0 - 7, 52, gold_y0 - 1, PANEL_BLUEBLACK)
+    panel_y0, panel_y1 = 9, gold_y0 - 8
+    for i, (px0, px1) in enumerate(((5, 27), (33, 55), (61, 83))):
+        contact_shadow(sd, (px0 + px1) / 2, gold_y0 - 1, (px1 - px0) / 2, 2)
+        for px in (px0 + 5, px1 - 3):
+            sd.line([(px, panel_y1 - 1), (px + 2, gold_y0)], fill=POLE_DARK, width=1.1)
+            sd.line([(px - 0.4, panel_y1 - 1), (px + 1.6, gold_y0)], fill=lit(POLE_DARK, 0.35), width=0.4)
+        tilted_collector(sd, px0, panel_y0, px1, panel_y1, depth=6, damaged_crack=(damaged and i == 1))
+        if not damaged:
+            sd.px(px0 + 2, panel_y0 - 5, lit(GREEN_ACCENT, 0.3))
+    # Ground-level storage cell between the middle poles, now a capped box.
+    bx0, bx1 = 37, 53
+    capped_box(sd, bx0, gold_y0 - 8, bx1, gold_y0 - 1, PANEL_BLUEBLACK, depth=2.5, edge=0.4)
     for i in range(3):
-        sd.px(40 + i * 4, gold_y0 - 4, (SUN_GOLD if not damaged else dim(SUN_GOLD, 0.6)))
+        sd.px(bx0 + 3 + i * 4, gold_y0 - 4, (SUN_GOLD if not damaged else dim(SUN_GOLD, 0.6)))
     if damaged:
         scorch(sd, [(45, gold_y0 - 4, 3), (70, panel_y1 - 3, 3), (16, gold_y0 + 3, 2)])
 
@@ -434,27 +466,28 @@ def sgcry_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=1)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
     cols, rows = 3, 2
-    block_w, block_h = 14, 12
+    block_w, block_h = 13, 12
     gap = 3
     total_w = cols * block_w + (cols - 1) * gap
     x0 = (w - total_w) // 2
     contact_shadow(sd, w / 2, gold_y0 - 0.5, total_w / 2 + 2, 2.5)
-    for r in range(rows):
+    # Back row first, then front row, so the volumetric racks overlap correctly.
+    for r in (rows - 1, 0):
         for c in range(cols):
             bx = x0 + c * (block_w + gap)
             by = gold_y0 - (r + 1) * (block_h + 2)
             # Slightly mismatched rack heights: scavenged, not uniform.
             jitter = (c * 2 + r) % 3 - 1
-            box3d(sd, bx, by + jitter, bx + block_w, by + block_h, LEGACY_GRAY)
+            capped_box(sd, bx, by + jitter, bx + block_w, by + block_h, LEGACY_GRAY, depth=2.5, edge=0.3)
             # Vent slits.
             for vy in range(3):
                 sd.line([(bx + 2, by + jitter + 3 + vy * 3), (bx + block_w - 2, by + jitter + 3 + vy * 3)],
-                        fill=dim(LEGACY_GRAY, 0.35), width=0.5)
+                        fill=dim(LEGACY_GRAY, 0.4), width=0.5)
             # Status light: amber, off when damaged.
             sd.px(bx + 2, by + jitter + 1, SUN_GOLD if not damaged and (c + r) % 3 != 2 else dim(LEGACY_GRAY, 0.3))
             # Rust streaks on the outer racks.
             if c in (0, cols - 1):
-                sd.rect([bx + block_w - 3, by + block_h - 4, bx + block_w - 2, by + block_h], fill=RUST)
+                sd.rect([bx + block_w - 3, by + jitter + block_h - 4, bx + block_w - 2, by + jitter + block_h], fill=RUST)
     # Tangle of power cabling down to the conduit.
     sd.line([(x0 + 8, gold_y0 - 2), (x0 + 12, gold_y0 + 2)], fill=POLE_DARK, width=0.7)
     sd.line([(x0 + total_w - 8, gold_y0 - 2), (x0 + total_w - 14, gold_y0 + 2)], fill=POLE_DARK, width=0.7)
