@@ -1202,38 +1202,41 @@ def _wrap_to_width(d, text, font, max_w):
 
 
 def draw_icon_label(icon, text):
-    """Bake an uppercase name across the bottom of a cameo, the way the stock
-    RA cameos carry theirs. Picks the largest FreeSansBold size (down to 7px)
-    whose word-wrapped lines fit the width and a ~20px bottom band, darkens a
-    gradient strip behind the text for legibility over any motif, and draws a
-    1px shadow under pale text."""
+    """Bake an uppercase name as a single white line across the bottom of a
+    cameo, matching the ported stock RA cameos (BARRACKS / ORE REFINERY / ...):
+    one line, white text, over a thin dark strip. Picks the largest FreeSansBold
+    size (10px down to 5px) whose single-line width fits, so even long names stay
+    on one line the way the stock cameos do, and draws a 1px shadow under the
+    text so it reads over any motif or photo."""
     text = text.upper()
     d = ImageDraw.Draw(icon, "RGBA")
-    max_w = ICON_W - 4
-    max_band = 20
-    for size in (10, 9, 8, 7):
-        font = _load_label_font(size)
-        lines, _, total_h = _wrap_to_width(d, text, font, max_w)
-        if total_h <= max_band and all(d.textlength(ln, font=font) <= max_w for ln in lines):
+    max_w = ICON_W - 3
+    # Largest size that fits on ONE line; keep the smallest as a last resort.
+    # Ceiling matches the ported stock cameos (BARRACKS / ORE REFINERY) so the
+    # short Sungrid names don't tower over their neighbors in the sidebar.
+    font = _load_label_font(5)
+    for size in (8, 7, 6, 5):
+        f = _load_label_font(size)
+        if d.textlength(text, font=f) <= max_w:
+            font = f
             break
-    asc, desc = font.getmetrics()
-    lh = asc + desc
-    band_top = ICON_H - total_h - 2
-    # Darken a gradient strip behind the text so it reads over bright motifs.
-    strip = Image.new("RGBA", (ICON_W, ICON_H - band_top), (0, 0, 0, 0))
+        font = f
+    bbox = d.textbbox((0, 0), text, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    pad = 2
+    band_h = th + pad * 2
+    band_top = ICON_H - band_h
+    # Thin dark strip behind the single line for legibility over any motif.
+    strip = Image.new("RGBA", (ICON_W, band_h), (0, 0, 0, 0))
     sd = ImageDraw.Draw(strip, "RGBA")
-    for i in range(strip.height):
-        a = int(150 * (i / max(1, strip.height - 1)) + 40)
-        sd.line([(0, i), (ICON_W, i)], fill=PANEL_BLUEBLACK + (min(210, a),))
+    for i in range(band_h):
+        a = int(150 * (i / max(1, band_h - 1)) + 50)
+        sd.line([(0, i), (ICON_W, i)], fill=PANEL_BLUEBLACK + (min(215, a),))
     icon.alpha_composite(strip, (0, band_top))
-    text_col = mix(GREEN_ACCENT, (255, 255, 255), 0.65) + (255,)
-    y = band_top + 1
-    for ln in lines:
-        w = d.textlength(ln, font=font)
-        x = (ICON_W - w) / 2
-        d.text((x + 1, y + 1), ln, font=font, fill=(0, 0, 0, 210))  # shadow
-        d.text((x, y), ln, font=font, fill=text_col)
-        y += lh
+    x = (ICON_W - tw) / 2 - bbox[0]
+    y = band_top + pad - bbox[1]
+    d.text((x + 1, y + 1), text, font=font, fill=(0, 0, 0, 220))  # shadow
+    d.text((x, y), text, font=font, fill=(255, 255, 255, 255))
     return icon
 
 
