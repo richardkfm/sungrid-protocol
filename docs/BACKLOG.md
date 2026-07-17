@@ -1141,7 +1141,7 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Fix (label baker only; regenerated the 17 `*icon.png` via `gen_photo_cameos.py`; no rules/sequence changes):**
 - One line always — the wrap step is gone; the baker now picks the largest FreeSansBold size from an **8px ceiling down to 5px** whose single-line width fits, so short names sit at the stock ~8px scale (no longer towering over their neighbors) and long names auto-shrink to stay on one line, exactly how the stock cameos behave.
 - Pure white text (`255,255,255`) over a thin dark legibility strip sized to the single line, with the 1px black shadow kept so it reads over any photo.
-- The long-name trade-off is inherent to one-line-only: ADVANCED SOLAR ARRAY / GRID DEFENSE TURRET / WIND TURBINE ARRAY render small. The two existing `LABEL_OVERRIDES` (AI DATACENTER, AERIAL FAB) still apply; further shortening any specific label is a one-line change if a given name reads too small in play.
+- One-line-only shrinks the longest names, so a player pass flagged seven as too small to read; they were shortened via `LABEL_OVERRIDES` (cameo-only cosmetic text — the in-game tooltip name in `rules.ftl` is unchanged): Advanced Solar Array→"Adv Solar Array", Hydrogen Plant→"Hydrogen Plt", Resilience Shelter→"Res Shelter", Wind Turbine Array→"Wind Turbine", Disruptor Trooper→"Disruptor", Grid Defense Turret→"Grid Turret", Smart Grid Relay→"Grid Relay" (joining the earlier AI Datacenter / Aerial Fab). Shortening any other label further is a one-line `LABEL_OVERRIDES` change.
 
 **Labels:** `type:art`, `area:mod-content`
 
