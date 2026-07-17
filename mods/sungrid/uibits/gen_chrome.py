@@ -27,6 +27,7 @@ Usage:
 Idempotent by construction: output depends only on this script, never on
 the previous file contents.
 """
+import itertools
 import math
 import os
 from PIL import Image, ImageDraw
@@ -100,6 +101,9 @@ def inset(img, x, y, w, h, fill=PANEL_DEEP, frame=GREEN_DIM):
 SS = 4
 
 def emblem(size, accent=SUN_GOLD):
+    """`accent` drives the whole ring/hex/sun/rays so each faction's
+    placeholder badge is genuinely its own mark (Consortium gold, Assembly
+    green — docs/ART_DIRECTION.md), not a recolor-in-name-only."""
     s = size * SS
     im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
@@ -109,7 +113,7 @@ def emblem(size, accent=SUN_GOLD):
 
     # outer ring
     d.ellipse((cx - r, cy - r, cx + r, cy + r),
-              outline=SUN_GOLD + (110,), width=max(SS // 2, lw // 2))
+              outline=accent + (110,), width=max(SS // 2, lw // 2))
 
     # hexagon (pointy-top) + vertex nodes + filaments to the ring
     hr = r * 0.82
@@ -119,20 +123,20 @@ def emblem(size, accent=SUN_GOLD):
         px, py = pts[k]
         ox = cx + r * math.sin(k * math.pi / 3)
         oy = cy - r * math.cos(k * math.pi / 3)
-        d.line((px, py, ox, oy), fill=SUN_GOLD + (150,), width=max(SS // 2, lw // 2))
-    d.polygon(pts, outline=SUN_GOLD + (255,), width=lw)
+        d.line((px, py, ox, oy), fill=accent + (150,), width=max(SS // 2, lw // 2))
+    d.polygon(pts, outline=accent + (255,), width=lw)
     nr = s * 0.016
     for px, py in pts:
-        d.ellipse((px - nr, py - nr, px + nr, py + nr), fill=SUN_GOLD + (255,))
+        d.ellipse((px - nr, py - nr, px + nr, py + nr), fill=accent + (255,))
 
     # sun disc, centered so the horizon band overlaps its lower third
     sr = hr * 0.44
     sy = cy - hr * 0.02
-    d.ellipse((cx - sr, sy - sr, cx + sr, sy + sr), fill=SUN_GOLD + (255,))
+    d.ellipse((cx - sr, sy - sr, cx + sr, sy + sr), fill=accent + (255,))
     hl = sr * 0.78
     d.ellipse((cx - hl - sr * 0.12, sy - hl - sr * 0.12,
                cx + hl - sr * 0.12, sy + hl - sr * 0.12),
-              fill=mix(SUN_GOLD, (255, 255, 255), 0.18) + (255,))
+              fill=mix(accent, (255, 255, 255), 0.18) + (255,))
 
     # three short rays above the sun
     for ang in (-math.pi / 2, -math.pi / 2 - 0.55, -math.pi / 2 + 0.55):
@@ -140,7 +144,7 @@ def emblem(size, accent=SUN_GOLD):
         y0 = sy + (sr * 1.22) * math.sin(ang)
         x1 = cx + (sr * 1.62) * math.cos(ang)
         y1 = sy + (sr * 1.62) * math.sin(ang)
-        d.line((x0, y0, x1, y1), fill=SUN_GOLD + (230,), width=lw)
+        d.line((x0, y0, x1, y1), fill=accent + (230,), width=lw)
 
     # horizon band (two-tone living green), clipped to the hexagon width
     bw = hr * 0.80
@@ -154,16 +158,133 @@ def emblem(size, accent=SUN_GOLD):
 
     return im.resize((size, size), Image.LANCZOS)
 
-def emblem_panel(size, accent=SUN_GOLD):
+def emblem_consortium(size, accent=SUN_GOLD):
+    """Consortium mark — "Citadel Seal": hardened and centralized, not a
+    recolor of the shared sun mark. docs/BUILDINGS.md: a Consortium
+    facility "matching the Consortium's capital-technocratic infrastructure
+    philosophy" (hardened, centralized) vs. the Assembly's decentralized,
+    improvisational one. A thick fortress-wall hex, a 16-tick metering ring
+    (ledger/gauge precision), spokes converging inward (capital
+    concentrating to one point, not radiating out), square rivet nodes
+    (industrial, not organic), and a cut-gem core standing in for a vault
+    asset rather than a sun."""
+    s = size * SS
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    cx = cy = s / 2
+    r = s * 0.46
+    lw = max(SS, round(s * 0.02))
+
+    # metering ring: ticks just inside the panel edge, gauge/ledger precision
+    ticks = 16
+    for i in range(ticks):
+        ang = 2 * math.pi * i / ticks
+        x0 = cx + r * 0.98 * math.cos(ang)
+        y0 = cy + r * 0.98 * math.sin(ang)
+        x1 = cx + r * 0.84 * math.cos(ang)
+        y1 = cy + r * 0.84 * math.sin(ang)
+        d.line((x0, y0, x1, y1), fill=accent + (140,), width=max(SS // 2, lw // 3))
+
+    # outer hex wall (thick — fortified) + inner concentric wall (vault)
+    hr = r * 0.80
+    pts = [(cx + hr * math.sin(k * math.pi / 3), cy - hr * math.cos(k * math.pi / 3)) for k in range(6)]
+    d.polygon(pts, outline=accent + (255,), width=lw)
+    hr2 = hr * 0.58
+    pts2 = [(cx + hr2 * math.sin(k * math.pi / 3), cy - hr2 * math.cos(k * math.pi / 3)) for k in range(6)]
+    d.polygon(pts2, outline=mix(accent, PANEL, 0.15) + (255,), width=max(SS, lw // 2))
+
+    # spokes converging inward from the outer wall to the core — centralization,
+    # the mirror image of the neutral mark's filaments feeding outward to a ring
+    for px, py in pts:
+        d.line((px, py, cx, cy), fill=accent + (90,), width=max(SS // 2, lw // 3))
+
+    # square rivet nodes at the outer vertices — precision hardware, not organic dots
+    nr = s * 0.018
+    for px, py in pts:
+        d.rectangle((px - nr, py - nr, px + nr, py + nr), fill=accent + (255,))
+
+    # central core: a cut-gem diamond (vault asset / capital), not a sun disc
+    cr = hr * 0.30
+    core = [(cx, cy - cr), (cx + cr, cy), (cx, cy + cr), (cx - cr, cy)]
+    d.polygon(core, fill=accent + (255,))
+    icr = cr * 0.5
+    d.polygon([(cx, cy - icr), (cx + icr, cy), (cx, cy + icr), (cx - icr, cy)],
+              fill=mix(accent, (255, 255, 255), 0.35) + (255,))
+
+    return im.resize((size, size), Image.LANCZOS)
+
+
+def emblem_assembly(size, accent=GREEN_ACCENT):
+    """Assembly mark — "Swarm Rig": decentralized and improvisational, not a
+    recolor of the shared sun mark. docs/BUILDINGS.md/docs/ART_DIRECTION.md:
+    "cheap, mass-producible... decentralized, improvisational infrastructure
+    philosophy" and the "decentralized/drone-based" faction axis. Three
+    unevenly sized nodes in a peer mesh (no single hub, unlike the
+    Consortium's converging spokes), hand-run strut cabling with welded
+    rivet joints, and a drone rotor standing in for a sun."""
+    s = size * SS
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    cx = cy = s / 2
+    r = s * 0.46
+    lw = max(SS, round(s * 0.016))
+
+    # three asymmetric nodes: unequal size, offset — a peer mesh, not a hub
+    nodes = [
+        (cx - r * 0.36, cy - r * 0.26, r * 0.40),
+        (cx + r * 0.42, cy - r * 0.12, r * 0.29),
+        (cx + r * 0.03, cy + r * 0.47, r * 0.24),
+    ]
+
+    # mesh struts between every pair, each with a slight kink — hand-run cabling
+    for (x0, y0, _), (x1, y1, _) in itertools.combinations(nodes, 2):
+        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+        dx, dy = x1 - x0, y1 - y0
+        nlen = math.hypot(dx, dy) or 1
+        jx, jy = -dy / nlen, dx / nlen
+        j = s * 0.012
+        d.line([(x0, y0), (mx + jx * j, my + jy * j), (x1, y1)],
+               fill=accent + (170,), width=max(SS // 2, lw // 2), joint="curve")
+        for t in (0.3, 0.7):
+            rx, ry = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+            d.ellipse((rx - SS, ry - SS, rx + SS, ry + SS), fill=mix(accent, PANEL, 0.2) + (255,))
+
+    # irregular hex node bodies — mass-produced/improvised sizing, not uniform
+    for nx, ny, nr in nodes:
+        pts = [(nx + nr * math.sin(k * math.pi / 3), ny - nr * math.cos(k * math.pi / 3)) for k in range(6)]
+        d.polygon(pts, fill=mix(accent, PANEL, 0.55) + (255,), outline=accent + (255,), width=max(SS, lw // 2))
+
+    # drone rotor on the largest node — drone-based identity, not a sun
+    hx, hy, hr = nodes[0]
+    blade_len = hr * 0.85
+    for k in range(3):
+        ang = k * (2 * math.pi / 3) - math.pi / 2
+        x1 = hx + blade_len * math.cos(ang)
+        y1 = hy + blade_len * math.sin(ang)
+        perp = ang + math.pi / 2
+        w = hr * 0.16
+        p0 = (hx + w * math.cos(perp), hy + w * math.sin(perp))
+        p1 = (hx - w * math.cos(perp), hy - w * math.sin(perp))
+        d.polygon([p0, p1, (x1, y1)], fill=accent + (255,))
+    d.ellipse((hx - hr * 0.14, hy - hr * 0.14, hx + hr * 0.14, hy + hr * 0.14),
+              fill=mix(accent, (255, 255, 255), 0.3) + (255,))
+
+    return im.resize((size, size), Image.LANCZOS)
+
+
+def emblem_panel(size, accent=SUN_GOLD, kind="neutral"):
     """Opaque framed panel with the emblem centered — radar placeholder /
-    loadscreen badge."""
+    loadscreen badge. `kind` picks the mark: 'neutral' (shared brand, used
+    by the main menu logo and mod icon — unchanged), 'consortium', or
+    'assembly' (the two faction-distinct marks above)."""
     im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     pv_grid(im, 0, 0, size, size, base=PANEL, cell=max(8, size // 14), line=-6, alt=2)
     d = ImageDraw.Draw(im)
     d.rectangle((0, 0, size - 1, size - 1), outline=BLACKLINE, width=1)
     d.rectangle((1, 1, size - 2, size - 2), outline=GREEN_MID, width=2)
     d.rectangle((3, 3, size - 4, size - 4), outline=lift(PANEL, -10), width=1)
-    e = emblem(round(size * 0.86), accent)
+    mark_fn = {"consortium": emblem_consortium, "assembly": emblem_assembly}.get(kind, emblem)
+    e = mark_fn(round(size * 0.86), accent)
     im.alpha_composite(e, ((size - e.width) // 2, (size - e.height) // 2))
     return im
 
@@ -270,11 +391,16 @@ def gen_sidebar():
     d.line((0, 43, 433, 43), fill=BLACKLINE)
 
     # moneybin strips: soviet/Assembly (0,54) green accent, allies/Consortium
-    # (0,85) gold accent — recessed credit readouts
+    # (0,85) gold accent — recessed credit readouts.
+    # NB: the real cash/power icons (glyphs.png, cash-icons/power-icons in
+    # chrome.yaml) and the game-timer label are drawn by the engine ON TOP
+    # of this background at runtime (see Image@CASH_ICON/@POWER_ICON in
+    # chrome/ingame-player.yaml) — leave that band clear of decoration so a
+    # baked shape doesn't collide with the live cash icon and read as a
+    # stray glitch next to the money counter (docs/BACKLOG.md issue #50).
     for y, accent in ((54, GREEN_ACCENT), (85, SUN_GOLD)):
         inset(im, 0, y, 238, 28, fill=PANEL_DEEP, frame=GREEN_DIM)
         d.line((2, y + 25, 235, y + 25), fill=mix(accent, PANEL, 0.35))
-        d.rectangle((4, y + 6, 9, y + 21), outline=mix(accent, PANEL, 0.15), width=1)
 
     # background-iconrow (0,116,238,47): this is the PALETTE_FOREGROUND overlay
     # drawn ON TOP of the production icons (its widget is listed after
@@ -338,10 +464,12 @@ def gen_sidebar():
     for y, fill, accent, disabled in states:
         button_block(im, 260, y, S, fill, accent=accent, disabled=disabled, border=2)
 
-    # radar placeholder emblems: allies/Consortium (290,67) gold accent,
-    # soviet/Assembly (290,290) green accent
-    im.paste(emblem_panel(222, SUN_GOLD), (290, 67))
-    im.paste(emblem_panel(222, GREEN_ACCENT), (290, 290))
+    # radar placeholder emblems: allies/Consortium (290,67) "Citadel Seal",
+    # soviet/Assembly (290,290) "Swarm Rig" — distinct marks per faction
+    # infrastructure philosophy (docs/BUILDINGS.md), not a recolor of one
+    # shared shape
+    im.paste(emblem_panel(222, SUN_GOLD, kind="consortium"), (290, 67))
+    im.paste(emblem_panel(222, GREEN_ACCENT, kind="assembly"), (290, 290))
 
     im.save(f"{UIBITS}/sidebar.png")
     print("sidebar.png", im.size)
