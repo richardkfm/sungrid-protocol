@@ -14,6 +14,9 @@ Ten buildings, staged across the roadmap in `docs/ROADMAP.md`, plus a follow-up 
 
 **Art note (Phase 5, superseded by docs/BACKLOG.md issue #34):** buildings 4-13 below originally shipped with placeholder art — each reused an existing structure's sprite (`RenderSprites.Image` override) chosen for rough thematic fit, not a dedicated sprite. Issue #34 replaced that reuse with dedicated first-pass programmatic art (`mods/sungrid/bits/gen_concept_art.py`) for all of them except Wind Turbine Array and Hydrogen Plant, which were instead drawn as palette/motif variants of Solar Array's own dedicated art (issue #12) since they're mechanically just other power buildings — see each building's entry below for specifics. `docs/concept-art/phase5-building-dossier.html` and `docs/concept-art/phase5-pixel-mockups.html` remain non-canonical discussion sketches, not what actually shipped.
 
+
+<img width="1280" height="800" alt="desert_base2" src="https://github.com/user-attachments/assets/d8cfc5fa-e1b4-4606-9b41-13f814aba409" />
+
 ## Building details
 
 ### 1. Solar Array
