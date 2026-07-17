@@ -100,6 +100,9 @@ def inset(img, x, y, w, h, fill=PANEL_DEEP, frame=GREEN_DIM):
 SS = 4
 
 def emblem(size, accent=SUN_GOLD):
+    """`accent` drives the whole ring/hex/sun/rays so each faction's
+    placeholder badge is genuinely its own mark (Consortium gold, Assembly
+    green — docs/ART_DIRECTION.md), not a recolor-in-name-only."""
     s = size * SS
     im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
@@ -109,7 +112,7 @@ def emblem(size, accent=SUN_GOLD):
 
     # outer ring
     d.ellipse((cx - r, cy - r, cx + r, cy + r),
-              outline=SUN_GOLD + (110,), width=max(SS // 2, lw // 2))
+              outline=accent + (110,), width=max(SS // 2, lw // 2))
 
     # hexagon (pointy-top) + vertex nodes + filaments to the ring
     hr = r * 0.82
@@ -119,20 +122,20 @@ def emblem(size, accent=SUN_GOLD):
         px, py = pts[k]
         ox = cx + r * math.sin(k * math.pi / 3)
         oy = cy - r * math.cos(k * math.pi / 3)
-        d.line((px, py, ox, oy), fill=SUN_GOLD + (150,), width=max(SS // 2, lw // 2))
-    d.polygon(pts, outline=SUN_GOLD + (255,), width=lw)
+        d.line((px, py, ox, oy), fill=accent + (150,), width=max(SS // 2, lw // 2))
+    d.polygon(pts, outline=accent + (255,), width=lw)
     nr = s * 0.016
     for px, py in pts:
-        d.ellipse((px - nr, py - nr, px + nr, py + nr), fill=SUN_GOLD + (255,))
+        d.ellipse((px - nr, py - nr, px + nr, py + nr), fill=accent + (255,))
 
     # sun disc, centered so the horizon band overlaps its lower third
     sr = hr * 0.44
     sy = cy - hr * 0.02
-    d.ellipse((cx - sr, sy - sr, cx + sr, sy + sr), fill=SUN_GOLD + (255,))
+    d.ellipse((cx - sr, sy - sr, cx + sr, sy + sr), fill=accent + (255,))
     hl = sr * 0.78
     d.ellipse((cx - hl - sr * 0.12, sy - hl - sr * 0.12,
                cx + hl - sr * 0.12, sy + hl - sr * 0.12),
-              fill=mix(SUN_GOLD, (255, 255, 255), 0.18) + (255,))
+              fill=mix(accent, (255, 255, 255), 0.18) + (255,))
 
     # three short rays above the sun
     for ang in (-math.pi / 2, -math.pi / 2 - 0.55, -math.pi / 2 + 0.55):
@@ -140,7 +143,7 @@ def emblem(size, accent=SUN_GOLD):
         y0 = sy + (sr * 1.22) * math.sin(ang)
         x1 = cx + (sr * 1.62) * math.cos(ang)
         y1 = sy + (sr * 1.62) * math.sin(ang)
-        d.line((x0, y0, x1, y1), fill=SUN_GOLD + (230,), width=lw)
+        d.line((x0, y0, x1, y1), fill=accent + (230,), width=lw)
 
     # horizon band (two-tone living green), clipped to the hexagon width
     bw = hr * 0.80
