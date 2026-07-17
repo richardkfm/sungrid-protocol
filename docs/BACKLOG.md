@@ -1228,3 +1228,18 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:art`, `area:ui`, `phase:6`
 
 **Phase:** 6/7. Logo fix verified via before/after crops of both `radar` regions side by side. Width investigation verified via direct pixel measurement against the player's screenshot and a comparison render against stock RA's own sidebar atlas; no fix applied pending a style-direction decision.
+
+### 52. Faction badges redesigned as two genuinely distinct marks, not a recolor of the shared sun/hex logo — DONE
+
+**Player request:** after issue #51 made the two badges different colors, asked for the badges to actually be *different logos* — and explicitly not to default back to "green" or "sun" imagery just because the mod's overall tone is eco/solarpunk. Asked to ground the redesign in what the docs already say about the two factions rather than invent new lore.
+
+**Research:** `docs/BUILDINGS.md`/`docs/ART_DIRECTION.md` already establish a concrete, doc-backed axis that the previous badge (a recolored copy of the shared sun-over-hex brand mark) didn't reflect at all: Consortium = "capital/technocratic," "hardened, centralized... infrastructure philosophy" (`docs/BUILDINGS.md`'s Hydrogen Plant fantasy line); Assembly = "scarcity-adapted, improvisational," "decentralized, improvisational infrastructure philosophy," "cheap, mass-producible" (Wind Turbine Array's fantasy line), plus `docs/ART_DIRECTION.md`'s explicit "differentiate through material and infrastructure philosophy (e.g. decentralized/drone-based vs. centralized/hardened grid)" guidance for whenever a second faction gets its own art.
+
+**Fix (`gen_chrome.py` only — two new functions, `emblem_panel` gains a `kind` dispatch; regenerated `sidebar.png`; the shared neutral mark used by the main-menu logo, loadscreen badge, and mod icon is untouched, still the original sun-over-horizon emblem, since only the two in-sidebar faction placeholder badges were in scope):**
+- **Consortium — "Citadel Seal" (`emblem_consortium`):** a thick fortress-wall hex with a concentric inner wall (vault), a 16-tick metering ring just inside the panel edge (ledger/gauge precision), spokes converging *inward* from every outer vertex to a single core (capital concentrating to one point — the deliberate mirror of the old mark's filaments feeding *outward*), square rivet nodes (precision hardware, not organic dots), and a cut-diamond core standing in for a vault asset instead of a sun disc. No sun, no green.
+- **Assembly — "Swarm Rig" (`emblem_assembly`):** three unevenly sized hex nodes in an asymmetric peer mesh (no single hub, unlike the Consortium's hub-and-spokes), hand-kinked strut cabling with welded rivet-dot joints, and a three-blade drone rotor on the largest node standing in for a sun. Genuinely smaller/scrappier footprint than the Consortium's frame-filling seal — a deliberate contrast (monumental capital vs. scrappy distributed scale), not an oversight.
+- Still uses the established Consortium-gold/Assembly-green accent colors (issue #43/#51's convention, used throughout the rest of each faction's chrome), since the request was for distinct *iconography*, not a wider faction-color overhaul that would touch every other bordered chrome element.
+
+**Labels:** `type:art`, `area:ui`, `phase:6`
+
+**Phase:** 6/7. Verified via before/after crops of both `radar` regions side by side and a direct bounding-box check that neither mark clips its panel; confirmed via `git status` that only `sidebar.png` changed (loadscreen/icon/main-menu logo, which use the unrelated neutral mark, are untouched).
