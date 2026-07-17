@@ -1124,8 +1124,9 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 - Only cameos change — the in-world sprite sheets (indexed, team-colored) are untouched, and cameos stay truecolor (they render on the fixed `chrome` palette, not team-colored). Same filenames/frame, so no sequence YAML changes.
 - `gen_concept_art.py` is retained as the programmatic fallback generator.
 - The Hauler Drone was reframed to the cab-less 6-wheeled rover in `desert_base2.png` (the `desert-base.png` hauler had a driver cab and read as a manned truck).
+- **Follow-up re-source pass:** nine cameos were re-cut from `desert_base2.png` (a wider, higher-quality re-render of the same base) where its crops read cleaner — Hydrogen Plant, Resilience Shelter, Wind Turbine Array, Sensor Array, Strike Drone, Grid Defense Turret, Aerial Fab, Arc Turret, Smart Grid Relay. This notably fixed the hazy Wind Turbine Array. A `LABEL_OVERRIDES` map also shortens two baked labels that were long at 64px — "Datacenter for AI" → "AI Datacenter", "Aerial Fabrication Bay" → "Aerial Fab" (cameo-only cosmetic text; the in-game tooltip name in `rules.ftl` is unchanged).
 
-**Known-soft first-pass crops** (flagged, not blocking): Wind Turbine Array (hazy/distant source), Datacenter for AI (dark, conceptually close to Cryptominer). Recon vs Strike Drone are both quadcopters (airborne vs landed) by nature.
+**Known-soft first-pass crops** (flagged, not blocking): Datacenter for AI is conceptually close to Cryptominer (both equipment racks). Recon vs Strike Drone are both quadcopters (airborne vs landed) by nature.
 
 **Labels:** `type:art`, `area:mod-content`
 
