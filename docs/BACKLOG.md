@@ -557,7 +557,7 @@ Ubuntu 22.04's distro-packaged `wine64` (6.0.3~repack) still depends on the `win
 **Labels:** `type:content`, `area:logistics`
 
 **Phase:** 5 — Faction Flavor (second follow-up correction to the Drone Bay/AI Data Center pairing).
-### 23. Windows packaging still fails after issue #21's fix: `rcedit` version string, not `wine32`, was the real cause — FIXED
+### 23. Windows packaging still fails after issue #21's fix: `rcedit` version string, not `wine32`, was the real cause — FIXED, confirmed on a real release tag
 
 **Problem:** The user cut the `alpha2` release tag expecting issue #21's `wine32` fix to have resolved Windows packaging. It didn't: the `Windows Installers` job on the real `alpha2` run failed with the exact same crash as `alpha1` — `Fatal error: Unable to parse version string for ProductVersion` — even though `wine32` was installed correctly this time (confirmed in the job log: `wine32:i386` sets up cleanly, no multiarch complaint). The Linux AppImage job succeeded again, producing `SungridProtocol-alpha2-x86_64.AppImage`; the macOS job stayed stuck `queued` (same pre-existing GitHub-hosted `macos-13` capacity issue as before, unrelated to this repo — still out of scope).
 
@@ -575,7 +575,7 @@ This only produces a digit-led string when `TAG` has a `type-version` shape like
 
 **Dependencies:** Builds on / corrects issue #21. `wine32` should stay installed — it's still needed for wine's own bootstrap — this just wasn't the blocking bug.
 
-**Definition of done:** `BACKWARDS_TAG` is guaranteed to start with a digit for both dashed (`release-20240101` → `20240101-release`) and non-dashed (`alpha2` → `0-alpha2`) tags — verified locally by running the substitution logic standalone. **A real release-tag push is still needed to confirm green end-to-end** (this session can't push tags itself); that's the same outstanding verification gap issue #21 also left open, now with the actual bug fixed underneath it.
+**Definition of done:** `BACKWARDS_TAG` is guaranteed to start with a digit for both dashed (`release-20240101` → `20240101-release`) and non-dashed (`alpha2` → `0-alpha2`) tags — verified locally by running the substitution logic standalone. **Met and confirmed end-to-end:** the `alpha17` release's `Release Packaging` run (2026-07-17) shows the `Windows Installers` job completing with `conclusion: success`, confirmed via the GitHub Actions API — the first real green Windows packaging job in this repo's history.
 
 **Labels:** `type:build`, `type:ci`
 
@@ -807,7 +807,7 @@ tracked separately as issue #30, so alpha8 still shipped without a `.dmg`.
 
 ---
 
-### 30. macOS packaging job now runs (issue #29) but fails: `buildpackage.sh` references engine files the pinned engine commit doesn't have — FIXED
+### 30. macOS packaging job now runs (issue #29) but fails: `buildpackage.sh` references engine files the pinned engine commit doesn't have — FIXED, confirmed on a real release tag
 
 **Problem:** With issue #29's runner fix landed, alpha8's `Release Packaging` run gave the `macOS Disk Image` job
 a real `macos-14` runner for the first time in this repo's history — engine fetch and compile both succeeded —
@@ -845,9 +845,10 @@ its own historical vendored script already did (confirmed by inspecting that com
 
 **Verification:** Confirmed via the GitHub Actions API that `apphost-mono.c`/`checkmono.c` are absent from the
 pinned engine commit's tree (`git ls-tree` against a direct fetch of that SHA) and that `launcher.m` at the same
-commit has no mono-related code path. No macOS host available in this sandbox to run `buildpackage.sh` directly;
-this fix should be confirmed by watching the next tag's `Release Packaging` run end-to-end and checking the
-resulting release for a `SungridProtocol-<tag>.dmg` asset.
+commit has no mono-related code path. **Confirmed end-to-end on a real release tag:** the `alpha17` release's
+`Release Packaging` run (2026-07-17) shows the `macOS Disk Image` job completing with `conclusion: success` on a
+`macos-14` runner, confirmed via the GitHub Actions API — the first real green macOS packaging job in this
+repo's history.
 
 ---
 
