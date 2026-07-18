@@ -1260,3 +1260,52 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:art`, `area:ui`, `phase:6`
 
 **Phase:** 6/7. Verified via before/after crops of the money-bin strips, radar panels, icon-row, and loadscreen badge (composited over the panel background color to check real rendered contrast, not raw alpha); confirmed via `git status` that only `sidebar.png`/`loadscreen*.png` changed (icons untouched, since `gen_icons()` calls `emblem()` directly, not `emblem_panel()`). Not yet verified in a live client here (no engine access in this environment).
+
+### 54. `DTRK`'s sub-faction renamed: Ukraine → Iran — DONE (display text only, matching the Allies/Soviet rename pattern)
+
+**Request:** "replace Ukraine with Iran" — the Ukraine sub-faction (`DTRK` Demolition Truck, `AFLD.Ukraine`) is real-world-coded, exactly the category `docs/BACKLOG.md` issue #15/`docs/ENERGY_BALANCE.md` flagged as "a separate, larger creative decision... shouldn't be assumed" and left untouched until directly asked. Directly asked this time, for this one sub-faction.
+
+**Scope decision:** followed the exact precedent issue #15 already set for the two umbrella sides (Allies→Consortium, Soviet→Assembly): rename only what's ever shown to a player, leave every internal identifier alone. Confirmed via a full-repo grep for `ukraine`/`Ukraine` that every occurrence outside `fluent/rules.ftl` is a non-displayed internal id or key — `Faction@ukraine`'s `InternalName: ukraine`, `~vehicles.ukraine`/`~structures.ukraine`/`~aircraft.ukraine`/`~infantry.ukraine` prerequisite gates, `ProvidesPrerequisite@ukraine`/`@ukrainianstructure`, `AFLD.Ukraine`'s actor id, `ai.yaml`'s `afld.ukraine` build weights and `UkraineParabombs` order name, `audio/voices.yaml`'s `ukraine:` voice-pack key, `chrome.yaml`'s `ukraine:` palette-remap key, `campaign-palettes.yaml`'s `Ukraine:` key (read by the `code-19` campaign map), and `metrics.yaml`'s `FactionSuffix-ukraine` — none of these render as text a player ever sees. Only two lines in `fluent/rules.ftl` do: `faction-ukraine.name` and the leading line of `.description`.
+
+**Fix (`mods/sungrid/fluent/rules.ftl` only, 2 lines changed; no rules/sequence/AI/palette/id changes anywhere):**
+```
+faction-ukraine =
+    .name = Iran
+    .description = Iran: Demolitions
+     Special Ability: Parabombs
+     Special Unit: Demolition Truck
+```
+`DTRK` (Demolition Truck) itself is unchanged — same chassis, same `DemoTruck` weapon, same `Parabombs` support power — this is a country-label swap, not a new unit design, matching how issue #27's `V2RL`/`QTNK`/`U2` renames also only touched fluent text where the underlying mechanic already fit. `docs/BUILDINGS.md`'s roster-survey table labels (`Assembly (Ukraine)` → `Assembly (Iran)`, the `AFLD` row's "Ukraine variant" note) and `docs/ENERGY_BALANCE.md`'s deferred-list writeup updated to match; the still-deferred `TTNK`/Russia and `CTNK`/Germany items are untouched and remain their own separate decision.
+
+**Scope:** `mods/sungrid/fluent/rules.ftl` (2 lines), `docs/BUILDINGS.md`, `docs/ENERGY_BALANCE.md`. No `rules/*.yaml`, no `sequences/*.yaml`, no `ai.yaml`, no palette/chrome changes, no new C#, no new art — same "fluent-only" footprint as issue #27's three unit renames.
+
+**Labels:** `type:content`, `area:units`
+
+**Phase:** Not tied to a specific roadmap phase — sub-faction identity correction, direct request.
+
+**Verification:** Grepped the full `mods/sungrid/` tree for `ukraine`/`Ukraine` (case-insensitive) after editing to confirm the only remaining "Ukraine" string is the internal `Faction@ukraine`/`~vehicles.ukraine`-style identifiers (by design, per the Allies/Soviet precedent) and that no other file hardcoded the old display text outside the two fluent lines changed. No engine/`dotnet` available in this sandbox, so `make test`/a real client launch couldn't be run locally; CI's rules/map validator is the primary correctness gate on the pushed branch, though there's little for it to catch here since no actor id/rules file changed.
+
+### 55. Remaining real-world-coded sub-factions (England, France, Germany, Russia) renamed to fictional identities — DONE
+
+**Request:** direct follow-up to issue #54 — "name all remaining sub factions." The four other sub-factions still carried real country names, the same deferred category `docs/ENERGY_BALANCE.md` and `docs/BACKLOG.md` issue #15 had explicitly flagged as "a separate, larger creative decision... shouldn't be assumed."
+
+**Direction taken:** rather than swapping in different real countries (issue #54's Ukraine→Iran pattern), these four were given fictional in-universe identities — matching how the two umbrella sides were already handled (Allies→**The Consortium**, Soviet→**The Assembly**), each grounded directly in the sub-faction's own existing special-unit fantasy rather than an arbitrary new name, and following the same "The ___" naming convention the umbrella renames established:
+
+| Old | New | Grounded in |
+|---|---|---|
+| England | **The Ledger** | Counterintelligence (British Spy/Mobile Gap Generator) — an audit-and-surveillance specialist, doubling as a pun on the Consortium's capital-technocratic "bookkeeping" identity. |
+| France | **The Mirage** | Deception (fake structures, Phase Transport) — illusion/phase-cloaking tech. |
+| Germany | **The Epoch** | Chronoshift Technology (Chrono Tank) — a time-manipulation R&D institute. |
+| Russia | **The Coil** | Tesla Weapons (Tesla Tank, Shock Trooper) — raw high-voltage/Tesla-coil weaponry, fitting the Assembly's scrappy/improvised identity. |
+
+Iran (issue #54) is untouched — it wasn't part of "remaining," having already been directly named.
+
+**Fix (`mods/sungrid/fluent/rules.ftl` only; no rules/sequence/AI/palette/id changes anywhere, same footprint as issue #54):** `faction-england`/`france`/`germany`/`russia`'s `.name`/`.description` values updated to the table above. The one unit-level nationality adjective in the whole tree, `actor-spy-england-disguisetooltip-name = British Spy`, became `= Auditor` to match The Ledger's new identity — confirmed via a full grep of `mods/sungrid/fluent/` that no other unit name contained a nationality adjective (`Tesla Tank`/`Chrono Tank`/`Phase Transport`/`Shock Trooper`/`Mobile Gap Generator` were already generic). Every internal id (`Faction@england`/`france`/`germany`/`russia`'s `InternalName:`, `~vehicles.<x>`/`~structures.<x>` prerequisite gates, `SPY.England`'s actor id, `ai.yaml`'s faction-conditional build lists, `chrome.yaml`/`campaign-palettes.yaml`'s per-country palette-remap keys, `audio/voices.yaml`'s voice-pack keys) is untouched — same precedent issues #15 and #54 already established.
+
+**Scope:** `mods/sungrid/fluent/rules.ftl` (faction blocks + one disguise-tooltip key). `docs/BUILDINGS.md`'s roster-survey table labels (`Consortium (England)` → `Consortium (The Ledger)`, etc.) and `docs/ENERGY_BALANCE.md`'s now-resolved deferred-list writeup updated to match. No `rules/*.yaml`, no actor ids, no AI/palette changes, no new C#, no new art.
+
+**Labels:** `type:content`, `area:units`
+
+**Phase:** Not tied to a specific roadmap phase — sub-faction identity correction, direct follow-up request to issue #54.
+
+**Verification:** Grepped the full `mods/sungrid/` tree for `England`/`France`/`Germany`/`Russia` (case-sensitive) after editing — the only remaining hits are internal identifiers (`SPY.England`'s actor id in `rules/infantry.yaml`, the palette-remap keys in `rules/campaign-palettes.yaml`), confirmed by inspection to be non-displayed. Checked `mods/sungrid/fluent/rules.ftl` for duplicate top-level fluent keys after editing (194 keys, none duplicated) to rule out a syntax regression. No engine/`dotnet` available in this sandbox; CI's rules/map validator is the primary correctness gate on the pushed branch, though there's little for it to catch here since no actor id/rules file changed.
