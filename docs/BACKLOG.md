@@ -1358,3 +1358,32 @@ Iran (issue #54) is untouched — it wasn't part of "remaining," having already 
 **Labels:** `type:art`, `area:mod-content`
 
 **Phase:** 6/7. Verified via before/after frame renders (idle/damaged, multiple facings/stances) from the actual indexed sheets and the team-color simulation; not verified in a live client here (no engine in this sandbox).
+
+### 59. Germany's sub-faction identity reverted from "The Epoch" back to Germany — DONE
+
+**Request:** "change epoch to Germany" — direct reversal of the fictional rename issue #55 gave this sub-faction.
+
+**Fix (`mods/sungrid/fluent/rules.ftl` only, 2 lines; `docs/BUILDINGS.md`/`docs/ENERGY_BALANCE.md` labels updated to match):** `faction-germany`'s `.name`/`.description` lead reverted from "The Epoch" to "Germany". No flag change needed — unlike England/France/Russia/Ukraine, Germany's slot was never touched by issues #56/#57's flag corrections (it always flew the stock German flag regardless of the displayed name), so this is purely a fluent-text change. `CTNK` (Chrono Tank) itself, its Chronoshift Technology fantasy, and every internal id are untouched — same "display text only" footprint as every other sub-faction rename in this project (issues #15/#54/#55).
+
+**Labels:** `type:content`, `area:units`
+
+**Phase:** Not tied to a roadmap phase — sub-faction identity correction, direct request.
+
+### 60. Proposal (not implemented): consolidate the European sub-factions into an EU faction, and Iran/Iraq/etc. into a fictional Federation of the Middle East
+
+**Request:** "write into backlog that we consider putting European nations together into EU. And the fictional Federation of the Middle East (which contains Iran, Iraq and others)."
+
+**Current roster, for reference:** Consortium (Allied side) currently has three selectable sub-factions — Greece (issue #57, was England), USA (issue #57, was France), Germany (issue #59, reverted from The Epoch). Assembly (Soviet side) has two — China (issue #55, was Russia) and Iran (issue #54, was Ukraine).
+
+**The idea:** rather than three separate European nations under the Consortium, consolidate Greece + Germany (and any future European additions) into a single **EU** sub-faction — matching how the Consortium's own fantasy is already "capital-technocratic" and "centralized" (`docs/BUILDINGS.md`), which a supranational bloc arguably expresses more cleanly than three separate flags. Symmetrically, give the Assembly's Iran a similarly-scoped companion: a fictional **Federation of the Middle East** (explicitly named as containing Iran, Iraq, and others) rather than a single-country identity — matching the Assembly's own "decentralized... improvisational" fantasy less as a literal description of the bloc and more as a second regional identity parallel to China's.
+
+**Why this isn't done yet — real design questions, not just an art/label swap like every rename so far:**
+- **Mechanically, sub-factions in this ruleset are 1:1 with their unique unit/ability** (`Faction@england` ↔ `SPY.England`/Auditor, `Faction@germany` ↔ `CTNK` Chronoshift, `Faction@russia` ↔ Tesla tech, `Faction@ukraine` ↔ `DTRK` Parabombs). Consolidating Greece+Germany into one "EU" pick means deciding whether EU gets *both* the Auditor and the Chrono Tank (two special units on one sub-faction, breaking the established 1-unit-per-sub-faction pattern), or picking one and retiring the other's mechanic entirely (real content loss). The same fork applies to a Federation of the Middle East absorbing Iran's `DTRK`/Parabombs identity plus whatever an "Iraq" slot would need to bring — there's no Iraq-equivalent unit in the current roster to give it, so "Iraq" would start as flag-only with no mechanical identity, unlike every other sub-faction in this project.
+- **`docs/BACKLOG.md`'s own precedent (issues #54/#55/#57/#59) has so far only ever done 1:1 country swaps** (rename the label, and where needed the flag, keep the unit/mechanic/id untouched) — every one of those was a same-scope, low-risk edit. A many-to-one consolidation is a structurally different kind of change: it deletes selectable options from the lobby dropdown (`RandomFactionMembers` lists in `rules/world.yaml` would shrink), which is the first sub-faction change in this project's history to actually remove a player-facing choice rather than relabel one.
+- **Scope of "and others"** is open-ended for the Federation of the Middle East (Iraq is named, "others" is not) — worth pinning down which specific countries/units (if any exist to borrow from) before implementation, so the fictional bloc's roster is a deliberate list, not a vague gesture.
+
+**Recommended next step, when this is picked up:** a short design pass to decide (a) whether EU/Federation each keep exactly one existing special unit (recommended — preserves the established 1-sub-faction-1-unit pattern with zero new C#/rules content) or gain a second, and (b) the exact consolidated `RandomFactionMembers` list for `Faction@randomallies`/`Faction@randomsoviet` afterward. Flagged here rather than actioned unilaterally since it changes lobby-visible option counts, unlike every prior rename in this project.
+
+**Labels:** `type:proposal`, `area:units`, `needs-design`
+
+**Phase:** Not tied to a roadmap phase — deferred pending a design decision, no code/rules/fluent/art changes made.

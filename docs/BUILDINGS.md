@@ -236,7 +236,7 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | MGG | Mobile Gap Generator | Consortium (Greece) | high | 1000 | 22000 | Heavy | 72 | — | atek | |
 | MRJ | Mobile Radar Jammer | Consortium | high | 1000 | 22000 | Heavy | 68 | — | atek | |
 | TTNK | Tesla Tank | Assembly (China) | high | 1350 | 40000 | Light | 92 | TTankZap | tsla, stek | |
-| CTNK | Chrono Tank | Consortium (The Epoch) | high | 1350 | 40000 | Light | 86 | APTusk | atek | |
+| CTNK | Chrono Tank | Consortium (Germany) | high | 1350 | 40000 | Light | 86 | APTusk | atek | |
 | STNK | Phase Transport | Consortium (USA) | high | 1000 | 35000 | Light | 128 | APTusk.stnk | atek | |
 | QTNK | Tremor Tank | Assembly | high | 2000 | 90000 | Heavy | 46 | (quake) | fix, stek | |
 | DTRK | Demolition Truck | Assembly (Iran) | high | 2500 | 2800 | Light | 67 | DemoTruck | stek | |
