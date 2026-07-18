@@ -52,14 +52,14 @@ faction-allies =
     .name = The Consortium
 
 faction-england =
-    .name = The Ledger
-    .description = The Ledger: Counterintelligence
+    .name = Greece
+    .description = Greece: Counterintelligence
      Special Unit: Auditor
      Special Unit: Mobile Gap Generator
 
 faction-france =
-    .name = The Mirage
-    .description = The Mirage: Deception
+    .name = USA
+    .description = USA: Deception
      Special Ability: Can build fake structures
      Special Unit: Phase Transport
 
