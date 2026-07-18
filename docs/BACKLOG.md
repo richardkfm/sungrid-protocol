@@ -1309,3 +1309,52 @@ Iran (issue #54) is untouched — it wasn't part of "remaining," having already 
 **Phase:** Not tied to a specific roadmap phase — sub-faction identity correction, direct follow-up request to issue #54.
 
 **Verification:** Grepped the full `mods/sungrid/` tree for `England`/`France`/`Germany`/`Russia` (case-sensitive) after editing — the only remaining hits are internal identifiers (`SPY.England`'s actor id in `rules/infantry.yaml`, the palette-remap keys in `rules/campaign-palettes.yaml`), confirmed by inspection to be non-displayed. Checked `mods/sungrid/fluent/rules.ftl` for duplicate top-level fluent keys after editing (194 keys, none duplicated) to rule out a syntax regression. No engine/`dotnet` available in this sandbox; CI's rules/map validator is the primary correctness gate on the pushed branch, though there's little for it to catch here since no actor id/rules file changed.
+
+### 56. Faction logos redone and rolled out to the lobby flag slots — the Consortium/Assembly slots no longer show the stock Allied eagle / Soviet hammer-and-sickle
+
+**Request:** "redo the two faction logos according to the ideology written in docs."
+
+**Research:** issue #52 had already designed two ideology-grounded marks (Consortium "Citadel Seal": hardened/centralized/capital-technocratic; Assembly "Swarm Rig": decentralized/improvisational/drone-based, per `docs/BUILDINGS.md`'s infrastructure-philosophy fantasy lines and `docs/ART_DIRECTION.md`'s faction axis) — but only as the two in-sidebar radar placeholder badges. The faction logo a player actually *picks a side by* — the `flags` collection in `chrome.yaml`, rendered in the lobby faction dropdown and the observer UI from `glyphs.png` — still shipped the stock RA sheet: The Consortium's slot carried the stock Allied eagle and The Assembly's the literal Soviet hammer-and-sickle, contradicting both documented identities. Additionally, the issue #52 marks were drawn with thin proportional strokes that turned to mush below ~32px, so they couldn't have been dropped into a 30×15 flag slot as-is.
+
+**Fix (`mods/sungrid/uibits/gen_chrome.py`; regenerated `sidebar.png` + patched `glyphs.png`/`-2x`/`-3x`):**
+- `emblem_consortium()`/`emblem_assembly()` redrawn bolder (second pass over issue #52's concepts, same ideology grounding, not new lore): the Citadel Seal's wall is now a solid filled hex band over a translucent keep wash instead of an outline stroke, and the Swarm Rig's nodes/struts got brighter fills and much heavier line weights. Both marks gained a detail tier (`fine = size >= 40`): the metering ticks, inner vault wall, and weld rivet dots only draw at sizes with the pixels to resolve them, so one function now serves both the 222px sidebar badge and the 15px flag.
+- New `gen_flags()`: patches the `allies`/`soviet` regions of the three glyph sheets in place with panel-styled plaques carrying the two marks (accent-framed, faction-colored). Unlike the rest of `gen_chrome.py` this deliberately patches rather than regenerates — `glyphs.png` is otherwise still stock content (cash/power icons, checkboxes...) that isn't being replaced; the patch is idempotent for the regions it owns. Verified `glyphs-3x.png` is a genuine 3x layout on an oversized 1024px canvas (checked against stock flag positions) before patching at scale 3.
+- `gen_sidebar()`'s radar badges pick the redone marks up automatically (same functions).
+
+**Labels:** `type:art`, `area:ui`, `phase:6`
+
+**Phase:** 6/7. Verified via side-by-side renders of both marks at 222px and 13px, and crops of all three patched glyph scales; sub-faction flag regions confirmed byte-untouched except those changed deliberately by issue #57. Not verified in a live client here (no engine in this sandbox).
+
+### 57. Sub-faction nation/flag corrections: Greece in the Consortium (England's slot), USA (France's slot), and China/Iran flags matching their issue #54/#55 renames
+
+**Request (mid-pass, direct):** "keep all western nation flags, but replace Russia with China and Ukraine with Iran. Also make sure we got Greece as a nation in the consortium (if necessary replace against England)." Followed by: "Replace flag of France with USA please."
+
+**State before:** issues #54/#55 renamed the displayed sub-factions (Russia→China, Ukraine→Iran, England→The Ledger, France→The Mirage) but the `flags` collection still showed the old country art — the "China" faction flew the USSR flag, "Iran" the UkSSR flag. Greece existed only as an unused stock flag slot.
+
+**Fix:**
+- **Greece** (replacing England, per the "if necessary replace against England" instruction): `faction-england`'s displayed `.name`/`.description` lead in `fluent/rules.ftl` become "Greece" (The Ledger identity retired; the Auditor special-unit name is kept — it describes the unit, not the country). The stock Greek flag art is copied verbatim from its own unused `greece` slot into the `england` region at all three glyph scales, so the lobby flag matches. Internal ids (`Faction@england`, `SPY.England`, prerequisite gates...) stay untouched, same precedent as issues #15/#54/#55.
+- **USA** (replacing France, direct request): `faction-france`'s displayed name becomes "USA" and a programmatic US flag (13 stripes + canton with a legible star-dot grid — 50 stars don't resolve at 15px) is drawn into the `france` slot.
+- **China / Iran flags:** programmatic PRC flag (red field, gold five-star canton) into the `russia` slot and Iranian tricolor (green/white/red with a simplified central tulip emblem) into the `ukraine` slot.
+- All new flags match the stock sheet's sampled border convention (Consortium-side 1px light-blue `(89,144,255)` frame, Assembly-side red `(191,0,0)`). England's/France's Union Jack/tricolore art is gone from the visible roster but remains recoverable from git history; Germany ("The Epoch") keeps its stock flag and fictional name — the only sub-faction still carrying one, left alone deliberately since it wasn't asked about.
+
+**Scope:** `mods/sungrid/uibits/gen_chrome.py` (`gen_flags()` additions), `glyphs*.png`, `mods/sungrid/fluent/rules.ftl` (2 display names), `docs/BUILDINGS.md`/`docs/ENERGY_BALANCE.md` label updates. No rules/sequence/AI/palette/id changes.
+
+**Labels:** `type:art`, `type:content`, `area:ui`
+
+**Phase:** Not tied to a roadmap phase — sub-faction identity corrections, direct requests.
+
+### 58. In-world sprite quality pass, batch 2: Wind Turbine Array / Grid Defense Turret / Disruptor Trooper — DONE
+
+**Request:** "do three more units including grid turret and disruptor trooper and win[d] energy turbine" — extending issue #48's volumetric technique past its 3-building test batch, per that issue's deferred-scope list.
+
+**Fix (`mods/sungrid/bits/gen_concept_art.py`; regenerated `sgwnd.png`/`sgturturret.png`/`disr.png` only — icons untouched, they're issue #45's photo cameos):**
+- **`sgwnd_draw` (Wind Turbine Array):** flat tapered-polygon towers became cylindrical masts (vcyl's horizontal lighting ramp on a tapering silhouette) on `capped_box` concrete footings; the nacelle is a shaded pod with a sphere-read hub; blades are tapered volume polygons on a foreshortened (rx>ry) tip path with full-opacity trailing motion-streak arcs. First attempt used a translucent swept disc for the spinning read — reverted twice: at honest alpha it read as a solid balloon, and the indexed pipeline's 1-bit alpha drops sub-threshold translucency over transparent background entirely, which is why the streaks are opaque dashes instead.
+- **`sgtur_turret_draw` (Grid Defense Turret):** constraint documented in-code — all 32 facings come from rotating this one frame, so the housing may only use *radially symmetric* volume cues (a stepped cylinder: skirt → wall → lit top rim → recessed face, radial vent slits, an emitter dome shaded as concentric rings with a dead-center highlight); directional detail lives on the barrel alone (lit spine, induction-coil collars, muzzle collar with lit lip), which genuinely points somewhere.
+- **`disr_pose` (Disruptor Trooper):** flat torso rect became a 4-strip cylindrical shading ramp (dark silhouette edges, brightness peaking left of center); the helmet a sphere (dark base, volume, offset upper-left highlight); the backpack discharge cell gained a lit top facet + shaded right edge; limbs a thin lit front line. Pose skeleton, stances, and the 437-frame facing-major layout are untouched.
+- Frame sizes/counts byte-compatible throughout (sgwnd 66×54×2, sgturturret 48×44×64, disr 20×26×437), so no sequence YAML changes; team-color verified via the established simulated red/blue palette-remap render (gold band/hub/coils/dome/pips all still land on remap indices 80–95).
+
+**Remaining from issue #48's list:** Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Smart Grid Relay, Resilience Shelter, Sensor Array, Hydrogen Plant, Arc Turret, the three drones, and RCYD's still-stock in-world sprite.
+
+**Labels:** `type:art`, `area:mod-content`
+
+**Phase:** 6/7. Verified via before/after frame renders (idle/damaged, multiple facings/stances) from the actual indexed sheets and the team-color simulation; not verified in a live client here (no engine in this sandbox).

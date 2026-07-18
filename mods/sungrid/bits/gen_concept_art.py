@@ -726,33 +726,84 @@ def arct_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
 def sgwnd_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     """Wind Turbine Array: two slim turbine poles/rotors -- deliberately
     sparser than Solar Array's dense panel frames, matching Wind Turbine's
-    "cheap, mass-producible" fantasy."""
+    "cheap, mass-producible" fantasy.
+
+    Volumetric second pass (issue #48's technique, batch 2): the flat
+    tapered-polygon towers become cylindrical masts (horizontal lighting
+    ramp on a tapering silhouette, same key light as vcyl) planted on a
+    concrete footing with real depth (capped_box); the nacelle becomes a
+    shaded pod with a sphere-read hub; and the rotor gains a foreshortened
+    translucent swept disc behind tapered volume blades, so it reads as a
+    spinning mass at the game's front-above angle instead of three stick
+    lines."""
     ground_y0, ground_y1 = h - 12, h
     gold_y0, gold_y1 = ground_y0 - 8, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=8)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
     for k, cx in enumerate((w // 3, 2 * w // 3)):
         hub_y = gold_y0 - 26
-        contact_shadow(sd, cx, gold_y0 - 1, 4, 1.5)
-        # Tapered tower with a lit edge.
-        sd.poly([(cx - 1.8, gold_y0), (cx + 1.8, gold_y0), (cx + 0.8, hub_y), (cx - 0.8, hub_y)], fill=LEGACY_GRAY_DARK)
-        sd.line([(cx - 1.4, gold_y0), (cx - 0.6, hub_y)], fill=lit(LEGACY_GRAY_DARK, 0.45), width=0.4)
-        # Nacelle + hub.
-        sd.rrect([cx - 2.4, hub_y - 2, cx + 2.4, hub_y + 2], 1, fill=LEGACY_GRAY)
-        sd.ellipse([cx - 1.6, hub_y - 1.6, cx + 1.6, hub_y + 1.6], fill=SUN_GOLD if not damaged or k == 1 else dim(SUN_GOLD, 0.5))
-        # Three blades, phase-offset per turbine so the pair doesn't read as
-        # a copy-paste; lit leading edge, dark root.
-        phase = 15 + k * 40
         stopped = damaged and k == 0
+        contact_shadow(sd, cx, gold_y0 - 1, 5, 1.8)
+        # Concrete footing block with volume.
+        capped_box(sd, cx - 3, gold_y0 - 3, cx + 3, gold_y0 - 0.5, CONCRETE, depth=1.4, edge=0.3)
+        # Tapered cylindrical mast: brightness peaks left of center, darkest
+        # at both silhouette edges (vcyl's ramp on a tapering outline).
+        base_hw, top_hw = 2.0, 0.9
+        bands = 5
+        for i in range(bands):
+            t0, t1 = i / bands, (i + 1) / bands
+            c = (t0 + t1) / 2
+            b = 1.0 - abs(c - 0.35) * 2.0
+            col = (lit(LEGACY_GRAY, 0.32 * max(0.0, b)) if b > 0
+                   else dim(LEGACY_GRAY, 0.3 * min(1.0, -b + 0.3)))
+            sd.poly([
+                (cx - base_hw + 2 * base_hw * t0, gold_y0 - 2),
+                (cx - base_hw + 2 * base_hw * t1, gold_y0 - 2),
+                (cx - top_hw + 2 * top_hw * t1, hub_y),
+                (cx - top_hw + 2 * top_hw * t0, hub_y),
+            ], fill=col)
+        # Service door at the mast base.
+        sd.rect([cx - 0.8, gold_y0 - 6.5, cx + 0.8, gold_y0 - 2.5], fill=dim(LEGACY_GRAY, 0.45))
+        # Nacelle pod: shaded body behind a sphere-read hub cone.
+        sd.ellipse([cx - 2.6, hub_y - 2.2, cx + 2.6, hub_y + 2.2], fill=dim(LEGACY_GRAY, 0.2))
+        sd.ellipse([cx - 2.6, hub_y - 2.2, cx + 1.6, hub_y + 1.4], fill=LEGACY_GRAY)
+        sd.arc([cx - 2.6, hub_y - 2.2, cx + 2.6, hub_y + 2.2], 150, 300,
+               fill=lit(LEGACY_GRAY, 0.4), width=0.5)
+        hub_c = SUN_GOLD if not stopped else dim(SUN_GOLD, 0.5)
+        # Rotor sweep: foreshortened (rx > ry) spinning-volume read. NB the
+        # indexed pipeline's 1-bit alpha (to_indexed) drops sub-threshold
+        # translucency over transparent background, so the sweep can't be a
+        # soft disc -- it's full-opacity trailing streak arcs behind each
+        # blade tip (plus a faint disc that only survives where it overlaps
+        # opaque geometry). Skipped when stopped.
+        rx, ry = 13, 10.5
+        if not stopped:
+            sd.ellipse([cx - rx, hub_y - ry, cx + rx, hub_y + ry], fill=GREEN_ACCENT + (13,))
+        # Three tapered volume blades on the foreshortened path, phase-offset
+        # per turbine so the pair doesn't read as a copy-paste.
+        phase = 15 + k * 40
         for b in range(3):
             ang = phase + b * 120
             rad = math.radians(ang)
-            ex, ey = cx + 13 * math.cos(rad), hub_y - 13 * math.sin(rad)
-            mx, my = cx + 4 * math.cos(rad), hub_y - 4 * math.sin(rad)
             blade = dim(GREEN_ACCENT, 0.45) if stopped else GREEN_ACCENT
-            sd.line([(mx, my), (ex, ey)], fill=blade, width=1.6)
-            sd.line([(mx, my), (ex, ey)], fill=lit(blade, 0.3), width=0.5)
-            sd.line([(cx, hub_y), (mx, my)], fill=dim(blade, 0.3), width=1.2)
+            blen = 1.0 if not (stopped and b == 1) else 0.55  # snapped blade
+            ex = cx + rx * blen * math.cos(rad)
+            ey = hub_y - ry * blen * math.sin(rad)
+            prad = rad + math.pi / 2
+            r0x, r0y = cx + 1.4 * math.cos(prad), hub_y - 1.4 * math.sin(prad)
+            r1x, r1y = cx - 1.4 * math.cos(prad), hub_y + 1.4 * math.sin(prad)
+            sd.poly([(r0x, r0y), (r1x, r1y), (ex, ey)], fill=blade)
+            sd.line([(r0x, r0y), (ex, ey)], fill=lit(blade, 0.4), width=0.6)
+            if not stopped:
+                # Trailing motion streak on the foreshortened tip path
+                # (PIL arc angles run clockwise with y down: math angle a
+                # maps to -a).
+                sd.arc([cx - rx, hub_y - ry, cx + rx, hub_y + ry],
+                       -ang - 52, -ang - 14, fill=dim(GREEN_ACCENT, 0.25), width=1.1)
+        # Hub sphere over the blade roots: dark rim, body, offset highlight.
+        sd.ellipse([cx - 1.9, hub_y - 1.9, cx + 1.9, hub_y + 1.9], fill=dim(hub_c, 0.35))
+        sd.ellipse([cx - 1.7, hub_y - 1.7, cx + 1.5, hub_y + 1.5], fill=hub_c)
+        sd.ellipse([cx - 1.2, hub_y - 1.2, cx - 0.1, hub_y - 0.1], fill=lit(hub_c, 0.45))
     if damaged:
         scorch(sd, [(w // 3, gold_y0 - 10, 2.5), (2 * w // 3 + 4, gold_y0 + 2, 2)])
 
@@ -820,22 +871,49 @@ def rotated_frames(draw_fn, frame_w, frame_h, n=32, outlined=True, **kwargs):
 
 
 def sgtur_turret_draw(sd, w, h, damaged=False):
+    """Volumetric second pass (issue #48's technique, batch 2). Constraint
+    unique to this sprite: all 32 facings are produced by rotating this one
+    frame, so any direction-dependent shading on the housing would spin with
+    it and read as inconsistent lighting across facings. The drum therefore
+    uses only radially symmetric volume cues (a stepped cylinder: skirt ->
+    wall -> lit top rim -> face, plus radial vent slits), and directional
+    detail lives on the barrel alone, which genuinely points somewhere."""
     cx, cy = w // 2, h // 2 + 6
+    top_y = cy - h // 2 + 4
     barrel = GREEN_PRIMARY if not damaged else LEGACY_GRAY
     ring = SUN_GOLD if not damaged else RUST
-    # Barrel: two-tone with a lit center stripe and a muzzle collar.
-    sd.rect([cx - 3, cy - h // 2 + 4, cx + 3, cy], fill=barrel)
-    sd.line([(cx - 2.4, cy - h // 2 + 4), (cx - 2.4, cy)], fill=dim(barrel, 0.3), width=0.6)
-    sd.line([(cx - 0.6, cy - h // 2 + 4), (cx - 0.6, cy)], fill=lit(barrel, 0.35), width=1)
-    sd.line([(cx + 2.4, cy - h // 2 + 4), (cx + 2.4, cy)], fill=dim(barrel, 0.35), width=0.6)
-    sd.rect([cx - 3.4, cy - h // 2 + 4, cx + 3.4, cy - h // 2 + 6.5], fill=ring)
-    # Housing: shaded disc with a gold trim ring and center emitter dome.
-    sd.ellipse([cx - 8, cy - 6, cx + 8, cy + 6], fill=dim(PANEL_BLUEBLACK, 0.2))
-    sd.ellipse([cx - 7, cy - 5.4, cx + 7, cy + 5], fill=PANEL_BLUEBLACK)
-    sd.arc([cx - 7, cy - 5.4, cx + 7, cy + 5], 150, 300, fill=lit(PANEL_BLUEBLACK, 0.4), width=0.8)
-    sd.ellipse([cx - 8, cy - 6, cx + 8, cy + 6], outline=dim(ring, 0.25), width=0.5)
-    sd.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=ring)
-    sd.ellipse([cx - 2, cy - 2, cx + 0.4, cy + 0.4], fill=lit(ring, 0.4))
+    # Barrel: dark flanks around a lit spine (cylinder read along its axis).
+    sd.rect([cx - 3, top_y, cx + 3, cy], fill=barrel)
+    sd.line([(cx - 2.4, top_y), (cx - 2.4, cy)], fill=dim(barrel, 0.3), width=0.6)
+    sd.line([(cx - 0.6, top_y), (cx - 0.6, cy)], fill=lit(barrel, 0.35), width=1)
+    sd.line([(cx + 2.4, top_y), (cx + 2.4, cy)], fill=dim(barrel, 0.35), width=0.6)
+    # Induction coil rings along the barrel -- raised collars, each with a
+    # lit upper edge, giving the tube volume (and grid flavor).
+    for ry_ in (top_y + 4.5, top_y + 7.5):
+        sd.line([(cx - 3.3, ry_), (cx + 3.3, ry_)], fill=dim(ring, 0.2), width=0.9)
+        sd.line([(cx - 3.3, ry_ - 0.6), (cx + 3.3, ry_ - 0.6)], fill=lit(ring, 0.25), width=0.4)
+    # Muzzle collar with a lit lip.
+    sd.rect([cx - 3.4, top_y, cx + 3.4, top_y + 2.5], fill=ring)
+    sd.line([(cx - 3.4, top_y), (cx + 3.4, top_y)], fill=lit(ring, 0.4), width=0.5)
+    # Housing drum: stepped concentric discs -- skirt, side wall, lit top
+    # rim, recessed face -- a cylinder seen from above (radially symmetric).
+    sd.ellipse([cx - 8.5, cy - 6.5, cx + 8.5, cy + 6.5], fill=dim(PANEL_BLUEBLACK, 0.5))
+    sd.ellipse([cx - 8, cy - 6.1, cx + 8, cy + 6.1], fill=dim(PANEL_BLUEBLACK, 0.25))
+    sd.ellipse([cx - 7.2, cy - 5.5, cx + 7.2, cy + 5.5], outline=lit(PANEL_BLUEBLACK, 0.35), width=0.6)
+    sd.ellipse([cx - 6.6, cy - 5, cx + 6.6, cy + 5], fill=PANEL_BLUEBLACK)
+    sd.ellipse([cx - 8.5, cy - 6.5, cx + 8.5, cy + 6.5], outline=dim(ring, 0.25), width=0.5)
+    # Radial vent slits on the face (rotation-safe by symmetry).
+    for i in range(8):
+        a = i * math.pi / 4 + math.pi / 8
+        sd.line([(cx + 4.3 * math.cos(a), cy + 3.3 * math.sin(a)),
+                 (cx + 5.9 * math.cos(a), cy + 4.5 * math.sin(a))],
+                fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
+    # Emitter dome: concentric radial ramp, highlight dead center so every
+    # facing keeps the same dome read.
+    sd.ellipse([cx - 3.4, cy - 3.4, cx + 3.4, cy + 3.4], fill=dim(ring, 0.35))
+    sd.ellipse([cx - 2.8, cy - 2.8, cx + 2.8, cy + 2.8], fill=ring)
+    sd.ellipse([cx - 1.6, cy - 1.6, cx + 1.6, cy + 1.6], fill=lit(ring, 0.3))
+    sd.ellipse([cx - 0.7, cy - 0.7, cx + 0.7, cy + 0.7], fill=lit(ring, 0.6))
     if damaged:
         sd.ellipse([cx - 6, cy - 9, cx - 2.4, cy - 6], fill=DAMAGE_SCORCH + (220,))
         sd.px(cx + 4, cy + 2, RUST)
@@ -1016,38 +1094,58 @@ def disr_pose(sd, w, h, stance="stand", phase=0.0):
 
     hip_y = cy + 6 - crouch - bob
     leg_len = 8 - crouch // 2
-    # Legs: two-tone with boot pixels; prone spreads them wider.
+    # Legs: two-tone with boot pixels; prone spreads them wider. A thin lit
+    # front line on each leg gives the limb a rounded read (volumetric
+    # second pass -- issue #48's technique at infantry scale).
     spread = 2 if crouch == 0 else 3.5
     for side in (-1, 1):
         lx = cx + side * spread + side * leg_swing * (0.4 if side < 0 else -0.4) + leg_swing * (0.6 if side < 0 else -0.6)
         sd.line([(cx + side * 2, hip_y), (lx, hip_y + leg_len)], fill=DISR_PANTS, width=1.7)
+        sd.line([(cx + side * 2 - 0.4, hip_y), (lx - 0.4, hip_y + leg_len)],
+                fill=lit(DISR_PANTS, 0.25), width=0.5)
         sd.px(round(lx) , round(hip_y + leg_len) - 1, dim(DISR_PANTS, 0.4))
-    # Torso: suit jacket with a lit shoulder line and a belt.
+    # Torso: cylindrical shading ramp (vcyl's convention at suit scale) --
+    # dark silhouette edges, brightness peaking left of center -- instead of
+    # the first pass's flat rect with two edge lines.
     torso_top = hip_y - 10
-    sd.rect([cx - 4, torso_top, cx + 4, hip_y], fill=DISR_SUIT)
+    for x0, x1, col in ((-4, -2.9, dim(DISR_SUIT, 0.18)),
+                        (-2.9, -0.6, lit(DISR_SUIT, 0.22)),
+                        (-0.6, 2.3, DISR_SUIT),
+                        (2.3, 4, dim(DISR_SUIT, 0.32))):
+        sd.rect([cx + x0, torso_top, cx + x1, hip_y], fill=col)
     sd.line([(cx - 4, torso_top), (cx + 4, torso_top)], fill=lit(DISR_SUIT, 0.4), width=0.7)
-    sd.line([(cx - 3.6, torso_top), (cx - 3.6, hip_y)], fill=lit(DISR_SUIT, 0.2), width=0.5)
-    sd.line([(cx + 3.6, torso_top), (cx + 3.6, hip_y)], fill=dim(DISR_SUIT, 0.3), width=0.5)
     sd.line([(cx - 4, hip_y - 2), (cx + 4, hip_y - 2)], fill=dim(SUN_GOLD, 0.35), width=0.7)
     # Backpack discharge cell -- the "Disruptor" identity signal, replacing
-    # E4's fuel tank: blue-black cell with charge pips.
+    # E4's fuel tank: blue-black cell with charge pips, now with a lit top
+    # facet and shaded right edge so it sits on the shoulders as a box.
     sd.rrect([cx - 3, torso_top - 2.4, cx + 3, torso_top + 4], 1, fill=PANEL_BLUEBLACK)
+    sd.line([(cx - 2.4, torso_top - 2.2), (cx + 2.4, torso_top - 2.2)],
+            fill=lit(PANEL_BLUEBLACK, 0.45), width=0.6)
+    sd.line([(cx + 2.6, torso_top - 1.6), (cx + 2.6, torso_top + 3.4)],
+            fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
     sd.rrect([cx - 3, torso_top - 2.4, cx + 3, torso_top + 4], 1, outline=dim(SUN_GOLD, 0.25), width=0.4)
     sd.px(cx - 1, torso_top, SUN_GOLD)
     sd.px(cx + 1, torso_top + 1, dim(SUN_GOLD, 0.2))
-    # Arms: counter-swing while walking, both toward the weapon when aiming.
+    # Arms: counter-swing while walking, both toward the weapon when aiming;
+    # lit upper line for the rounded-limb read.
     arm_y = torso_top + 3
     if arm_forward:
         sd.line([(cx - 3, arm_y + 1), (cx + 3, arm_y)], fill=dim(DISR_SUIT, 0.15), width=1.4)
         sd.line([(cx + 2, arm_y + 1), (cx + 6, arm_y - 0.5)], fill=dim(DISR_SUIT, 0.15), width=1.4)
+        sd.line([(cx - 3, arm_y + 0.6), (cx + 6, arm_y - 0.9)], fill=lit(DISR_SUIT, 0.2), width=0.4)
     else:
         sw = leg_swing * 0.5
         sd.line([(cx - 3.5, arm_y), (cx - 4 - sw * 0.4, arm_y + 5)], fill=dim(DISR_SUIT, 0.15), width=1.3)
         sd.line([(cx + 3.5, arm_y), (cx + 4 + sw * 0.4, arm_y + 5)], fill=dim(DISR_SUIT, 0.15), width=1.3)
-    # Head: pale helmet distinct from the torso, gold visor slit.
+        sd.line([(cx - 3.5 - 0.4, arm_y), (cx - 4.4 - sw * 0.4, arm_y + 5)],
+                fill=lit(DISR_SUIT, 0.15), width=0.4)
+    # Head: spherical helmet -- dark base sphere, main volume, then an
+    # offset upper-left highlight patch (top-left key light), replacing the
+    # first pass's flat disc with an arc stroke. Gold visor slit kept.
     head_y = torso_top - 4.6
-    sd.ellipse([cx - 3, head_y - 3, cx + 3, head_y + 3], fill=DISR_HELMET)
-    sd.arc([cx - 3, head_y - 3, cx + 3, head_y + 3], 150, 320, fill=lit(DISR_HELMET, 0.4), width=0.6)
+    sd.ellipse([cx - 3, head_y - 3, cx + 3, head_y + 3], fill=dim(DISR_HELMET, 0.28))
+    sd.ellipse([cx - 2.9, head_y - 2.9, cx + 2.3, head_y + 2.3], fill=DISR_HELMET)
+    sd.ellipse([cx - 2.2, head_y - 2.3, cx - 0.1, head_y - 0.2], fill=lit(DISR_HELMET, 0.4))
     sd.line([(cx - 1.6, head_y + 0.8), (cx + 1.6, head_y + 0.8)], fill=dim(SUN_GOLD, 0.15), width=0.7)
     # Discharge prod: dark rod, twin gold prong tips, spark star when firing.
     if arm_forward:
