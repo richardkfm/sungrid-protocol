@@ -73,8 +73,8 @@ faction-soviet =
     .name = The Assembly
 
 faction-russia =
-    .name = The Coil
-    .description = The Coil: Tesla Weapons
+    .name = China
+    .description = China: Tesla Weapons
      Special Unit: Tesla Tank
      Special Unit: Shock Trooper
 

@@ -119,10 +119,11 @@ changed.
 The category this section originally deferred ("touches sub-faction identity, needs its own decision first")
 is now closed. `DTRK`'s Ukraine sub-faction was renamed to the real country Iran on direct request (issue
 #54); the four remaining real-world-coded sub-factions (England, France, Germany, Russia) were then renamed
-to fictional in-universe identities on direct request (issue #55), matching the same "drop real-world
-national coding" direction the Allies→Consortium/Soviet→Assembly rename already established for the two
-umbrella sides: England → **The Ledger** (counterintelligence), France → **The Mirage** (deception), Germany →
-**The Epoch** (chronoshift), Russia → **The Coil** (Tesla weapons). `TTNK`/`CTNK`/`STNK`/`MGG`/`SPY.England`
+on direct request (issue #55) — England, France, and Germany to fictional in-universe identities matching the
+same "drop real-world national coding" direction the Allies→Consortium/Soviet→Assembly rename already
+established for the two umbrella sides, Russia to another real country instead: England → **The Ledger**
+(counterintelligence), France → **The Mirage** (deception), Germany → **The Epoch** (chronoshift), Russia →
+**China** (Tesla weapons). `TTNK`/`CTNK`/`STNK`/`MGG`/`SPY.England`
 all keep their existing chassis/weapon/mechanic unchanged — country-label swaps and fictional renames only,
 not new unit designs. Internal ids (`~vehicles.england`, `Faction@russia`'s `InternalName: russia`, etc.) are
 untouched everywhere, same pattern as every prior faction-identity rename in this project.

@@ -212,7 +212,7 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | MECH | Mechanic | Consortium | med | 500 | 8000 | 49 | Repair | tent, fix | |
 | SPY | Spy | Consortium | med | 500 | 2500 | 54 | SilencedPPK | tent, dome | The Ledger variant costs 250 |
 | THF | Thief | Assembly | med | 500 | 8000 | 72 | — | barr, dome | Steals 50% of stored credits — incl. from SILO, see gap G2 |
-| SHOK | Shock Trooper | Assembly (The Coil) | high | 350 | 5000 | 54 | PortaTesla | barr, stek, tsla | |
+| SHOK | Shock Trooper | Assembly (China) | high | 350 | 5000 | 54 | PortaTesla | barr, stek, tsla | |
 | E7 | Tanya | Consortium | high | 1800 | 10000 | 68 | Colt45 | tent, atek | |
 
 ### Vehicles
@@ -235,7 +235,7 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | MNLY | Minelayer | Both | med | 800 | 30000 | Heavy | 113 | — | fix | |
 | MGG | Mobile Gap Generator | Consortium (The Ledger) | high | 1000 | 22000 | Heavy | 72 | — | atek | |
 | MRJ | Mobile Radar Jammer | Consortium | high | 1000 | 22000 | Heavy | 68 | — | atek | |
-| TTNK | Tesla Tank | Assembly (The Coil) | high | 1350 | 40000 | Light | 92 | TTankZap | tsla, stek | |
+| TTNK | Tesla Tank | Assembly (China) | high | 1350 | 40000 | Light | 92 | TTankZap | tsla, stek | |
 | CTNK | Chrono Tank | Consortium (The Epoch) | high | 1350 | 40000 | Light | 86 | APTusk | atek | |
 | STNK | Phase Transport | Consortium (The Mirage) | high | 1000 | 35000 | Light | 128 | APTusk.stnk | atek | |
 | QTNK | Tremor Tank | Assembly | high | 2000 | 90000 | Heavy | 46 | (quake) | fix, stek | |
