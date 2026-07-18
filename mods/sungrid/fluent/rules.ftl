@@ -64,8 +64,8 @@ faction-france =
      Special Unit: Phase Transport
 
 faction-germany =
-    .name = The Epoch
-    .description = The Epoch: Chronoshift Technology
+    .name = Germany
+    .description = Germany: Chronoshift Technology
      Special Ability: Advanced Chronoshift
      Special Unit: Chrono Tank
 
