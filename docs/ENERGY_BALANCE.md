@@ -114,14 +114,19 @@ All three were confirmed faction-general (no `~vehicles.<sub-faction>` gate) bef
 entire change was confined to `mods/sungrid/fluent/rules.ftl`/`chrome.ftl` — no actor id, weapon, or sprite
 changed.
 
-**Deferred — touches sub-faction identity, needs its own decision first:**
+**Resolved — all five real-world-coded sub-factions renamed (see `docs/BACKLOG.md` issues #54/#55):**
 
-- **`TTNK` Tesla Tank** (Russia-gated) and **`DTRK` Demolition Truck** (Ukraine-gated) — real-world-coded
-  sub-faction special units, exactly the category `docs/BACKLOG.md` issue #15 flagged as "a separate, larger
-  creative decision... shouldn't be assumed" when the Allies→Consortium/Soviet→Assembly rename deliberately
-  left sub-faction identity untouched. Explicitly not reskinned in this pass — bundle with that larger
-  Russia/Ukraine-naming decision rather than touching piecemeal.
-- **`CTNK` Chrono Tank** (Germany-gated) — same category, same deferral.
+The category this section originally deferred ("touches sub-faction identity, needs its own decision first")
+is now closed. `DTRK`'s Ukraine sub-faction was renamed to the real country Iran on direct request (issue
+#54); the four remaining real-world-coded sub-factions (England, France, Germany, Russia) were then renamed
+on direct request (issue #55) — England, France, and Germany to fictional in-universe identities matching the
+same "drop real-world national coding" direction the Allies→Consortium/Soviet→Assembly rename already
+established for the two umbrella sides, Russia to another real country instead: England → **The Ledger**
+(counterintelligence), France → **The Mirage** (deception), Germany → **The Epoch** (chronoshift), Russia →
+**China** (Tesla weapons). `TTNK`/`CTNK`/`STNK`/`MGG`/`SPY.England`
+all keep their existing chassis/weapon/mechanic unchanged — country-label swaps and fictional renames only,
+not new unit designs. Internal ids (`~vehicles.england`, `Faction@russia`'s `InternalName: russia`, etc.) are
+untouched everywhere, same pattern as every prior faction-identity rename in this project.
 
 **Blocked — needs a real art/audio pipeline, not just YAML/fluent edits:**
 

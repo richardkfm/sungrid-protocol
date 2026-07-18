@@ -52,20 +52,20 @@ faction-allies =
     .name = The Consortium
 
 faction-england =
-    .name = England
-    .description = England: Counterintelligence
-     Special Unit: British Spy
+    .name = The Ledger
+    .description = The Ledger: Counterintelligence
+     Special Unit: Auditor
      Special Unit: Mobile Gap Generator
 
 faction-france =
-    .name = France
-    .description = France: Deception
+    .name = The Mirage
+    .description = The Mirage: Deception
      Special Ability: Can build fake structures
      Special Unit: Phase Transport
 
 faction-germany =
-    .name = Germany
-    .description = Germany: Chronoshift Technology
+    .name = The Epoch
+    .description = The Epoch: Chronoshift Technology
      Special Ability: Advanced Chronoshift
      Special Unit: Chrono Tank
 
@@ -73,14 +73,14 @@ faction-soviet =
     .name = The Assembly
 
 faction-russia =
-    .name = Russia
-    .description = Russia: Tesla Weapons
+    .name = China
+    .description = China: Tesla Weapons
      Special Unit: Tesla Tank
      Special Unit: Shock Trooper
 
 faction-ukraine =
-    .name = Ukraine
-    .description = Ukraine: Demolitions
+    .name = Iran
+    .description = Iran: Demolitions
      Special Ability: Parabombs
      Special Unit: Demolition Truck
 
@@ -355,7 +355,7 @@ actor-spy =
       Weak vs Vehicles and Aircraft
       Special Ability: Disguised
 
-actor-spy-england-disguisetooltip-name = British Spy
+actor-spy-england-disguisetooltip-name = Auditor
 
 actor-e7 =
     .name = Tanya
