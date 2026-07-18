@@ -85,12 +85,18 @@ def bevel(img, x, y, w, h, fill, border=2, light=None, dark=None, flat=False):
         d.line((x + b, y + h - 1 - b, x + w - 1 - b, y + h - 1 - b), fill=dark)  # bottom
         d.line((x + w - 1 - b, y + b, x + w - 1 - b, y + h - 1 - b), fill=dark)  # right
 
-def inset(img, x, y, w, h, fill=PANEL_DEEP, frame=GREEN_DIM):
-    """Recessed slot: dark fill, 1px frame, 1px inner shadow at top."""
+def inset(img, x, y, w, h, fill=PANEL_DEEP, frame=GREEN_DIM, radius=3):
+    """Recessed slot: dark fill, soft low-contrast rounded frame, faint inner
+    shadow at top. Rounded + blended toward `fill` (docs/BACKLOG.md issue #51
+    follow-up: differently-sized hard-edged boxes across the sidebar read as a
+    visible "step" between panels; a lower-contrast, rounded frame keeps the
+    recessed-slot cue without each region reading as its own stark box)."""
     d = ImageDraw.Draw(img)
-    d.rectangle((x, y, x + w - 1, y + h - 1), fill=fill)
-    d.rectangle((x, y, x + w - 1, y + h - 1), outline=frame, width=1)
-    d.line((x + 1, y + 1, x + w - 2, y + 1), fill=lift(fill, -10))
+    soft_frame = mix(frame, fill, 0.35)
+    r = min(radius, (h - 1) // 2)
+    d.rounded_rectangle((x, y, x + w - 1, y + h - 1), radius=r, fill=fill)
+    d.rounded_rectangle((x, y, x + w - 1, y + h - 1), radius=r, outline=soft_frame, width=1)
+    d.line((x + 1 + r, y + 1, x + w - 2 - r, y + 1), fill=lift(fill, -10))
 
 
 # --------------------------------------------------------------------------
@@ -276,13 +282,19 @@ def emblem_panel(size, accent=SUN_GOLD, kind="neutral"):
     """Opaque framed panel with the emblem centered — radar placeholder /
     loadscreen badge. `kind` picks the mark: 'neutral' (shared brand, used
     by the main menu logo and mod icon — unchanged), 'consortium', or
-    'assembly' (the two faction-distinct marks above)."""
+    'assembly' (the two faction-distinct marks above).
+
+    Frame softened (docs/BACKLOG.md issue #51 follow-up): the original
+    3-ring, full-contrast outline made this panel read as its own hard box
+    next to the sidebar's other (differently sized) bordered regions. Down
+    to a single low-contrast rounded outline — still a frame, not stock's
+    borderless texture, but no longer a competing hard edge."""
     im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     pv_grid(im, 0, 0, size, size, base=PANEL, cell=max(8, size // 14), line=-6, alt=2)
     d = ImageDraw.Draw(im)
-    d.rectangle((0, 0, size - 1, size - 1), outline=BLACKLINE, width=1)
-    d.rectangle((1, 1, size - 2, size - 2), outline=GREEN_MID, width=2)
-    d.rectangle((3, 3, size - 4, size - 4), outline=lift(PANEL, -10), width=1)
+    r = max(2, size // 30)
+    d.rounded_rectangle((0, 0, size - 1, size - 1), radius=r,
+                        outline=mix(GREEN_MID, PANEL, 0.30), width=2)
     mark_fn = {"consortium": emblem_consortium, "assembly": emblem_assembly}.get(kind, emblem)
     e = mark_fn(round(size * 0.86), accent)
     im.alpha_composite(e, ((size - e.width) // 2, (size - e.height) // 2))
@@ -411,10 +423,13 @@ def gen_sidebar():
     ir_y, ir_h = 116, 47
     im.paste((0, 0, 0, 0), (0, ir_y, 238, ir_y + ir_h))
     # icon columns align with ProductionPalette (X:42 in the widget, 62px cells,
-    # 1px margin -> column origins 42, 105, 168)
+    # 1px margin -> column origins 42, 105, 168). Softened (docs/BACKLOG.md
+    # issue #51 follow-up): a full per-column box outline read as a fenced
+    # grid boxing in the icons, sharper than the panels around it — down to
+    # just a faint lit top edge per column, no side/bottom lines, so the row
+    # reads as a shelf rather than a set of cells.
     for cx in (42, 105, 168):
-        d.rectangle((cx - 1, ir_y, cx + 62, ir_y + ir_h - 1), outline=GREEN_MID, width=1)
-        d.line((cx - 1, ir_y, cx + 62, ir_y), fill=GREEN_ACCENT)  # lit top edge
+        d.line((cx - 1, ir_y, cx + 62, ir_y), fill=mix(GREEN_ACCENT, PANEL, 0.25))
 
     # thin trims: background-bottom (0,166,238,8), observer-bottom (0,176,238,8)
     for y in (166, 176):

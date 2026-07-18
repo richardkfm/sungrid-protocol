@@ -1244,3 +1244,19 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 **Labels:** `type:art`, `area:ui`, `phase:6`
 
 **Phase:** 6/7. Verified via before/after crops of both `radar` regions side by side and a direct bounding-box check that neither mark clips its panel; confirmed via `git status` that only `sidebar.png` changed (loadscreen/icon/main-menu logo, which use the unrelated neutral mark, are untouched).
+
+### 53. Sidebar border treatment softened — the issue #51 style-direction follow-up, now actioned
+
+**Player request:** "soften sidebar" — picking up the follow-up issue #51 flagged but deliberately didn't act on unilaterally (a hard-edged, full-contrast frame drawn around every sidebar region, differently sized, reading as a visible "step" between boxes).
+
+**Fix (`mods/sungrid/uibits/gen_chrome.py` only; regenerated `sidebar.png` + `loadscreen.png`/`-2x`/`-3x`; `dialog.png`/mod icons untouched — neither uses the touched primitives):**
+- `inset()` (money-bin strips, icon-slot recesses, support-power slots): switched from a hard-edged `rectangle` outline to a `rounded_rectangle` with the frame color blended 35% toward the fill — same recessed-slot cue, much lower contrast, rounded corners instead of sharp ones.
+- `emblem_panel()` (radar placeholders + loadscreen badge): the original 3-ring, full-contrast outline (`BLACKLINE`/`GREEN_MID`/shade) collapsed to a single low-contrast (`GREEN_MID` blended 30% toward `PANEL`) rounded outline — the single biggest "hard box" in the sidebar, now a much lighter frame.
+- `background-iconrow` (the production-icon row): dropped the full per-column box outline entirely, keeping only a faint lit top edge per column (also blended down in contrast) — reads as a shelf the icons sit on rather than a fenced grid of cells.
+- No `chrome.yaml` rects, canvas sizes, or geometry touched anywhere — purely pixel-content softening within already-addressed regions, per the file's own geometry contract.
+
+**Scope note:** `emblem_panel()` is shared by the sidebar radar placeholders and the loadscreen badge, so the loadscreen badge picked up the same softer single-ring frame as a side effect — a deliberate call for visual consistency across the two surfaces rather than adding a second, sidebar-only frame style. `dialog.png`'s own button-block borders (a different UI element — interactive buttons, not background panel framing) were left alone; the request was about the panel framing the width-mismatch report was actually about.
+
+**Labels:** `type:art`, `area:ui`, `phase:6`
+
+**Phase:** 6/7. Verified via before/after crops of the money-bin strips, radar panels, icon-row, and loadscreen badge (composited over the panel background color to check real rendered contrast, not raw alpha); confirmed via `git status` that only `sidebar.png`/`loadscreen*.png` changed (icons untouched, since `gen_icons()` calls `emblem()` directly, not `emblem_panel()`). Not yet verified in a live client here (no engine access in this environment).
