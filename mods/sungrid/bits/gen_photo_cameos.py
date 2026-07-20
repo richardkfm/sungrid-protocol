@@ -68,7 +68,7 @@ CROPS = {
 LABEL_OVERRIDES = {
     "sgdai": "AI Datacenter",
     "sgdra": "Aerial Fab",
-    "sgapwr": "Adv Solar Array",
+    "sgapwr": "Adv Solar Arr",
     "sghyd": "Hydrogen Plt",
     "sgshl": "Res Shelter",
     "sgwnd": "Wind Turbine",
