@@ -1332,13 +1332,42 @@ def _wrap_to_width(d, text, font, max_w):
     return lines, (max(widths) if widths else 0), lh * len(lines)
 
 
+_LABEL_BAND_PAD = 2
+_LABEL_BAND_CEILING_SIZE = 8
+
+# The in-game production palette (ProductionPaletteWidget, IconSize 62x46)
+# draws these 64x48 cameos centered in a cell 2px smaller than the sprite in
+# both dimensions, so a few rows at the very bottom edge are cropped off in
+# the live sidebar even though they're fully visible in the standalone
+# generator output (see docs/BACKLOG.md issue #61 -- reported as "Barracks/
+# War Factory subtitle not visible, others slightly moved up"). Reserve a
+# real safety margin, not just the 1px the widget math implies, since the
+# exact clip boundary isn't worth re-deriving pixel-by-pixel here.
+_LABEL_BOTTOM_CLEARANCE = 4
+
+# Band geometry (height, and thus how far down the darkening strip starts) is
+# fixed to the ceiling font size's metrics, independent of which size a given
+# label ends up using -- otherwise a long name that has to drop to a smaller
+# size to fit on one line (e.g. "Adv Solar Array") gets a shorter band than
+# its neighbors, which reads as that cameo's motif being vertically shifted
+# relative to the rest of the row.
+_LABEL_BAND_H = (
+    _load_label_font(_LABEL_BAND_CEILING_SIZE).getbbox("AGY")[3]
+    - _load_label_font(_LABEL_BAND_CEILING_SIZE).getbbox("AGY")[1]
+) + _LABEL_BAND_PAD * 2
+
+
 def draw_icon_label(icon, text):
     """Bake an uppercase name as a single white line across the bottom of a
     cameo, matching the ported stock RA cameos (BARRACKS / ORE REFINERY / ...):
     one line, white text, over a thin dark strip. Picks the largest FreeSansBold
-    size (10px down to 5px) whose single-line width fits, so even long names stay
+    size (8px down to 5px) whose single-line width fits, so even long names stay
     on one line the way the stock cameos do, and draws a 1px shadow under the
-    text so it reads over any motif or photo."""
+    text so it reads over any motif or photo. The strip itself is always
+    _LABEL_BAND_H tall and sits 1px clear of the very bottom edge (see
+    _LABEL_BAND_H's docstring) regardless of which size wins, so every cameo's
+    band -- and the motif crop above it -- lines up row to row.
+    """
     text = text.upper()
     d = ImageDraw.Draw(icon, "RGBA")
     max_w = ICON_W - 3
@@ -1354,9 +1383,8 @@ def draw_icon_label(icon, text):
         font = f
     bbox = d.textbbox((0, 0), text, font=font)
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    pad = 2
-    band_h = th + pad * 2
-    band_top = ICON_H - band_h
+    band_h = _LABEL_BAND_H
+    band_top = ICON_H - band_h - _LABEL_BOTTOM_CLEARANCE
     # Thin dark strip behind the single line for legibility over any motif.
     strip = Image.new("RGBA", (ICON_W, band_h), (0, 0, 0, 0))
     sd = ImageDraw.Draw(strip, "RGBA")
@@ -1365,7 +1393,7 @@ def draw_icon_label(icon, text):
         sd.line([(0, i), (ICON_W, i)], fill=PANEL_BLUEBLACK + (min(215, a),))
     icon.alpha_composite(strip, (0, band_top))
     x = (ICON_W - tw) / 2 - bbox[0]
-    y = band_top + pad - bbox[1]
+    y = band_top + (band_h - th) / 2 - bbox[1]
     d.text((x + 1, y + 1), text, font=font, fill=(0, 0, 0, 220))  # shadow
     d.text((x, y), text, font=font, fill=(255, 255, 255, 255))
     return icon
