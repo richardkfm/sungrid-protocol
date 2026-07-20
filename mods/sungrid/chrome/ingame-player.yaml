@@ -114,7 +114,7 @@ Container@PLAYER_WIDGETS:
 			Children:
 				SupportPowers@SUPPORT_PALETTE:
 					IconSize: 62, 46
-					IconSpriteOffset: -1, -1
+					IconSpriteOffset: 0, 0
 					TooltipContainer: TOOLTIP_CONTAINER
 					ReadyText: supportpowers-support-powers-palette.ready
 					HoldText: supportpowers-support-powers-palette.hold
@@ -554,7 +554,7 @@ Container@PLAYER_WIDGETS:
 					HoldText: productionpalette-sidebar-production-palette.hold
 					IconSize: 62, 46
 					IconMargin: 1, 1
-					IconSpriteOffset: -1, -1
+					IconSpriteOffset: 0, 0
 					HotkeyPrefix: Production
 					HotkeyCount: 24
 					SelectProductionBuildingHotkey: SelectProductionBuilding
