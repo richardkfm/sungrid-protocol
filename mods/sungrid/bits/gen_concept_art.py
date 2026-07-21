@@ -1399,6 +1399,34 @@ def draw_icon_label(icon, text):
     return icon
 
 
+_SIDEBAR_SAFETY_MARGIN = 2
+
+
+def apply_sidebar_safety_margin(icon, margin=_SIDEBAR_SAFETY_MARGIN):
+    """Inset a finished 64x48 cameo's real content by `margin` px on every
+    edge, leaving a fully transparent border outside it.
+
+    ProductionPaletteWidget's IconSize (62x46) is 2px smaller than these
+    64x48 cameos in each dimension, so the widget renders part of every
+    cameo's own edge pixels into the neighboring sidebar row/column (see
+    docs/BACKLOG.md issue #61, reported as "Barracks/War Factory subtitle
+    not visible, Recycling Depot's cameo overlapping Barracks above it").
+    An earlier fix retuned IconSpriteOffset to spread that 2px mismatch
+    across all four edges instead of concentrating it at the top, which
+    only shrank the overflow -- it didn't remove it, so opaque pixels were
+    still bleeding into the row above closely enough to paint over the
+    stock cameos' own bottom-edge labels. Shrinking every generated
+    cameo's real content onto a safe interior (losing ~6% scale) and
+    leaving genuine transparency at the edges means whichever edge the
+    widget overflows is invisible no matter how it distributes the
+    mismatch, without having to re-derive the exact overflow direction.
+    """
+    shrunk = icon.resize((ICON_W - margin * 2, ICON_H - margin * 2), Image.LANCZOS)
+    safe = Image.new("RGBA", (ICON_W, ICON_H), (0, 0, 0, 0))
+    safe.paste(shrunk, (margin, margin), shrunk)
+    return safe
+
+
 def make_icon(draw_fn, frame_w, frame_h, *args, label=None, **kwargs):
     """Sidebar cameo: the motif cropped tight and fitted onto a shaded panel
     with a border, instead of a transparent whole-frame downscale."""
@@ -1429,7 +1457,7 @@ def make_icon(draw_fn, frame_w, frame_h, *args, label=None, **kwargs):
         draw_icon_label(icon, label)
         # Redraw the border so the label strip doesn't bleed over the frame.
         d.rectangle([0, 0, ICON_W - 1, ICON_H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
-    return icon
+    return apply_sidebar_safety_margin(icon)
 
 
 def main():

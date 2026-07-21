@@ -29,7 +29,7 @@ from PIL import Image, ImageDraw
 from gen_concept_art import (
     ICON_W, ICON_H, ICON_LABELS,
     LEGACY_GRAY, LEGACY_GRAY_DARK,
-    lit, dim, draw_icon_label, save_pngsheet,
+    lit, dim, draw_icon_label, save_pngsheet, apply_sidebar_safety_margin,
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -107,7 +107,7 @@ def make_photo_icon(source, box, label):
     # Border: dark outer frame with a lit top edge (same as make_icon).
     d.rectangle([0, 0, ICON_W - 1, ICON_H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
     d.line([(1, 1), (ICON_W - 2, 1)], fill=lit(LEGACY_GRAY, 0.05))
-    return icon
+    return apply_sidebar_safety_margin(icon)
 
 
 def main():
