@@ -611,14 +611,14 @@ def gen_sidebar():
     # the cell interiors fully transparent so the icons underneath show through.
     ir_y, ir_h = 116, 47
     im.paste((0, 0, 0, 0), (0, ir_y, 238, ir_y + ir_h))
-    # icon columns align with ProductionPalette (X:42 in the widget, 62px cells,
-    # 1px margin -> column origins 42, 105, 168). Softened (docs/BACKLOG.md
+    # icon columns align with ProductionPalette (X:42 in the widget, 64px cells,
+    # 1px margin -> column origins 42, 107, 172). Softened (docs/BACKLOG.md
     # issue #51 follow-up): a full per-column box outline read as a fenced
     # grid boxing in the icons, sharper than the panels around it — down to
     # just a faint lit top edge per column, no side/bottom lines, so the row
     # reads as a shelf rather than a set of cells.
-    for cx in (42, 105, 168):
-        d.line((cx - 1, ir_y, cx + 62, ir_y), fill=mix(GREEN_ACCENT, PANEL, 0.25))
+    for cx in (42, 107, 172):
+        d.line((cx - 1, ir_y, cx + 64, ir_y), fill=mix(GREEN_ACCENT, PANEL, 0.25))
 
     # thin trims: background-bottom (0,166,238,8), observer-bottom (0,176,238,8)
     for y in (166, 176):

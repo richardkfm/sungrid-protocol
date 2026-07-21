@@ -552,7 +552,7 @@ Container@PLAYER_WIDGETS:
 					TooltipContainer: TOOLTIP_CONTAINER
 					ReadyText: productionpalette-sidebar-production-palette.ready
 					HoldText: productionpalette-sidebar-production-palette.hold
-					IconSize: 62, 46
+					IconSize: 64, 48
 					IconMargin: 1, 1
 					IconSpriteOffset: 0, 0
 					HotkeyPrefix: Production
