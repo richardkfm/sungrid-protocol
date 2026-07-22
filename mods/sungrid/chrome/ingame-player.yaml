@@ -528,16 +528,14 @@ Container@PLAYER_WIDGETS:
 					Children:
 						Container@ROW_TEMPLATE:
 							Width: 238
-							# Row pitch: ClassicProductionLogic tiles each icon row at
-							# this template's Height (backgroundTemplate.Bounds.Height).
-							# Bumped 47 -> 50 together with the foreground ROW_TEMPLATE
-							# and the palette's IconMargin.Y so the 64x48 cameos get a
-							# ~3px breathing gap between rows instead of butting edge to
-							# edge (docs/BACKLOG.md issue #62). The 47px background-iconbg
-							# texture (Image@ROW_BGND below) still draws at its native
-							# height at the row top; the extra 3px is a clean gap of the
-							# sidebar body between recessed slots, so no atlas regen.
-							Height: 50
+							# Native stock RA row pitch (docs/BACKLOG.md issue #63).
+							# ClassicProductionLogic tiles each icon row at this
+							# template's Height. The earlier 47->50 bump (issue #62)
+							# only papered over the real overlap -- a per-actor world
+							# sprite Offset leaking into the cameo sequences -- while
+							# padding out the whole menu and shrinking the readable
+							# area; reverted to 47 now that the offsets are fixed.
+							Height: 47
 							ClickThrough: false
 							Children:
 								Image@ROW_BGND:
@@ -562,12 +560,11 @@ Container@PLAYER_WIDGETS:
 					ReadyText: productionpalette-sidebar-production-palette.ready
 					HoldText: productionpalette-sidebar-production-palette.hold
 					IconSize: 62, 46
-					# Vertical margin 1 -> 4 gives a 50px row pitch (IconSize.Y 46 +
-					# margin 4) matching the ROW_TEMPLATE height bump above, so the
-					# 48px-tall cameos no longer overlap the row above. Horizontal
-					# margin stays 1 (columns are width-constrained; the reported
-					# crowding was vertical). See docs/BACKLOG.md issue #62.
-					IconMargin: 1, 4
+					# Native stock RA icon margin (docs/BACKLOG.md issue #63).
+					# Reverted from the issue #62 vertical bump (1 -> 4): the cameo
+					# overlap came from inherited sequence Offsets, not the pitch, and
+					# the wider margin only shrank every cameo and its baked label.
+					IconMargin: 1, 1
 					IconSpriteOffset: 0, 0
 					HotkeyPrefix: Production
 					HotkeyCount: 24
@@ -579,11 +576,10 @@ Container@PLAYER_WIDGETS:
 							Width: 238
 							# Foreground row pitch, tiled at this Height by
 							# ClassicProductionLogic. Kept equal to the background
-							# ROW_TEMPLATE (50) so the per-row overlay frames stay
-							# aligned with the icons at the wider pitch. The
-							# background-iconrow texture is 47px and transparent over
-							# the cells, so the 3px gap is invisible. See issue #62.
-							Height: 50
+							# ROW_TEMPLATE (47) -- native stock RA pitch, restored in
+							# issue #63 now that the real cameo overlap (inherited
+							# sequence Offsets) is fixed at its source.
+							Height: 47
 							IgnoreMouseOver: true
 							ImageCollection: sidebar
 							ImageName: background-iconrow
