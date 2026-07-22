@@ -63,6 +63,9 @@ oilb:
 	make:
 	icon:
 		Filename: oilb.shp
+		# Cameo must NOT inherit the Defaults world-sprite Offset
+		# (0,-6), which would shift it up in the build menu. issue #63.
+		Offset: 0,0
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:
@@ -87,6 +90,10 @@ rcyd:
 	make:
 	icon:
 		Filename: rcydicon.png
+		# Do not inherit the Defaults Offset 0,-6 (tuned for the shared
+		# oilb.shp world sprite); it pushed this cameo up in the build
+		# menu, overlapping the row above. docs/BACKLOG.md issue #63.
+		Offset: 0,0
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:
@@ -281,6 +288,10 @@ sgapwr:
 		Length: *
 	icon:
 		Filename: sgapwricon.png
+		# Do not inherit the Defaults Offset 0,-10 (tuned for the tall
+		# 90x60 world sprite); it pushed this cameo up in the build menu,
+		# overlapping the row above. docs/BACKLOG.md issue #63.
+		Offset: 0,0
 
 # First-pass custom art (docs/BACKLOG.md issue #34) for the rest of the roster
 # that has no mods/ra equivalent and previously reused an unrelated existing

@@ -1398,7 +1398,9 @@ Iran (issue #54) is untouched — it wasn't part of "remaining," having already 
 
 **Phase:** 6/7. Verified offline: checked each regenerated icon's edge-pixel alpha is genuinely 0, and rendered a 4x contact-sheet crop of a few representative cameos (Solar Array, Recycling Depot, Arc Turret) confirming the border/motif/label are all still intact and legible at the new inset scale. Not checked in a live client here (no engine access) — if the live sidebar still shows any clipping after this, the next step is revisiting `IconSize`/`IconMargin` in `chrome/ingame-player.yaml` directly (bigger change: also touches issue #42's hardcoded frame-overlay alignment in `gen_chrome.py`), not another cameo-side margin tweak.
 
-### 62. Build-menu cameos crowd/overlap each other vertically — the real cause was the row *pitch*, not the cameo art — FIXED
+### 62. Build-menu cameos crowd/overlap each other vertically — the real cause was the row *pitch*, not the cameo art — REVERTED, superseded by issue #63
+
+> **Superseded by issue #63.** The pitch-widening diagnosis below was wrong. The next playtest screenshot showed most rows were still not level: the *stock* cameos (Radar Dome, Service Depot, Airfield, Tech Center, Ore Refinery, Kennel, Sub Pen) sat correctly, but four *mod* cameos were shifted up — two badly (Recycling Depot, Adv Solar Array) and two slightly (Solar Array, Wind Turbine) — which a uniform pitch bump can't cause and can't fix. It only made every cameo and its baked label smaller and harder to read ("do not increase inner padding or gaps"). The 47→50 pitch (this issue) and the 2px cameo margin (issue #61) were both reverted; the real per-cameo cause is fixed in issue #63.
 
 **Player report** (screenshot, after issue #61 merged): the whole build-menu grid still read as wrong — "these graphics are moved up and overlapping each other." The player was explicit that this was **not** about the cameo pictures or their subtitles (issue #61's territory) but about the **menu layout**: adjacent cameo rows crowd into each other with no separation.
 
@@ -1411,3 +1413,29 @@ Iran (issue #54) is untouched — it wasn't part of "remaining," having already 
 **Labels:** `type:bug`, `area:chrome`, `area:ui`
 
 **Phase:** 6/7. Verified offline via a faithful reconstruction of the widget + `ClassicProductionLogic` geometry (row pitch = template height; icon cell pitch = `IconSize.Y + IconMargin.Y`; sprite centered at `cellTopLeft + 0.5·IconSize + IconSpriteOffset`) rendering the real committed cameos: pitch 47 shows the reported crowding, pitch 50 shows clean per-row gaps for both mod and stock-style cameos. Not checked in a live client here (no engine access).
+
+---
+
+### 63. Build-menu cameos "moved up" — the real per-cameo cause: world-sprite `Offset` leaking into the `icon` sequence, plus reverting the issue #61/#62 hacks — FIXED
+
+**Player report** (screenshot, after issue #62 merged): still wrong. The player pinned it down precisely this time: it is **not** about the cameo pictures or their subtitles, and increasing padding/gaps only makes the tiny images and labels harder to read. Per-cameo:
+- **Solar Array** (`SGPWR`) — cameo slightly moved up.
+- **Recycling Dpt** (`RCYD`) — moved up *a lot*, still overlapping Barracks above.
+- **Adv Solar Arr** (`SGAPWR`) — moved up, overlapping the row above it.
+- **Wind Turbine** (`SGWND`) — too much padding.
+- Radar Dome, Service Depot, Airfield, Tech Center, Ore Refinery, Kennel, Sub Pen — all look correct.
+
+The tell issues #61/#62 both missed: every "look correct" cameo is a **stock** ported RA cameo, and every wrong one is a **Sungrid-original** cameo. A uniform pitch/margin change (issues #61, #62) can't produce a *per-cameo* vertical offset, so those were the wrong layer.
+
+**Root cause (two independent things, both now fixed):**
+1. **`icon` sequences inheriting a world-sprite `Offset`.** `mods/sungrid/sequences/structures.yaml` gives `RCYD` a `Defaults: Offset: 0,-6` and `SGAPWR` a `Defaults: Offset: 0,-10` — correct for their in-world building sprites (RCYD reuses the tall `oilb.shp` derrick; SGAPWR is a tall 90×60 building). But `Offset` in a sequence node's `Defaults` is inherited by **every** sub-sequence including `icon`, so each cameo was drawn shifted up by exactly that amount in the build menu (−6px / −10px — matching "moved up a lot" / "overlapping the row above"). Fixed by adding an explicit `Offset: 0,0` to each affected `icon` sequence (`RCYD`, `SGAPWR`, and the civilian `OILB` for consistency), overriding the inherited world offset. The `bib` sub-sequences already did exactly this, which is what confirmed the mechanism.
+2. **The issue #61 2px cameo margin** (`apply_sidebar_safety_margin`, from the wrong "62-vs-64 IconSize overflow" diagnosis) inset every mod cameo's content by 2px, leaving transparent top/bottom strips so the baked label sat 2px higher than a full-bleed stock cameo — the "Solar Array slightly moved up" residue. Reverted: `make_icon` (`gen_concept_art.py`) and `make_photo_icon` (`gen_photo_cameos.py`) now return the full-frame 64×48 cameo, the `apply_sidebar_safety_margin` helper is deleted, and all 18 `*icon.png` were regenerated (content now spans the full `0,0,64,48`, label flush at the bottom edge like stock).
+3. **The issue #62 row-pitch bump** (47→50, `IconMargin 1,1`→`1,4`) — reverted to native stock RA geometry (47px, `IconMargin 1,1`) in `ingame-player.yaml`, since it only padded/shrank the menu without addressing the real cause ("do not increase inner padding or gaps").
+
+**Net effect:** every cameo (stock and mod) is now full-bleed 64×48 drawn at `Offset 0,0` at the native 47px pitch — identical treatment across the whole grid, so all rows line up. No rules changes; sequence change is offset-only; chrome change is a revert to stock values; cameo art is a regen (full-frame, no margin).
+
+**Files:** `mods/sungrid/sequences/structures.yaml` (3 `icon` offset overrides), `mods/sungrid/chrome/ingame-player.yaml` (revert pitch to 47/`1,1`), `mods/sungrid/bits/gen_concept_art.py` + `gen_photo_cameos.py` (drop the margin), all 18 `mods/sungrid/bits/*icon.png` (regenerated full-frame).
+
+**Labels:** `type:bug`, `area:chrome`, `area:ui`, `area:art`
+
+**Phase:** 6/7. The offset-leak mechanism is confirmed from the sequence data (the `bib` overrides prove `Defaults: Offset` is inherited by sub-sequences); the full-frame regen is verified by alpha bounds (`0,0,64,48`) and a rendered strip showing labels flush at the bottom edge. Not checked in a live client here (no engine access).
