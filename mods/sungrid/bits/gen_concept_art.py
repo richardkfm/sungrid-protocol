@@ -241,7 +241,12 @@ def save_pngsheet(img, name, frame_w, frame_h, frame_amount, indexed=False):
     meta.add_text("FrameAmount", str(frame_amount))
     path = os.path.join(HERE, name)
     if indexed:
-        to_indexed(img).save(path, pnginfo=meta, transparency=TRANSPARENT_IDX)
+        # Already-indexed sheets (the infantry art below draws straight in
+        # palette indices) pass through untouched -- to_indexed()'s nearest-RGB
+        # match would only be able to reproduce them approximately.
+        if img.mode != "P":
+            img = to_indexed(img)
+        img.save(path, pnginfo=meta, transparency=TRANSPARENT_IDX)
     else:
         img.save(path, pnginfo=meta)
     print(f"wrote {name}  {img.size}  frame={frame_w}x{frame_h} x{frame_amount}"
@@ -257,6 +262,135 @@ def sheet_of(frames, frame_w, frame_h):
     for i, f in enumerate(frames):
         sheet.paste(f, (i * frame_w, 0), f)
     return sheet
+
+
+# ---------------------------------------------------------------------------
+# Native-resolution palette-index canvas.
+#
+# The supersample + LANCZOS + to_indexed() path above is right for the
+# building/vehicle art (curves and 32 rotated facings resolve cleanly), but
+# wrong at infantry scale: a 14px-tall figure downscaled from 4x comes out as
+# an anti-aliased blur that the 1-bit-alpha indexed conversion then has to
+# hard-threshold, so edges go ragged and the interior turns to dither noise.
+# Every stock RA infantry sheet is instead authored one pixel at a time in
+# palette indices, with hard edges and a small deliberate value ramp (decoding
+# e6.shp shows a single stand frame using ~10 distinct indices in ~95 pixels).
+# PC draws that way: no scaling, no blending, indices only.
+# ---------------------------------------------------------------------------
+
+class PC:
+    """A frame-sized grid of palette indices (0 = transparent)."""
+
+    def __init__(self, w, h):
+        self.w, self.h = w, h
+        self.px = [[0] * w for _ in range(h)]
+
+    def set(self, x, y, idx):
+        x, y = int(round(x)), int(round(y))
+        if idx and 0 <= x < self.w and 0 <= y < self.h:
+            self.px[y][x] = idx
+
+    def get(self, x, y):
+        x, y = int(round(x)), int(round(y))
+        if 0 <= x < self.w and 0 <= y < self.h:
+            return self.px[y][x]
+        return 0
+
+    def hline(self, x0, x1, y, idx):
+        for x in range(int(round(x0)), int(round(x1)) + 1):
+            self.set(x, y, idx)
+
+    def vline(self, x, y0, y1, idx):
+        for y in range(int(round(y0)), int(round(y1)) + 1):
+            self.set(x, y, idx)
+
+    def box(self, x0, y0, x1, y1, idx):
+        for y in range(int(round(y0)), int(round(y1)) + 1):
+            self.hline(x0, x1, y, idx)
+
+    def blob(self, cx, cy, rx, ry, idx):
+        """Small filled ellipse, rounded at native resolution."""
+        cx, cy = float(cx), float(cy)
+        for y in range(int(math.floor(cy - ry)), int(math.ceil(cy + ry)) + 1):
+            for x in range(int(math.floor(cx - rx)), int(math.ceil(cx + rx)) + 1):
+                dx = (x - cx) / max(0.4, rx)
+                dy = (y - cy) / max(0.4, ry)
+                if dx * dx + dy * dy <= 1.15:
+                    self.set(x, y, idx)
+
+    def ray(self, x0, y0, x1, y1, idx):
+        """Bresenham-ish 1px line (no anti-aliasing)."""
+        steps = int(max(abs(x1 - x0), abs(y1 - y0)) * 2) + 1
+        for i in range(steps + 1):
+            t = i / steps
+            self.set(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, idx)
+
+    def stamp(self, x, y, rows, cmap):
+        """Paint an ASCII template; '.' / ' ' leave the pixel untouched."""
+        for dy, row in enumerate(rows):
+            for dx, ch in enumerate(row):
+                if ch in cmap:
+                    self.set(x + dx, y + dy, cmap[ch])
+
+    def dissolve(self, keep):
+        """Drop pixels on an ordered 4x4 pattern (keep in 0..1). Indexed
+        sprites have 1-bit alpha, so a fade-out has to be a dither, not an
+        alpha ramp -- the first pass's alpha fade was silently thresholded
+        back to fully opaque/absent by to_indexed()."""
+        order = (0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
+        cut = keep * 16
+        for y in range(self.h):
+            for x in range(self.w):
+                if self.px[y][x] and order[(y % 4) * 4 + (x % 4)] >= cut:
+                    self.px[y][x] = 0
+
+
+def _palette_flat():
+    flat = []
+    for c in PLAYER_PAL:
+        flat += list(c)
+    return flat
+
+
+def sheet_of_indexed(frames, frame_w, frame_h):
+    """Assemble PC frames into one P-mode strip on the player palette."""
+    sheet = Image.new("P", (frame_w * len(frames), frame_h), TRANSPARENT_IDX)
+    sheet.putpalette(_palette_flat())
+    dst = sheet.load()
+    for i, f in enumerate(frames):
+        for y in range(frame_h):
+            row = f.px[y]
+            for x in range(frame_w):
+                if row[x]:
+                    dst[i * frame_w + x, y] = row[x]
+    return sheet
+
+
+# Cameo/preview rendering of an indexed frame. The player-remap ramp (80-95)
+# renders as the owner's colour in game; for a standalone cameo there is no
+# owner, so substitute the mod's own green ramp so the preview reads the way a
+# Sungrid-coloured player's trooper does rather than palette-file khaki.
+_PREVIEW_REMAP = {
+    80: lit(GREEN_ACCENT, 0.35), 81: lit(GREEN_ACCENT, 0.2), 82: GREEN_ACCENT,
+    83: mix(GREEN_ACCENT, GREEN_PRIMARY, 0.4), 84: mix(GREEN_ACCENT, GREEN_PRIMARY, 0.6),
+    85: lit(GREEN_PRIMARY, 0.15), 86: GREEN_PRIMARY, 87: GREEN_PRIMARY,
+    88: dim(GREEN_PRIMARY, 0.15), 89: dim(GREEN_PRIMARY, 0.3),
+    90: dim(GREEN_PRIMARY, 0.4), 91: dim(GREEN_PRIMARY, 0.5),
+    92: dim(GREEN_PRIMARY, 0.6), 93: dim(GREEN_PRIMARY, 0.7),
+    94: dim(GREEN_PRIMARY, 0.8), 95: dim(GREEN_PRIMARY, 0.85),
+}
+
+
+def indexed_to_rgba(frame, drop_shadow=True):
+    img = Image.new("RGBA", (frame.w, frame.h), (0, 0, 0, 0))
+    dst = img.load()
+    for y in range(frame.h):
+        for x in range(frame.w):
+            idx = frame.px[y][x]
+            if not idx or (drop_shadow and idx == SHADOW_IDX):
+                continue
+            dst[x, y] = _PREVIEW_REMAP.get(idx, PLAYER_PAL[idx]) + (255,)
+    return img
 
 
 # ---------------------------------------------------------------------------
@@ -1044,12 +1178,51 @@ def sghau_frames(fullness):
 
 
 # ---------------------------------------------------------------------------
-# Disruptor Trooper (DISR): dedicated infantry art, reversing the "leave it
-# on E4's (Flame Infantry) chassis" call issue #14 made -- same rationale as
-# SGHAU's reversal above (see docs/BACKLOG.md issue #36): the sprite still
-# visually read as a flamethrower trooper after the name/weapon swap to an
-# Arc Turret-style electric discharge, which is exactly the kind of
-# silhouette/identity mismatch docs/ART_DIRECTION.md rules out.
+# Disruptor Trooper (DISR): dedicated infantry art.
+#
+# History: issue #14 swapped Flame Infantry's name/weapon but kept e4.shp's
+# chassis; issue #36 called that the same silhouette-identity mistake SGHAU had
+# already been reversed for and generated a self-contained sheet here. That
+# first sheet was built the way the vehicle/turret art in this file is -- draw
+# ONE side-view figure 4x supersampled, then rotate it in the image plane for
+# each of the 8 facings. Correct for a top-down drone or turret; badly wrong
+# for infantry: issue #58's volumetric pass reshaded that figure without
+# revisiting how the facings were produced, and a player rejected the result
+# outright ("does not work out at all ... too bad to be taken seriously").
+# Reviewing the shipped sheet against the stock art (docs/BACKLOG.md issue #64)
+# found four separate faults, all of them structural:
+#   * facings 1-7 were a side-view man ROTATED, so the trooper rendered lying
+#     on his side or upside down in seven of eight directions,
+#   * the figure was ~23px tall where every stock RA infantryman is ~15, and
+#     its feet sat ~15px BELOW the frame centre -- so it drew roughly half a
+#     cell south of where the actor actually stood, with the boots clipped off
+#     the bottom edge of the frame entirely,
+#   * 4x LANCZOS downscale + a full 1px outline + 1-bit indexed alpha turned
+#     the interior into dither noise and the edges into a ragged blob,
+#   * no shadow at all, so it floated over the terrain.
+#
+# This pass models it the way the stock sheets actually are, studied by
+# decoding e6.shp against temperat.pal (a stand frame is ~95 pixels using ~10
+# palette indices, ~9px wide and ~15px tall, no anti-aliasing anywhere):
+#   * drawn at NATIVE resolution straight in palette indices (PC, above):
+#     hard pixel edges, form carried by a small deliberate value ramp plus
+#     selective near-black rim pixels, no all-round outline,
+#   * ~14px tall with the boots ON the frame centre row -- stock infantry put
+#     the feet at the canvas centre and leave the rest as slack (e6: body rows
+#     5-19 of a 39px frame),
+#   * a baked ShadowIndex-4 blob at the feet offset to the lower right, which
+#     every stock infantry frame has (palettes.yaml: player palette
+#     ShadowIndex: 4),
+#   * the body mass on the 80-95 player-remap ramp, exactly as stock infantry
+#     uniforms are, so ownership reads at a glance -- with the Disruptor's own
+#     identity carried by FIXED bright accents the remap can't touch (gold
+#     visor slit, backpack charge pips, forked electrode tips, electric-white
+#     discharge). Issue #43 put only the gold accent on the remap ramp; on a
+#     14px figure that left almost nothing team-coloured.
+#   * all 8 facings drawn as actual viewpoints -- back, three-quarter, profile,
+#     front -- upright in every one, with pack coverage, visor, shoulder width,
+#     stride axis and weapon anchor all swapped per facing, and the draw order
+#     flipped so the prod sits behind the body in the away-facing frames.
 #
 # Self-contained sheet covering every sequence disr: actually needs:
 # stand/stand2/run/shoot/prone-run/prone-shoot (all facing-dependent, laid
@@ -1060,199 +1233,463 @@ def sghau_frames(fullness):
 # no separate art here. die6 (electro zap) and die-crushed (corpse) stay on
 # the shared generic FX assets, unchanged -- same "shared generic FX asset"
 # convention rotor blur and bib decals already use elsewhere in this file.
+# Frame size (20x26) and the 437-frame layout are unchanged from the first
+# pass, so mods/sungrid/sequences/infantry.yaml needs no edits.
 # ---------------------------------------------------------------------------
 
 DISR_W, DISR_H = 20, 26
+DISR_CX = 9                  # figure centre column
+DISR_GROUND = DISR_H // 2    # boots land on the frame centre row
 
-DISR_SUIT = GREEN_PRIMARY
-DISR_PANTS = dim(LEGACY_GRAY, 0.15)
-DISR_HELMET = lit(LEGACY_GRAY, 0.2)
+# Vertical anatomy, measured off a decoded stock e6.shp stand frame: helmet 3
+# rows, torso 7, legs 3, boots 1 -- 14 rows all in, ~6px wide. The first pass
+# drew a 23-row figure, which towered over every other infantryman in the game.
+DISR_HEAD_TOP = 0
+DISR_TORSO_TOP = 3
+DISR_TORSO_BOT = 9
+DISR_HIP = 10
+
+# Palette indices (temperat.pal), picked the way the stock infantry sheets pick
+# theirs: body mass on the player-remap ramp, greys for hardware, one near
+# black for rim/occlusion, fixed brights for the energy accents.
+A_LIT, A_MID, A_SHD, A_DRK, A_DEEP = 82, 85, 89, 92, 94   # PlayerColorPalette remap
+H_LIT, H_MID, H_SHD = 14, 13, 143               # helmet/hardware greys
+RIM = 143                                       # (20,20,20) selective rim pixel
+BOOT = 12                                       # pure black boot
+PACK_LIT, PACK, PACK_DRK = 183, 17, 16          # discharge cell blue-blacks
+GOLD, GOLD_LIT, GOLD_DRK = 212, 210, 213        # fixed gold accents
+ARC, ARC_LIT = 192, 15                          # electric blue / white
+
+# Frame 0 is north and frame indices advance counter-clockwise -- verified by
+# decoding heli.shp, whose 32-facing sheet has frames 0/8/16/24 pointing
+# N/W/S/E -- so the 8 facings run N, NW, W, SW, S, SE, E, NE. The y component
+# is foreshortened: the camera looks down at the battlefield, so a step "south"
+# covers less screen height than a step "west" covers width.
+DISR_AIM = ((0.0, -1.0), (-0.8, -0.5), (-1.0, 0.0), (-0.8, 0.5),
+            (0.0, 1.0), (0.8, 0.5), (1.0, 0.0), (0.8, -0.5))
+
+# Torso extent per facing as (left, right) from the centre column: 5px across
+# the shoulders front-on (stock e6 is 6 including its sleeves), one column
+# narrower in profile where the far arm is hidden behind the near one.
+DISR_TORSO_EXT = ((2, 2), (2, 2), (1, 2), (2, 2), (2, 2), (2, 2), (2, 1), (2, 2))
+
+# How much of the discharge cell shows, as a box relative to (cx, torso top):
+# across the upper back facing away, a bump behind the shoulder in profile, a
+# one-column sliver on the three-quarter fronts, nothing head-on. Deliberately
+# smaller than the first pass's, which covered the whole torso and turned the
+# trooper into a black box with green legs.
+# The box starts one row BELOW the shoulder line so the lit shoulder pixels
+# always separate the (near-black) cell from the helmet -- with the cell flush
+# to the shoulders the head read as sitting on a black brick.
+DISR_PACK_BOX = {
+    0: (-1, 1, 1, 3),
+    1: (0, 2, 1, 3),
+    7: (-2, 0, 1, 3),
+    2: (1, 2, 1, 3),
+    6: (-2, -1, 1, 3),
+    3: (2, 2, 2, 3),
+    5: (-2, -2, 2, 3),
+    4: None,
+}
+
+# Prod geometry per facing, (x0, y0, x1, y1) relative to (cx, torso top): a
+# 3-4px rod, the length a rifle gets on a stock RA infantry frame. Raised/
+# aiming runs along the facing direction, foreshortened to a stub for the two
+# head-on facings (0 aims away from the camera, 4 toward it) the way a real
+# sprite sheet fakes depth.
+# The grip x is kept inside the torso extent for that facing, so the weapon
+# never floats a pixel clear of the body it is supposed to be held against.
+DISR_ROD_READY = {
+    0: (2, 1, 3, -1),
+    1: (-2, 1, -4, -1),
+    2: (-1, 2, -4, 1),
+    3: (-2, 2, -4, 4),
+    4: (2, 2, 3, 5),
+    5: (2, 2, 4, 4),
+    6: (1, 2, 4, 1),
+    7: (2, 1, 4, -1),
+}
+
+# Lowered/at rest: same hand, tip swung down.
+DISR_ROD_REST = {
+    0: (2, 2, 3, 4),
+    1: (-2, 2, -3, 5),
+    2: (-1, 2, -3, 5),
+    3: (-2, 3, -3, 5),
+    4: (2, 3, 3, 5),
+    5: (2, 3, 3, 5),
+    6: (1, 2, 3, 5),
+    7: (2, 2, 3, 4),
+}
 
 
-def disr_pose(sd, w, h, stance="stand", phase=0.0):
-    cx, cy = w // 2, h // 2 + 2
-    leg_swing = 0.0
-    arm_forward = False
-    spark = False
-    crouch = 0
-    bob = 0.0
-    if stance == "walk":
-        leg_swing = 3 * math.sin(phase * 2 * math.pi)
-        bob = 0.6 * abs(math.sin(phase * 2 * math.pi))
-    elif stance in ("shoot", "prone-shoot"):
-        arm_forward = True
-        spark = phase < 0.5
-    elif stance == "stand2":
-        arm_forward = True
-    elif stance == "prone-walk":
-        leg_swing = 2 * math.sin(phase * 2 * math.pi)
-    if stance == "stand":
-        bob = 0.35 * math.sin(phase * 2 * math.pi)  # idle breathing
+def _disr_shadow(c, cx=DISR_CX, ground=DISR_GROUND, wide=0, flat=False):
+    """Baked ShadowIndex-4 blob at the feet, thrown to the lower right like
+    every stock RA infantry frame's."""
+    if flat:
+        c.hline(cx - 4 - wide, cx + 4 + wide, ground, SHADOW_IDX)
+        c.hline(cx - 3 - wide, cx + 5 + wide, ground + 1, SHADOW_IDX)
+        return
+    c.hline(cx - 2, cx + 2 + wide, ground, SHADOW_IDX)
+    c.hline(cx - 1, cx + 3 + wide, ground + 1, SHADOW_IDX)
+    c.hline(cx + 1, cx + 3 + wide, ground + 2, SHADOW_IDX)
 
-    if stance in ("prone-walk", "prone-shoot"):
-        crouch = 8
 
-    hip_y = cy + 6 - crouch - bob
-    leg_len = 8 - crouch // 2
-    # Legs: two-tone with boot pixels; prone spreads them wider. A thin lit
-    # front line on each leg gives the limb a rounded read (volumetric
-    # second pass -- issue #48's technique at infantry scale).
-    spread = 2 if crouch == 0 else 3.5
-    for side in (-1, 1):
-        lx = cx + side * spread + side * leg_swing * (0.4 if side < 0 else -0.4) + leg_swing * (0.6 if side < 0 else -0.6)
-        sd.line([(cx + side * 2, hip_y), (lx, hip_y + leg_len)], fill=DISR_PANTS, width=1.7)
-        sd.line([(cx + side * 2 - 0.4, hip_y), (lx - 0.4, hip_y + leg_len)],
-                fill=lit(DISR_PANTS, 0.25), width=0.5)
-        sd.px(round(lx) , round(hip_y + leg_len) - 1, dim(DISR_PANTS, 0.4))
-    # Torso: cylindrical shading ramp (vcyl's convention at suit scale) --
-    # dark silhouette edges, brightness peaking left of center -- instead of
-    # the first pass's flat rect with two edge lines.
-    torso_top = hip_y - 10
-    for x0, x1, col in ((-4, -2.9, dim(DISR_SUIT, 0.18)),
-                        (-2.9, -0.6, lit(DISR_SUIT, 0.22)),
-                        (-0.6, 2.3, DISR_SUIT),
-                        (2.3, 4, dim(DISR_SUIT, 0.32))):
-        sd.rect([cx + x0, torso_top, cx + x1, hip_y], fill=col)
-    sd.line([(cx - 4, torso_top), (cx + 4, torso_top)], fill=lit(DISR_SUIT, 0.4), width=0.7)
-    sd.line([(cx - 4, hip_y - 2), (cx + 4, hip_y - 2)], fill=dim(SUN_GOLD, 0.35), width=0.7)
-    # Backpack discharge cell -- the "Disruptor" identity signal, replacing
-    # E4's fuel tank: blue-black cell with charge pips, now with a lit top
-    # facet and shaded right edge so it sits on the shoulders as a box.
-    sd.rrect([cx - 3, torso_top - 2.4, cx + 3, torso_top + 4], 1, fill=PANEL_BLUEBLACK)
-    sd.line([(cx - 2.4, torso_top - 2.2), (cx + 2.4, torso_top - 2.2)],
-            fill=lit(PANEL_BLUEBLACK, 0.45), width=0.6)
-    sd.line([(cx + 2.6, torso_top - 1.6), (cx + 2.6, torso_top + 3.4)],
-            fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
-    sd.rrect([cx - 3, torso_top - 2.4, cx + 3, torso_top + 4], 1, outline=dim(SUN_GOLD, 0.25), width=0.4)
-    sd.px(cx - 1, torso_top, SUN_GOLD)
-    sd.px(cx + 1, torso_top + 1, dim(SUN_GOLD, 0.2))
-    # Arms: counter-swing while walking, both toward the weapon when aiming;
-    # lit upper line for the rounded-limb read.
-    arm_y = torso_top + 3
-    if arm_forward:
-        sd.line([(cx - 3, arm_y + 1), (cx + 3, arm_y)], fill=dim(DISR_SUIT, 0.15), width=1.4)
-        sd.line([(cx + 2, arm_y + 1), (cx + 6, arm_y - 0.5)], fill=dim(DISR_SUIT, 0.15), width=1.4)
-        sd.line([(cx - 3, arm_y + 0.6), (cx + 6, arm_y - 0.9)], fill=lit(DISR_SUIT, 0.2), width=0.4)
+def _disr_leg(c, x, top, bot, near=True):
+    """One 2px leg: lit outer column, shaded inner, black boot. Legs sit a
+    step or two down the ramp from the torso -- stock infantry are lighter up
+    top and darker below, which is what gives them a waist at 5px wide."""
+    c.vline(x, top, bot, A_SHD if near else A_DRK)
+    c.vline(x + 1, top, bot, A_DRK if near else A_DEEP)
+    c.hline(x, x + 1, bot + 1, BOOT)
+
+
+def _disr_legs(c, facing, phase=None, cx=DISR_CX, ground=DISR_GROUND):
+    """Two 2px legs meeting at the centre (stock legs are 4px wide with no gap),
+    striding along the facing axis when phase is given."""
+    hip = DISR_HIP
+    bot = ground - 1
+    ax, ay = DISR_AIM[facing]
+    swing = 0.0 if phase is None else math.sin(phase * 2 * math.pi)
+    dx = 1.6 * ax * swing            # lateral stride: full in profile
+    dy = 1.0 * ay * swing            # walking toward/away: near leg reads longer
+    lx, rx = -2 + dx, 0 - dx
+    lbot = bot + (1 if dy > 0.4 else 0)
+    rbot = bot + (1 if dy < -0.4 else 0)
+    if swing == 0.0:
+        order = ((rx, rbot, False), (lx, lbot, True))
+    elif dx >= 0:
+        order = ((lx, lbot, False), (rx, rbot, True))
     else:
-        sw = leg_swing * 0.5
-        sd.line([(cx - 3.5, arm_y), (cx - 4 - sw * 0.4, arm_y + 5)], fill=dim(DISR_SUIT, 0.15), width=1.3)
-        sd.line([(cx + 3.5, arm_y), (cx + 4 + sw * 0.4, arm_y + 5)], fill=dim(DISR_SUIT, 0.15), width=1.3)
-        sd.line([(cx - 3.5 - 0.4, arm_y), (cx - 4.4 - sw * 0.4, arm_y + 5)],
-                fill=lit(DISR_SUIT, 0.15), width=0.4)
-    # Head: spherical helmet -- dark base sphere, main volume, then an
-    # offset upper-left highlight patch (top-left key light), replacing the
-    # first pass's flat disc with an arc stroke. Gold visor slit kept.
-    head_y = torso_top - 4.6
-    sd.ellipse([cx - 3, head_y - 3, cx + 3, head_y + 3], fill=dim(DISR_HELMET, 0.28))
-    sd.ellipse([cx - 2.9, head_y - 2.9, cx + 2.3, head_y + 2.3], fill=DISR_HELMET)
-    sd.ellipse([cx - 2.2, head_y - 2.3, cx - 0.1, head_y - 0.2], fill=lit(DISR_HELMET, 0.4))
-    sd.line([(cx - 1.6, head_y + 0.8), (cx + 1.6, head_y + 0.8)], fill=dim(SUN_GOLD, 0.15), width=0.7)
-    # Discharge prod: dark rod, twin gold prong tips, spark star when firing.
-    if arm_forward:
-        wx0, wy0 = cx + 4, torso_top + 3
-        wx1, wy1 = cx + 10, torso_top + 0.5
-    else:
-        wx0, wy0 = cx + 3, torso_top + 4
-        wx1, wy1 = cx + 6, torso_top + 8
-    sd.line([(wx0, wy0), (wx1, wy1)], fill=LEGACY_GRAY_DARK, width=1.4)
-    sd.line([(wx0, wy0), (wx1, wy1)], fill=lit(LEGACY_GRAY_DARK, 0.35), width=0.5)
-    ang = math.atan2(wy1 - wy0, wx1 - wx0)
-    for da in (-0.5, 0.5):
-        tx = wx1 + 1.8 * math.cos(ang + da)
-        ty = wy1 + 1.8 * math.sin(ang + da)
-        sd.line([(wx1, wy1), (tx, ty)], fill=SUN_GOLD, width=0.8)
+        order = ((rx, rbot, False), (lx, lbot, True))
+    for x, b, near in order:         # trailing leg first, leading one overlaps
+        _disr_leg(c, cx + x, hip, min(bot, b), near=near)
+
+
+def _disr_torso(c, facing, cx=DISR_CX, top=DISR_TORSO_TOP, bot=DISR_TORSO_BOT,
+                pulse=0, arm_swing=0):
+    """Armour torso: a 3px core with an arm column down each side, on the
+    player-remap ramp so the mass of the unit carries the owner's colour the
+    way stock infantry uniforms do."""
+    left, right = DISR_TORSO_EXT[facing]
+    for y in range(top, bot + 1):
+        c.hline(cx - 1, cx + 1, y, A_MID)
+        c.set(cx - 1, y, A_LIT)                            # top-left key light
+        c.set(cx + 1, y, A_SHD)
+    c.hline(cx - left, cx + right, top, A_LIT)             # lit shoulder line
+    c.set(cx + right, top, A_MID)
+    # Arms: grey armoured sleeves, not more of the body ramp. This is the trick
+    # that makes a 5px-wide stock infantryman's shoulders read at all (e6 puts
+    # light grey 0x0E down both sides of its khaki torso) -- with the arms on
+    # neighbouring steps of the same ramp the whole figure was one flat lump.
+    for side, ext in ((-1, left), (1, right)):
+        if ext < 2:
+            continue
+        ax = cx + side * 2
+        ay0 = top + 1 + (1 if side * arm_swing > 0 else 0)
+        c.vline(ax, ay0, bot - 1, H_LIT if side < 0 else H_MID)
+        c.set(ax, bot - 1, H_SHD)                          # glove, in shadow
+    c.hline(cx - 1, cx + 1, bot, RIM)                      # belt: hard division
+    if facing in (2, 3, 4, 5, 6):
+        # Front-ish views: a spare charge cartridge on the hip, doing the job
+        # e6's red toolbox does -- one small saturated non-remap mass so the
+        # figure isn't a single flat colour from the front, plus the harness
+        # pip that brightens on the animation pulse.
+        hip_x = cx - 2 if facing in (5, 6) else cx + 2
+        c.vline(hip_x, bot - 2, bot - 1, PACK)
+        c.set(hip_x, bot - 2, GOLD if pulse % 4 < 2 else GOLD_DRK)
+        c.set(cx, top + 2, GOLD_LIT if pulse % 4 < 2 else GOLD_DRK)
+
+
+def _disr_pack(c, facing, cx=DISR_CX, top=DISR_TORSO_TOP, pulse=0):
+    box = DISR_PACK_BOX[facing]
+    if box is None:
+        # Head-on: only the cell's top corners clear the shoulders.
+        c.set(cx - 2, top, PACK_LIT)
+        c.set(cx + 2, top, PACK)
+        return
+    x0, x1, y0, y1 = box
+    # Filled on the lighter of the two cell tones: at 3px wide inside a 5px
+    # torso, the near-black fill read as a hole punched through the trooper.
+    c.box(cx + x0, top + y0, cx + x1, top + y1, PACK_LIT)
+    c.hline(cx + x0, cx + x1, top + y0, H_SHD)             # lit top facet
+    c.vline(cx + x1, top + y0, top + y1, PACK_DRK)         # shaded right edge
+    # One charge pip, pulsing, so the cell reads as live hardware. (Two pips
+    # plus a visor plus a nape coil just read as scattered orange pixels.)
+    c.set(cx + x0, top + y0 + 1, GOLD_LIT if pulse % 4 < 2 else GOLD)
+
+
+def _disr_head(c, facing, cx=DISR_CX, top=DISR_HEAD_TOP, turn=0.0):
+    """3x3 helmet -- stock infantry heads are 3px wide; the first pass's 5px
+    one gave the trooper a bobble head."""
+    hx = cx + turn
+    # A bright cap: stock infantry all carry their strongest value up here (e6's
+    # yellow hard hat), which is what lets a 14px figure read at a glance.
+    c.hline(hx - 1, hx + 1, top, H_LIT)                    # crown
+    c.set(hx - 1, top, ARC_LIT)                            # key-light glint
+    c.set(hx + 1, top, H_MID)
+    c.hline(hx - 1, hx + 1, top + 1, H_MID)
+    c.set(hx + 1, top + 1, H_SHD)
+    c.hline(hx - 1, hx + 1, top + 2, H_SHD)                # jaw / neck shadow
+    c.set(hx, top + 2, H_MID)
+    if facing in (3, 4, 5):                                # visor toward us
+        c.hline(hx - 1, hx, top + 1, GOLD)
+        c.set(hx - 1, top + 1, GOLD_LIT)
+    elif facing == 2:
+        c.set(hx - 1, top + 1, GOLD)
+    elif facing == 6:
+        c.set(hx + 1, top + 1, GOLD)
+    else:                                                  # back of the helmet
+        c.set(hx, top + 1, H_LIT)
+        c.set(hx + 1, top + 1, GOLD_DRK)                   # nape coil
+
+
+def _disr_arc(c, x, y, level, seed=0, ax=1.0, ay=0.0):
+    """Electric discharge off the electrodes: a short zigzag bolt along the
+    aim direction plus a white core, rather than a symmetrical star."""
+    if level <= 0:
+        return
+    c.set(x, y, ARC_LIT)
+    px, py = x, y
+    for i in range(2 + level):
+        px += ax
+        py += ay
+        jitter = 1 if (seed + i) % 2 else -1
+        if abs(ax) > abs(ay):
+            py += jitter * (0.5 if i % 2 else -0.5)
+        else:
+            px += jitter * (0.5 if i % 2 else -0.5)
+        c.set(px, py, ARC_LIT if i == 0 else ARC)
+    if level > 1:
+        c.set(x - ay, y + ax, ARC)
+        c.set(x + ay, y - ax, ARC)
+
+
+def _disr_rod(c, facing, pose, cx, torso_top, spark=0, seed=0):
+    x0, y0, x1, y1 = (DISR_ROD_READY if pose in ("ready", "fire") else DISR_ROD_REST)[facing]
+    gx, gy = cx + x0, torso_top + y0
+    bx, by = cx + x1, torso_top + y1
+    c.ray(gx, gy, bx, by, H_LIT)                           # light grey reads
+    c.set(gx, gy, H_MID)                                   # grip, in shadow
+    c.set(bx, by, GOLD_LIT if spark else GOLD)             # electrode
     if spark:
-        sx, sy = wx1 + 2.6 * math.cos(ang), wy1 + 2.6 * math.sin(ang)
-        sd.ellipse([sx - 2.2, sy - 2.2, sx + 2.2, sy + 2.2], fill=GREEN_ACCENT + (70,))
-        sd.line([(sx - 1.8, sy), (sx + 1.8, sy)], fill=lit(SUN_GOLD, 0.4), width=0.6)
-        sd.line([(sx, sy - 1.8), (sx, sy + 1.8)], fill=lit(SUN_GOLD, 0.4), width=0.6)
-        sd.px(round(sx), round(sy), lit(GREEN_ACCENT, 0.5))
+        ang = math.atan2(by - gy, bx - gx)
+        _disr_arc(c, bx + round(math.cos(ang)), by + round(math.sin(ang)),
+                  spark, seed, math.cos(ang), math.sin(ang))
 
 
-def _disr_frame(stance, phase=0.0):
-    return outline_sprite(render(disr_pose, DISR_W, DISR_H, stance, phase))
+def disr_upright(facing, pose="rest", phase=None, spark=0, turn=0.0, dy=0,
+                 pulse=0, ground=DISR_GROUND, shadow=True, seed=0):
+    """One upright trooper frame, drawn as an actual viewpoint for `facing`."""
+    c = PC(DISR_W, DISR_H)
+    cx = DISR_CX
+    if shadow:
+        _disr_shadow(c, cx, ground)
+    torso_top = DISR_TORSO_TOP + dy
+    torso_bot = DISR_TORSO_BOT + dy
+    head_top = DISR_HEAD_TOP + dy
+    away = facing in (0, 1, 7)
+    arm_swing = 0 if phase is None else (1 if math.sin(phase * 2 * math.pi) > 0 else -1)
+    if away:                                               # weapon behind body
+        _disr_rod(c, facing, pose, cx, torso_top, spark, seed)
+    _disr_legs(c, facing, phase, cx, ground)
+    _disr_torso(c, facing, cx, torso_top, torso_bot, pulse, arm_swing)
+    _disr_pack(c, facing, cx, torso_top, pulse)
+    _disr_head(c, facing, cx, head_top, turn)
+    if not away:
+        _disr_rod(c, facing, pose, cx, torso_top, spark, seed)
+    return c
 
 
-def _facing_major_frames(stance, n_facings, n_poses):
-    """Facing-major layout: n_poses consecutive frames per facing, matching
-    how a sequence with both Length and Facings consumes Length x Facings
-    frames (see docs/BACKLOG.md issue #35). Rotation happens at SS resolution
-    before the downscale + outline."""
-    w, h = DISR_W, DISR_H
-    poses = []
-    for p in range(n_poses):
-        base = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
-        disr_pose(SD(base), w, h, stance, p / max(1, n_poses))
-        poses.append(base)
-    frames = []
-    for facing in range(n_facings):
-        angle = facing * (360.0 / n_facings)
-        for base in poses:
-            f = base.rotate(angle, resample=Image.BICUBIC, center=(w * SS / 2, h * SS / 2))
-            frames.append(outline_sprite(f.resize((w, h), Image.LANCZOS)))
-    return frames
+def _disr_shoot(facing, p):
+    """16-phase discharge: brief windup, bright arc, decay, then hold."""
+    if p < 2:
+        spark = 0
+    elif p < 6:
+        spark = 2
+    elif p < 9:
+        spark = 1
+    else:
+        spark = 0
+    kick = -1 if 2 <= p < 4 else 0                         # recoil
+    return disr_upright(facing, "fire", spark=spark, dy=kick, pulse=p, seed=p)
 
 
-def disr_die_frame(w, h, angle_deg, fade=1.0):
-    base = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
-    disr_pose(SD(base), w, h, "stand")
-    frame = base.rotate(angle_deg, resample=Image.BICUBIC, center=(w * SS / 2, (h / 2 + 2) * SS))
-    frame = outline_sprite(frame.resize((w, h), Image.LANCZOS))
-    if fade < 1.0:
-        alpha = frame.getchannel("A").point(lambda a: int(a * fade))
-        frame.putalpha(alpha)
-    return frame
+def disr_prone(facing, phase=None, shoot=None):
+    """Prone/crawling trooper: the figure strung out along the facing axis,
+    vertically foreshortened for the overhead camera."""
+    c = PC(DISR_W, DISR_H)
+    cx, ground = DISR_CX, DISR_GROUND
+    _disr_shadow(c, cx, ground + 1, flat=True)
+    ax, ay = DISR_AIM[facing]
+    ox, oy = cx, ground - 1
+    crawl = 0.0 if phase is None else math.sin(phase * 2 * math.pi)
+
+    def at(t, lateral=0.0):
+        return (ox + ax * t - ay * lateral * 1.2,
+                oy + ay * t * 0.55 + ax * lateral * 0.6)
+
+    # Legs trail behind, alternating on the crawl cycle.
+    for s in (-1, 1):
+        lx, ly = at(-3.4 - 0.6 * s * crawl, 0.8 * s)
+        c.blob(lx, ly, 1.1, 1.0, A_SHD if s < 0 else A_DRK)
+        c.set(lx, ly + 1, BOOT)
+    for t, r, idx in ((-1.9, 1.4, A_SHD), (-0.2, 1.8, A_MID), (1.5, 1.5, A_LIT)):
+        bx, by = at(t)
+        c.blob(bx, by, r, r * 0.85, idx)
+    # Discharge cell rides on the back, visible whenever the back is toward us.
+    if facing in (0, 1, 7):
+        px, py = at(0.2)
+        c.blob(px, py, 1.2, 1.0, PACK)
+        c.set(px, py - 1, PACK_LIT)
+        c.set(px, py, GOLD if (shoot or 0) % 4 < 2 else GOLD_DRK)
+    # Helmet at the leading end.
+    hx, hy = at(3.2)
+    c.blob(hx, hy, 1.5, 1.3, H_MID)
+    c.set(hx - 1, hy - 1, H_LIT)
+    c.set(hx + 1, hy + 1, H_SHD)
+    if facing in (2, 3, 4, 5, 6):
+        c.set(hx + (1 if ax > 0 else -1 if ax < 0 else 0), hy, GOLD)
+    # Prod pushed forward past the head; arms are implied at this scale.
+    gx, gy = at(2.0, 1.0)
+    tx, ty = at(5.2, 0.8)
+    c.ray(gx, gy, tx, ty, H_MID)
+    c.set(tx, ty, GOLD)
+    if shoot is not None:
+        if shoot < 2:
+            level = 0
+        elif shoot < 6:
+            level = 2
+        elif shoot < 9:
+            level = 1
+        else:
+            level = 0
+        if level:
+            sx, sy = at(6.4, 0.7)
+            _disr_arc(c, round(sx), round(sy), level, shoot)
+    return c
 
 
-def disr_die_frames(n, max_angle, fade_from=None):
+def _disr_dying(t, dir_sign, zap=False, keep=1.0):
+    """Articulated collapse: the body chain rotates from upright to flat about
+    the hips while the legs fold, instead of the first pass's whole-sprite
+    image rotation (which just tipped a standing man over sideways)."""
+    c = PC(DISR_W, DISR_H)
+    cx, ground = DISR_CX, DISR_GROUND
+    ease = t * t * (3 - 2 * t)
+    # The shadow spreads as the body goes flat, then draws back in as the
+    # corpse dissolves rather than dithering into loose speckle.
+    _disr_shadow(c, cx, ground, wide=round(3 * ease * max(0.0, keep * 2 - 1)),
+                 flat=ease > 0.65 and keep > 0.5)
+    theta = math.radians(90 * (1 - ease))
+    hip_x = cx + dir_sign * 2.6 * ease
+    hip_y = ground - 3.0 * (1 - ease) - 0.5
+    dx, dy = dir_sign * math.cos(theta), -math.sin(theta)
+    # Legs fold under the hips.
+    for s in (-1, 1):
+        lx = hip_x - dir_sign * 2.0 * ease + s * 1.1
+        ly = min(ground - 0.5, hip_y + 2.6 * (1 - ease) + 1.2 * ease)
+        c.blob(lx, ly, 1.1, 1.0, A_SHD)
+        c.set(lx, min(ground, ly + 1.2), BOOT)
+    for d, r, idx in ((2.0, 1.6, A_MID), (4.0, 1.5, A_MID), (5.6, 1.3, A_LIT)):
+        c.blob(hip_x + dx * d, hip_y + dy * d, r, r * 0.85, idx)
+    hx, hy = hip_x + dx * 7.3, hip_y + dy * 7.3
+    c.blob(hx, hy, 1.5, 1.3, H_MID)
+    c.set(hx - 1, hy - 1, H_LIT)
+    c.set(hx + 1, hy + 1, H_SHD)
+    c.set(hx, hy + 1, GOLD_DRK)
+    # The prod slips from the hands and lands beside the body.
+    if ease < 0.5:
+        c.ray(hip_x + dx * 4, hip_y + dy * 4 + 1, hip_x + dir_sign * 5, ground - 1, H_MID)
+    else:
+        c.hline(hip_x + dir_sign * 3, hip_x + dir_sign * 6, ground - 1, H_MID)
+        c.set(hip_x + dir_sign * 6, ground - 1, GOLD_DRK)
+    if zap:
+        # Electrocution flicker: the discharge earths itself through the body.
+        step = round(t * 12)
+        for i, (ox, oy) in enumerate(((-2, -4), (2, -6), (0, -2), (3, -3), (-3, -1))):
+            if (step + i) % 2 == 0:
+                c.set(cx + ox, ground - 1 + oy, ARC_LIT if i % 2 else ARC)
+    if keep < 1.0:
+        c.dissolve(keep)
+    return c
+
+
+def _disr_die_frames(n, dir_sign, zap=False, dissolve_from=None):
     out = []
     for i in range(n):
         t = i / max(1, n - 1)
-        angle = max_angle * t
-        fade = 1.0
-        if fade_from is not None and t > fade_from:
-            fade = max(0.0, 1.0 - (t - fade_from) / (1.0 - fade_from))
-        out.append(disr_die_frame(DISR_W, DISR_H, angle, fade))
+        keep = 1.0
+        if dissolve_from is not None and t > dissolve_from:
+            keep = 1.0 - (t - dissolve_from) / (1.0 - dissolve_from)
+        out.append(_disr_dying(t, dir_sign, zap=zap, keep=keep))
     return out
 
 
-def disr_parachute_draw(sd, w, h):
-    disr_pose(sd, w, h, "stand")
-    # Canopy: shaded gold arc + shroud lines.
-    sd.arc([w / 2 - 9, 0, w / 2 + 9, 16], 180, 360, fill=SUN_GOLD, width=1.6)
-    sd.arc([w / 2 - 7, 2, w / 2 + 7, 14], 200, 270, fill=lit(SUN_GOLD, 0.4), width=0.7)
-    sd.line([(w / 2 - 8.4, 7), (w / 2 - 2, 14)], fill=dim(SUN_GOLD, 0.2), width=0.5)
-    sd.line([(w / 2 + 8.4, 7), (w / 2 + 2, 14)], fill=dim(SUN_GOLD, 0.2), width=0.5)
-    sd.line([(w / 2, 8), (w / 2, 14)], fill=dim(SUN_GOLD, 0.3), width=0.4)
+def disr_parachute():
+    """Airborne drop frame: canopy up top, trooper slung below it."""
+    ground = 21
+    c = disr_upright(4, "rest", dy=8, ground=ground, shadow=False)
+    cx = DISR_CX
+    c.hline(cx - 3, cx + 3, 1, GOLD_LIT)                   # canopy crown
+    c.hline(cx - 5, cx + 5, 2, GOLD)
+    c.hline(cx - 6, cx + 6, 3, GOLD_DRK)
+    c.set(cx - 5, 2, GOLD_LIT)
+    c.set(cx + 5, 2, GOLD_DRK)
+    c.set(cx - 6, 4, GOLD_DRK)                             # skirt corners
+    c.set(cx + 6, 4, GOLD_DRK)
+    c.ray(cx - 5, 4, cx - 1, 8, H_MID)                     # shrouds
+    c.ray(cx + 5, 4, cx + 1, 8, H_MID)
+    return c
+
+
+def _disr_idle1(i):
+    """Sentry scan: the trooper checks left and right, cell pips pulsing."""
+    turn = (0, 0, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 0, 0)[i % 14]
+    facing = 3 if turn < 0 else 5 if turn > 0 else 4
+    return disr_upright(facing, "rest", turn=turn * 0.0, pulse=i)
+
+
+def _disr_idle2(i):
+    """Prod check: weapon comes up, an arc runs across the electrodes, down."""
+    if i < 3 or i >= 13:
+        return disr_upright(4, "rest", pulse=i)
+    spark = 2 if 6 <= i <= 8 else 1 if 5 <= i <= 10 else 0
+    return disr_upright(4, "fire" if spark else "ready", spark=spark, pulse=i, seed=i)
 
 
 def disr_frames():
     frames = []
-    # stand / stand2: 1 pose x 8 facings each.
-    frames += _facing_major_frames("stand", 8, 1)
-    frames += _facing_major_frames("stand2", 8, 1)
-    # run: 6 walk-cycle poses x 8 facings.
-    frames += _facing_major_frames("walk", 8, 6)
-    # shoot: 16 poses x 8 facings.
-    frames += _facing_major_frames("shoot", 8, 16)
-    # prone-run: 4 poses x 8 facings (prone-stand/prone-stand2 reuse these via Stride).
-    frames += _facing_major_frames("prone-walk", 8, 4)
-    # prone-shoot: 16 poses x 8 facings.
-    frames += _facing_major_frames("prone-shoot", 8, 16)
-    # idle1/idle2: single-direction breathing loops, no facings.
-    for i in range(14):
-        frames.append(_disr_frame("stand", i / 14))
-    for i in range(16):
-        frames.append(_disr_frame("stand2", i / 16))
-    # die1-5: a simple topple-and-fade, single direction. Lengths match the
-    # sequence's own Length values; die4/die5 fall further and fade out more.
-    frames += disr_die_frames(8, 70)
-    frames += disr_die_frames(8, -70)
-    frames += disr_die_frames(8, 90, fade_from=0.6)
-    frames += disr_die_frames(12, 100, fade_from=0.5)
-    frames += disr_die_frames(18, 110, fade_from=0.35)
-    # parachute: single static frame.
-    frames.append(outline_sprite(render(disr_parachute_draw, DISR_W, DISR_H)))
+    # stand / stand2: one frame per facing, weapon lowered then ready.
+    for pose in ("rest", "ready"):
+        frames += [disr_upright(f, pose) for f in range(8)]
+    # run: 6 walk-cycle poses per facing, with a 1px body bob.
+    for f in range(8):
+        for p in range(6):
+            frames.append(disr_upright(f, "ready", phase=p / 6,
+                                       dy=-1 if p % 3 == 1 else 0))
+    # shoot: 16 poses per facing.
+    for f in range(8):
+        frames += [_disr_shoot(f, p) for p in range(16)]
+    # prone-run: 4 crawl poses per facing (prone-stand/-stand2 reuse these
+    # via Stride in the sequence YAML).
+    for f in range(8):
+        frames += [disr_prone(f, phase=p / 4) for p in range(4)]
+    # prone-shoot: 16 poses per facing.
+    for f in range(8):
+        frames += [disr_prone(f, shoot=p) for p in range(16)]
+    # idle1/idle2: single-direction loops, drawn front-on since the sequence
+    # has no Facings key and plays whatever way the unit is turned.
+    frames += [_disr_idle1(i) for i in range(14)]
+    frames += [_disr_idle2(i) for i in range(16)]
+    # die1-5: collapse forward, backward, then three electrocution variants
+    # that dissolve out over their longer runs.
+    frames += _disr_die_frames(8, 1)
+    frames += _disr_die_frames(8, -1)
+    frames += _disr_die_frames(8, 1, zap=True)
+    frames += _disr_die_frames(12, -1, zap=True, dissolve_from=0.6)
+    frames += _disr_die_frames(18, 1, zap=True, dissolve_from=0.45)
+    frames.append(disr_parachute())
     return frames
 
 
@@ -1405,6 +1842,13 @@ def make_icon(draw_fn, frame_w, frame_h, *args, label=None, **kwargs):
     # Render the motif at SS resolution and crop to content for a crisp fit.
     big = Image.new("RGBA", (frame_w * SS, frame_h * SS), (0, 0, 0, 0))
     draw_fn(SD(big), frame_w, frame_h, *args, **kwargs)
+    return make_icon_from_motif(big, label=label)
+
+
+def make_icon_from_motif(big, label=None):
+    """Panel/border/label half of make_icon, for motifs that are already
+    rendered (the infantry art is authored at native resolution in palette
+    indices, so it is upscaled with NEAREST rather than drawn at SS scale)."""
     bbox = big.getbbox()
     if bbox:
         big = big.crop(bbox)
@@ -1483,12 +1927,21 @@ def main():
     )
 
     # Disruptor Trooper (DISR): one self-contained 437-frame sheet, plus icon.
+    # Authored natively in palette indices (see PC/disr_upright), so the sheet
+    # is assembled as an indexed strip directly rather than converted from RGBA.
     disr_all = disr_frames()
-    save_pngsheet(sheet_of(disr_all, DISR_W, DISR_H), "disr.png", DISR_W, DISR_H, len(disr_all), indexed=True)
-    save_pngsheet(
-        make_icon(disr_pose, DISR_W, DISR_H, "stand2", label=ICON_LABELS["disr"]),
-        "disricon.png", ICON_W, ICON_H, 1,
-    )
+    save_pngsheet(sheet_of_indexed(disr_all, DISR_W, DISR_H), "disr.png",
+                  DISR_W, DISR_H, len(disr_all), indexed=True)
+    # Cameo motif: the three-quarter front facing, mid-discharge, upscaled with
+    # NEAREST so the cameo shows the same hard pixels the in-world sprite has.
+    # (gen_photo_cameos.py overwrites this with the photographic cameo when it
+    # runs -- see docs/BACKLOG.md issue #45 -- this keeps the programmatic
+    # fallback in step with the sprite.)
+    motif = indexed_to_rgba(disr_upright(5, "fire", spark=2))
+    motif = motif.crop(motif.getbbox())
+    motif = motif.resize((motif.width * SS, motif.height * SS), Image.NEAREST)
+    save_pngsheet(make_icon_from_motif(motif, label=ICON_LABELS["disr"]),
+                  "disricon.png", ICON_W, ICON_H, 1)
 
     print("done")
 

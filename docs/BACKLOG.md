@@ -1439,3 +1439,42 @@ The tell issues #61/#62 both missed: every "look correct" cameo is a **stock** p
 **Labels:** `type:bug`, `area:chrome`, `area:ui`, `area:art`
 
 **Phase:** 6/7. The offset-leak mechanism is confirmed from the sequence data (the `bib` overrides prove `Defaults: Offset` is inherited by sub-sequences); the full-frame regen is verified by alpha bounds (`0,0,64,48`) and a rendered strip showing labels flush at the bottom edge. Not checked in a live client here (no engine access).
+
+### 64. Disruptor Trooper art rebuilt as real infantry pixel art — the facings were rotated, not drawn — FIXED
+
+**Player report:** "the disruptor trooper does not work out at all! it looks too bad to be taken seriously. any chance you take a look at the gfx of the other units? grasp how they are modeled? copy and enhance that?"
+
+That is the third pass over this sprite (issue #36 gave it dedicated art; issue #58 reshaded it volumetrically), and both earlier passes changed the *shading* while leaving the thing that was actually wrong in place. Decoding the stock art to compare against made it obvious.
+
+**How the stock sheets are actually built** (decoded `mods/sungrid/bits/e6.shp` — engine-independent, the file is in the repo — against `temperat.pal`, plus `heli.shp` to pin the facing convention):
+- One stand frame is ~95 pixels: a figure ~6px wide and ~15px tall (helmet 3 rows, torso 7, legs 3, boots 1), using ~10 palette indices, with **no anti-aliasing anywhere**.
+- The **feet sit on the frame centre row** — the rest of the canvas is slack (e6: body rows 5–19 of a 39px frame).
+- Every frame bakes a **ShadowIndex-4 blob** at the feet, thrown to the lower right (`palettes.yaml` gives the `player` palette `ShadowIndex: 4`).
+- The **uniform is on the 80–95 player-remap ramp**, so the mass of the unit carries the owner's colour; small fixed non-remap accents (e6's red toolbox, its yellow hard hat) supply the identity and the local contrast.
+- Limbs read because the sleeves are a *different material* (light grey 0x0E) beside the khaki torso, not a neighbouring step of the same ramp.
+- Frame 0 faces **north** and frame indices advance **counter-clockwise** (`heli.shp`'s 32 facings: frames 0/8/16/24 point N/W/S/E).
+
+**What was wrong with the shipped `disr.png`** — four structural faults, none of them a shading problem:
+1. **Facings were an image-plane rotation of one side-view figure.** Correct for a turret or a top-down drone (which is what the rest of `gen_concept_art.py` does), but for infantry it rendered a man **lying on his side or upside down in seven of the eight directions**. This is the single reason it "looks too bad to be taken seriously".
+2. **Wrong scale and wrong position.** ~23px tall against every stock infantryman's ~15, with the feet ~15px *below* the frame centre — so it drew roughly half a cell south of where the actor actually stood, **with the boots clipped off the bottom edge of the frame**.
+3. **4× supersample + LANCZOS + a full 1px outline, then 1-bit indexed alpha.** The blur got hard-thresholded on the way to indexed, so edges came out ragged and the interior came out as dither noise — the mush visible in the report.
+4. **No shadow at all**, so it floated over the terrain while every other infantryman was anchored.
+
+**Fix (`mods/sungrid/bits/gen_concept_art.py`, regenerated `disr.png` only):**
+- New `PC` class: a native-resolution **palette-index canvas** (set/hline/vline/box/blob/ray/stamp/dissolve) plus `sheet_of_indexed`, so infantry are authored one pixel at a time in indices — no scaling, no blending, no outline pass. `save_pngsheet` now passes an already-`P`-mode sheet straight through instead of re-deriving indices from RGB.
+- The trooper is rebuilt part by part (`_disr_head`/`_disr_torso`/`_disr_pack`/`_disr_legs`/`_disr_rod`/`_disr_arc`) at stock proportions — 5px wide, 14px tall, boots on the frame centre row — with **all 8 facings drawn as actual viewpoints** (back / three-quarter / profile / front). Torso width, pack coverage, visor placement, stride axis, weapon anchor and draw order (the prod goes *behind* the body on the away-facing frames) all switch per facing.
+- Body mass moved onto the **80–95 remap ramp** so ownership reads, reversing issue #43's gold-only remap, which on a 14px figure left almost nothing team-coloured. Identity now rides on fixed accents the remap can't touch: gold visor slit, pulsing charge pip on the discharge cell, a hip cartridge doing the job e6's toolbox does, forked electrode tips, electric-white discharge bolt.
+- Grey armoured sleeves beside the remap torso (stock's limb-separation trick), darker legs than torso for a waist, near-black belt, black boots, bright helmet crown with a key-light glint — the local-contrast recipe the stock frames use to stay legible at 14px.
+- Baked ShadowIndex-4 blob at the feet on every frame; flattened and widened for prone and for the death collapse.
+- Animations rebuilt rather than faked from rotation: a real 6-phase walk cycle (stride along the facing axis, arm swing, 1px body bob), a 16-phase discharge with recoil and a zigzag arc bolt, prone/crawl frames strung along the facing axis with the body foreshortened for the overhead camera, and `die1`–`die5` as an **articulated collapse** (the body chain rotates from upright to flat about the hips while the legs fold), with electrocution flicker on the three zap variants. Fade-out is an ordered **dither dissolve**, because indexed sprites have 1-bit alpha — the first pass's alpha fade was being silently thresholded back to fully opaque or fully absent.
+- Frame size (20×26) and the whole 437-frame layout are byte-compatible with the previous sheet, so `mods/sungrid/sequences/infantry.yaml` needs **no edits**; `disricon.png` stays issue #45's photographic cameo (regenerated from `gen_photo_cameos.py` after the sprite regen, so it is unchanged on disk). Re-running the generator leaves every other sprite/cameo in `mods/sungrid/bits` byte-identical, which confirms the `save_pngsheet`/`make_icon` refactor didn't disturb the rest of the roster.
+
+![Disruptor Trooper stand frames, all 8 facings, on the same palette: the shipped rotated sheet (before), the rebuilt per-facing sheet (after), and decoded stock `e6.shp` as the scale/anchor reference.](concept-art/issue64-disr-before-after.png)
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/disr.png`. Review render: `docs/concept-art/issue64-disr-before-after.png`.
+
+**Labels:** `type:bug`, `type:art`, `area:mod-content`
+
+**Phase:** 6/7. Verified by rendering the regenerated indexed sheet against decoded stock `e6.shp` frames on the *same* palette at 1×/2×/6× (scale, silhouette mass, feet-on-centre, shadow shape all now match), by frame-by-frame renders of every animation group, and by checking the shipped file's metadata/indices (`FrameSize 20,26`, `FrameAmount 437`, 19 distinct indices, index 4 present for the shadow). Not checked in a live client here — the "see a live temperate battlefield" blocker from issue #49 is still open.
+
+**Deferred:** the same "rotate one drawing for every facing" construction is still how `ARCT`'s build-up and the two drones are generated. That is *correct* for the drones and the turret (radially symmetric top-down hardware, noted in-code for `sgtur_turret_draw`), so nothing else in the roster inherits this bug — but if any other humanoid actor gets original art later, it needs `PC`/`disr_upright`'s per-facing approach, not `rotated_frames`.
