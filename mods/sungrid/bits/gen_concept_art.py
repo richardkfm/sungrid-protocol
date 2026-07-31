@@ -480,6 +480,253 @@ def draw_gold_band(sd, x0, x1, y0, y1):
 
 
 # ---------------------------------------------------------------------------
+# Axonometric mesh renderer (docs/BACKLOG.md issue #65).
+#
+# Everything above draws a *single* front-above elevation and, for rotating
+# actors, spins that one picture with rotated_frames(). That is fine for the
+# drones (genuinely top-down, radially symmetric) but wrong for a turret: the
+# real thing keeps its housing still and swings a barrel, whereas rotating the
+# picture swings the housing, the base, and the key light along with it.
+# Decoding the stock rotating turret in this directory (sam2.shp, 48x24, 32
+# idle facings + 32 damaged) shows how the legacy art solves it: 227 of its
+# pixels are byte-identical across all 32 facings -- the mount never moves --
+# and only the superstructure is redrawn per facing, as a genuine viewpoint of
+# a solid, with the light staying put in world space.
+#
+# This is the same fault (and the same fix) as the Disruptor Trooper rebuild in
+# issue #64, so it gets the same treatment: build the object once in 3D and
+# draw each facing as a real view of it. Projection is orthographic with the
+# ground plane foreshortened 2:1 and height 1:1, measured off the stock
+# 32-facing art (heli.shp: north-facing height 22px and west-facing width 37px
+# over a 13px beam give a ground factor of (22-9)/(37-13) = 0.54).
+# ---------------------------------------------------------------------------
+
+MESH_KY = 0.5          # ground-plane depth foreshortening (2:1)
+MESH_AMBIENT = 0.34    # fraction of full brightness a fully-unlit face keeps
+
+
+def _v_norm(v):
+    m = math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) or 1.0
+    return (v[0] / m, v[1] / m, v[2] / m)
+
+
+def _v_dot(a, b):
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+# Key light from the front-above-left, matching the "one top-left key light"
+# convention every other sprite here is drawn to. The cast shadow below is
+# deliberately NOT derived from it: stock RA throws building shadows down and
+# to the right (light from behind-left), and matching that convention matters
+# more for sitting next to the ported art than being physically consistent
+# with the face shading -- the same split the infantry sheet already uses.
+MESH_LIGHT = _v_norm((-0.5, -0.35, 0.8))
+MESH_VIEW = _v_norm((0.0, -1.0, MESH_KY))   # scene -> camera (south and above)
+MESH_SHADOW_SLANT = (0.55, -0.30)           # per unit of height: +x, -y
+
+
+def _rotz(p, c, s):
+    return (p[0] * c - p[1] * s, p[0] * s + p[1] * c, p[2])
+
+
+def _project(p, ox, oy):
+    """World (x east, y north, z up) -> screen pixels."""
+    return (ox + p[0], oy - (p[1] * MESH_KY + p[2]))
+
+
+def _face_normal(v):
+    ax, ay, az = (v[1][i] - v[0][i] for i in range(3))
+    bx, by, bz = (v[2][i] - v[0][i] for i in range(3))
+    return _v_norm((ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx))
+
+
+# Illumination is snapped to this many steps before it becomes a colour, so a
+# material's faces land on a handful of flat tones rather than a continuous
+# ramp -- the small per-material ramp the stock art is built from (a sam2.shp
+# facing uses ~30 palette indices in total). Note this only flattens face
+# interiors: most of the residual index spread in the finished sheet comes
+# from the 4x -> 1x downscale blending along face edges, which is inherent to
+# this pipeline and would need native-index authoring (as the infantry sheet
+# uses) to remove entirely.
+MESH_SHADE_STEPS = 6
+
+
+def _shaded(color, s):
+    """Map a 0..1 illumination onto the colour's dim..lit range."""
+    s = round(s * MESH_SHADE_STEPS) / MESH_SHADE_STEPS
+    return lit(color, (s - 0.62) * 1.25) if s >= 0.62 else dim(color, (0.62 - s) * 0.95)
+
+
+def mesh_screen(p, ox, oy, deg=0.0):
+    """Where a model-space point lands on screen -- for placing effect
+    overlays (muzzle glow, discharge arc) on top of a rendered mesh."""
+    rad = math.radians(deg)
+    return _project(_rotz(p, math.cos(rad), math.sin(rad)), ox, oy)
+
+
+# Shared hull/plating materials for the two defence structures, so the Grid
+# Defense Turret and the Arc Turret read as the same manufacturer.
+_TUR_HULL = mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.30)
+_TUR_CAP = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.25)
+_TUR_BARREL = mix(LEGACY_GRAY_DARK, LEGACY_GRAY, 0.40)
+
+
+def _convex_hull(points):
+    """Monotone-chain hull of a small 2D point set."""
+    pts = sorted(set((round(x, 3), round(y, 3)) for x, y in points))
+    if len(pts) < 3:
+        return pts
+
+    def half(seq):
+        out = []
+        for p in seq:
+            while len(out) >= 2:
+                (ax, ay), (bx, by) = out[-2], out[-1]
+                if (bx - ax) * (p[1] - ay) - (by - ay) * (p[0] - ax) > 0:
+                    break
+                out.pop()
+            out.append(p)
+        return out[:-1]
+
+    return half(pts) + half(pts[::-1])
+
+
+class Mesh:
+    """A handful of convex quads, drawn back-to-front with per-face flat
+    shading. Deliberately tiny: no clipping, no z-buffer, no textures -- at
+    24-odd pixels across, painter's order over a dozen faces is all a turret
+    needs, and flat faces are what keeps the indexed conversion clean."""
+
+    def __init__(self):
+        self.faces = []
+        self.solids = []   # vertex groups, one per solid, for the cast shadow
+
+    def poly(self, verts, color, order=0):
+        self.faces.append((list(verts), color, order))
+        return self
+
+    def quad(self, a, b, c, d, color, order=0):
+        return self.poly((a, b, c, d), color, order)
+
+    def box(self, x0, y0, z0, x1, y1, z1, color, top=None, order=0, shadow=True,
+            top_face=True):
+        """Axis-aligned box. Only the four sides and the top are emitted --
+        the underside is never visible from this camera. `order` overrides
+        painter's depth for detail that sits proud of a parent solid: this
+        projection makes higher geometry sort as nearer, so a thin band
+        wrapped around a tall hull loses the depth test against the hull's own
+        front face however the key is computed. Ordering it explicitly is
+        correct here because back faces are culled anyway."""
+        top = color if top is None else top
+        if shadow:
+            self.solids.append([(x, y, z) for x in (x0, x1) for y in (y0, y1) for z in (z0, z1)])
+        if top_face:
+            self.quad((x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1), top, order)  # +z
+        self.quad((x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1), color, order)    # -y front
+        self.quad((x1, y1, z0), (x0, y1, z0), (x0, y1, z1), (x1, y1, z1), color, order)    # +y back
+        self.quad((x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1), color, order)    # +x
+        self.quad((x0, y1, z0), (x0, y0, z0), (x0, y0, z1), (x0, y1, z1), color, order)    # -x
+        return self
+
+    def prism(self, cx, cy, z0, z1, r, color, sides=10, top=None, phase=0.0, order=0):
+        """Upright n-gon column standing in for a cylinder (the barrel sleeve,
+        the mount collar). Its top cap is emitted so it reads as solid."""
+        top = color if top is None else top
+        ring = [(cx + r * math.cos(phase + i * 2 * math.pi / sides),
+                 cy + r * math.sin(phase + i * 2 * math.pi / sides)) for i in range(sides)]
+        self.solids.append([(px, py, z) for px, py in ring for z in (z0, z1)])
+        for i in range(sides):
+            (ax, ay), (bx, by) = ring[i], ring[(i + 1) % sides]
+            self.quad((ax, ay, z0), (bx, by, z0), (bx, by, z1), (ax, ay, z1), color, order)
+        self.poly([(px, py, z1) for px, py in ring], top, order)
+        return self
+
+    def strut(self, a, b, r, color, cap=None, order=0):
+        """Square-section beam between two arbitrary points (electrode rods,
+        braces) -- the one shape here that is not axis-aligned."""
+        ax = _v_norm(tuple(b[i] - a[i] for i in range(3)))
+        up = (0.0, 0.0, 1.0) if abs(ax[2]) < 0.9 else (1.0, 0.0, 0.0)
+        u = _v_norm((ax[1] * up[2] - ax[2] * up[1], ax[2] * up[0] - ax[0] * up[2],
+                     ax[0] * up[1] - ax[1] * up[0]))
+        v = (ax[1] * u[2] - ax[2] * u[1], ax[2] * u[0] - ax[0] * u[2], ax[0] * u[1] - ax[1] * u[0])
+        corners = []
+        for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            off = tuple(r * (su * u[i] + sv * v[i]) for i in range(3))
+            corners.append((tuple(a[i] + off[i] for i in range(3)),
+                            tuple(b[i] + off[i] for i in range(3))))
+        self.solids.append([p for pair in corners for p in pair])
+        for i in range(4):
+            (a0, b0), (a1, b1) = corners[i], corners[(i + 1) % 4]
+            self.quad(a0, a1, b1, b0, color, order)
+        self.poly([c[1] for c in corners], cap or lit(color, 0.25), order)
+        return self
+
+    def _oriented(self, deg):
+        rad = math.radians(deg)
+        c, s = math.cos(rad), math.sin(rad)
+        return [([_rotz(p, c, s) for p in verts], color, order) for verts, color, order in self.faces]
+
+    def draw(self, sd, ox, oy, deg=0.0):
+        out = []
+        for verts, color, order in self._oriented(deg):
+            n = _face_normal(verts)
+            if _v_dot(n, MESH_VIEW) <= 0.015:      # back face
+                continue
+            depth = sum(_v_dot(p, MESH_VIEW) for p in verts) / len(verts)
+            shade = MESH_AMBIENT + (1 - MESH_AMBIENT) * max(0.0, _v_dot(n, MESH_LIGHT))
+            out.append(((order, depth), [_project(p, ox, oy) for p in verts], _shaded(color, shade)))
+        out.sort(key=lambda t: t[0])
+        for _, pts, col in out:
+            sd.poly(pts, fill=col, outline=col)
+
+    def draw_shadow(self, sd, ox, oy, deg=0.0, color=(0, 0, 0, 255)):
+        """Flatten each solid onto the ground plane along the shadow slant and
+        fill its 2D hull. Per-solid hulls rather than per-face polygons: a face
+        on edge flattens to a sliver, which showed up as detached streaks
+        instead of one shadow."""
+        rad = math.radians(deg)
+        c, s = math.cos(rad), math.sin(rad)
+        sx, sy = MESH_SHADOW_SLANT
+        for solid in self.solids:
+            pts = []
+            for p in solid:
+                q = _rotz(p, c, s)
+                pts.append(_project((q[0] + sx * q[2], q[1] + sy * q[2], 0.0), ox, oy))
+            hull = _convex_hull(pts)
+            if len(hull) >= 3:
+                sd.poly(hull, fill=color, outline=color)
+
+
+def indexed_strip(bodies, shadows, frame_w, frame_h):
+    """Assemble RGBA frames (+ optional native-resolution shadow masks) into a
+    single indexed strip. Shadows have to be injected here rather than drawn
+    into the RGBA frame: SHADOW_IDX is excluded from the nearest-colour search
+    in _index_for (it is a stencil index, not a colour), so a black blob drawn
+    into the frame would come back as ordinary near-black paint."""
+    sheet = Image.new("P", (frame_w * len(bodies), frame_h), TRANSPARENT_IDX)
+    sheet.putpalette(_palette_flat())
+    dst = sheet.load()
+    for i, body in enumerate(bodies):
+        src = body.convert("RGBA").load()
+        shd = shadows[i].load() if shadows and shadows[i] is not None else None
+        for y in range(frame_h):
+            for x in range(frame_w):
+                r, g, b, a = src[x, y]
+                if a >= 128:
+                    dst[i * frame_w + x, y] = _index_for((r, g, b))
+                elif shd is not None and shd[x, y] >= 110:
+                    dst[i * frame_w + x, y] = SHADOW_IDX
+    return sheet
+
+
+def render_shadow_mask(draw_fn, w, h, *args, **kwargs):
+    """Native-resolution 'L' coverage mask of a shadow-only draw pass."""
+    img = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
+    draw_fn(SD(img), w, h, *args, **kwargs)
+    return img.getchannel("A").resize((w, h), Image.LANCZOS)
+
+
+# ---------------------------------------------------------------------------
 # Per-building motifs. Each draw_fn renders one frame into a frame_w x
 # frame_h (native-pixel) canvas via the SD scaled-draw wrapper; damaged=True
 # redraws the same building with status lights off + scorch/rust decals.
@@ -817,44 +1064,89 @@ def sgrel_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
         scorch(sd, [(cx, node_y + 8, 2.5), (cx + 4, ground_y0 - 2, 2)])
 
 
+ARCT_AZIMUTH = 208.0    # fixed three-quarter view (the actor never rotates)
+
+
+def arct_mesh(damaged=False):
+    """Arc Turret as a solid: a ring-mounted emitter head carrying twin
+    discharge rods, deliberately NOT a nozzle/fuel-tank silhouette so it reads
+    as "electric discharge" rather than "flamethrower" (docs/BACKLOG.md issue
+    #36). Rebuilt in 3D for issue #65 -- the flat blob it replaced had no
+    volume at all next to the ported stock defences it shares a sidebar with."""
+    body = mix(_TUR_HULL, LEGACY_GRAY, 0.22)
+    body = body if not damaged else mix(body, DAMAGE_SCORCH, 0.4)
+    cap = _TUR_CAP if not damaged else mix(_TUR_CAP, DAMAGE_SCORCH, 0.4)
+    accent = SUN_GOLD if not damaged else RUST
+    m = Mesh()
+    # Emitter head: main mass, then a shallower brow plate above it.
+    m.box(-7.5, -5.5, 1.5, 7.5, 5.5, 10.0, body, top=lit(body, 0.14))
+    m.box(-6.2, -4.6, 10.0, 6.2, 4.6, 11.4, cap, top=lit(cap, 0.2))
+    # Cooling stack behind the head.
+    m.box(-2.2, -7.0, 5.0, 2.2, -5.4, 14.2, dim(body, 0.35), top=dim(body, 0.2))
+    # Capacitor band -- the team-coloured element, same grammar as the turret
+    # -- and the recessed emitter port above it. Both are proud of the head so
+    # they are drawn after it, and both drop their top face: a wrap-around
+    # band is a strip of side faces, not a slab sitting on the roof.
+    m.box(-7.9, -5.9, 3.0, 7.9, 5.9, 4.4, accent, order=1, shadow=False, top_face=False)
+    m.box(-4.2, -6.0, 5.4, 4.2, 6.0, 8.4, dim(body, 0.5), order=1, shadow=False,
+          top_face=False)
+    # Twin discharge rods standing off the brow, splayed just enough to leave
+    # a gap for the arc. The right rod snaps short when damaged, so the
+    # silhouette itself carries the damage state.
+    for sx, live in ((-1, True), (1, not damaged)):
+        tip = _arct_rod_tip(sx, live)
+        m.strut((sx * 3.6, -0.5, 10.6), tip, 1.7,
+                mix(LEGACY_GRAY_DARK, LEGACY_GRAY, 0.35), cap=lit(LEGACY_GRAY, 0.1), order=2)
+        if live:
+            m.strut(tip, (tip[0] * 1.05, tip[1] + 0.4, tip[2] + 1.8), 1.8,
+                    accent, cap=lit(accent, 0.35), order=2)
+    return m
+
+
+def _arct_rod_tip(sx, live=True):
+    return (sx * 5.5, 1.5 if live else 0.5, 20.5 if live else 14.0)
+
+
 def arct_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
-    """Arc Turret: a squat discharge base with a forked electrode, deliberately
-    NOT a nozzle/fuel-tank silhouette so it reads as "electric discharge"
-    rather than "flamethrower" -- see docs/BACKLOG.md issue #36 (reverses the
-    FTUR chassis reuse issue #14 left in place)."""
     ground_y0, ground_y1 = h - 8, h
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=10)
-    cx = w // 2
-    base_top = ground_y0 - 10
-    contact_shadow(sd, cx, ground_y0 + 1, 10, 2)
-    # Capacitor housing: shaded, vented, green-trimmed.
-    sd.rrect([cx - 9, base_top, cx + 9, ground_y0], 4, fill=PANEL_BLUEBLACK)
-    sd.arc([cx - 9, base_top, cx + 9, base_top + 8], 180, 360, fill=lit(PANEL_BLUEBLACK, 0.45), width=0.7)
-    sd.rrect([cx - 9, base_top, cx + 9, ground_y0], 4, outline=GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.4), width=0.5)
-    for vx in (-5, 0, 5):
-        sd.line([(cx + vx, base_top + 4), (cx + vx, ground_y0 - 3)], fill=dim(PANEL_BLUEBLACK, 0.6), width=0.7)
-    # Charge indicator pips.
-    for i in range(3):
-        on = not damaged or i == 0
-        sd.px(cx - 4 + i * 4, ground_y0 - 3, SUN_GOLD if on else dim(LEGACY_GRAY, 0.3))
-    # Electrode mast with insulator rings.
-    rod_top = base_top - 12
-    sd.line([(cx, base_top), (cx, rod_top)], fill=LEGACY_GRAY_DARK, width=1.6)
-    sd.line([(cx - 0.6, base_top), (cx - 0.6, rod_top)], fill=lit(LEGACY_GRAY_DARK, 0.4), width=0.4)
-    for ry in (base_top - 4, base_top - 8):
-        sd.line([(cx - 1.8, ry), (cx + 1.8, ry)], fill=lit(LEGACY_GRAY, 0.3), width=0.8)
-    # Forked electrode: two gold prongs with ball tips -- a discharge gap,
-    # not a flame nozzle.
-    for sx in (-1, 1):
-        sd.line([(cx, rod_top), (cx + sx * 5, rod_top - 6)], fill=SUN_GOLD, width=1.4)
-        sd.ellipse([cx + sx * 5 - 1.4, rod_top - 7.4, cx + sx * 5 + 1.4, rod_top - 4.6], fill=lit(SUN_GOLD, 0.3))
-    # The living arc bridging the prongs: jagged bolt + soft glow.
+    ox, oy = w // 2, h - 9
+    base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
+    # Concrete pedestal and the mount race the head sits in -- ellipses, so
+    # the footprint stays a clean oval instead of a polygonal approximation.
+    sd.ellipse([ox - 11, oy - 1.5, ox + 11, oy + 6.5], fill=dim(CONCRETE, 0.35))
+    sd.ellipse([ox - 11, oy - 4, ox + 11, oy + 4], fill=CONCRETE)
+    sd.ellipse([ox - 11, oy - 4, ox + 11, oy + 4], outline=lit(CONCRETE, 0.25), width=0.6)
+    sd.ellipse([ox - 8, oy - 4.6, ox + 8, oy + 1.4], fill=base)
+    sd.ellipse([ox - 8, oy - 5.4, ox + 8, oy + 0.6], fill=lit(base, 0.18))
+    arct_mesh(damaged).draw(sd, ox, oy, ARCT_AZIMUTH)
     if not damaged:
-        sd.ellipse([cx - 6, rod_top - 9, cx + 6, rod_top - 2], fill=GREEN_ACCENT + (55,))
-        sd.line([(cx - 4.6, rod_top - 6), (cx - 1.5, rod_top - 4), (cx + 1.5, rod_top - 7), (cx + 4.6, rod_top - 6)],
-                fill=lit(GREEN_ACCENT, 0.35), width=0.7)
-    if damaged:
-        scorch(sd, [(cx + 3, base_top + 4, 3), (cx - 5, ground_y0 - 2, 2)])
+        # The living arc bridging the rod tips: soft bloom, then a jagged bolt.
+        # Drawn in screen space over the solid, the way the muzzle/effect
+        # overlays elsewhere in this file are.
+        tips = sorted(mesh_screen((t[0], t[1], t[2] + 1.7), ox, oy, ARCT_AZIMUTH)
+                      for t in (_arct_rod_tip(-1), _arct_rod_tip(1)))
+        (lx, ly), (rx, ry) = tips
+        # Opaque, not a translucent bloom: indexed sprites have 1-bit alpha,
+        # so anything drawn at low opacity is simply thresholded away (the
+        # lesson issue #64 learned the hard way on the infantry fade).
+        mid = ((lx + rx) / 2, (ly + ry) / 2)
+        sd.line([(lx, ly), (mid[0] - 1.2, mid[1] - 1.8), (mid[0] + 1.2, mid[1] + 1.4), (rx, ry)],
+                fill=lit(GREEN_ACCENT, 0.5), width=1.0)
+        for (px_, py_) in ((lx, ly), (rx, ry)):
+            sd.px(round(px_), round(py_), lit(GREEN_ACCENT, 0.75))
+        # Charge-state pips on the emitter port, the one small warm detail
+        # that is not team-coloured.
+        for i in range(3):
+            sd.px(ox - 4 + i * 4, oy - 6, GREEN_ACCENT if i else lit(GREEN_ACCENT, 0.4))
+    else:
+        scorch(sd, [(ox + 4, oy - 12, 3.5), (ox - 6, oy - 4, 2.5)])
+
+
+def arct_shadow_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
+    ox, oy = w // 2, h - 9
+    sd.ellipse([ox - 9, oy - 2, ox + 13, oy + 6], fill=(0, 0, 0, 255))
+    arct_mesh(damaged).draw_shadow(sd, ox, oy, ARCT_AZIMUTH)
 
 
 def sgwnd_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
@@ -981,10 +1273,13 @@ def sghyd_draw(sd, w=FAM33_W, h=FAM33_H, damaged=False):
 
 
 # ---------------------------------------------------------------------------
-# Rotating sprites: turret (32 facings x2 for damaged) and the two drone
-# bodies (32 facings, no damaged variant -- matching tran/mh60/heli, which
-# don't define one either). All rotation happens at SS resolution before the
-# downscale, so facings stay crisp.
+# Image-plane rotation, for genuinely top-down radially symmetric hardware
+# only: the two drone bodies and the Hauler Drone (32 facings, no damaged
+# variant -- matching tran/mh60/heli, which don't define one either). Rotation
+# happens at SS resolution before the downscale, so facings stay crisp.
+# Anything with a distinguishable top, front and side -- the defence turrets --
+# goes through Mesh instead; see issue #65 for why this is not a matter of
+# taste.
 # ---------------------------------------------------------------------------
 
 def rotated_frames(draw_fn, frame_w, frame_h, n=32, outlined=True, **kwargs):
@@ -1004,67 +1299,107 @@ def rotated_frames(draw_fn, frame_w, frame_h, n=32, outlined=True, **kwargs):
     return frames
 
 
-def sgtur_turret_draw(sd, w, h, damaged=False):
-    """Volumetric second pass (issue #48's technique, batch 2). Constraint
-    unique to this sprite: all 32 facings are produced by rotating this one
-    frame, so any direction-dependent shading on the housing would spin with
-    it and read as inconsistent lighting across facings. The drum therefore
-    uses only radially symmetric volume cues (a stepped cylinder: skirt ->
-    wall -> lit top rim -> face, plus radial vent slits), and directional
-    detail lives on the barrel alone, which genuinely points somewhere."""
-    cx, cy = w // 2, h // 2 + 6
-    top_y = cy - h // 2 + 4
-    barrel = GREEN_PRIMARY if not damaged else LEGACY_GRAY
-    ring = SUN_GOLD if not damaged else RUST
-    # Barrel: dark flanks around a lit spine (cylinder read along its axis).
-    sd.rect([cx - 3, top_y, cx + 3, cy], fill=barrel)
-    sd.line([(cx - 2.4, top_y), (cx - 2.4, cy)], fill=dim(barrel, 0.3), width=0.6)
-    sd.line([(cx - 0.6, top_y), (cx - 0.6, cy)], fill=lit(barrel, 0.35), width=1)
-    sd.line([(cx + 2.4, top_y), (cx + 2.4, cy)], fill=dim(barrel, 0.35), width=0.6)
-    # Induction coil rings along the barrel -- raised collars, each with a
-    # lit upper edge, giving the tube volume (and grid flavor).
-    for ry_ in (top_y + 4.5, top_y + 7.5):
-        sd.line([(cx - 3.3, ry_), (cx + 3.3, ry_)], fill=dim(ring, 0.2), width=0.9)
-        sd.line([(cx - 3.3, ry_ - 0.6), (cx + 3.3, ry_ - 0.6)], fill=lit(ring, 0.25), width=0.4)
-    # Muzzle collar with a lit lip.
-    sd.rect([cx - 3.4, top_y, cx + 3.4, top_y + 2.5], fill=ring)
-    sd.line([(cx - 3.4, top_y), (cx + 3.4, top_y)], fill=lit(ring, 0.4), width=0.5)
-    # Housing drum: stepped concentric discs -- skirt, side wall, lit top
-    # rim, recessed face -- a cylinder seen from above (radially symmetric).
-    sd.ellipse([cx - 8.5, cy - 6.5, cx + 8.5, cy + 6.5], fill=dim(PANEL_BLUEBLACK, 0.5))
-    sd.ellipse([cx - 8, cy - 6.1, cx + 8, cy + 6.1], fill=dim(PANEL_BLUEBLACK, 0.25))
-    sd.ellipse([cx - 7.2, cy - 5.5, cx + 7.2, cy + 5.5], outline=lit(PANEL_BLUEBLACK, 0.35), width=0.6)
-    sd.ellipse([cx - 6.6, cy - 5, cx + 6.6, cy + 5], fill=PANEL_BLUEBLACK)
-    sd.ellipse([cx - 8.5, cy - 6.5, cx + 8.5, cy + 6.5], outline=dim(ring, 0.25), width=0.5)
-    # Radial vent slits on the face (rotation-safe by symmetry).
+# ---------------------------------------------------------------------------
+# Grid Defense Turret (SGTUR) rotating assembly -- 32 facings x 2 damage
+# states, drawn as 32 genuine viewpoints of one 3D weapon station (issue #65).
+#
+# Construction copied from the stock rotating turret next to it (sam2.shp):
+# the mount never moves and never re-lights, the superstructure is a solid
+# redrawn per facing, and the barrel is offset from the pivot so the direction
+# it points is legible at a glance. The sheet holds only the rotating
+# assembly -- sequences/structures.yaml draws the fixed pad underneath from
+# stock gunmake.shp, the same split sam: uses.
+# ---------------------------------------------------------------------------
+
+SGTUR_W, SGTUR_H = 48, 44
+SGTUR_PIVOT_DY = 3      # pad contact point, just below the frame centre
+
+
+def sgtur_mesh(damaged=False):
+    """The rotating assembly in world units (x east, y north, z up), zeroed on
+    the pivot at pad level and pointing north at facing 0."""
+    hull = _TUR_HULL if not damaged else mix(_TUR_HULL, DAMAGE_SCORCH, 0.38)
+    cap = _TUR_CAP if not damaged else mix(_TUR_CAP, DAMAGE_SCORCH, 0.42)
+    barrel = _TUR_BARREL if not damaged else mix(_TUR_BARREL, DAMAGE_SCORCH, 0.5)
+    accent = SUN_GOLD if not damaged else RUST
+    m = Mesh()
+    # Hull, then the recessed cap plate above it.
+    m.box(-7.5, -6.5, 2.0, 7.5, 4.5, 9.0, hull, top=lit(hull, 0.12))
+    m.box(-6.2, -5.5, 9.0, 6.2, 3.5, 10.3, cap, top=lit(cap, 0.18))
+    # Conduit band wrapping the hull: the one team-coloured element, sitting
+    # slightly proud so it catches its own shading on every face.
+    m.box(-7.9, -6.9, 4.4, 7.9, 4.9, 5.9, accent, top=lit(accent, 0.25))
+    # Front apron below the barrel line.
+    m.box(-5.5, 4.5, 2.0, 5.5, 6.2, 6.6, dim(hull, 0.12))
+    # Sensor block on the rear left of the cap, with a live status pip.
+    m.box(-5.4, -4.8, 10.3, -3.2, -2.2, 12.6, dim(cap, 0.15),
+          top=(GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.55)))
+    # Mantlet + barrel, carried on top of the hull rather than through its
+    # front face, so the gun is still visible over the roofline when it points
+    # away from the camera -- the read stock turret art keeps at every facing.
+    # Both sit right of the pivot (as in the concept art), so a facing is
+    # legible from the offset alone, not just the barrel angle.
+    tip = 16.4 if not damaged else 13.2
+    m.prism(3.2, 1.2, 9.0, 12.9, 2.5, dim(hull, 0.18), sides=8, top=lit(hull, 0.22))
+    m.box(1.9, 4.0, 10.2, 4.5, tip, 12.5, barrel, top=lit(barrel, 0.3))
+    if not damaged:
+        m.box(1.3, tip - 1.5, 9.8, 5.1, tip + 0.9, 12.9, accent, top=lit(accent, 0.3))
+    return m
+
+
+def _sgtur_mount(sd, ox, oy, damaged=False):
+    """Turntable under the assembly. Drawn with ellipses rather than as mesh
+    faces so it is pixel-identical in all 32 facings (sam2.shp keeps 227
+    pixels byte-identical across its facings for exactly this reason)."""
+    ring = dim(SUN_GOLD, 0.35) if not damaged else dim(RUST, 0.2)
+    base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
+    sd.ellipse([ox - 11, oy - 5.5, ox + 11, oy + 5.5], fill=dim(base, 0.35))
+    sd.ellipse([ox - 11, oy - 6.8, ox + 11, oy + 4.2], fill=base)
+    sd.ellipse([ox - 11, oy - 6.8, ox + 11, oy + 4.2], outline=lit(base, 0.3), width=0.6)
+    sd.ellipse([ox - 8.6, oy - 5.4, ox + 8.6, oy + 3.2], fill=dim(base, 0.25))
+    # Bolt ring: eight studs around the race, one team-coloured feed lug.
     for i in range(8):
         a = i * math.pi / 4 + math.pi / 8
-        sd.line([(cx + 4.3 * math.cos(a), cy + 3.3 * math.sin(a)),
-                 (cx + 5.9 * math.cos(a), cy + 4.5 * math.sin(a))],
-                fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
-    # Emitter dome: concentric radial ramp, highlight dead center so every
-    # facing keeps the same dome read.
-    sd.ellipse([cx - 3.4, cy - 3.4, cx + 3.4, cy + 3.4], fill=dim(ring, 0.35))
-    sd.ellipse([cx - 2.8, cy - 2.8, cx + 2.8, cy + 2.8], fill=ring)
-    sd.ellipse([cx - 1.6, cy - 1.6, cx + 1.6, cy + 1.6], fill=lit(ring, 0.3))
-    sd.ellipse([cx - 0.7, cy - 0.7, cx + 0.7, cy + 0.7], fill=lit(ring, 0.6))
+        sd.px(round(ox + 9.7 * math.cos(a)), round(oy - 1.3 + 4.8 * math.sin(a)), lit(base, 0.45))
+    sd.rect([ox - 2, oy + 2.4, ox + 2, oy + 4.2], fill=ring)
+
+
+def sgtur_turret_draw(sd, w, h, damaged=False, facing=0.0):
+    ox, oy = w // 2, h // 2 + SGTUR_PIVOT_DY
+    _sgtur_mount(sd, ox, oy, damaged)
+    sgtur_mesh(damaged).draw(sd, ox, oy, facing)
     if damaged:
-        sd.ellipse([cx - 6, cy - 9, cx - 2.4, cy - 6], fill=DAMAGE_SCORCH + (220,))
-        sd.px(cx + 4, cy + 2, RUST)
+        # Blown cap panel and a rust streak down the hull, on the fixed
+        # top-left the key light comes from (so it never spins with the
+        # barrel the way the old rotated-image damage decal did).
+        sd.ellipse([ox - 5.5, oy - 11.5, ox - 1.5, oy - 8.5], fill=DAMAGE_SCORCH + (235,))
+        sd.ellipse([ox - 4.6, oy - 10.8, ox - 2.6, oy - 9.6], fill=(0, 0, 0, 255))
+        sd.px(ox + 5, oy - 4, RUST)
+        sd.px(ox + 5, oy - 3, dim(RUST, 0.3))
+
+
+def sgtur_shadow_draw(sd, w, h, damaged=False, facing=0.0):
+    ox, oy = w // 2, h // 2 + SGTUR_PIVOT_DY
+    sd.ellipse([ox - 10, oy - 4.5, ox + 12, oy + 5], fill=(0, 0, 0, 255))
+    sgtur_mesh(damaged).draw_shadow(sd, ox, oy, facing)
+
+
+def sgtur_frames(damaged=False, n=32):
+    """One genuine viewpoint per facing: frame 0 = north, winding
+    counter-clockwise (the convention heli.shp's 32-facing sheet confirms)."""
+    bodies, shadows = [], []
+    for i in range(n):
+        deg = i * (360.0 / n)
+        bodies.append(outline_sprite(render(sgtur_turret_draw, SGTUR_W, SGTUR_H,
+                                            damaged=damaged, facing=deg)))
+        shadows.append(render_shadow_mask(sgtur_shadow_draw, SGTUR_W, SGTUR_H,
+                                          damaged=damaged, facing=deg))
+    return bodies, shadows
 
 
 def sgtur_base_draw(sd, w, h, damaged=False):
-    """Non-rotating reference frame, used only to derive the icon."""
-    cx, cy = w // 2, h // 2 + 4
-    sd.ellipse([cx - 16, cy - 12, cx + 16, cy + 12], fill=dim(PANEL_BLUEBLACK, 0.2))
-    sd.ellipse([cx - 15, cy - 11.2, cx + 15, cy + 11], fill=PANEL_BLUEBLACK)
-    sd.arc([cx - 15, cy - 11.2, cx + 15, cy + 11], 150, 300, fill=lit(PANEL_BLUEBLACK, 0.35), width=1)
-    sd.ellipse([cx - 16, cy - 12, cx + 16, cy + 12], outline=dim(SUN_GOLD, 0.2), width=0.6)
-    sd.rect([cx - 3, cy - 20, cx + 3, cy], fill=GREEN_PRIMARY)
-    sd.line([(cx - 0.6, cy - 20), (cx - 0.6, cy)], fill=lit(GREEN_PRIMARY, 0.35), width=1)
-    sd.rect([cx - 3.4, cy - 20, cx + 3.4, cy - 17.5], fill=SUN_GOLD)
-    sd.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=SUN_GOLD)
-    sd.ellipse([cx - 2, cy - 2, cx + 0.4, cy + 0.4], fill=lit(SUN_GOLD, 0.4))
+    """Three-quarter view for the programmatic cameo fallback."""
+    sgtur_turret_draw(sd, w, h, damaged=damaged, facing=28.0)
 
 
 def _rotor_disc(sd, ex, ey, r):
@@ -1876,6 +2211,12 @@ def make_icon_from_motif(big, label=None):
     return icon
 
 
+# Buildings that bake a cast shadow into their sprite the way the stock art
+# does. The rest of the roster still has none -- a deliberate follow-up, not
+# an oversight (docs/BACKLOG.md issue #65).
+SHADOW_DRAWS = {"arct": lambda sd, w, h, damaged=False: arct_shadow_draw(sd, w, h, damaged)}
+
+
 def main():
     flat_buildings = [
         ("sgpwr", sgpwr_draw, FAM23_W, FAM23_H),
@@ -1893,17 +2234,29 @@ def main():
     ]
 
     for name, draw_fn, w, h in flat_buildings:
-        sheet = two_frame_sheet(draw_fn, w, h)
+        if name in SHADOW_DRAWS:
+            # Buildings whose sprite carries a baked ground shadow have to go
+            # through indexed_strip so SHADOW_IDX survives (see its docstring).
+            sheet = indexed_strip(
+                [render(draw_fn, w, h, damaged=d) for d in (False, True)],
+                [render_shadow_mask(SHADOW_DRAWS[name], w, h, damaged=d) for d in (False, True)],
+                w, h)
+        else:
+            sheet = two_frame_sheet(draw_fn, w, h)
         save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
         icon = make_icon(draw_fn, w, h, label=ICON_LABELS.get(name))
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
 
     # Turret: 32 idle-facing frames + 32 damaged-facing frames, single strip.
-    idle_rot = rotated_frames(sgtur_turret_draw, 48, 44, 32, damaged=False)
-    damaged_rot = rotated_frames(sgtur_turret_draw, 48, 44, 32, damaged=True)
-    all_frames = idle_rot + damaged_rot
-    save_pngsheet(sheet_of(all_frames, 48, 44), "sgturturret.png", 48, 44, len(all_frames), indexed=True)
-    save_pngsheet(make_icon(sgtur_base_draw, 48, 44, label=ICON_LABELS["sgtur"]), "sgturicon.png", ICON_W, ICON_H, 1)
+    # Each facing is a separate view of the 3D assembly (issue #65), and the
+    # baked ground shadow is injected as SHADOW_IDX rather than painted.
+    idle_bodies, idle_shadows = sgtur_frames(damaged=False)
+    dmg_bodies, dmg_shadows = sgtur_frames(damaged=True)
+    save_pngsheet(indexed_strip(idle_bodies + dmg_bodies, idle_shadows + dmg_shadows,
+                                SGTUR_W, SGTUR_H),
+                  "sgturturret.png", SGTUR_W, SGTUR_H, 64, indexed=True)
+    save_pngsheet(make_icon(sgtur_base_draw, SGTUR_W, SGTUR_H, label=ICON_LABELS["sgtur"]),
+                  "sgturicon.png", ICON_W, ICON_H, 1)
 
     # Drones: 32-facing body only (no damaged state, matching tran/mh60/heli).
     for name, draw_fn, fw, fh in (
