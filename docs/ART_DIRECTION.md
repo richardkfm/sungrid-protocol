@@ -65,6 +65,8 @@ Any future original humanoid actor follows this track, not `rotated_frames`. Sti
 
 Two things generalise beyond the turrets. **Cast shadows must be injected as `SHADOW_IDX`, not painted** — index 4 is a stencil, so it is excluded from the RGB→index search, and the roster's older `contact_shadow()` calls (drawn at alpha 70, below the 1-bit alpha threshold) have never produced a visible shadow at all. And **anything meant to glow has to be opaque**: translucent blooms are thresholded away by the same 1-bit alpha, which is why the Arc Turret's discharge is a hard zigzag with bright tip pixels rather than a soft halo.
 
+A defence that turns should also *show* it turning: the Arc Turret's head was subsequently split off its body into its own 32-facing turret sprite (`docs/BACKLOG.md` issue #66), so both defence structures now point at what they are engaging rather than sitting at a fixed angle. The body sheet keeps only the pedestal — the fixed-mount half of the same rule.
+
 ![Grid Defense Turret across 8 facings — the previous rotated sheet, the rebuilt per-facing sheet, and decoded stock `sam2.shp` for construction — plus the Arc Turret's idle and damaged frames before and after.](concept-art/issue65-turrets-before-after.png)
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

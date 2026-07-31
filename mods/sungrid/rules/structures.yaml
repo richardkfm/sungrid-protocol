@@ -908,14 +908,14 @@ ARCT:
 	Turreted:
 		TurnSpeed: 512
 		Offset: 0,0,112
+	WithSpriteTurret:
+		RequiresCondition: !build-incomplete
+		Recoils: false
 	Armament:
 		Weapon: ArcDischarge
 		LocalOffset: 512,0,0
 	AttackTurreted:
 		PauseOnCondition: build-incomplete
-	-QuantizeFacingsFromSequence:
-	BodyOrientation:
-		QuantizedFacings: 8
 	Power:
 		Amount: -20
 	DetectCloaked:
@@ -924,6 +924,8 @@ ARCT:
 	FireWarheadsOnDeath:
 		Weapon: BuildingExplode
 		EmptyWeapon: BuildingExplode
+	-BodyOrientation:
+	ClassicFacingBodyOrientation:
 
 SAM:
 	Inherits: ^Defense

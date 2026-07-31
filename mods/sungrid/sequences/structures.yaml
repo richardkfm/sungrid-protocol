@@ -873,8 +873,8 @@ agun:
 	icon:
 		Filename: agunicon.shp
 
-arct:
-	Defaults:
+arct: # Body sheet is the fixed pedestal only; the emitter head rotates as a
+	Defaults: # separate turret sprite, the same split `sam:`/`sgtur:` use.
 		Filename: arct.png
 	idle:
 	damaged-idle:
@@ -882,6 +882,15 @@ arct:
 	make:
 		Start: 0
 		Length: 1
+	turret:
+		Filename: arctturret.png
+		Facings: 32
+		UseClassicFacings: True
+	damaged-turret:
+		Filename: arctturret.png
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
 	bib:
 		TilesetFilenames:
 			SNOW: mbFTUR.sno

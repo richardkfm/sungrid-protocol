@@ -641,7 +641,7 @@ class Mesh:
         self.poly([(px, py, z1) for px, py in ring], top, order)
         return self
 
-    def strut(self, a, b, r, color, cap=None, order=0):
+    def strut(self, a, b, r, color, cap=None, order=0, shadow=True):
         """Square-section beam between two arbitrary points (electrode rods,
         braces) -- the one shape here that is not axis-aligned."""
         ax = _v_norm(tuple(b[i] - a[i] for i in range(3)))
@@ -654,7 +654,8 @@ class Mesh:
             off = tuple(r * (su * u[i] + sv * v[i]) for i in range(3))
             corners.append((tuple(a[i] + off[i] for i in range(3)),
                             tuple(b[i] + off[i] for i in range(3))))
-        self.solids.append([p for pair in corners for p in pair])
+        if shadow:
+            self.solids.append([p for pair in corners for p in pair])
         for i in range(4):
             (a0, b0), (a1, b1) = corners[i], corners[(i + 1) % 4]
             self.quad(a0, a1, b1, b0, color, order)
@@ -1064,7 +1065,15 @@ def sgrel_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
         scorch(sd, [(cx, node_y + 8, 2.5), (cx + 4, ground_y0 - 2, 2)])
 
 
-ARCT_AZIMUTH = 208.0    # fixed three-quarter view (the actor never rotates)
+# The Arc Turret's head is a rotating sprite of its own (issue #66), so the
+# body sheet keeps only the pedestal. `Turreted: Offset: 0,0,112` draws the
+# turret sprite 112 world units up, which at RA's 24px/1024-unit scale is
+# 2.625px, so the head has to be drawn that much lower inside its own frame
+# for its underside to land back on the pedestal.
+ARCT_AZIMUTH = 208.0                 # three-quarter view, used for the cameo
+ARCT_TUR_LIFT = 112 * 24 / 1024
+ARCT_PEDESTAL_DY = 9                 # pedestal top, below the body frame centre
+ARCT_TUR_OY = SG1x1_H / 2 + ARCT_PEDESTAL_DY + ARCT_TUR_LIFT
 
 
 def arct_mesh(damaged=False):
@@ -1095,11 +1104,15 @@ def arct_mesh(damaged=False):
     # silhouette itself carries the damage state.
     for sx, live in ((-1, True), (1, not damaged)):
         tip = _arct_rod_tip(sx, live)
+        # The rods are excluded from the cast shadow: at this camera a 10px
+        # mast throws a shadow longer than the whole footprint, which reads as
+        # a smear rather than as contact. Only the head's own mass casts.
         m.strut((sx * 3.6, -0.5, 10.6), tip, 1.7,
-                mix(LEGACY_GRAY_DARK, LEGACY_GRAY, 0.35), cap=lit(LEGACY_GRAY, 0.1), order=2)
+                mix(LEGACY_GRAY_DARK, LEGACY_GRAY, 0.35), cap=lit(LEGACY_GRAY, 0.1),
+                order=2, shadow=False)
         if live:
             m.strut(tip, (tip[0] * 1.05, tip[1] + 0.4, tip[2] + 1.8), 1.8,
-                    accent, cap=lit(accent, 0.35), order=2)
+                    accent, cap=lit(accent, 0.35), order=2, shadow=False)
     return m
 
 
@@ -1108,45 +1121,73 @@ def _arct_rod_tip(sx, live=True):
 
 
 def arct_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
+    """Body sheet: the fixed pedestal and mount race only. The emitter head
+    rides above this as a separate 32-facing turret sprite."""
     ground_y0, ground_y1 = h - 8, h
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=10)
-    ox, oy = w // 2, h - 9
+    ox, oy = w // 2, h - ARCT_PEDESTAL_DY
     base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
     # Concrete pedestal and the mount race the head sits in -- ellipses, so
-    # the footprint stays a clean oval instead of a polygonal approximation.
+    # the footprint stays a clean oval, and so the race is pixel-identical
+    # under every facing of the head (sam2.shp's fixed-mount rule).
     sd.ellipse([ox - 11, oy - 1.5, ox + 11, oy + 6.5], fill=dim(CONCRETE, 0.35))
     sd.ellipse([ox - 11, oy - 4, ox + 11, oy + 4], fill=CONCRETE)
     sd.ellipse([ox - 11, oy - 4, ox + 11, oy + 4], outline=lit(CONCRETE, 0.25), width=0.6)
     sd.ellipse([ox - 8, oy - 4.6, ox + 8, oy + 1.4], fill=base)
     sd.ellipse([ox - 8, oy - 5.4, ox + 8, oy + 0.6], fill=lit(base, 0.18))
-    arct_mesh(damaged).draw(sd, ox, oy, ARCT_AZIMUTH)
-    if not damaged:
-        # The living arc bridging the rod tips: soft bloom, then a jagged bolt.
-        # Drawn in screen space over the solid, the way the muzzle/effect
-        # overlays elsewhere in this file are.
-        tips = sorted(mesh_screen((t[0], t[1], t[2] + 1.7), ox, oy, ARCT_AZIMUTH)
-                      for t in (_arct_rod_tip(-1), _arct_rod_tip(1)))
-        (lx, ly), (rx, ry) = tips
-        # Opaque, not a translucent bloom: indexed sprites have 1-bit alpha,
-        # so anything drawn at low opacity is simply thresholded away (the
-        # lesson issue #64 learned the hard way on the infantry fade).
-        mid = ((lx + rx) / 2, (ly + ry) / 2)
-        sd.line([(lx, ly), (mid[0] - 1.2, mid[1] - 1.8), (mid[0] + 1.2, mid[1] + 1.4), (rx, ry)],
-                fill=lit(GREEN_ACCENT, 0.5), width=1.0)
-        for (px_, py_) in ((lx, ly), (rx, ry)):
-            sd.px(round(px_), round(py_), lit(GREEN_ACCENT, 0.75))
-        # Charge-state pips on the emitter port, the one small warm detail
-        # that is not team-coloured.
-        for i in range(3):
-            sd.px(ox - 4 + i * 4, oy - 6, GREEN_ACCENT if i else lit(GREEN_ACCENT, 0.4))
-    else:
-        scorch(sd, [(ox + 4, oy - 12, 3.5), (ox - 6, oy - 4, 2.5)])
+    # Anchor bolts around the race, and a team-coloured feed lug at the front.
+    for i in range(8):
+        a = i * math.pi / 4 + math.pi / 8
+        sd.px(round(ox + 9.4 * math.cos(a)), round(oy - 2 + 4.4 * math.sin(a)), lit(base, 0.4))
+    sd.rect([ox - 2, oy + 1.6, ox + 2, oy + 3.2], fill=(SUN_GOLD if not damaged else RUST))
+    if damaged:
+        scorch(sd, [(ox + 6, oy - 2, 3), (ox - 7, oy + 2, 2.5)])
 
 
 def arct_shadow_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
-    ox, oy = w // 2, h - 9
-    sd.ellipse([ox - 9, oy - 2, ox + 13, oy + 6], fill=(0, 0, 0, 255))
-    arct_mesh(damaged).draw_shadow(sd, ox, oy, ARCT_AZIMUTH)
+    ox, oy = w // 2, h - ARCT_PEDESTAL_DY
+    sd.ellipse([ox - 5, oy - 0.5, ox + 17, oy + 7], fill=(0, 0, 0, 255))
+
+
+def arct_turret_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0):
+    """Rotating emitter head: the mesh plus its live discharge arc."""
+    ox, oy = w // 2, ARCT_TUR_OY
+    arct_mesh(damaged).draw(sd, ox, oy, facing)
+    if damaged:
+        return
+    # The living arc bridging the rod tips, anchored to the projected
+    # electrode heads so it tracks the head through every facing. Opaque, not
+    # a translucent bloom: indexed sprites have 1-bit alpha, so anything drawn
+    # at low opacity is simply thresholded away (issue #64's fade lesson).
+    tips = sorted(mesh_screen((t[0], t[1], t[2] + 1.7), ox, oy, facing)
+                  for t in (_arct_rod_tip(-1), _arct_rod_tip(1)))
+    (lx, ly), (rx, ry) = tips
+    mid = ((lx + rx) / 2, (ly + ry) / 2)
+    sd.line([(lx, ly), (mid[0] - 1.2, mid[1] - 1.8), (mid[0] + 1.2, mid[1] + 1.4), (rx, ry)],
+            fill=lit(GREEN_ACCENT, 0.5), width=1.0)
+    for (px_, py_) in ((lx, ly), (rx, ry)):
+        sd.px(round(px_), round(py_), lit(GREEN_ACCENT, 0.75))
+
+
+def arct_turret_shadow_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0):
+    arct_mesh(damaged).draw_shadow(sd, w // 2, ARCT_TUR_OY, facing)
+
+
+def arct_turret_frames(damaged=False, n=32):
+    bodies, shadows = [], []
+    for i in range(n):
+        deg = i * (360.0 / n)
+        bodies.append(render(arct_turret_draw, SG1x1_W, SG1x1_H, damaged=damaged, facing=deg))
+        shadows.append(render_shadow_mask(arct_turret_shadow_draw, SG1x1_W, SG1x1_H,
+                                          damaged=damaged, facing=deg))
+    return bodies, shadows
+
+
+def arct_icon_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
+    """Body and head together, for the programmatic cameo fallback (the
+    shipped cameo is issue #45's photographic one)."""
+    arct_draw(sd, w, h, damaged)
+    arct_mesh(damaged).draw(sd, w // 2, h - ARCT_PEDESTAL_DY, ARCT_AZIMUTH)
 
 
 def sgwnd_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
@@ -2216,6 +2257,10 @@ def make_icon_from_motif(big, label=None):
 # an oversight (docs/BACKLOG.md issue #65).
 SHADOW_DRAWS = {"arct": lambda sd, w, h, damaged=False: arct_shadow_draw(sd, w, h, damaged)}
 
+# Cameos whose motif is not simply the body sheet's draw function (the Arc
+# Turret's body is only its pedestal now that the head rotates separately).
+ICON_DRAWS = {"arct": arct_icon_draw}
+
 
 def main():
     flat_buildings = [
@@ -2244,8 +2289,16 @@ def main():
         else:
             sheet = two_frame_sheet(draw_fn, w, h)
         save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
-        icon = make_icon(draw_fn, w, h, label=ICON_LABELS.get(name))
+        icon = make_icon(ICON_DRAWS.get(name, draw_fn), w, h, label=ICON_LABELS.get(name))
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
+
+    # Arc Turret: the head is its own 32-facing turret sprite (issue #66), so
+    # arct.png above is the pedestal alone and this is what rotates on top.
+    arct_idle, arct_idle_sh = arct_turret_frames(damaged=False)
+    arct_dmg, arct_dmg_sh = arct_turret_frames(damaged=True)
+    save_pngsheet(indexed_strip(arct_idle + arct_dmg, arct_idle_sh + arct_dmg_sh,
+                                SG1x1_W, SG1x1_H),
+                  "arctturret.png", SG1x1_W, SG1x1_H, 64, indexed=True)
 
     # Turret: 32 idle-facing frames + 32 damaged-facing frames, single strip.
     # Each facing is a separate view of the 3D assembly (issue #65), and the
