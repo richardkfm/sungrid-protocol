@@ -1478,3 +1478,67 @@ That is the third pass over this sprite (issue #36 gave it dedicated art; issue 
 **Phase:** 6/7. Verified by rendering the regenerated indexed sheet against decoded stock `e6.shp` frames on the *same* palette at 1×/2×/6× (scale, silhouette mass, feet-on-centre, shadow shape all now match), by frame-by-frame renders of every animation group, and by checking the shipped file's metadata/indices (`FrameSize 20,26`, `FrameAmount 437`, 19 distinct indices, index 4 present for the shadow). Not checked in a live client here — the "see a live temperate battlefield" blocker from issue #49 is still open.
 
 **Deferred:** the same "rotate one drawing for every facing" construction is still how `ARCT`'s build-up and the two drones are generated. That is *correct* for the drones and the turret (radially symmetric top-down hardware, noted in-code for `sgtur_turret_draw`), so nothing else in the roster inherits this bug — but if any other humanoid actor gets original art later, it needs `PC`/`disr_upright`'s per-facing approach, not `rotated_frames`.
+
+### 65. Grid Defense Turret and Arc Turret rebuilt as 3D solids — the turret's facings were rotated too — FIXED
+
+**Player request:** "Can you do the same procedure for grid turret and disruptor turret? Taking an example gfx from Legacy game and modify or enhance it. Only if necessary render it in 3d from scratch."
+
+"The same procedure" is issue #64's: decode the stock art in this repo, work out how it is actually built, and rebuild to that recipe rather than reshading what is there. Doing that immediately contradicted #64's own closing note, which excused the turret from the rotated-facings bug on the grounds that it is "radially symmetric top-down hardware". It is not: it is a boxy weapon station seen from an elevated camera, and rotating one drawing of it spins the mount, the shading and the light along with the gun.
+
+**How the stock rotating turret is actually built** (decoded `mods/sungrid/bits/sam2.shp` — engine-independent, the file is in the repo — 48×24, 32 idle facings + 32 damaged):
+- **227 pixels are byte-identical across all 32 facings.** The mount is drawn once and never moves; only the superstructure is redrawn.
+- Each facing is a genuine **viewpoint of a solid**, with the barrel/rack foreshortening as it swings toward or away from the camera — not the same silhouette at a different angle.
+- The **key light stays put in world space**, so the lit faces of the housing do not travel with the gun.
+- The whole assembly stays inside ~22×19 px, and one facing uses ~30 palette indices.
+- Ground foreshortening is roughly **2:1**: `heli.shp`'s 32-facing sheet gives (22−9)/(37−13) = 0.54 from its north-facing height and west-facing width over a 13px beam.
+
+**What was wrong with the shipped art:**
+1. `sgturturret.png` was one drawing spun 32 times (`rotated_frames`), so the drum, its shading and its vents rotated with the barrel. Worse, because the drum was drawn 6px below the frame centre and the frame centre is the pivot, **the mount visibly orbited** as the turret tracked a target.
+2. The turret read as a flat keyhole — a top-down ellipse with a striped stick — with no volume at the game's camera angle and no cast shadow, next to ported stock defences that have both.
+3. `arct.png` had no volume at all: a flat rounded blob with a 1px mast and a forked electrode, dimmer and smaller than the stock bib drawn underneath it.
+
+**Fix (`mods/sungrid/bits/gen_concept_art.py`; regenerated `sgturturret.png` and `arct.png` only):**
+- New **axonometric mesh renderer**: `Mesh` (quads/`box`/`prism`/`strut`), painter-sorted with back-face culling, flat per-face shading from a fixed world-space key light, orthographic projection with the ground plane at the measured 2:1 and height 1:1. `mesh_screen()` projects a model point so screen-space effect overlays can be anchored to geometry instead of hardcoded pixels. Faces carry an explicit draw `order` for detail proud of a parent solid — in this projection higher geometry sorts as nearer, so a band wrapped around a tall hull loses the depth test against that hull's own front face however the key is computed; back-face culling makes ordering it explicitly correct.
+- `Mesh.draw_shadow()` flattens each solid onto the ground plane along a shadow slant and fills its 2D hull (per-*face* flattening produced detached slivers). The slant is deliberately not derived from the shading light: stock RA throws building shadows down-right, and matching the ported art matters more here than internal physical consistency — the same split the infantry sheet already makes.
+- `indexed_strip()` composes RGBA frames plus native-resolution shadow masks into the indexed sheet. Shadows have to be injected at that point rather than painted into the frame, because `SHADOW_IDX` is excluded from `_index_for`'s nearest-colour search (it is a stencil index, not a colour), so a black blob drawn into the RGBA frame comes back as ordinary near-black paint. This is why the rest of the roster's `contact_shadow()` calls have never produced a visible shadow: they are drawn at alpha 70 and the 1-bit indexed alpha discards them.
+- **SGTUR** is now a ring-mounted weapon station: a turntable drawn with ellipses so it is pixel-identical in all 32 facings (sam2's 227-pixel trick), carrying a hull, a recessed cap plate, a cooling/sensor block, a team-coloured conduit band and a barrel mounted *on top of* the hull and offset right of the pivot. Mounting it high keeps the gun visible over the roofline when it points away from the camera; offsetting it means a facing reads from the offset alone, not just the barrel angle. Damaged loses the muzzle collar and ~3px of barrel, so the damage state is in the silhouette, and its blown cap panel sits on the fixed top-left the key light comes from instead of spinning with the gun.
+- **ARCT** is a ring-mounted emitter head on a concrete pedestal: hull, brow plate, cooling stack, the same team-coloured capacitor band, a recessed emitter port with green charge pips, and twin discharge rods with team-coloured electrode heads bridged by an arc. The arc is drawn **opaque**, not as a translucent bloom — indexed sprites have 1-bit alpha, so a low-opacity glow is simply thresholded away (issue #64's fade lesson). Damaged snaps the right rod short and kills the arc.
+- Face illumination is snapped to `MESH_SHADE_STEPS` levels so a material's faces land on a few flat tones rather than a continuous ramp. This flattens face *interiors* only; the residual index spread (52–70 per facing against stock's 28–35) comes from the 4×→1× downscale blending along face edges and would need native-index authoring, as the infantry sheet uses, to remove entirely.
+
+Frame sizes and counts are unchanged (`sgturturret.png` 48×44 ×64, `arct.png` 40×36 ×2), so `mods/sungrid/sequences/structures.yaml` needs **no edits**, and both cameos stay issue #45's photographic ones (regenerated via `gen_photo_cameos.py` after the sprite regen, unchanged on disk). Re-running the generator leaves every other sprite and cameo in `mods/sungrid/bits` byte-identical.
+
+![Grid Defense Turret across 8 facings — the shipped rotated sheet (before), the rebuilt per-facing sheet (after), and decoded stock `sam2.shp` as the construction reference — plus the Arc Turret's idle and damaged frames before and after.](concept-art/issue65-turrets-before-after.png)
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/sgturturret.png`, `mods/sungrid/bits/arct.png`. Review render: `docs/concept-art/issue65-turrets-before-after.png`.
+
+**Labels:** `type:bug`, `type:art`, `area:mod-content`
+
+**Phase:** 6/7. Verified by rendering all 32 idle and 32 damaged facings against decoded stock `sam2.shp` facings on the same palette (fixed mount, per-facing foreshortening and stationary key light all now match), and by checking the shipped files' metadata (`FrameSize 48,44` / `FrameAmount 64` and `FrameSize 40,36` / `FrameAmount 2`, index 4 present for the baked shadows, remap indices 80–95 present for the conduit bands). Not checked in a live client here — the "see a live temperate battlefield" blocker from issue #49 is still open.
+
+**Open risk worth a live look:** the old sheet drew its drum 6px below the frame centre; the rebuild centres the assembly on the pivot (biased 3px down) because `WithSpriteTurret` draws the sprite centred on the turret position and `SGTUR`'s `Turreted:` sets no `Offset`. That is geometrically right and it is what stops the mount orbiting, but it does shift where the assembly sits over the stock `gunmake.shp` pad, which cannot be checked without a client.
+
+**Deferred:** the two drones are still generated by `rotated_frames`, which remains correct for them (genuinely top-down, radially symmetric). The rest of the roster still bakes no cast shadow — `Mesh`/`indexed_strip` now make that a small change per building, but it is a separate pass, as is giving the remaining in-world sprites (Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Smart Grid Relay, Resilience Shelter, Sensor Array, Hydrogen Plant, the drones, and Recycling Depot's still-stock sprite) the same volumetric treatment.
+
+### 66. Arc Turret emitter head split into a rotating turret sprite — DONE
+
+**Player request:** "Any chance we add more states of movement like the other one?" — asked after confirming that `ARCT` had only two frames and no turning sprites, while `SGTUR` has 32 facings.
+
+`ARCT` already had a `Turreted:` trait: it turns, and the turn matters mechanically, because `Armament: LocalOffset: 512,0,0` is rotated by the turret's facing, so the discharge spawns from the side facing the target. It simply had no `WithSpriteTurret`, so nothing rotating was ever drawn — the head always pointed the same way no matter what it was shooting. This is the readability gap issue #65 left in place.
+
+**Change** — the same body/turret split `sam:` and `sgtur:` already use:
+- `mods/sungrid/bits/arct.png` (unchanged frame geometry, 40×36 ×2) is now the **fixed pedestal alone**: concrete plinth, mount race, anchor bolts and a team-coloured feed lug, drawn with ellipses so it is pixel-identical under every facing of the head — sam2.shp's fixed-mount rule from issue #65.
+- New `mods/sungrid/bits/arctturret.png` (40×36 ×64: 32 idle facings + 32 damaged) carries the **emitter head**: hull, brow plate, cooling stack, team-coloured capacitor band, recessed emitter port, and the twin discharge rods with the arc bridging their electrode heads. The arc is re-derived per facing from the projected rod tips (`mesh_screen`), so it tracks the head instead of being pinned to fixed pixels.
+- Rods are excluded from the cast shadow (`Mesh.strut(..., shadow=False)`): at this camera a 10px mast throws a shadow longer than the whole footprint, which reads as a smear rather than as contact. Only the head's own mass casts.
+- `Turreted: Offset: 0,0,112` draws the turret sprite 112 world units up, which at RA's 24px/1024-unit scale is 2.625px, so the head is authored that much lower inside its own frame (`ARCT_TUR_OY`) for its underside to land back on the pedestal.
+
+**Rules (`mods/sungrid/rules/structures.yaml`)** — `ARCT`'s trait set now mirrors `SAM`/`SGTUR` exactly: added `WithSpriteTurret:` (`RequiresCondition: !build-incomplete`, `Recoils: false`), and swapped the "logical turret, no turret sprite" pattern (`-QuantizeFacingsFromSequence:` + `BodyOrientation: QuantizedFacings: 8`) for the "turret sprite" pattern (`-BodyOrientation:` + `ClassicFacingBodyOrientation:`), which is what `UseClassicFacings: True` sequences require. **Sequences** gained `turret:` / `damaged-turret:` entries pointing at the new sheet.
+
+Deliberately **not** changed: `TurnSpeed: 512`. It is effectively instantaneous — the head snaps to its target's direction rather than sweeping — which was a reasonable value while nothing was drawn. The win here is that a defence now visibly points at what it is engaging; if watching it sweep is wanted, that one value is the knob (`SGTUR`/`SAM` use 120, which is still under a tenth of a second for a full rotation).
+
+![Arc Turret: the static two-frame body it replaced, then the rebuilt idle and damaged sheets composited over the fixed pedestal across 8 of the 32 facings.](concept-art/issue66-arct-turret.png)
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/arct.png`, `mods/sungrid/bits/arctturret.png` (new), `mods/sungrid/rules/structures.yaml`, `mods/sungrid/sequences/structures.yaml`. Review render: `docs/concept-art/issue66-arct-turret.png`.
+
+**Labels:** `type:art`, `type:enhancement`, `area:mod-content`
+
+**Phase:** 6/7. Verified by compositing the body and turret sheets at the engine's own 2.625px turret lift across all facings and both damage states, and by checking the new sheet's metadata (`FrameSize 40,36`, `FrameAmount 64`, index 4 present for the shadows, remap indices 80–95 present for the band and electrode heads). The rules/sequence change follows `SAM`'s and `SGTUR`'s working pattern trait for trait, and CI's rules and sequence validation covers it, but as with issue #65 this is not checked in a live client — the issue #49 blocker is still open.

@@ -57,6 +57,18 @@ Before more than one contributor (human or AI-assisted) produces art, lock: spri
 
 Any future original humanoid actor follows this track, not `rotated_frames`. Still programmatic first-pass art, so the real-artist-pass status above is unaffected.
 
+**Follow-up: rotating hardware is a third track — build the solid, then view it (see `docs/BACKLOG.md` issue #65).** Issue #64 above excused the Grid Defense Turret from the rotated-facings bug on the grounds that it is radially symmetric top-down hardware. Decoding the stock rotating turret (`sam2.shp`) showed that was wrong: a defence turret is a boxy object seen from an elevated camera, and the stock sheet keeps **227 pixels byte-identical across all 32 facings** because the mount is drawn once and only the superstructure is redrawn — as a genuine view of a solid, with the key light fixed in world space. Rotating one drawing instead spun the mount and its shading with the gun, and (because the pivot is the frame centre) made the mount visibly orbit as the turret tracked. So there are now three authoring tracks here, and the choice is about what the object *is*:
+
+- **Buildings and static hardware:** draw one front-above elevation at 4× and downscale (the issue #40 recipe).
+- **Figures:** author natively in palette indices, per facing (the issue #64 recipe above).
+- **Rotating hardware:** build it once as a 3D solid and render each facing as a real viewpoint, via `Mesh` in `gen_concept_art.py`. Ground foreshortening is **2:1** and height is 1:1, measured off the stock 32-facing sheets. The mount stays out of the mesh and is drawn with ellipses so it is pixel-identical every facing; the barrel is mounted high and offset from the pivot so both its direction and the facing read at a glance; damage lives in the silhouette (a shorter barrel, a snapped rod), not only in decals.
+
+Two things generalise beyond the turrets. **Cast shadows must be injected as `SHADOW_IDX`, not painted** — index 4 is a stencil, so it is excluded from the RGB→index search, and the roster's older `contact_shadow()` calls (drawn at alpha 70, below the 1-bit alpha threshold) have never produced a visible shadow at all. And **anything meant to glow has to be opaque**: translucent blooms are thresholded away by the same 1-bit alpha, which is why the Arc Turret's discharge is a hard zigzag with bright tip pixels rather than a soft halo.
+
+A defence that turns should also *show* it turning: the Arc Turret's head was subsequently split off its body into its own 32-facing turret sprite (`docs/BACKLOG.md` issue #66), so both defence structures now point at what they are engaging rather than sitting at a fixed angle. The body sheet keeps only the pedestal — the fixed-mount half of the same rule.
+
+![Grid Defense Turret across 8 facings — the previous rotated sheet, the rebuilt per-facing sheet, and decoded stock `sam2.shp` for construction — plus the Arc Turret's idle and damaged frames before and after.](concept-art/issue65-turrets-before-after.png)
+
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.
 
 ## Beyond building art: full visual identity (Phase 6/7)
