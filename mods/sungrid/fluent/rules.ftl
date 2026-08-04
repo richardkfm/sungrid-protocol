@@ -991,6 +991,9 @@ bot-turtle-ai =
 bot-naval-ai =
     .name = Naval AI
 
+bot-grid-broker-ai =
+    .name = Grid Broker AI
+
 ## map-generators.yaml
 label-random-map = Random Map
 label-clear-map-generator-option-tile = Tile
