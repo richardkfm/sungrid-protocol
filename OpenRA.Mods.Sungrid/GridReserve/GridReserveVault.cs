@@ -23,7 +23,12 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public readonly int Capacity = 8000;
 
 		[Desc("Maximum Credits converted into Reserve per tick. Prevents dumping an entire treasury into Reserve in one move.")]
-		public readonly int DepositRate = 30;
+		public readonly int DepositRate = 10;
+
+		[Desc("Spendable Credits the Vault will never draw the owner below. Vaults bank the *surplus* above this,",
+			"not every Credit that arrives - without it a Vault absorbs income the instant it lands and the owner",
+			"can never spend anything while any Vault is still filling, which is 'save only', not spend-vs-save.")]
+		public readonly int MinimumOperatingBalance = 3000;
 
 		[Desc("Percentage (0-100) of this Vault's held Reserve that is drained from the owner's total Reserve when the Vault is destroyed.")]
 		public readonly int DestructionDrainPercent = 50;
@@ -68,7 +73,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			{
 				var room = info.Capacity - CurrentReserve;
 				var wanted = Math.Min(info.DepositRate, room);
-				var available = playerResources.GetCashAndResources();
+
+				// Only the surplus above the operating balance is bankable. Vaults tick in sequence and each
+				// re-reads the current balance, so the floor holds across all of a player's Vaults, not per-Vault.
+				var available = playerResources.GetCashAndResources() - info.MinimumOperatingBalance;
 				var amount = Math.Min(wanted, available);
 
 				if (amount > 0 && playerResources.TakeCash(amount))
