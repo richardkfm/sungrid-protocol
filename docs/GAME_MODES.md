@@ -88,7 +88,9 @@ Bots read every player's Reserve total directly rather than inferring it from th
 
 This section records the concrete trait design implemented for Phase 3, superseding the open questions in `docs/ARCHITECTURE.md`'s "New C# traits" friction point for this specific mechanic.
 
-**The Vault is the existing Battery Bank (`SILO` in `mods/sungrid/rules/structures.yaml`), not a new actor.** `docs/BUILDINGS.md` already scoped "Battery Bank (Vault)" as one evolving building — Phase 2 shipped its storage-capacity role, Phase 3 adds the Grid Reserve deposit role on the same actor/art. No new art or actor id was introduced.
+**The Vault is the existing Battery Bank (`SILO` in `mods/sungrid/rules/structures.yaml`), not a new actor.** `docs/BUILDINGS.md` already scoped "Battery Bank (Vault)" as one evolving building — Phase 2 shipped its storage-capacity role, Phase 3 adds the Grid Reserve deposit role on the same actor. No new actor id was introduced. It initially kept stock RA's silo art too; that was replaced in `docs/BACKLOG.md` issue #70 with dedicated Battery Bank art (`mods/sungrid/bits/sgvlt.png`, wired via `RenderSprites: Image: sgvlt`), since an ore bin filling with ore is the wrong read for a building that banks Credits as grid capacity. The nine `stages` frames now show battery charge, which is the same fill-fraction the trait already drove.
+
+**Naming convention: "Vault" is internal, "Battery Bank" is what the player sees.** These docs, the trait names (`GridReserveVault`), and the C# `[Desc]` modder documentation all say *Vault*, because that is what the thing is in design terms. Every string a player actually reads says *Battery Bank* — the actor's display name, the in-match briefing popup (`label-grid-reserve-briefing-line1`…`line5`), and the baked cameo label. Keep new player-facing text on that side of the split: a player never sees a building called a Vault, so using the word in the lobby or HUD sends them looking for something that does not exist. (This was a real leak in the lobby checkbox description until issue #70's follow-up.)
 
 Three traits, `OpenRA.Mods.Sungrid/GridReserve/`:
 

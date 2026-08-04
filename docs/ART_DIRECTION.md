@@ -69,6 +69,17 @@ A defence that turns should also *show* it turning: the Arc Turret's head was su
 
 ![Grid Defense Turret across 8 facings — the previous rotated sheet, the rebuilt per-facing sheet, and decoded stock `sam2.shp` for construction — plus the Arc Turret's idle and damaged frames before and after.](concept-art/issue65-turrets-before-after.png)
 
+**Follow-up: a reused stock sprite can be wrong about the *mechanic*, not just the theme (see `docs/BACKLOG.md` issue #70).** The Grid Reserve Vault — the building the mode's whole win condition runs through — was still rendering stock RA's `silo2.shp`, a rusty open-topped bin filling with ore. Every earlier silhouette fix in this document was about two actors looking alike; this one is different, and worse: the art was *legible and wrong*, telling the player the building stores ore when it banks Credits as grid capacity. Treat "does this sprite describe what the building actually does?" as a distinct check from "is this sprite distinguishable from its neighbours?" — a well-drawn, unambiguous sprite can still fail it.
+
+Two constraints generalise from the replacement:
+
+- **A fill-stage building has to stay readable at every stage, damaged included.** `WithResourceLevelSpriteBody` picks a frame by fill fraction, so `sgvlt.png` carries 9 charge stages *and* 9 damaged charge stages. The damaged half is the easy one to get wrong — issue #40's bug was 9 identical damaged frames — and here it also matters for play: Core Rule 4 cancels a Lockdown when Reserve drops below target, so hiding the level while a Vault is under fire hides the exact information a raid turns on. The level is double-coded: a discrete 8-segment gauge (countable stage by stage) plus a continuous bottom-up fill in each cell window (readable at RTS zoom, where 2px LEDs are not).
+- **Team-colour accents must be stamped at native resolution.** `SUN_GOLD` is what routes onto the 80–95 remap ramp, but the 4× LANCZOS downscale reaches past a pixel's own block, so even a pixel-aligned gold segment picks up enough of the dark bezel beside it to land back on a *fixed* palette entry. The first pass produced a gauge whose segments alternated team-coloured and off-palette gold along its length. Accents on this recipe get re-stamped after the downscale (`_vlt_accents`/`sgvlt_frame`).
+
+Also worth carrying forward: this building's mass is drawn to roughly the 24px tile it occupies rather than filling the 40px frame, so the rows of 4–6 Vaults the AI actually builds tile into one continuous battery farm instead of colliding.
+
+![Battery Bank: stock silo2.shp charge stages above, the new sgvlt.png stages below, on temperate ground, plus the build-menu cameo.](concept-art/issue70-battery-bank.png)
+
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.
 
 ## Beyond building art: full visual identity (Phase 6/7)

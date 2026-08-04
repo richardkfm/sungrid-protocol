@@ -1065,6 +1065,165 @@ def sgrel_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
         scorch(sd, [(cx, node_y + 8, 2.5), (cx + 4, ground_y0 - 2, 2)])
 
 
+# ---------------------------------------------------------------------------
+# Battery Bank (SILO / the Grid Reserve Vault).
+#
+# The mode's signature building had never been drawn: it still rendered stock
+# RA's silo2.shp, a rusty open-topped ore bin, which reads as "ore storage"
+# in a mode whose whole point is that the Vault banks *Credits* as grid
+# capacity (docs/GAME_MODES.md). Decoding silo2.shp here (24x24, 9 fill stages
+# + 9 damaged, a baked ShadowIndex-4 blob, and a fill drawn in indices 83-91 --
+# i.e. inside the 80-95 player-remap ramp, so stock's fill level is already
+# team-coloured) gives the constraints this has to hit:
+#
+#   - WithResourceLevelSpriteBody picks a frame from `stages` by fill fraction,
+#     so all 9 charge levels must be individually legible, and so must all 9
+#     *damaged* ones -- a damaged Vault still holds Reserve, and hiding the
+#     level while it is under attack would hide exactly the information Core
+#     Rule 4's "Lockdown breaks when Reserve drops below target" turns on.
+#     (This is also the trap issue #40 fell into: 9 identical damaged frames.)
+#   - The charge accent is drawn in SUN_GOLD, which _index_for maps onto the
+#     remap ramp, so charge reads in the owner's colour the way stock's does.
+#
+# Form is the containerised battery energy storage system from the concept
+# renders in docs/concept-art/cameo-sources/: an olive switchgear/inverter
+# cabinet with roof louvres behind a front rank of silver cell canisters. The
+# level is double-coded -- a discrete 8-segment charge readout on the cabinet
+# (one segment per stage, so the exact stage is countable) plus a continuous
+# bottom-up fill in each canister's sight window (readable at RTS zoom, where
+# 2px LEDs are not).
+# ---------------------------------------------------------------------------
+
+SGVLT_STAGES = 9                     # matches `stages:` Length in sequences
+SGVLT_SEGMENTS = SGVLT_STAGES - 1    # stage n lights n of them (0 = empty)
+_VLT_SKID = mix(GREEN_PRIMARY, LEGACY_GRAY_DARK, 0.55)  # cabinet shell
+_VLT_CAN = lit(LEGACY_GRAY, 0.30)                       # cell canister
+_VLT_CANS = ((8, 14), (16, 22), (24, 30))               # x spans, integer pixels
+_VLT_CAN_TOP, _VLT_CAN_BOT = 14, 27
+
+
+_VLT_BAR_X0, _VLT_BAR_Y0, _VLT_BAR_Y1 = 8, 9, 11   # gauge origin, 3px segment pitch
+
+
+def _vlt_charge_px(sd, x0, x1, y0, y1, col):
+    """Fill whole native pixels only (sd.px draws an exact SS x SS block)."""
+    for y in range(int(y0), int(y1) + 1):
+        for x in range(int(x0), int(x1) + 1):
+            sd.px(x, y, col)
+
+
+def _vlt_accents(damaged, charge):
+    """The charge readout as (x, y, colour) *native* pixels.
+
+    SUN_GOLD is what _index_for routes onto the 80-95 player-remap ramp, so
+    these pixels are what make the stored level render in the owner's colour.
+    They have to be re-stamped after the 4x LANCZOS downscale: the kernel
+    reaches past a pixel's own block, so even a pixel-aligned gold segment
+    picks up enough of the dark bezel beside it to land back on a *fixed*
+    palette entry -- which showed up as a gauge whose segments alternated
+    team-coloured and off-palette gold along its length.
+    """
+    live = not damaged
+    on = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    off = dim(LEGACY_GRAY_DARK, 0.15)
+    out = []
+    for i in range(SGVLT_SEGMENTS):
+        col = on if i < charge else off
+        for x in (_VLT_BAR_X0 + i * 3, _VLT_BAR_X0 + i * 3 + 1):
+            for y in range(_VLT_BAR_Y0, _VLT_BAR_Y1 + 1):
+                out.append((x, y, col))
+    wy1 = _VLT_CAN_BOT - 2
+    for cx0, _ in _VLT_CANS:
+        for k in range(charge):
+            col = lit(SUN_GOLD, 0.4) if (live and k == charge - 1) else on
+            for x in range(cx0 + 2, cx0 + 5):
+                out.append((x, wy1 - k, col))
+    return out
+
+
+def sgvlt_frame(damaged=False, charge=SGVLT_STAGES - 1):
+    """One Battery Bank frame, with the charge readout re-stamped at native
+    resolution on top of the supersampled render (see _vlt_accents)."""
+    img = render(sgvlt_draw, SG1x1_W, SG1x1_H, damaged=damaged, charge=charge)
+    px = img.load()
+    for x, y, col in _vlt_accents(damaged, charge):
+        px[x, y] = tuple(col[:3]) + (255,)
+    return img
+
+
+def sgvlt_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, charge=SGVLT_STAGES - 1):
+    """Battery Bank at charge level `charge` (0..SGVLT_STAGES-1)."""
+    live = not damaged
+    ground_y0, ground_y1 = h - 8, h
+    draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=9)
+
+    # --- switchgear cabinet (rear mass) --------------------------------------
+    cab_x0, cab_x1, cab_y0, cab_y1 = 7, 31, 6, 20
+    depth = 3.0
+    skid = _VLT_SKID if live else mix(_VLT_SKID, DAMAGE_SCORCH, 0.3)
+    capped_box(sd, cab_x0, cab_y0, cab_x1, cab_y1, skid, depth=depth, edge=0.36)
+    # Roof louvres, following the receding top face.
+    for t in (0.28, 0.5, 0.72, 0.94):
+        ly = cab_y0 - depth * 0.6 * t
+        sd.line([(cab_x0 + depth * t + 2, ly), (cab_x1 + depth * t - 3, ly)],
+                fill=dim(skid, 0.42), width=0.4)
+    # Access door seam and a rating plate on the front face.
+    sd.line([(cab_x1 - 4, cab_y0 + 2), (cab_x1 - 4, cab_y1 - 1)], fill=dim(skid, 0.45), width=0.5)
+    # Standby pip: stays lit at zero charge so an empty bank still reads as
+    # powered rather than destroyed.
+    sd.px(cab_x0 + 2, cab_y0 + 2, lit(GREEN_ACCENT, 0.3) if live else dim(LEGACY_GRAY, 0.35))
+    # Busbar trunk down to the pad, the shared grid-connection grammar.
+    sd.line([(cab_x1 - 2, cab_y1 - 2), (34, ground_y0 + 1)], fill=POLE_DARK, width=1.0)
+
+    # --- charge readout: one segment per stage --------------------------------
+    # Dimmed rather than dark when damaged: the readout survives, so all nine
+    # damaged frames stay distinguishable from each other.
+    on_col = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    off_col = dim(LEGACY_GRAY_DARK, 0.15)
+    bar_x0, bar_y0, bar_y1 = _VLT_BAR_X0, _VLT_BAR_Y0, _VLT_BAR_Y1
+    sd.rect([bar_x0 - 2, bar_y0 - 1, bar_x0 + SGVLT_SEGMENTS * 3, bar_y1 + 1],
+            fill=mix(PANEL_BLUEBLACK, skid, 0.25))
+    sd.line([(bar_x0 - 2, bar_y0 - 1), (bar_x0 + SGVLT_SEGMENTS * 3, bar_y0 - 1)],
+            fill=lit(skid, 0.3), width=0.5)
+    for i in range(SGVLT_SEGMENTS):
+        sx = bar_x0 + i * 3
+        _vlt_charge_px(sd, sx, sx + 1, bar_y0, bar_y1, on_col if i < charge else off_col)
+
+    # --- cell canisters (front rank) ------------------------------------------
+    # Painted contact shadow rather than a SHADOW_IDX one: the pad the whole
+    # roster stands on is opaque, so a real cast shadow would only ever show
+    # through the gaps *between* the cans, which reads as holes in the sprite.
+    can_top, can_bot = _VLT_CAN_TOP, _VLT_CAN_BOT
+    sd.ellipse([6, can_bot - 0.5, 34, can_bot + 3], fill=dim(CONCRETE, 0.25))
+    can = _VLT_CAN if live else mix(_VLT_CAN, DAMAGE_SCORCH, 0.22)
+    for i, (cx0, cx1) in enumerate(_VLT_CANS):
+        # Anchor foot, then the can body, then a domed terminal cap.
+        sd.rect([cx0 - 1, can_bot - 1, cx1 + 1, can_bot + 1], fill=dim(CONCRETE, 0.05))
+        vcyl(sd, cx0, can_top, cx1, can_bot, can, bands=7)
+        sd.ellipse([cx0, can_top - 2.5, cx1, can_top + 2.5], fill=lit(can, 0.16))
+        sd.ellipse([cx0 + 1, can_top - 2, cx1 - 2.4, can_top + 0.4], fill=lit(can, 0.3))
+        # Retaining straps break up the white cylinder mass.
+        for sy in (can_top + 2, can_top + 9):
+            sd.line([(cx0, sy), (cx1, sy)], fill=dim(can, 0.4), width=0.5)
+        # Terminal post and its lead back into the cabinet.
+        sd.px(cx0 + 2, can_top - 3, POLE_DARK)
+        sd.line([(cx0 + 2.5, can_top - 3), (cx0 + 2.5, can_top - 5)], fill=POLE_DARK, width=0.6)
+        # Sight window: dark slot filled bottom-up with the stored charge, on
+        # whole pixels so every stage moves the fill by exactly one row.
+        wx0, wx1 = cx0 + 2, cx0 + 4
+        wy0, wy1 = can_top + 4, can_bot - 2      # 8 rows: one per lit stage
+        _vlt_charge_px(sd, wx0 - 1, wx1 + 1, wy0 - 1, wy1 + 1, mix(PANEL_BLUEBLACK, can, 0.18))
+        if charge:
+            _vlt_charge_px(sd, wx0, wx1, wy1 - charge + 1, wy1, on_col)
+            _vlt_charge_px(sd, wx0, wx1, wy1 - charge + 1, wy1 - charge + 1,
+                           lit(SUN_GOLD, 0.45) if live else SUN_GOLD)
+
+    if damaged:
+        # Split can seam, rust, and scorch across the cabinet face.
+        sd.line([(24, can_top + 2), (26, can_bot - 2)], fill=RUST, width=0.6)
+        scorch(sd, [(13, cab_y0 + 7, 3.5), (30, can_bot - 6, 2.5)])
+
+
 # The Arc Turret's head is a rotating sprite of its own (issue #66), so the
 # body sheet keeps only the pedestal. `Turreted: Offset: 0,0,112` draws the
 # turret sprite 112 world units up, which at RA's 24px/1024-unit scale is
@@ -2100,6 +2259,7 @@ ICON_LABELS = {
     "sgrel": "Smart Grid Relay",
     "sgwnd": "Wind Turbine Array",
     "sghyd": "Hydrogen Plant",
+    "sgvlt": "Battery Bank",
     "arct": "Arc Turret",
     "sgtur": "Grid Defense Turret",
     "sgdro": "Recon Drone",
@@ -2291,6 +2451,16 @@ def main():
         save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
         icon = make_icon(ICON_DRAWS.get(name, draw_fn), w, h, label=ICON_LABELS.get(name))
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
+
+    # Battery Bank (the Grid Reserve Vault): one strip of 9 charge stages
+    # followed by 9 damaged charge stages, which is what `stages:` /
+    # `damaged-stages:` index into.
+    vlt = [sgvlt_frame(damaged=dmg, charge=stage)
+           for dmg in (False, True) for stage in range(SGVLT_STAGES)]
+    save_pngsheet(sheet_of(vlt, SG1x1_W, SG1x1_H), "sgvlt.png",
+                  SG1x1_W, SG1x1_H, len(vlt), indexed=True)
+    save_pngsheet(make_icon(sgvlt_draw, SG1x1_W, SG1x1_H, label=ICON_LABELS["sgvlt"]),
+                  "sgvlticon.png", ICON_W, ICON_H, 1)
 
     # Arc Turret: the head is its own 32-facing turret sprite (issue #66), so
     # arct.png above is the pedestal alone and this is what rotates on top.

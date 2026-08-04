@@ -1644,3 +1644,37 @@ So the banking was largely free money, and the army was simply the Normal AI's a
 **Phase:** 3 follow-up.
 
 **Definition of done:** With Grid Reserve on, no player's banked Reserve exceeds the map target, and killing a single Vault during an opponent's Lockdown cancels the countdown. The Easy Grid Broker reaches Lockdown eventually but loses to a player who pressures its base. Both need a real skirmish to confirm — the Easy Grid Broker's numbers in particular are reasoned from the Normal AI's config rather than measured, and the risk to watch is over-nerfing: a bot that never threatens the Reserve target at all is not a teaching opponent either.
+
+---
+
+### 70. The Grid Reserve Vault still looked like an ore silo — dedicated Battery Bank art — DONE
+
+**Player report:** "this is still looking like a silo" — asked for a rendered build-menu cameo cut from the concept renders, and an in-world sprite set taking the design into electric battery storage.
+
+**The gap.** The Vault is the `SILO` actor (`docs/GAME_MODES.md` — deliberately not a new actor id), and every prior art pass left its sprite alone: it still rendered stock RA's `silo2.shp`, a rusty open-topped bin filling with **ore**, plus the stock `siloicon.shp` cameo. This is a different failure from every silhouette bug in issues #34/#36/#58/#64/#65, which were all "two actors look alike." This sprite was perfectly legible and told the player the wrong thing — the building banks Credits as grid capacity, and it is the building the mode's entire win condition runs through. It was also the last Sungrid-original-role building still on borrowed art after issue #34's sweep, which missed it precisely because it *is* a stock actor.
+
+**Reference decoded first, as issues #64/#65 established.** `silo2.shp` decodes to 24×24, 18 frames (9 fill stages then 9 damaged stages), a baked `ShadowIndex`-4 blob, and a fill drawn in indices 83–91 — inside the 80–95 remap ramp, so stock's fill level is *already* team-coloured. That pinned the frame layout the replacement has to hit and confirmed team-colouring the charge is the stock-consistent choice, not an invention.
+
+**In-world sprite (`mods/sungrid/bits/sgvlt.png`, 40×36 × 18, indexed).** A containerised battery energy storage system, taken from the same hardware in `docs/concept-art/cameo-sources/desert_base2.png`: an olive switchgear cabinet with roof louvres behind a front rank of three silver cell canisters. Drawn on the issue #40 building recipe (4× supersample, one top-left key light, `capped_box`/`vcyl`), so it sits with the rest of the roster. Three things are specific to it:
+
+- **Charge is double-coded across all 18 frames.** A discrete 8-segment gauge on the cabinet (one segment per stage, so the exact stage is countable) plus a continuous bottom-up fill in each canister's sight window (what actually reads at RTS zoom). The **damaged** nine keep the readout, dimmed rather than dark — issue #40's bug was 9 identical damaged frames, and here it is also a play issue: Core Rule 4 cancels a Lockdown when Reserve drops below target, so the level has to stay visible while the Vault is being shot at, which is exactly when it matters.
+- **Accents are re-stamped at native resolution** (`_vlt_accents`/`sgvlt_frame`). `SUN_GOLD` is what `_index_for` routes onto the remap ramp, but the 4× LANCZOS downscale reaches past a pixel's own block, so even pixel-aligned gold segments picked up enough of the dark bezel beside them to land back on *fixed* palette entries — the first pass produced a gauge whose segments alternated team-coloured and off-palette gold along its length.
+- **Mass drawn to the 24px tile, not the 40px frame.** The AI builds Vaults in rows of 4–6 (issue #67), so an over-wide mass would collide; at tile width a row tiles into one continuous battery farm with each unit's charge still individually readable. The shared 36px ground pad is kept, matching the other 1×1 buildings.
+
+No `SHADOW_IDX` shadow: the pad every building here stands on is opaque, so a real cast shadow would only show through the gaps *between* the canisters, which reads as holes in the sprite. A painted contact shadow on the pad grounds it instead.
+
+**Cameo (`sgvlticon.png`).** An 18th photographic cameo on issue #45's recipe — the battery bank cropped from `desert_base2.png` (92, 308, 244, 422), cover-fitted, with issue #46's single-line white baked label ("BATTERY BANK"). Chosen over the other candidate crops because its green-cabinet-behind-silver-cells composition is the same one the in-world sprite draws, so cameo and building read as the same object.
+
+**Wiring.** `SILO` gains `RenderSprites: Image: sgvlt`; a new `sgvlt:` sequence node mirrors the stock `silo:` frame layout (`stages` 0–8, `damaged-stages` 9–17, `make` frame 0, the stock `mbSILO` bib). The stock `silo:` node is left intact rather than repointed, the same split issue #47 used for `rcyd` vs. the shared civilian `oilb` derrick.
+
+**Verified:** engine + mod build clean; `./utility.sh --check-yaml` exits 0 across all maps; `--check-missing-sprites` reports no missing mod-owned sprite (the one `siloicon.shp` miss is the untouched stock node, missing only because RA content isn't installed in this environment); `--png-sheet-export` confirms the engine's own PNG reader parses `FrameSize: 40,36` / `FrameAmount: 18`, which the sequence ranges are consistent with. Re-running both generators leaves every other sprite and cameo in `mods/sungrid/bits` byte-identical.
+
+**Not verified:** no live client render. Frame-count/layout bugs of the issue #35 kind are ruled out by the metadata check above, but this environment has no RA content installed, so the sprite has not been seen in an actual match.
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/gen_photo_cameos.py`, `mods/sungrid/bits/sgvlt.png` (new), `mods/sungrid/bits/sgvlticon.png` (new), `mods/sungrid/rules/structures.yaml`, `mods/sungrid/sequences/structures.yaml`, `docs/ART_DIRECTION.md`, `docs/GAME_MODES.md`, `docs/BUILDINGS.md`, `docs/concept-art/issue70-battery-bank.png` (new), `CLAUDE.md`.
+
+**Labels:** `type:art`, `area:grid-reserve`, `phase:6`
+
+**Phase:** 6 — visual identity.
+
+**Definition of done:** The Grid Reserve Vault reads as a battery storage system rather than an ore silo, at every charge stage and in the build menu, and a row of them reads as one installation. Frame sizes/counts match the stock layout so no other rules changed.

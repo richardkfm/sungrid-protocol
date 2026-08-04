@@ -20,8 +20,8 @@ checkbox-reusable-engineers =
 
 checkbox-gridreserve =
     .label = Grid Reserve
-    .description = Adds an economic victory: bank Credits into Vaults and hold
-    Grid Lockdown once the Reserve target is reached to win
+    .description = Adds an economic victory: bank Credits into Battery Banks and
+    hold Grid Lockdown once the Reserve target is reached to win
 
 notification-insufficient-funds = Insufficient funds.
 notification-new-construction-options = New construction options.
