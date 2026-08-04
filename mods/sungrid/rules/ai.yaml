@@ -11,6 +11,9 @@ Player:
 	ModularBot@NavalAI:
 		Name: bot-naval-ai.name
 		Type: naval
+	ModularBot@GridBrokerAI:
+		Name: bot-grid-broker-ai.name
+		Type: gridbroker
 	GrantConditionOnBotOwner@rush:
 		Condition: enable-rush-ai
 		Bots: rush
@@ -23,15 +26,21 @@ Player:
 	GrantConditionOnBotOwner@naval:
 		Condition: enable-naval-ai
 		Bots: naval
+	GrantConditionOnBotOwner@gridbroker:
+		Condition: enable-gridbroker-ai
+		Bots: gridbroker
+	# The Grid Broker plays the Normal AI's base/army game and differs only in how it treats the
+	# Grid Reserve economy, so it reuses every Normal AI module rather than duplicating their config.
+	# Its own behaviour lives in the GridReserveBotModule@gridbroker instance at the end of this file.
 	ResourceMapBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-gridbroker-ai
 		ResourceCreatorTypes: mine, gmine
 		ValuableResourceTypes: Ore, Gems
 		HarvesterTypes: harv
 		RefineryTypes: proc
 		EnemyBaseBuildingTypes: pbox,gun,tsla,agun,barr,tent,weap,afld,hpad,fact,powr,apwr,proc,arct
 	SupportPowerBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai
 		Decisions:
 			spyplane:
 				OrderName: SovietSpyPlane
@@ -87,7 +96,7 @@ Player:
 		RefineryTypes: proc
 		InitialHarvesters: 2
 	HarvesterBotModule@normal-turtle:
-		RequiresCondition: enable-normal-ai || enable-turtle-ai
+		RequiresCondition: enable-normal-ai || enable-turtle-ai || enable-gridbroker-ai
 		HarvesterTypes: harv
 		RefineryTypes: proc
 		InitialHarvesters: 4
@@ -118,6 +127,7 @@ Player:
 			atek: 1
 			stek: 1
 			fix: 1
+			silo: 8
 		BuildingFractions:
 			powr: 1
 			proc: 1
@@ -148,7 +158,7 @@ Player:
 			atek: 11000
 			stek: 11000
 	BaseBuilderBotModule@normal:
-		RequiresCondition: enable-normal-ai
+		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
 		MinimumExcessPower: 0
 		MaximumExcessPower: 200
 		ExcessPowerIncrement: 40
@@ -178,6 +188,7 @@ Player:
 			atek: 1
 			stek: 1
 			fix: 1
+			silo: 8
 		BuildingFractions:
 			powr: 1
 			proc: 1
@@ -243,6 +254,7 @@ Player:
 			atek: 1
 			stek: 1
 			fix: 1
+			silo: 8
 		BuildingFractions:
 			powr: 1
 			proc: 1
@@ -302,6 +314,7 @@ Player:
 			atek: 1
 			stek: 1
 			fix: 1
+			silo: 8
 		BuildingFractions:
 			powr: 1
 			proc: 25
@@ -328,10 +341,10 @@ Player:
 			tsla: 21000
 			kenn: 4000
 	PowerDownBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai
 		PowerDownTypes: dome,tsla,mslo,agun,sam
 	BuildingRepairBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai
 	SquadManagerBotModule@rush:
 		RequiresCondition: enable-rush-ai
 		SquadSize: 20
@@ -355,7 +368,7 @@ Player:
 		MoveOldConyardFirst: true
 		MinimumConstructionYardCount: 2
 	McvExpansionManagerBotModule@normal:
-		RequiresCondition: enable-normal-ai
+		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
 		McvTypes: mcv
 		ConstructionYardTypes: fact
 		McvFactoryTypes: weap
@@ -396,7 +409,7 @@ Player:
 			jeep: 4
 			ftrk: 4
 	SquadManagerBotModule@normal:
-		RequiresCondition: enable-normal-ai
+		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
 		SquadSize: 40
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
@@ -409,7 +422,7 @@ Player:
 		ProtectUnitScanRadius: 15
 		ProtectionScanRadius: 12
 	UnitBuilderBotModule@normal:
-		RequiresCondition: enable-normal-ai
+		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
 		UnitsToBuild:
 			e1: 65
 			e2: 15
@@ -540,3 +553,19 @@ Player:
 			jeep: 1
 		UnitDelays:
 			harv: 10000
+	# Grid Reserve participation. Without this the only thing that ever builds a bot a Vault is the
+	# base builder's storage-overflow path (SiloTypes above), which triggers on full ore storage and
+	# has nothing to do with the Reserve target - so a bot tops out one or two Vaults short of it and
+	# the economic victory is effectively human-only. Every instance below no-ops entirely while the
+	# gridreserve lobby checkbox is off. See docs/GAME_MODES.md.
+	GridReserveBotModule:
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
+		VaultTypes: silo
+	GridReserveBotModule@gridbroker:
+		RequiresCondition: enable-gridbroker-ai
+		VaultTypes: silo
+		CoveragePercent: 150
+		ContestedCoveragePercent: 175
+		MinimumCash: 800
+		BuildIntervalTicks: 150
+		AbandonBankingOnEnemyLockdown: false
