@@ -1602,3 +1602,45 @@ This was never bot-specific — a human with Vaults filling was equally locked o
 **Phase:** 3 follow-up.
 
 **Definition of done:** With Grid Reserve on, both a human and a bot retain a spendable balance at all times while Vaults fill, and a bot opponent builds defenses and attacks on a normal schedule instead of standing still. Needs the same kind of real skirmish that found this — the numbers (floor 3000, rate 10, 80% fill gate, 5-minute delay) are reasoned from the engine's own cash gates rather than measured against observed income, so a second playtest should confirm the bot actually reaches Lockdown rather than merely no longer being paralysed.
+
+---
+
+### 69. Grid Reserve bots banked *past* the target, buying an unbreakable Lockdown — plus a new Easy Grid Broker AI — FIXED
+
+**Reported from a playtest screenshot:** the HUD showed `Grid Broker AI 38,413 / 30,000` against `Commander 0 / 30,000`, with the player's summary being "ai opponent crushes me in gridmode" and, on follow-up, "the ai was too hard for me tbh — I just don't understand how AI was able to build that many units AND bank so much funds at the same time."
+
+Two separate problems, one of them a real bug.
+
+**Bug: nothing stopped a Vault banking past the Reserve target.** `GridReserveVault.Tick` filled to `Capacity` with no reference to `GridReserveManager.Target`. Issue #67's `CoveragePercent` (150 for the Grid Broker) sizes Vault *capacity* above the target on purpose, documented as "so that losing a Vault to a raid doesn't immediately put the target out of reach" — but because Vaults filled to capacity regardless, that capacity buffer became a **banked** buffer. The Grid Broker built `ceil(30000 × 1.5 / 8000) = 6` Vaults (48,000 capacity) and banked toward all of it.
+
+This silently deleted the mode's core counterplay. Core Rule 4 in `docs/GAME_MODES.md` says a Lockdown "cancels if Reserve drops below target at any point during the countdown (typically because a Vault was destroyed)" — which only holds while the total sits *at* the target. At 38,413 with ~6,400 per Vault, a kill drains `50% × 6,400 ≈ 3,200`, so breaking the Lockdown needed **three Vault kills inside the 90-second window**, deep in the bot's base. In the reported match the player had no way to contest the win at all.
+
+**Fix:** new `GridReserveVaultInfo.MaximumTargetPercent` (default 100). Deposits are additionally capped so the owner's *total* Reserve — read off the manager, not the Vault — never exceeds that percentage of `Target`. It is re-read every tick rather than latched, so a raid that drops the total below target re-opens banking and the owner has to earn the Lockdown back, which is the loop the docs already describe. Set to 0 to restore fill-to-capacity. With the ceiling in, killing *any single* Vault during a Lockdown drops the total below target and cancels the countdown, as documented. `CoveragePercent` keeps its intended meaning as pure raid redundancy: somewhere to re-bank after losing one.
+
+**Not a bug: how it afforded an army and the banking at the same time.** Verified against `mods/sungrid/rules/ai.yaml` and `mods/sungrid/rules/player.yaml` — bots use the same `PlayerResources` as the human, with no cash bonus, multiplier or handicap anywhere. The real answer is that issue #68's `MinimumOperatingBalance` floor made the bot's economy *more* efficient than a human's, not less:
+
+- The floor pins the bot's spendable balance near 3000 — comfortably above every production gate (`ProductionMinCashRequirement` 500) — and converts everything above it to Reserve. A human typically floats 5–20k unspent between decisions; the bot floats ~3k and banks the rest.
+- Its build rate is limited by *queue throughput*, not cash: with `barr: 7`, `tent: 7`, `weap: 4` it produces from many queues in parallel, and once those are saturated the surplus has nowhere else to go. For a Vault-owning bot that otherwise-idle surplus becomes Reserve at nearly zero opportunity cost.
+- `InitialHarvesters: 4` plus `AdditionalMinimumRefineryCount: 2` and expansion give it a larger harvester fleet than most players bother to build.
+
+So the banking was largely free money, and the army was simply the Normal AI's army. Worth recording as an interaction rather than a defect — but it does mean the `MaximumTargetPercent` ceiling has a side effect: once at target the bot stops banking, its cash climbs past `NewProductionCashThreshold` (8000), and it starts building *additional* production. The Grid Broker's clock is therefore slowed to compensate (below), and the difficulty complaint is answered with a separate personality rather than by tuning the same one in two directions at once.
+
+**Grid Broker clock slowed:** `CoveragePercent` 150 → 125, `ContestedCoveragePercent` 175 → 150 (both now capacity-only, per the ceiling above), and `StartDelayTicks` 5000 → 9000. The Grid Broker starting to bank *earlier* than every other personality (5000 against the stock 7500) meant its economic clock ran before an opponent had an army to contest it with. It keeps `AbandonBankingOnEnemyLockdown: false` and `ExpandAtFillPercent: 65` — racing rather than conceding is its identity.
+
+**New: Easy Grid Broker AI (sixth lobby personality).** The player asked for both the clock change and an easy variant. The point it makes is that a bot which plays the *economy* well is still a full-strength Normal AI in the *ground war*, and it is the ground war that beats a new player — so unlike the Grid Broker it deliberately does **not** reuse the Normal AI's base modules:
+
+- Own `BaseBuilderBotModule@easygridbroker`: 1 barracks / 1 tent / 1 war factory (against 7/7/4), no `atek`/`stek`/`mslo`/naval/air tech, thinner defenses and longer `BuildingDelays`. Army is throughput-limited rather than cash-limited.
+- Own `UnitBuilderBotModule@easygridbroker`: hard `UnitLimits` on *every* line (the Normal AI caps only 4 types, so its army grows until its economy stops it — which for a banking bot is never), capping the total force around 39 units, with no air, naval or heavy tech.
+- Own `SquadManagerBotModule@easygridbroker`: `SquadSize: 25` with `SquadSizeRandomBonus: 0`, so the attack force is flat and predictable rather than the Grid Broker's 18–48, plus `MinimumAttackForceDelay: 1500` for a guaranteed rebuilding gap between pushes.
+- Own `HarvesterBotModule@easygridbroker` with `InitialHarvesters: 2` (half the Normal AI's). Income is the root lever — it caps banking speed *and* army size without either needing a direct nerf.
+- Own `McvExpansionManagerBotModule@easygridbroker` with `MinimumConstructionYardCount: 1`: one base, no expansion. This module is **required, not optional** — it is what deploys the starting MCV, so a personality with no instance of it never builds anything at all.
+- Opted out of `SupportPowerBotModule` entirely: no nukes, paratroopers or spy planes.
+- Own `GridReserveBotModule@easygridbroker`: `StartDelayTicks: 15000`, `ExpandAtFillPercent: 95`, `BuildIntervalTicks: 400`, `CoveragePercent: 110`, and `AbandonBankingOnEnemyLockdown: true` — banks late, one Vault at a time, and concedes an opponent's Lockdown instead of racing it.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveVault.cs`, `mods/sungrid/rules/ai.yaml`, `mods/sungrid/fluent/rules.ftl`, `docs/GAME_MODES.md` (the `GridReserveVault` technical paragraph, the constants table, and the AI opponents section), `CLAUDE.md`.
+
+**Labels:** `type:bug`, `type:balance`, `area:grid-reserve`, `area:ai`, `needs:playtest`
+
+**Phase:** 3 follow-up.
+
+**Definition of done:** With Grid Reserve on, no player's banked Reserve exceeds the map target, and killing a single Vault during an opponent's Lockdown cancels the countdown. The Easy Grid Broker reaches Lockdown eventually but loses to a player who pressures its base. Both need a real skirmish to confirm — the Easy Grid Broker's numbers in particular are reasoned from the Normal AI's config rather than measured, and the risk to watch is over-nerfing: a bot that never threatens the Reserve target at all is not a teaching opponent either.

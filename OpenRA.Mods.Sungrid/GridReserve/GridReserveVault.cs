@@ -30,6 +30,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			"can never spend anything while any Vault is still filling, which is 'save only', not spend-vs-save.")]
 		public readonly int MinimumOperatingBalance = 3000;
 
+		[Desc("Stop depositing once the owner's total Reserve reaches this percentage of the map's Reserve target.",
+			"Banking past the target is not just wasted income - it buys an effectively unbreakable Grid Lockdown.",
+			"The mode's documented counterplay is that killing a Vault drops the owner below target and cancels the",
+			"countdown, which only holds while the total sits at the target rather than well above it. Set to 0 to",
+			"disable the ceiling and let Vaults fill to Capacity regardless.")]
+		public readonly int MaximumTargetPercent = 100;
+
 		[Desc("Percentage (0-100) of this Vault's held Reserve that is drained from the owner's total Reserve when the Vault is destroyed.")]
 		public readonly int DestructionDrainPercent = 50;
 
@@ -72,6 +79,16 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			if (CurrentReserve < info.Capacity)
 			{
 				var room = info.Capacity - CurrentReserve;
+
+				// Ceiling on the owner's *total* Reserve, not this Vault's: spare Vault capacity is meant to be
+				// raid redundancy (somewhere to re-bank after losing one), not extra banked Reserve. Without this
+				// a player with more capacity than target simply fills all of it, and every Vault kill during their
+				// Lockdown comes off a buffer instead of off the target - so the countdown never cancels.
+				// Re-read every tick rather than latched, so a raid that drops the total below target re-opens
+				// banking and the owner has to earn the Lockdown back, as docs/GAME_MODES.md describes.
+				if (info.MaximumTargetPercent > 0 && manager.Target > 0)
+					room = Math.Min(room, (int)((long)manager.Target * info.MaximumTargetPercent / 100) - manager.TotalReserve);
+
 				var wanted = Math.Min(info.DepositRate, room);
 
 				// Only the surplus above the operating balance is bankable. Vaults tick in sequence and each

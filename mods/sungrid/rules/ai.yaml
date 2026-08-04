@@ -14,6 +14,9 @@ Player:
 	ModularBot@GridBrokerAI:
 		Name: bot-grid-broker-ai.name
 		Type: gridbroker
+	ModularBot@EasyGridBrokerAI:
+		Name: bot-easy-grid-broker-ai.name
+		Type: easygridbroker
 	GrantConditionOnBotOwner@rush:
 		Condition: enable-rush-ai
 		Bots: rush
@@ -29,11 +32,20 @@ Player:
 	GrantConditionOnBotOwner@gridbroker:
 		Condition: enable-gridbroker-ai
 		Bots: gridbroker
+	GrantConditionOnBotOwner@easygridbroker:
+		Condition: enable-easygridbroker-ai
+		Bots: easygridbroker
 	# The Grid Broker builds the Normal AI's base, so it reuses those modules rather than duplicating
 	# their config. It has only two of its own: SquadManagerBotModule@gridbroker (attacks on a smaller
 	# force) and the GridReserveBotModule@gridbroker instance at the end of this file.
+	#
+	# The Easy Grid Broker is the learn-the-mode opponent and does NOT reuse the Normal AI's base: a
+	# Grid Reserve bot that plays the economy well is still a full-strength Normal AI in the ground war,
+	# which is what actually beats a player who is new to the mode. It therefore carries its own smaller
+	# base builder, unit builder and squad manager, and deliberately opts out of support powers and base
+	# expansion below. See docs/GAME_MODES.md.
 	ResourceMapBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-gridbroker-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-gridbroker-ai || enable-easygridbroker-ai
 		ResourceCreatorTypes: mine, gmine
 		ValuableResourceTypes: Ore, Gems
 		HarvesterTypes: harv
@@ -100,6 +112,13 @@ Player:
 		HarvesterTypes: harv
 		RefineryTypes: proc
 		InitialHarvesters: 4
+	# Half the Normal AI's opening harvester fleet. Income is the root lever on this bot: it caps how
+	# fast it can bank *and* how big an army it can sustain, without needing either to be nerfed directly.
+	HarvesterBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		HarvesterTypes: harv
+		RefineryTypes: proc
+		InitialHarvesters: 2
 	BaseBuilderBotModule@rush:
 		RequiresCondition: enable-rush-ai
 		MinimumExcessPower: 0
@@ -225,6 +244,54 @@ Player:
 			syrd: 6000
 			atek: 9000
 			stek: 9000
+	# Easy Grid Broker base. Same build order as the Normal AI, but roughly a third of the production
+	# capacity (1 barracks/1 tent/1 war factory against 7/7/4) and no superweapon or advanced tech, so
+	# its army is throughput-limited rather than cash-limited. Defenses are thinned out too - a base a
+	# new player cannot get into is a base whose Vaults they can never raid, which is the one skill
+	# this opponent exists to teach.
+	BaseBuilderBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		MinimumExcessPower: 0
+		MaximumExcessPower: 120
+		ExcessPowerIncrement: 40
+		ExcessPowerIncreaseThreshold: 4
+		ConstructionYardTypes: fact
+		RefineryTypes: proc
+		InititalMinimumRefineryCount: 0
+		AdditionalMinimumRefineryCount: 1
+		ExpansionTolerate: 0
+		ForceExpansionTolerate: 0
+		PowerTypes: powr,apwr
+		TechTypes: dome, fix
+		ProductionTypes: barr,tent,weap
+		NewProductionCashThreshold: 8000
+		SiloTypes: silo
+		DefenseTypes: pbox,gun,sam,arct
+		BuildingLimits:
+			barr: 1
+			tent: 1
+			dome: 1
+			weap: 1
+			fix: 1
+			silo: 8
+		BuildingFractions:
+			powr: 1
+			proc: 1
+			tent: 1
+			barr: 1
+			dome: 1
+			weap: 1
+			pbox: 2
+			gun: 2
+			sam: 1
+			arct: 2
+			fix: 1
+		BuildingDelays:
+			dome: 9000
+			fix: 6000
+			pbox: 4000
+			gun: 5000
+			arct: 4000
 	BaseBuilderBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		MinimumExcessPower: 20
@@ -341,10 +408,10 @@ Player:
 			tsla: 21000
 			kenn: 4000
 	PowerDownBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-easygridbroker-ai
 		PowerDownTypes: dome,tsla,mslo,agun,sam
 	BuildingRepairBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-easygridbroker-ai
 	SquadManagerBotModule@rush:
 		RequiresCondition: enable-rush-ai
 		SquadSize: 20
@@ -381,6 +448,16 @@ Player:
 		MoveOldConyardFirst: false
 		MoveConyardTick: 8000
 		MinimumConstructionYardCount: 2
+	# Required, not optional: this module is what deploys the starting MCV, so a bot without an instance
+	# of it never builds anything at all. MinimumConstructionYardCount 1 is the nerf - it deploys its
+	# opening MCV and then stays on one base, where the other personalities maintain two.
+	McvExpansionManagerBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		McvTypes: mcv
+		ConstructionYardTypes: fact
+		McvFactoryTypes: weap
+		MinimumConstructionYardCount: 1
+		AdditionalConstructionYardCount: 0
 	UnitBuilderBotModule@rush:
 		RequiresCondition: enable-rush-ai
 		UnitsToBuild:
@@ -437,6 +514,25 @@ Player:
 		IgnoredEnemyTargetTypes: AirborneActor
 		ProtectUnitScanRadius: 15
 		ProtectionScanRadius: 12
+	# Easy Grid Broker attacks. SquadSizeRandomBonus is zeroed rather than left at the stock 30, so the
+	# attack force is a flat, predictable 25 instead of the Grid Broker's 18-48 - a defender can learn
+	# what a push looks like. With one war factory feeding it, gathering 25 takes long enough that
+	# attacks arrive as occasional pushes rather than constant pressure, and MinimumAttackForceDelay
+	# guarantees a rebuilding gap after each one.
+	SquadManagerBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		SquadSize: 25
+		SquadSizeRandomBonus: 0
+		MinimumAttackForceDelay: 1500
+		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
+		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ConstructionYardTypes: fact
+		AirUnitsTypes: mig, yak, heli, hind, mh60
+		AircraftTargetType: AirborneActor
+		ProtectionTypes: harv, mcv, mslo, gap, spen, syrd, iron, pdox, tsla, agun, dome, pbox, hbox, gun, sam, atek, weap, fact, proc, silo, hpad, afld, afld.ukraine, powr, apwr, stek, barr, kenn, tent, fix, fpwr, tenf, syrf, spef, weaf, domf, fixf, fapw, atef, pdof, mslf, facf, arct
+		IgnoredEnemyTargetTypes: AirborneActor
+		ProtectUnitScanRadius: 15
+		ProtectionScanRadius: 12
 	UnitBuilderBotModule@normal:
 		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
 		UnitsToBuild:
@@ -473,6 +569,34 @@ Player:
 			harv: 8
 			jeep: 4
 			ftrk: 4
+	# Easy Grid Broker army. Hard UnitLimits across the board are the point: the Normal AI's list caps
+	# only 4 unit types, so its army grows until its economy stops it, which for a Vault-banking bot is
+	# never. Capping every line keeps the total force small and, just as importantly, keeps it simple -
+	# no air, no naval, no Tesla/mammoth tech to answer while still learning the mode.
+	UnitBuilderBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		UnitsToBuild:
+			e1: 60
+			e3: 25
+			harv: 15
+			jeep: 15
+			apc: 15
+			1tnk: 35
+			2tnk: 35
+			3tnk: 25
+			arty: 10
+		UnitLimits:
+			e1: 12
+			e3: 5
+			harv: 4
+			jeep: 2
+			apc: 2
+			1tnk: 6
+			2tnk: 6
+			3tnk: 4
+			arty: 2
+		UnitDelays:
+			arty: 9000
 	SquadManagerBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		SquadSize: 10
@@ -577,12 +701,29 @@ Player:
 	GridReserveBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
 		VaultTypes: silo
+	# Coverage is spare *capacity* only, now that GridReserveVaultInfo.MaximumTargetPercent caps what is
+	# actually banked at the Reserve target - before that ceiling existed these percentages were banked
+	# in full, which bought a Lockdown no single raid could break (see docs/BACKLOG.md issue #69).
+	# StartDelayTicks is also pushed out past the stock 7500: the Grid Broker starting to bank *earlier*
+	# than every other personality meant its clock ran before an opponent had an army to contest it with.
 	GridReserveBotModule@gridbroker:
 		RequiresCondition: enable-gridbroker-ai
 		VaultTypes: silo
-		CoveragePercent: 150
-		ContestedCoveragePercent: 175
-		StartDelayTicks: 5000
+		CoveragePercent: 125
+		ContestedCoveragePercent: 150
+		StartDelayTicks: 9000
 		ExpandAtFillPercent: 65
 		BuildIntervalTicks: 150
 		AbandonBankingOnEnemyLockdown: false
+	# Easy Grid Broker economy: banks late, one Vault at a time, and concedes an opponent's Lockdown
+	# instead of racing it. Its Reserve win is meant to be a clock a player can beat by pressuring the
+	# base, not a race they have to win on income.
+	GridReserveBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		VaultTypes: silo
+		CoveragePercent: 110
+		ContestedCoveragePercent: 110
+		StartDelayTicks: 15000
+		ExpandAtFillPercent: 95
+		BuildIntervalTicks: 400
+		AbandonBankingOnEnemyLockdown: true
