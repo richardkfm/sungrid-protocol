@@ -29,6 +29,9 @@ Playable today: `mods/sungrid` holds real Red Alert-derived gameplay (Phase 1), 
 
 EA has not endorsed and does not support this product. See [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) for the full non-affiliation and licensing notes.
 
+Gameplay (alpha23)
+<img width="2183" height="1434" alt="gridmodea23" src="https://github.com/user-attachments/assets/5761372a-1e5a-45be-90c7-8b2440e97077" />
+
 
 ### Download
 
