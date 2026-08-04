@@ -494,6 +494,44 @@ sghyd:
 	icon:
 		Filename: sghydicon.png
 
+# Grid Reserve Vault art for SILO. The stock `silo:` node above is left intact
+# rather than repointed: SILO now renders `sgvlt` via RenderSprites, and the
+# stock silo2.shp/silomake.shp assets stay available to any map or campaign
+# actor that still wants the original ore bin (the same split issue #47 used
+# for rcyd vs. the shared civilian oilb derrick).
+#
+# Frame layout is silo2.shp's: 9 charge stages, then 9 damaged charge stages,
+# which is what WithResourceLevelSpriteBody indexes into via `stages:` /
+# `damaged-stages:`.
+sgvlt:
+	idle:
+		Filename: sgvlt.png
+		Length: 1
+	damaged-idle:
+		Filename: sgvlt.png
+		Start: 9
+		Length: 1
+	stages:
+		Filename: sgvlt.png
+		Length: 9
+	damaged-stages:
+		Filename: sgvlt.png
+		Start: 9
+		Length: 9
+	make:
+		Filename: sgvlt.png
+		Start: 0
+		Length: 1
+	bib:
+		TilesetFilenames:
+			SNOW: mbSILO.sno
+			INTERIOR: mbSILO.int
+			TEMPERAT: mbSILO.tem
+			DESERT: mbSILO.des
+		Length: *
+	icon:
+		Filename: sgvlticon.png
+
 barr:
 	Defaults:
 		Filename: barr.shp

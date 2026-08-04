@@ -1352,6 +1352,8 @@ PROC:
 
 SILO:
 	Inherits: ^Building
+	RenderSprites:
+		Image: sgvlt
 	Selectable:
 		Bounds: 1024, 1024
 	Buildable:
