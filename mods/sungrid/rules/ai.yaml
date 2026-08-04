@@ -29,9 +29,9 @@ Player:
 	GrantConditionOnBotOwner@gridbroker:
 		Condition: enable-gridbroker-ai
 		Bots: gridbroker
-	# The Grid Broker plays the Normal AI's base/army game and differs only in how it treats the
-	# Grid Reserve economy, so it reuses every Normal AI module rather than duplicating their config.
-	# Its own behaviour lives in the GridReserveBotModule@gridbroker instance at the end of this file.
+	# The Grid Broker builds the Normal AI's base, so it reuses those modules rather than duplicating
+	# their config. It has only two of its own: SquadManagerBotModule@gridbroker (attacks on a smaller
+	# force) and the GridReserveBotModule@gridbroker instance at the end of this file.
 	ResourceMapBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-gridbroker-ai
 		ResourceCreatorTypes: mine, gmine
@@ -409,8 +409,24 @@ Player:
 			jeep: 4
 			ftrk: 4
 	SquadManagerBotModule@normal:
-		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
+		RequiresCondition: enable-normal-ai
 		SquadSize: 40
+		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
+		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ConstructionYardTypes: fact
+		NavalProductionTypes: spen, syrd
+		AirUnitsTypes: mig, yak, heli, hind, mh60
+		AircraftTargetType: AirborneActor
+		ProtectionTypes: harv, mcv, mslo, gap, spen, syrd, iron, pdox, tsla, agun, dome, pbox, hbox, gun, sam, atek, weap, fact, proc, silo, hpad, afld, afld.ukraine, powr, apwr, stek, barr, kenn, tent, fix, fpwr, tenf, syrf, spef, weaf, domf, fixf, fapw, atef, pdof, mslf, facf, arct
+		IgnoredEnemyTargetTypes: AirborneActor
+		ProtectUnitScanRadius: 15
+		ProtectionScanRadius: 12
+	# The Grid Broker attacks on a smaller force than the Normal AI it otherwise copies. Banking is a
+	# commitment of income that could have been army, so an opponent left completely unpressured just
+	# out-banks it - the raid is what buys the time its own Reserve needs.
+	SquadManagerBotModule@gridbroker:
+		RequiresCondition: enable-gridbroker-ai
+		SquadSize: 18
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
 		ConstructionYardTypes: fact
@@ -566,6 +582,7 @@ Player:
 		VaultTypes: silo
 		CoveragePercent: 150
 		ContestedCoveragePercent: 175
-		MinimumCash: 800
+		StartDelayTicks: 5000
+		ExpandAtFillPercent: 65
 		BuildIntervalTicks: 150
 		AbandonBankingOnEnemyLockdown: false

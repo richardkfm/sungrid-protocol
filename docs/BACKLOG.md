@@ -991,7 +991,7 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 
 ---
 
-### 38. Vault DepositRate (750 Credits/sec) likely far exceeds normal income, defeating "spend vs save" once Grid Reserve is on — flagged for playtest, no rules change yet
+### 38. Vault DepositRate (750 Credits/sec) likely far exceeds normal income, defeating "spend vs save" once Grid Reserve is on — CONFIRMED BY PLAYTEST, FIXED IN ISSUE #68
 
 **Problem:** A player who re-tested Grid Reserve after issue #37's fix (this time with the `gridreserve` checkbox actually on) reported being pinned at zero spendable Credits for the whole match while their Battery Bank's Reserve climbed steadily -- distinct from issue #37 (which happened even with the mode *off*). The math suggests this isn't a report of a bug in the deposit logic itself, but a balance gap in the shipped constants: `GridReserveVaultInfo.DepositRate = 30` Credits/tick, at OpenRA's normal-speed tick rate of ~25 ticks/second, is ~750 Credits/second per Vault -- likely well above what a typical early-to-mid Sungrid economy (a couple of harvesters/haulers cycling resources) actually generates. If so, any Vault with capacity remaining will absorb essentially all incoming Credits the instant they arrive, not just the "dump the whole treasury in one panic move" scenario `docs/GAME_MODES.md`'s Core Rules describe the per-tick cap as guarding against. That would mean a player effectively cannot spend Credits on units/defenses at all while any Vault is still filling, contradicting `docs/VISION.md` pillar 3 ("spend vs save is a first-class strategic decision") -- the current numbers may make it "save only," not a choice.
 
@@ -1570,3 +1570,35 @@ Deliberately **not** changed: `TurnSpeed: 512`. It is effectively instantaneous 
 **Phase:** 3 follow-up.
 
 **Definition of done:** With Grid Reserve on, a skirmish bot visibly accumulates Reserve toward the target and can trigger Grid Lockdown; with it off, bot Vault behaviour is unchanged from before. Not verified against a live client in this environment — no `dotnet` SDK is installed here, so the module was written against the fetched `ENGINE_VERSION` sources (`BaseBuilderQueueManager`, `UnitBuilderBotModule`, `ConditionalTrait`, `ModularBot`'s `IsTraitEnabled` tick filter) rather than compiled, and CI is the first real check. The numbers (`CoveragePercent`, `MinimumCash`, the Grid Broker's tuning) are first-pass guesses and are coupled to issue #38's open `DepositRate` question: if a Vault really does absorb ~all income at 750 Credits/sec, a banking bot will starve its own army, and both sets of constants should be retuned together off one playtest rather than separately.
+
+---
+
+### 68. Grid Reserve bots banked themselves into paralysis — the AI built nothing but Vaults, no defenses and no army — FIXED
+
+**Player report,** after playtesting issue #67's new AI: "way too easy — ai only started building silos / missed out on defenses / did not really build any offense / i was already very close to getting to the 30k after realizing there are no attacks towards my base and the base of the enemy is almost defenseless." Screenshot shows the human at 24,000/30,000 Reserve with $6,564 spare, walking four tanks into an essentially undefended enemy base.
+
+**Root cause — this is issue #38, now confirmed with real match data rather than estimated.** `GridReserveVault.Tick` deposited `min(DepositRate, room, GetCashAndResources())` with **no floor whatsoever**, at `DepositRate = 30`/tick ≈ 750 Credits/second *per Vault*. Every bot production path in the engine is gated on spendable cash at exactly the same threshold:
+
+- `BaseBuilderQueueManager.TickQueue`: `if (playerResources.GetCashAndResources() < Info.ProductionMinCashRequirement /* 500 */) return false;` — a broke bot queues nothing in *any* building or defense category.
+- `UnitBuilderBotModule.BotTick`: the same 500-Credit gate — no units.
+- `BaseBuilderBotModule.NewProductionCashThreshold` (7000–8000): never reached — no additional production buildings.
+
+So issue #67's module, which correctly sized Vault count to the Reserve target (5–6 Vaults, plus up to 8 from the stock overflow path), had every one of those Vaults draining in parallel from a single treasury the moment they finished. The bot's cash sat at zero permanently and it could not build a pillbox, a tank, or a second war factory for the rest of the match. Two aggravating factors on top of the same cause: the Vault (`SILO`) is buildable from the **Defense** queue, the same queue as `pbox`/`gun`/`tsla`/`sam`/`arct`, so a 150-Credit Vault trickling in at near-zero cash blocked every defense behind it for minutes at a time; and the module queued Vaults as fast as the queue went idle, with no pacing against how full the existing ones were.
+
+This was never bot-specific — a human with Vaults filling was equally locked out of spending, which is what issue #38 predicted. It only became *visible* through the AI because a human can look at the sidebar and stop building Vaults, and because issue #39 made the mode on by default.
+
+**Fix, in three parts:**
+
+1. **`GridReserveVaultInfo.MinimumOperatingBalance` (new, default 3000).** Vaults now bank only the surplus *above* a spendable floor: `available = GetCashAndResources() - MinimumOperatingBalance`. Vaults tick in sequence and each re-reads the current balance, so the floor holds across all of a player's Vaults rather than per-Vault. This is issue #38's second suggested remedy ("gating deposits to only pull Credits above a configurable minimum operating balance, so a Vault draws down *surplus* rather than *all* income"), chosen over simply lowering the rate because no rate below a player's income restores the ability to *spend* — only a floor does.
+2. **`DepositRate` 30 → 10** (750 → 250 Credits/second per Vault). Still far above what a panic-dump needs to feel like a commitment (a full 8000-capacity Vault takes ~32s from a large treasury), without being an instantaneous sink.
+3. **`GridReserveBotModule` pacing.** New `StartDelayTicks` (default 7500 ≈ 5 minutes) so a bot establishes a base and an army before converting income into Reserve at all, and new `ExpandAtFillPercent` (default 80) so it adds the next Vault only once the ones already standing are ~80% full — keeping roughly one Vault filling at a time instead of five. `MinimumCash` dropped 1500 → 2000 as a plain "am I broke" guard, since it is no longer doing the pacing work.
+
+**Also:** the Grid Broker AI now has its own `SquadManagerBotModule@gridbroker` (`SquadSize: 18` vs. the Normal AI's 40) instead of reusing the Normal AI's squad module. Banking is income that could have been army, so a Grid Broker that never pressures its opponent just loses the bank race to an opponent playing normally; the raid is what buys its own Reserve the time it needs. Its `GridReserveBotModule` instance also gained `StartDelayTicks: 5000` and `ExpandAtFillPercent: 65`, i.e. it commits to the economy earlier and wider than the stock personalities, which is its whole identity.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveVault.cs`, `OpenRA.Mods.Sungrid/GridReserve/GridReserveBotModule.cs`, `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md` (Core Rules rule 1, the `GridReserveVault` technical paragraph, the constants table, and the AI opponents section — this changes a documented rule, per the RFC workflow in `docs/CONTRIBUTING.md`), `CLAUDE.md`. Closes issue #38.
+
+**Labels:** `type:bug`, `type:balance`, `area:grid-reserve`, `area:economy`, `needs:playtest`
+
+**Phase:** 3 follow-up.
+
+**Definition of done:** With Grid Reserve on, both a human and a bot retain a spendable balance at all times while Vaults fill, and a bot opponent builds defenses and attacks on a normal schedule instead of standing still. Needs the same kind of real skirmish that found this — the numbers (floor 3000, rate 10, 80% fill gate, 5-minute delay) are reasoned from the engine's own cash gates rather than measured against observed income, so a second playtest should confirm the bot actually reaches Lockdown rather than merely no longer being paralysed.

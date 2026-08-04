@@ -39,9 +39,17 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[Desc("Never build more than this many Vaults, whatever the Reserve target works out to.")]
 		public readonly int MaximumVaults = 8;
 
-		[Desc("Only queue another Vault while the bot holds at least this much spendable cash.",
-			"Vaults siphon Credits once built, so a bot that overbuilds them starves its own army.")]
-		public readonly int MinimumCash = 1500;
+		[Desc("Only queue another Vault while the bot holds at least this much spendable cash.")]
+		public readonly int MinimumCash = 2000;
+
+		[Desc("Don't bank at all before this tick. A bot that starts converting income into Reserve before it has",
+			"a base and an army never gets either, because every bot production path is gated on spendable cash.")]
+		public readonly int StartDelayTicks = 7500;
+
+		[Desc("Only add another Vault once the ones already standing are at least this percentage full.",
+			"Vaults draw from the same treasury, so several filling at once multiply the drain on the bot's",
+			"income; this keeps roughly one Vault filling at a time and paces capacity against actual banking.")]
+		public readonly int ExpandAtFillPercent = 80;
 
 		[Desc("Ticks between Vault build decisions.")]
 		public readonly int BuildIntervalTicks = 250;
@@ -144,6 +152,12 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			if (enemyLockdown && Info.AbandonBankingOnEnemyLockdown)
 				return;
 
+			// Banking before there is a base and an army to protect it is self-defeating: every bot production
+			// path is gated on spendable cash, so a bot that starts converting income into Reserve too early
+			// simply stops building anything at all.
+			if (world.WorldTick < Info.StartDelayTicks)
+				return;
+
 			if (playerResources.GetCashAndResources() < Info.MinimumCash)
 				return;
 
@@ -153,6 +167,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 			var owned = world.ActorsHavingTrait<GridReserveVault>().Count(a => a.Owner == player && !a.IsDead);
 			if (owned >= wanted)
+				return;
+
+			// Don't stack up empty Vaults: they all draw from the same treasury at once.
+			if (owned > 0 && manager.TotalReserve * 100 < owned * vaultCapacity * Info.ExpandAtFillPercent)
 				return;
 
 			var queuesByCategory = AIUtils.FindQueuesByCategory(player);
