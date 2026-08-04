@@ -994,6 +994,9 @@ bot-naval-ai =
 bot-grid-broker-ai =
     .name = Grid Broker AI
 
+bot-easy-grid-broker-ai =
+    .name = Easy Grid Broker AI
+
 ## map-generators.yaml
 label-random-map = Random Map
 label-clear-map-generator-option-tile = Tile
