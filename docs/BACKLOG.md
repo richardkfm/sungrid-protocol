@@ -1172,7 +1172,7 @@ Fix: a dedicated `mods/sungrid/bits/reskin_cursor_palette.py` (adapted from `res
 - The gold conduit band (the team-color remap element, indices 80–95) was deliberately left on the existing flat `draw_gold_band`/`contact_shadow` grammar — an earlier iteration tried a cast-shadow effect that darkened/notched the band and muddied the team-color read, so that was reverted.
 - Frame sizes/counts are byte-identical to before (sgpwr/sgcry 66×54×2, sgapwr 90×60×2), so `sequences/structures.yaml` needed no changes.
 
-**Deferred:** the rest of the roster (Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Grid Defense Turret, Smart Grid Relay, Resilience Shelter, Sensor Array, Wind Turbine Array, Hydrogen Plant, Arc Turret, the drones, Disruptor Trooper, and Recycling Depot's still-stock in-world sprite) is explicitly out of scope for this pass — planned as follow-up batches using the same `tilted_collector`/`capped_box` vocabulary where applicable. Stock-RA-derived units are a separate, larger Phase 7 effort (see `docs/ART_DIRECTION.md`).
+**Deferred:** the rest of the roster (Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Grid Defense Turret, Smart Grid Relay, Resilience Shelter, Sensor Array, Wind Turbine Array, Hydrogen Plant, Arc Turret, the drones, Disruptor Trooper, and Recycling Depot's still-stock in-world sprite) is explicitly out of scope for this pass — planned as follow-up batches using the same `tilted_collector`/`capped_box` vocabulary where applicable. *(Done across issues #58 (batch 2), #64/#65/#66, #71 and #73 (batch 3), which closes this list.)* Stock-RA-derived units are a separate, larger Phase 7 effort (see `docs/ART_DIRECTION.md`).
 
 **Labels:** `type:art`, `area:mod-content`
 
@@ -1353,7 +1353,7 @@ Iran (issue #54) is untouched — it wasn't part of "remaining," having already 
 - **`disr_pose` (Disruptor Trooper):** flat torso rect became a 4-strip cylindrical shading ramp (dark silhouette edges, brightness peaking left of center); the helmet a sphere (dark base, volume, offset upper-left highlight); the backpack discharge cell gained a lit top facet + shaded right edge; limbs a thin lit front line. Pose skeleton, stances, and the 437-frame facing-major layout are untouched.
 - Frame sizes/counts byte-compatible throughout (sgwnd 66×54×2, sgturturret 48×44×64, disr 20×26×437), so no sequence YAML changes; team-color verified via the established simulated red/blue palette-remap render (gold band/hub/coils/dome/pips all still land on remap indices 80–95).
 
-**Remaining from issue #48's list:** Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Smart Grid Relay, Resilience Shelter, Sensor Array, Hydrogen Plant, Arc Turret, the three drones, and RCYD's still-stock in-world sprite.
+**Remaining from issue #48's list:** Datacenter for AI, Drone Bay, Aerial Fabrication Bay, Smart Grid Relay, Resilience Shelter, Sensor Array, Hydrogen Plant, Arc Turret, the three drones, and RCYD's still-stock in-world sprite. *(All since done: Arc Turret in issue #65/#66, Smart Grid Relay and RCYD in issue #71, and the rest — plus both flying drones — in issue #73, which closes this list.)*
 
 **Labels:** `type:art`, `area:mod-content`
 
@@ -1713,7 +1713,7 @@ That redraw exposed a second, quieter bug on the same actor: **its gold conduit 
 
 ---
 
-### 72. `contact_shadow()` punches a transparent hole through the sprite it is drawn on — OPEN
+### 72. `contact_shadow()` punches a transparent hole through the sprite it is drawn on — DONE (fixed in issue #73)
 
 **Found while implementing issue #71**, verified against unmodified art on `main`.
 
@@ -1739,3 +1739,44 @@ The same is visible in the "before" column of `docs/concept-art/issue71-rcyd-sgr
 **Phase:** 6 — visual identity.
 
 **Definition of done:** No Sungrid-original sprite has transparent pixels inside its own ground pad, and the buildings that should cast a shadow bake a real `SHADOW_IDX` one.
+
+**Resolution (issue #73).** The helper now paints opaque — `dim(base, f)` of whatever it lands on, with `base=SUN_GOLD` for pools that land on the conduit band so the shadow stays on the remap ramp instead of putting a grey bar across a team-coloured strip. Measured over the affected sheets: transparent pixels inside the conduit band went 161/158/152/110/84/80/46/28 → **0** on all eight buildings that have one, and inside the concrete pad 132 (`sgshl`) and 100 (`sgsns`) → **0** on the two that do not.
+
+The second clause of the definition-of-done was answered rather than implemented, and the answer is that a `SHADOW_IDX` cast shadow is the wrong tool for *these* buildings. `indexed_strip` only writes the stencil where the body frame is transparent, so a shadow projected onto the building's own pad is discarded outright — and the pad is most of the frame. Decoding stock `fact.shp` against `temperat.pal` confirms the convention independently: an RA building bakes no long cast shadow, only a 1–3px `ShadowIndex` rim along the lower edge of a silhouette that already fills its frame. The turrets keep their `SHADOW_IDX` shadows (issue #65) because a pedestal genuinely leaves terrain visible around it; a building whose art *is* its footprint gets a painted pool.
+
+---
+
+### 73. In-world sprite quality pass, batch 3: the rest of the roster — DONE
+
+**Request:** "do the next batch on our list" — closing out issue #48's deferred volumetric list (`SGDAI`, `SGDRN`, `SGDRA`, `SGSHL`, `SGSNS`, `SGHYD`, both drones), which issue #71 also nominated as the right place to fix issue #72 since it was going to redraw these sprites anyway.
+
+**Fix (`mods/sungrid/bits/gen_concept_art.py` only; regenerated 8 target sheets + 4 collateral).** Two new shapes join the `capped_box`/`tilted_collector`/`Mesh` vocabulary:
+
+- **`Roof`** — a receding top plane with an `at(u, v)` mapping (u across the eaves, v from eaves to ridge), so rooftop plant can be drawn as a `capped_box` *on* the roof in the right perspective rather than floating over the eaves.
+- **`sphere()`** — nested ellipses converging on a small highlight up-and-left of centre, replacing `dome3d`'s three hand-placed blobs. The lit half of the ramp is gamma-curved deliberately: linear puts a pale wash over most of the dome and reads as gloss, not curvature.
+
+Per actor:
+
+- **`SGDAI` (Datacenter for AI):** the flat 4×3 grid of front-elevation tiles became one enclosed hall with a real roof carrying a regular chiller bank, and the server identity moved onto two rows of lit window apertures. It reads as a building instead of a tiled wall.
+- **`SGDRN` (Drone Bay):** the 1px A-frame line trusses — effectively invisible on terrain — became box-section masts and a beam with real thickness, and the landing apron became a raised slab whose *top* plane is what the parked drone stands on. Its rotors are drawn **stopped**: a parked airframe on a service pad isn't spinning, and at 16px two clean blades read where a swept ring turns to noise. Damage shears the beam.
+- **`SGDRA` (Aerial Fabrication Bay):** flat box with a rounded strip on top → a genuine barrel vault, the front arch swept back and shaded per segment off the same key light, with an arched door big enough to fly through. Choosing a vault is also what keeps it apart from `SGDAI`, the other enclosed hall on the same footprint.
+- **`SGSHL` (Resilience Shelter):** real sphere ramp plus projected meridian ribs (a sphere's meridians project to ellipses sharing its vertical extent, so each is a narrower top-half arc), banked into an earth berm with a stepped entry throat, so it meets the ground instead of sitting on the pad like a dropped bead.
+- **`SGSNS` (Sensor Array):** three 1px tripod lines → a tapering cylindrical mast on a plinth, with a yoke and an equipment cabinet; the dish is now a genuine concave bowl, lit on its **lower-right** inner face, which is what a dish tilted up-and-left does under this key light and the cue that tells a bowl from a disc at 20px. Gained a gold conduit collar so the team-colour count didn't fall (27 → 8 → 26 remap pixels).
+- **`SGHYD` (Hydrogen Plant):** concrete skirts, domed caps built from `sphere()` rather than one flat ellipse with a bright patch on it, a caged access ladder for scale, and a compressor skid with the transfer pipe arching over it. Damage crumples a tank crown and breaks a hoop, so the state reads from the outline.
+- **`SGDRO`/`SGDRS` (Recon/Strike Drone):** the four translucent rotor discs were deleted outright by the 1-bit alpha, leaving each drone as a body ringed by four empty circles. They are now opaque blades with one trailing tip streak (`rotor_blur`), and the flat diamond bodies became faceted airframes — Recon slim with a gimbal camera ball, Strike heavier with a raised sensor turret and rail-mounted munitions.
+
+**Issue #72 fixed in the same pass** (see its entry above for the measurements and for why the buildings get a painted pool rather than a `SHADOW_IDX` cast shadow). This is what regenerates the four collateral sheets: `sgpwr`, `sgapwr`, `sgcry` and `sgwnd` are otherwise untouched by this batch, but they all called `contact_shadow()`.
+
+**Verified in this environment** (engine already fetched and built): `./utility.sh --check-yaml` exits 0 across all maps; `--png-sheet-export` confirms the engine's own PNG reader parses every sheet at its **unchanged** `FrameSize`/`FrameAmount` (66,54 ×2; 72,50 ×2; 40,36 ×2; 90,60 ×2; 32,30 ×32; 36,32 ×32), so no sequence YAML was touched; `--check-missing-sprites` reports no missing mod-owned sprite. A `git status` after re-running **both** generators shows exactly the 12 sheets above plus the script — every other sprite and every cameo in `mods/sungrid/bits` is byte-identical, and the cameos in particular are unchanged because `gen_photo_cameos.py` still overwrites the programmatic ones (issues #45/#47). Team colour re-checked by counting remap-ramp (80–95) pixels per sheet; all eight targets carry more than before except `SGSNS`, addressed above.
+
+**Not verified:** no live client render — this environment has no RA game content installed, so none of these has been seen in an actual match.
+
+**Remaining from issue #48's list:** none. The programmatic in-world roster has now had the volumetric pass end to end. Still open and deliberately untouched here: the invisible `grid-normal`/`grid-strained` power-tier states on `SGCRY`/`SGDAI`/`SGTUR`; `SGHAU`'s three fullness sheets still using the abstract hex sled rather than the splash's flatbed-with-scrap-load; and the single-frame `make` build-up on all 13 Sungrid buildings. All three are behaviour/animation gaps rather than "this drawing is flat", which is why they were never part of this list.
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py`, `sgdai.png`, `sgdrn.png`, `sgdra.png`, `sgshl.png`, `sgsns.png`, `sghyd.png`, `sgdro.png`, `sgdrs.png`, `sgpwr.png`, `sgapwr.png`, `sgcry.png`, `sgwnd.png`, `docs/ART_DIRECTION.md`, `docs/concept-art/issue73-batch3-volumetric.png` (new), `CLAUDE.md`. No rules, sequence, cameo or palette changes.
+
+**Labels:** `type:art`, `type:bug`, `area:mod-content`, `phase:6`
+
+**Phase:** 6/7 — first-pass programmatic art, quality iteration.
+
+**Definition of done:** Every Sungrid-original in-world sprite reads as a solid at the game's overhead camera angle, and no sprite has transparent pixels punched through its own ground pad or conduit band.
