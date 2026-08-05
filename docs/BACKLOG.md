@@ -1678,3 +1678,64 @@ No `SHADOW_IDX` shadow: the pad every building here stands on is opaque, so a re
 **Phase:** 6 — visual identity.
 
 **Definition of done:** The Grid Reserve Vault reads as a battery storage system rather than an ore silo, at every charge stage and in the build menu, and a row of them reads as one installation. Frame sizes/counts match the stock layout so no other rules changed.
+
+---
+
+### 71. Two more sprites that described the wrong mechanic — Recycling Depot and Smart Grid Relay — DONE
+
+**Request:** after issue #70, "any other units or buildings we might need to redesign based on original splashes with different statuses?" — i.e. run issue #70's check across the rest of the roster and fix what it finds.
+
+**The check.** `docs/ART_DIRECTION.md` states the rule issue #70 established: *"Treat 'does this sprite describe what the building actually does?' as a distinct check from 'is this sprite distinguishable from its neighbours?'"* Running it over the roster turned up two failures, both of the #70 kind — perfectly legible sprites telling the player the wrong thing — rather than the silhouette collisions of #34/#36/#58/#64/#65.
+
+**RCYD (Recycling Depot).** Still rendered stock RA's **`oilb.shp` oil derrick**. A pumpjack says "extracts crude oil"; the rules make this a **Scrap refinery** — `Refinery` + `DockHost: Unload` + `StoresPlayerResources: 1000` + `FreeActor: SGHAU` + a baseline `CashTrickler`. Issue #47 gave it a dedicated photographic cameo but explicitly repointed only the icon, leaving the world sprite on the derrick, so after #70 landed it was the last Sungrid-original-role building on borrowed art. Two aggravating details: it is a **1×1** building wearing art drawn for the 2×2 civilian `OILB`, and its stored level was visible only through the selection-only 5-pip decoration.
+
+New `mods/sungrid/bits/rcyd.png` (40×36 × 18, indexed) on the issue #40 building recipe and the #70 stage layout: a sorting hall under a wide-mouthed **shredder hopper**, with an open tipping bay across the front. Fill is double-coded exactly as the Vault's charge is — a discrete 8-segment gauge on the hall face (countable, one segment per stage) plus a continuous **scrap heap** in the bay whose centre-peaked profile grows with the level (what actually reads at RTS zoom). The damaged nine keep the readout dimmed rather than dark, avoiding issue #40's identical-damaged-frames trap. Accents are re-stamped at native resolution (`_rcyd_accents`/`rcyd_frame`) for the reason `_vlt_accents` documents. The hopper's near lip shears away when damaged, so the state reads from the outline alone (issue #65).
+
+**SGREL (Smart Grid Relay).** Its sprite was a relay pylon with radiating distribution lines — it depicted the cluster-pooling fantasy `docs/BUILDINGS.md` records as **explicitly descoped**, while the trait set is a flat **+60 `Power`** source and nothing else. Redrawn as a **pad-mounted transformer** (radiator fin bank, tank, three bushings with energized terminals on a gold conduit band), which is what a small local supply looks like and is the object the concept renders put on this footprint.
+
+That redraw exposed a second, quieter bug on the same actor: **its gold conduit band was not team-coloured at all.** `draw_gold_band` works untouched on the 2×3 buildings because their band is 8px tall, so interior rows survive the 4× LANCZOS downscale as pure `SUN_GOLD` and land on the 80–95 remap ramp. On this 1×1 plinth the band is 3px tall, every row is an edge row, and the whole band came back on *fixed* palette entries (indices 209/213). Fixed with the same native re-stamp (`_sgrel_accents`/`sgrel_frame`, wired through a new `ACCENT_FRAMES` hook in `main()`); remapped pixels went 57 → 181, verified by simulating `PlayerColorPalette` over both sprites.
+
+**Wiring.** The `rcyd:` sequence node moves off `oilb.shp` onto `rcyd.png` with `stages` 0–8 / `damaged-stages` 9–17 / `make` frame 0, mirroring `sgvlt:`; the stock `oilb:` node is left intact so the shared civilian derrick is unaffected (the split #70 used for `sgvlt` vs. `silo`). `RCYD` swaps `WithSpriteBody` for `WithResourceLevelSpriteBody: Sequence: stages`, matching `SILO`. Its bib becomes the `mbSILO` minibib every other 1×1 building in this mod uses (`sgvlt`, `sgsns`) — it had been drawing the 3-cell-wide `bib3` decal under a single cell. `sgrel:` needed no change (frame geometry unchanged).
+
+**Verified in this environment** (engine fetched, `.NET` SDK installed, engine + mod built clean): `./utility.sh --check-yaml` exits 0 across all maps; `--resolved-rules RCYD` confirms `WithSpriteBody` gone and `WithResourceLevelSpriteBody` present on `RenderSprites: Image: rcyd`; `--resolved-sequences rcyd` resolves all six nodes; `--png-sheet-export` confirms the engine's own PNG reader parses `FrameSize: 40,36` / `FrameAmount: 18` (rcyd) and `× 2` (sgrel), which the sequence ranges are consistent with; `--check-missing-sprites` reports **no** missing mod-owned sprite and the total missing count *drops* 3161 → 3157, since the depot no longer references stock `oilb.shp`. Re-running both generators leaves every other sprite and cameo in `mods/sungrid/bits` byte-identical.
+
+**Not verified:** no live client render — this environment has no RA game content installed, so neither sprite has been seen in an actual match. Frame-count/layout bugs of the issue #35 kind are ruled out by the metadata check above.
+
+**Deliberately out of scope** (raised and deferred with the requester): the invisible `grid-normal`/`grid-strained` power-tier states on `SGCRY`/`SGDAI`/`SGTUR` (output and `DetectCloaked` change with no visual cue — `WithIdleOverlay` + `RequiresCondition` is already used on `PROC`, so this is data-driven); `SGHAU`'s three fullness sheets still using the abstract hex sled rather than the splash's flatbed-with-scrap-load; the single-frame `make` build-up on all 13 Sungrid buildings; and issue #48's batch-3 volumetric list (`SGDAI`, `SGDRN`, `SGDRA`, `SGSHL`, `SGSNS`, `SGHYD`, both drones).
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/rcyd.png` (new), `mods/sungrid/bits/sgrel.png`, `mods/sungrid/rules/structures.yaml`, `mods/sungrid/sequences/structures.yaml`, `docs/ART_DIRECTION.md`, `docs/BUILDINGS.md`, `docs/concept-art/issue71-rcyd-sgrel.png` (new), `CLAUDE.md`.
+
+**Labels:** `type:art`, `phase:6`
+
+**Phase:** 6 — visual identity.
+
+**Definition of done:** The Recycling Depot reads as a scrap reclamation plant rather than an oil derrick, at every fill stage and in the build menu; the Smart Grid Relay reads as a local power source rather than a distribution network it does not have; both team-colour correctly.
+
+---
+
+### 72. `contact_shadow()` punches a transparent hole through the sprite it is drawn on — OPEN
+
+**Found while implementing issue #71**, verified against unmodified art on `main`.
+
+Issue #65 diagnosed half of this: *"the rest of the roster's `contact_shadow()` calls (alpha 70, under the 1-bit indexed alpha threshold) have never produced a visible shadow."* The other half is worse — it does not merely fail to draw. `to_indexed()` maps any pixel with `a < 128` to `TRANSPARENT_IDX`, and PIL's RGBA draw path leaves the alpha-70 ellipse's own alpha on the result, so wherever `contact_shadow()` overlaps the building's own ground pad it **erases** it, leaving a lens-shaped hole through which terrain shows.
+
+Reproduced on committed art (`sgsns.png`, untouched by #71) — rows 28–30 of the ground pad are transparent in exactly the ellipse's bounding box:
+
+```
+28 ..#########..................#########..
+29 ..#########..................#########..
+30 ..###########..............###########..
+31 ..####################################..
+```
+
+The same is visible in the "before" column of `docs/concept-art/issue71-rcyd-sgrel.png`: the old relay pylon's pad is missing its middle.
+
+**Affected:** every draw function still calling `contact_shadow()` over its ground strip. Not `sgvlt`/`rcyd`/`sgrel`, which paint an opaque contact shadow instead, nor `sgtur`/`arct`, which bake a real `SHADOW_IDX` shadow via `indexed_strip` (issue #65).
+
+**Fix** is one line in the helper — draw the ellipse opaque (`dim(CONCRETE, …)`, as `sgvlt_draw` does) rather than at alpha 70, or route it through `render_shadow_mask`/`indexed_strip` for a real `SHADOW_IDX` shadow. Deliberately **not** done in #71: it changes every affected sprite, which would have broken that pass's "every other sprite byte-identical" regression check. It belongs with issue #48's batch-3 volumetric pass, which is already going to redraw these buildings and which #65 already scoped the roster-wide shadow work into.
+
+**Labels:** `type:art`, `type:bug`, `phase:6`
+
+**Phase:** 6 — visual identity.
+
+**Definition of done:** No Sungrid-original sprite has transparent pixels inside its own ground pad, and the buildings that should cast a shadow bake a real `SHADOW_IDX` one.

@@ -1031,38 +1031,127 @@ def sgsns_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
         scorch(sd, [(cx + 2, mast_top + 2, 2.5), (cx - 4, ground_y0 - 2, 2)])
 
 
+_REL_TANK = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.22)   # transformer tank
+_REL_BUSHING_X = (16, 21, 26)                         # bushing stack centres
+_REL_BAND_X0, _REL_BAND_X1 = 8, 31                    # conduit band span
+_REL_BAND_Y0, _REL_BAND_Y1 = 25, 27
+_REL_TERM_Y = 5                                       # bushing terminal centre row
+
+
+def _sgrel_accents(damaged):
+    """The energized parts as (x, y, colour) *native* pixels.
+
+    Same re-stamp the Battery Bank needs (see _vlt_accents), and for the same
+    reason -- but it bites harder here. draw_gold_band works untouched on the
+    2x3 buildings because their band is 8px tall, so its interior rows survive
+    the 4x LANCZOS downscale as pure SUN_GOLD and land on the 80-95 player-remap
+    ramp. On this 1x1 plinth the band is only 3px tall, so every row is an edge
+    row, every row gets blended with the concrete above and below it, and the
+    whole band came back on *fixed* palette entries -- a relay whose grid
+    conduit ignored its owner's colour.
+    """
+    live = not damaged
+    core = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    hi = lit(SUN_GOLD, 0.35) if live else dim(SUN_GOLD, 0.25)
+    out = []
+    for x in range(_REL_BAND_X0, _REL_BAND_X1 + 1):
+        out.append((x, _REL_BAND_Y0, hi))
+        for y in range(_REL_BAND_Y0 + 1, _REL_BAND_Y1 + 1):
+            out.append((x, y, core))
+    for i, bx in enumerate(_REL_BUSHING_X):
+        if damaged and i == 1:      # snapped bushing carries no terminal
+            continue
+        for dx in (-1, 0, 1):
+            out.append((bx + dx, _REL_TERM_Y, core))
+            out.append((bx + dx, _REL_TERM_Y - 1, hi if dx < 1 else core))
+    return out
+
+
+def sgrel_frame(damaged=False):
+    """One Smart Grid Relay frame with its energized pixels re-stamped at
+    native resolution on top of the supersampled render."""
+    img = render(sgrel_draw, SG1x1_W, SG1x1_H, damaged=damaged)
+    px = img.load()
+    for x, y, col in _sgrel_accents(damaged):
+        px[x, y] = tuple(col[:3]) + (255,)
+    return img
+
+
 def sgrel_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
-    """Smart Grid Relay: gold-lit relay pylon with radiating power lines."""
+    """Smart Grid Relay: a pad-mounted step-down transformer.
+
+    Redrawn for the issue #70 wrong-mechanic check. The sprite this replaces
+    was a relay pylon with radiating distribution lines -- it depicted the
+    cluster-pooling fantasy that docs/BUILDINGS.md records as *explicitly
+    descoped*, while the trait set (mods/sungrid/rules/structures.yaml) is a
+    flat +60 Power source and nothing else. A pad transformer is what a small
+    local supply actually looks like, and it is the object the concept renders
+    in docs/concept-art/cameo-sources/ put on exactly this footprint (the
+    bushing-topped tank on a concrete pad in desert-base.png).
+    """
+    live = not damaged
     ground_y0, ground_y1 = h - 8, h
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=7)
-    cx = w // 2
-    pylon_top = 6
-    contact_shadow(sd, cx, ground_y0 + 1, 8, 2)
-    # Tapered lattice pylon with a lit left edge and crossarms.
-    sd.poly([(cx - 6, ground_y0), (cx + 6, ground_y0), (cx + 2, pylon_top), (cx - 2, pylon_top)],
-            fill=PANEL_BLUEBLACK, outline=dim(LEGACY_GRAY, 0.1))
-    sd.line([(cx - 5.6, ground_y0), (cx - 1.8, pylon_top)], fill=lit(PANEL_BLUEBLACK, 0.5), width=0.5)
-    for t in (0.35, 0.65):
-        yy = pylon_top + (ground_y0 - pylon_top) * t
-        half = 2 + 4 * t
-        sd.line([(cx - half, yy), (cx + half, yy)], fill=dim(LEGACY_GRAY, 0.15), width=0.6)
-        # Insulator studs at the crossarm tips.
-        sd.px(round(cx - half), round(yy) - 1, dim(SUN_GOLD, 0.25))
-        sd.px(round(cx + half) - 1, round(yy) - 1, dim(SUN_GOLD, 0.25))
-    node_y = pylon_top - 2
-    # Radiating distribution lines with node dots, then the energized head.
-    live = not damaged
-    for ang in (200, 245, 295, 340):
-        rad = math.radians(ang)
-        ex, ey = cx + 14 * math.cos(rad), node_y + 12 * math.sin(rad)
-        sd.line([(cx, node_y), (ex, ey)], fill=(SUN_GOLD if live else dim(SUN_GOLD, 0.5)), width=0.6)
-        sd.ellipse([ex - 1, ey - 1, ex + 1, ey + 1], fill=lit(SUN_GOLD, 0.3) if live else dim(SUN_GOLD, 0.4))
-    if live:
-        sd.ellipse([cx - 6, node_y - 6, cx + 6, node_y + 6], fill=SUN_GOLD + (60,))
-    sd.ellipse([cx - 4, node_y - 4, cx + 4, node_y + 4], fill=SUN_GOLD if live else dim(SUN_GOLD, 0.45))
-    sd.ellipse([cx - 2.6, node_y - 2.6, cx + 0.2, node_y + 0.2], fill=lit(SUN_GOLD, 0.5) if live else dim(SUN_GOLD, 0.3))
+
+    tank = _REL_TANK if live else mix(_REL_TANK, DAMAGE_SCORCH, 0.32)
+    accent = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    # Painted (opaque) contact shadow, not contact_shadow(): that helper draws
+    # at alpha 70, which the indexed pipeline's 1-bit alpha drops entirely --
+    # so it not only never shows a shadow (issue #65) but punches a transparent
+    # lens through whatever it covers. See docs/BACKLOG.md for the roster-wide
+    # case; here it would have holed the pad this building stands on.
+    sd.ellipse([w // 2 - 13, ground_y0 - 1, w // 2 + 13, ground_y0 + 3], fill=dim(CONCRETE, 0.25))
+
+    # Concrete plinth with the shared gold conduit band signalling grid tie-in.
+    sd.rect([6, 23, 33, ground_y0], fill=CONCRETE)
+    sd.line([(6, 23), (33, 23)], fill=lit(CONCRETE, 0.22), width=0.5)
+    draw_gold_band(sd, 8, 31, 25, 27)
+
+    # Radiator fin bank jutting out to the left -- the transformer's signature
+    # profile, and what keeps this silhouette clear of the Battery Bank's
+    # canister rank on the same 1x1 footprint.
+    sd.rect([5, 14, 13, 24], fill=dim(tank, 0.5))
+    for i in range(4):
+        fx = 5.4 + i * 1.9
+        sd.rect([fx, 15, fx + 1.1, 23.4], fill=lit(tank, 0.18))
+        sd.line([(fx, 15), (fx, 23.4)], fill=lit(tank, 0.42), width=0.4)
+    # Header rails top and bottom tie the fins together as one radiator bank.
+    sd.line([(5, 14.4), (13, 14.4)], fill=lit(tank, 0.34), width=0.7)
+    sd.line([(5, 24), (13, 24)], fill=dim(tank, 0.3), width=0.6)
+
+    # Main tank.
+    capped_box(sd, 12, 13, 30, 24, tank, depth=3.0, edge=0.32)
+    sd.rect([24, 16, 28, 20], fill=dim(tank, 0.4))          # rating plate
+    sd.line([(24, 16), (28, 16)], fill=lit(tank, 0.25), width=0.4)
+    sd.px(14, 15, lit(GREEN_ACCENT, 0.3) if live else dim(LEGACY_GRAY, 0.35))
+
+    # Bushings: stacked insulator sheds with an energized terminal on top. The
+    # terminals are drawn in SUN_GOLD so they land on the player-remap ramp.
+    for i, bx in enumerate(_REL_BUSHING_X):
+        snapped = damaged and i == 1
+        top = 9 if snapped else 5
+        sd.line([(bx, 13), (bx, top)], fill=dim(LEGACY_GRAY_DARK, 0.05), width=1.0)
+        sheds = 2 if snapped else 3
+        for k in range(sheds):
+            sy = 12 - k * 2.4
+            sd.ellipse([bx - 2.2, sy - 1, bx + 2.2, sy + 1], fill=RUST if live else dim(RUST, 0.3))
+            sd.line([(bx - 2.2, sy - 0.6), (bx + 2.2, sy - 0.6)], fill=lit(RUST, 0.25), width=0.4)
+        if snapped:
+            # Sheared stub, so the damage reads from the outline alone.
+            sd.line([(bx - 1.5, top), (bx + 1.5, top - 1)], fill=LEGACY_GRAY_DARK, width=0.6)
+        else:
+            sd.ellipse([bx - 1.6, top - 1.6, bx + 1.6, top + 1.6], fill=accent)
+            sd.ellipse([bx - 1, top - 1, bx + 0.3, top + 0.3],
+                       fill=lit(SUN_GOLD, 0.45) if live else dim(SUN_GOLD, 0.2))
+    # HV jumper looping between the two outer terminals, clear of the middle one.
+    if not damaged:
+        sd.arc([_REL_BUSHING_X[0] - 1, 1, _REL_BUSHING_X[2] + 1, 9], 200, 340, fill=dim(SUN_GOLD, 0.2), width=0.5)
+
     if damaged:
-        scorch(sd, [(cx, node_y + 8, 2.5), (cx + 4, ground_y0 - 2, 2)])
+        # Oil weeping from the split tank down onto the pad.
+        sd.line([(20, 20), (20, 24)], fill=dim(DAMAGE_SCORCH, 0.0), width=0.8)
+        sd.ellipse([17, 23.5, 24, 25.5], fill=DAMAGE_SCORCH + (200,))
+        scorch(sd, [(15, 17, 1.9), (27, 21, 1.5)])
 
 
 # ---------------------------------------------------------------------------
@@ -1222,6 +1311,190 @@ def sgvlt_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, charge=SGVLT_STAGES - 1)
         # Split can seam, rust, and scorch across the cabinet face.
         sd.line([(24, can_top + 2), (26, can_bot - 2)], fill=RUST, width=0.6)
         scorch(sd, [(13, cab_y0 + 7, 3.5), (30, can_bot - 6, 2.5)])
+
+
+# ---------------------------------------------------------------------------
+# Recycling Depot (RCYD).
+#
+# Second building found by the issue #70 check ("does this sprite describe what
+# the building actually *does*?", docs/ART_DIRECTION.md). RCYD still rendered
+# stock RA's oilb.shp -- an oil derrick, which says "pumps crude out of the
+# ground" -- for a building whose rules (mods/sungrid/rules/structures.yaml)
+# make it a *Scrap refinery*: Refinery + DockHost:Unload + StoresPlayerResources
+# + FreeActor: SGHAU + a baseline CashTrickler. Issue #47 gave it a dedicated
+# photographic cameo but deliberately left the world sprite on the derrick, so
+# this is the last Sungrid-original-role building on borrowed art.
+#
+# Like the Vault, its stored level is real state the sprite has to carry, so it
+# gets WithResourceLevelSpriteBody and the same double-coded readout: a discrete
+# segment gauge (countable, exact) plus a continuous scrap heap in the tipping
+# bay (what actually reads at RTS zoom). Damaged stages keep the readout dimmed
+# rather than dark, so all nine stay distinguishable from each other -- issue
+# #40's identical-damaged-frames trap.
+#
+# Silhouette is deliberately unlike the Battery Bank, the only other 1x1
+# Sungrid building with a rear mass: a wide-mouthed shredder hopper breaks the
+# roofline and an open tipping bay holds the heap, where the Vault is a closed
+# box behind three upright canisters. Damage lands in the silhouette (the
+# hopper's near lip shears away) rather than only in decals, per issue #65.
+# ---------------------------------------------------------------------------
+
+RCYD_STAGES = 9                      # matches `stages:` Length in sequences
+RCYD_SEGMENTS = RCYD_STAGES - 1      # stage n lights n of them (0 = empty)
+_RCY_HALL = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.30)     # sorting hall shell
+_RCY_BAR_X0, _RCY_BAR_Y0, _RCY_BAR_Y1 = 8, 13, 15       # gauge origin, 3px pitch
+_RCY_BAY_X0, _RCY_BAY_X1 = 9, 29                        # heap interior columns
+_RCY_BAY_FLOOR = 27                                     # heap bottom row
+
+
+def _rcyd_col_height(x, charge):
+    """Rows of scrap standing in bay column `x` at fill level `charge`.
+
+    A centre-peaked mound with deterministic per-column roughness, so the heap
+    reads as tipped scrap rather than a level liquid, and every stage still
+    raises the profile somewhere visible."""
+    if charge <= 0:
+        return 0
+    span = _RCY_BAY_X1 - _RCY_BAY_X0
+    t = (x - _RCY_BAY_X0) / span
+    mound = 1.0 - abs(t - 0.5) * 1.35
+    jag = ((x * 7 + 3) % 5) / 12.0
+    return max(0, min(charge, int(round(charge * max(0.0, mound) - jag * charge * 0.35))))
+
+
+def _rcyd_scrap_col(x, y):
+    """Deterministic scrap tone: mixed plate, rust and bright cut edges. Kept
+    well above the bay's shadowed interior so the heap reads as a mass of
+    material rather than a dark void in the middle of the sprite."""
+    k = (x * 5 + y * 3) % 7
+    if k in (0, 3):
+        return RUST
+    if k == 1:
+        return dim(LEGACY_GRAY, 0.15)
+    if k in (5, 6):
+        return lit(LEGACY_GRAY, 0.28)
+    return lit(LEGACY_GRAY, 0.08)
+
+
+def _rcyd_accents(damaged, charge):
+    """The fill readout as (x, y, colour) *native* pixels.
+
+    Same reason as _vlt_accents: SUN_GOLD is what _index_for routes onto the
+    80-95 player-remap ramp, and the 4x LANCZOS kernel reaches past a pixel's
+    own block, so gold drawn in the supersampled pass blends with the dark
+    bezel/scrap beside it and lands back on a fixed palette entry. Re-stamping
+    these after the downscale is what keeps the level team-coloured."""
+    live = not damaged
+    on = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    off = dim(LEGACY_GRAY_DARK, 0.15)
+    out = []
+    for i in range(RCYD_SEGMENTS):
+        col = on if i < charge else off
+        for x in (_RCY_BAR_X0 + i * 3, _RCY_BAR_X0 + i * 3 + 1):
+            for y in range(_RCY_BAR_Y0, _RCY_BAR_Y1 + 1):
+                out.append((x, y, col))
+    # Sorter light along the crest of the heap: marks the current level on the
+    # continuous readout the way the Vault's lit top row does.
+    rim = lit(SUN_GOLD, 0.4) if live else dim(SUN_GOLD, 0.35)
+    for x in range(_RCY_BAY_X0, _RCY_BAY_X1 + 1):
+        n = _rcyd_col_height(x, charge)
+        if n:
+            out.append((x, _RCY_BAY_FLOOR - n + 1, rim))
+    return out
+
+
+def rcyd_frame(damaged=False, charge=RCYD_STAGES - 1):
+    """One Recycling Depot frame, with the fill readout re-stamped at native
+    resolution on top of the supersampled render (see _rcyd_accents)."""
+    img = render(rcyd_draw, SG1x1_W, SG1x1_H, damaged=damaged, charge=charge)
+    px = img.load()
+    for x, y, col in _rcyd_accents(damaged, charge):
+        px[x, y] = tuple(col[:3]) + (255,)
+    return img
+
+
+def rcyd_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, charge=RCYD_STAGES - 1):
+    """Recycling Depot holding `charge` of scrap (0..RCYD_STAGES-1)."""
+    live = not damaged
+    ground_y0, ground_y1 = h - 8, h
+    draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=13)
+
+    hall = _RCY_HALL if live else mix(_RCY_HALL, DAMAGE_SCORCH, 0.3)
+    hall_x0, hall_x1, hall_y0, hall_y1 = 7, 31, 7, 18
+    depth = 3.0
+
+    # --- shredder hopper, above the roofline ---------------------------------
+    # A wide-mouthed funnel narrowing into the hall: the one shape that still
+    # says "material is tipped in here" at a 24px footprint, and the main thing
+    # separating this outline from the Battery Bank's.
+    hop_l, hop_r = (7, 22) if live else (11, 22)   # near lip shears off when hit
+    hop_top, hop_bot = 0, hall_y0 + 1
+    sd.poly([(hop_l, hop_top), (hop_r, hop_top), (16.5, hop_bot), (12.5, hop_bot)],
+            fill=dim(hall, 0.18))
+    # Open throat: a dark mouth over a strongly tapered wall is what makes this
+    # read as a funnel rather than a solid wedge at this size.
+    sd.poly([(hop_l + 1.6, hop_top + 1), (hop_r - 1.6, hop_top + 1),
+             (15.7, hop_bot - 1.5), (13.3, hop_bot - 1.5)], fill=dim(PANEL_BLUEBLACK, 0.3))
+    sd.line([(hop_l, hop_top), (12.5, hop_bot)], fill=lit(hall, 0.42), width=0.6)
+    sd.line([(hop_r, hop_top), (16.5, hop_bot)], fill=dim(hall, 0.4), width=0.6)
+    sd.line([(hop_l, hop_top), (hop_r, hop_top)], fill=lit(hall, 0.55), width=0.7)
+
+    # --- sorting hall (rear mass) --------------------------------------------
+    capped_box(sd, hall_x0, hall_y0, hall_x1, hall_y1, hall, depth=depth, edge=0.34)
+    # Roof ribs following the receding top face.
+    for t in (0.25, 0.45, 0.65, 0.85):
+        ry = hall_y0 - depth * 0.6 * t
+        sd.line([(hall_x0 + depth * t + 2, ry), (hall_x1 + depth * t - 3, ry)],
+                fill=dim(hall, 0.4), width=0.4)
+    # Exhaust stack, breaking the roofline clear of the hopper on the right.
+    sd.rect([26.5, 1, 28.6, hall_y0], fill=dim(hall, 0.25))
+    sd.line([(26.5, 1), (26.5, hall_y0)], fill=lit(hall, 0.35), width=0.5)
+    sd.ellipse([26, 0.2, 29.1, 2], fill=dim(LEGACY_GRAY_DARK, 0.1))
+    # Running light: stays lit at zero fill so an empty depot still reads as
+    # powered rather than destroyed.
+    sd.px(hall_x0 + 2, hall_y0 + 2, lit(GREEN_ACCENT, 0.3) if live else dim(LEGACY_GRAY, 0.35))
+
+    # --- fill gauge on the hall face -----------------------------------------
+    on_col = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    off_col = dim(LEGACY_GRAY_DARK, 0.15)
+    sd.rect([_RCY_BAR_X0 - 2, _RCY_BAR_Y0 - 1, _RCY_BAR_X0 + RCYD_SEGMENTS * 3, _RCY_BAR_Y1 + 1],
+            fill=mix(PANEL_BLUEBLACK, hall, 0.25))
+    sd.line([(_RCY_BAR_X0 - 2, _RCY_BAR_Y0 - 1), (_RCY_BAR_X0 + RCYD_SEGMENTS * 3, _RCY_BAR_Y0 - 1)],
+            fill=lit(hall, 0.3), width=0.5)
+    for i in range(RCYD_SEGMENTS):
+        sx = _RCY_BAR_X0 + i * 3
+        _vlt_charge_px(sd, sx, sx + 1, _RCY_BAR_Y0, _RCY_BAR_Y1, on_col if i < charge else off_col)
+
+    # --- tipping bay and its scrap heap --------------------------------------
+    # Painted contact shadow rather than a SHADOW_IDX one, same reasoning as the
+    # Battery Bank: the pad is opaque, so a cast shadow would only show through
+    # the gaps and read as holes in the sprite.
+    sd.ellipse([6, _RCY_BAY_FLOOR + 0.5, 33, _RCY_BAY_FLOOR + 3.5], fill=dim(CONCRETE, 0.25))
+    bay_x0, bay_x1 = hall_x0, hall_x1
+    # Bay floor/back, lit enough that an *empty* bay reads as a swept apron
+    # rather than a hole punched through the sprite, and kept the full width of
+    # the hall so the depot reads as one block instead of a top-heavy mushroom.
+    sd.rect([bay_x0, hall_y1, bay_x1, _RCY_BAY_FLOOR + 1], fill=dim(CONCRETE, 0.12))
+    sd.line([(bay_x0 + 1, hall_y1 + 1), (bay_x1 - 1, hall_y1 + 1)], fill=dim(CONCRETE, 0.4), width=0.5)
+    # Sorting grate across the back of the bay, so the empty frames still have
+    # some structure to read instead of one flat field.
+    for gx in range(bay_x0 + 4, bay_x1 - 2, 5):
+        sd.line([(gx, hall_y1 + 2), (gx, _RCY_BAY_FLOOR)], fill=dim(CONCRETE, 0.3), width=0.4)
+    # Heap, drawn on whole pixels so every stage moves the profile by exact rows.
+    for x in range(_RCY_BAY_X0, _RCY_BAY_X1 + 1):
+        n = _rcyd_col_height(x, charge)
+        for k in range(n):
+            y = _RCY_BAY_FLOOR - k
+            sd.px(x, y, _rcyd_scrap_col(x, y) if live else mix(_rcyd_scrap_col(x, y), DAMAGE_SCORCH, 0.25))
+    # Bay side walls last, so the heap sits inside them.
+    for wx in (bay_x0, bay_x1 - 1):
+        sd.rect([wx, hall_y1 + 1, wx + 1, _RCY_BAY_FLOOR + 1], fill=CONCRETE)
+        sd.line([(wx, hall_y1 + 1), (wx, _RCY_BAY_FLOOR + 1)], fill=lit(CONCRETE, 0.3), width=0.4)
+    sd.line([(bay_x0, _RCY_BAY_FLOOR + 1), (bay_x1, _RCY_BAY_FLOOR + 1)], fill=dim(CONCRETE, 0.45), width=0.6)
+
+    if damaged:
+        sd.line([(23, hall_y0 + 4), (21.6, hall_y1 - 3)], fill=RUST, width=0.5)
+        scorch(sd, [(26, hall_y0 + 5, 1.8), (11, hall_y1 - 3, 1.5)])
 
 
 # The Arc Turret's head is a rotating sprite of its own (issue #66), so the
@@ -2260,6 +2533,7 @@ ICON_LABELS = {
     "sgwnd": "Wind Turbine Array",
     "sghyd": "Hydrogen Plant",
     "sgvlt": "Battery Bank",
+    "rcyd": "Recycling Depot",
     "arct": "Arc Turret",
     "sgtur": "Grid Defense Turret",
     "sgdro": "Recon Drone",
@@ -2421,6 +2695,10 @@ SHADOW_DRAWS = {"arct": lambda sd, w, h, damaged=False: arct_shadow_draw(sd, w, 
 # Turret's body is only its pedestal now that the head rotates separately).
 ICON_DRAWS = {"arct": arct_icon_draw}
 
+# Buildings whose team-coloured pixels have to be re-stamped at native
+# resolution after the supersampled downscale (see _sgrel_accents).
+ACCENT_FRAMES = {"sgrel": sgrel_frame}
+
 
 def main():
     flat_buildings = [
@@ -2439,7 +2717,9 @@ def main():
     ]
 
     for name, draw_fn, w, h in flat_buildings:
-        if name in SHADOW_DRAWS:
+        if name in ACCENT_FRAMES:
+            sheet = sheet_of([ACCENT_FRAMES[name](damaged=d) for d in (False, True)], w, h)
+        elif name in SHADOW_DRAWS:
             # Buildings whose sprite carries a baked ground shadow have to go
             # through indexed_strip so SHADOW_IDX survives (see its docstring).
             sheet = indexed_strip(
@@ -2461,6 +2741,17 @@ def main():
                   SG1x1_W, SG1x1_H, len(vlt), indexed=True)
     save_pngsheet(make_icon(sgvlt_draw, SG1x1_W, SG1x1_H, label=ICON_LABELS["sgvlt"]),
                   "sgvlticon.png", ICON_W, ICON_H, 1)
+
+    # Recycling Depot: same layout as the Battery Bank -- 9 fill stages then 9
+    # damaged fill stages, indexed by `stages:` / `damaged-stages:`. The cameo
+    # written here is the programmatic fallback; gen_photo_cameos.py overwrites
+    # it with the photographic one (issue #47), same as every other actor.
+    rcy = [rcyd_frame(damaged=dmg, charge=stage)
+           for dmg in (False, True) for stage in range(RCYD_STAGES)]
+    save_pngsheet(sheet_of(rcy, SG1x1_W, SG1x1_H), "rcyd.png",
+                  SG1x1_W, SG1x1_H, len(rcy), indexed=True)
+    save_pngsheet(make_icon(rcyd_draw, SG1x1_W, SG1x1_H, label=ICON_LABELS["rcyd"]),
+                  "rcydicon.png", ICON_W, ICON_H, 1)
 
     # Arc Turret: the head is its own 32-facing turret sprite (issue #66), so
     # arct.png above is the pedestal alone and this is what rotates on top.

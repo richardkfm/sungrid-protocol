@@ -80,6 +80,15 @@ Also worth carrying forward: this building's mass is drawn to roughly the 24px t
 
 ![Battery Bank: stock silo2.shp charge stages above, the new sgvlt.png stages below, on temperate ground, plus the build-menu cameo.](concept-art/issue70-battery-bank.png)
 
+**Follow-up: running that check across the roster found two more (see `docs/BACKLOG.md` issue #71).** The wrong-mechanic check above is only worth stating if it is actually run, so it was — and it caught two buildings the silhouette rule never would have:
+
+- **Recycling Depot (`RCYD`)** was still rendering stock `oilb.shp`, an oil pumpjack, for a **Scrap refinery** that docks the Hauler Drone and stores what it brings in. Issue #47 had given it a dedicated cameo and deliberately left the world sprite on the derrick, so after issue #70 it was the last Sungrid-original-role building on borrowed art. Redrawn as a sorting hall under a shredder hopper with an open tipping bay, on the same fill-stage recipe as the Vault: a countable segment gauge plus a scrap heap whose profile grows with the level.
+- **Smart Grid Relay (`SGREL`)** failed the check in the subtler direction — its relay pylon with radiating distribution lines depicted a **mechanic that does not exist**, since `docs/BUILDINGS.md` records the cluster-pooling idea as explicitly descoped and the shipped trait set is a flat `+60 Power`. A sprite can promise a capability as easily as it can misname one. Redrawn as a pad-mounted transformer.
+
+One more constraint generalises, and it sharpens the team-colour rule above: **`draw_gold_band` is only safe on a band several pixels tall.** The 2×3 buildings' 8px band survives the downscale because it has interior rows; on a 1×1 plinth the band is 3px, every row is an edge row, and the entire band came back on *fixed* palette entries — a relay whose grid conduit ignored its owner's colour. Any accent thinner than about 4px needs the native re-stamp, not just the fiddly ones.
+
+![Recycling Depot fill stages, the Smart Grid Relay before and after, and a 1×1 silhouette comparison against the Battery Bank, Sensor Array and Arc Turret.](concept-art/issue71-rcyd-sgrel.png)
+
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.
 
 ## Beyond building art: full visual identity (Phase 6/7)

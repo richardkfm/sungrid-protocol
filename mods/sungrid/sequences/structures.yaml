@@ -74,33 +74,46 @@ oilb:
 		Length: *
 		Offset: 0,0
 
-# The Recycling Depot (RCYD) reuses the stock oilb.shp derrick for its in-world
-# sprite, but needs its own build-menu cameo (the scrap-heap photo cameo). It
-# gets a dedicated `rcyd` image mirroring oilb's world sequences so the civilian
-# OILB derrick keeps the stock icon -- only the cameo differs. See
-# gen_photo_cameos.py and docs/BACKLOG.md issue #47.
+# Recycling Depot art for RCYD. Issue #47 gave this actor its own `rcyd` image
+# so it could carry a dedicated cameo, but pointed the world sequences straight
+# back at the stock oilb.shp derrick -- an oil pumpjack standing in for a Scrap
+# refinery. Now dedicated art (docs/BACKLOG.md issue #71); the stock `oilb:`
+# node below is left intact so the shared civilian OILB derrick is unaffected,
+# the same split issue #70 used for sgvlt vs. the stock silo.
+#
+# Frame layout mirrors sgvlt's: 9 fill stages, then 9 damaged fill stages,
+# which is what WithResourceLevelSpriteBody indexes into via `stages:` /
+# `damaged-stages:`. The bib is the mbSILO minibib every other 1x1 building in
+# this mod uses (sgvlt, sgsns), replacing the 3-cell-wide bib3 decal this actor
+# had been drawing under its single cell.
 rcyd:
-	Defaults:
-		Filename: oilb.shp
-		Offset: 0,-6
 	idle:
+		Filename: rcyd.png
+		Length: 1
 	damaged-idle:
-		Start: 1
-		Length: *
+		Filename: rcyd.png
+		Start: 9
+		Length: 1
+	stages:
+		Filename: rcyd.png
+		Length: 9
+	damaged-stages:
+		Filename: rcyd.png
+		Start: 9
+		Length: 9
 	make:
+		Filename: rcyd.png
+		Start: 0
+		Length: 1
+	bib:
+		TilesetFilenames:
+			SNOW: mbSILO.sno
+			INTERIOR: mbSILO.int
+			TEMPERAT: mbSILO.tem
+			DESERT: mbSILO.des
+		Length: *
 	icon:
 		Filename: rcydicon.png
-		# Do not inherit the Defaults Offset 0,-6 (tuned for the shared
-		# oilb.shp world sprite); it pushed this cameo up in the build
-		# menu, overlapping the row above. docs/BACKLOG.md issue #63.
-		Offset: 0,0
-	bib:
-		Filename: bib3.tem
-		TilesetFilenames:
-			SNOW: bib3.sno
-			DESERT: bib3.des
-		Length: *
-		Offset: 0,0
 
 fact:
 	Defaults:
