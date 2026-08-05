@@ -414,6 +414,23 @@ def dome3d(sd, x0, y0, x1, y1, fill):
     sd.ellipse([x0 + w * 0.2, y0 + h * 0.12, x1 - w * 0.42, y1 - h * 0.5], fill=lit(fill, 0.22))
 
 
+def sphere(sd, x0, y0, x1, y1, fill, steps=10, lit_f=0.30, dim_f=0.38):
+    """Rounded mass shaded as a real sphere: nested ellipses shrinking toward a
+    highlight up-and-left of centre, so the ramp runs dark rim -> body ->
+    small highlight instead of dome3d's three hand-placed blobs. The lit half
+    of the ramp is deliberately gamma-curved: a linear one puts a pale wash
+    over most of the dome and reads as gloss, not curvature."""
+    cxm, cym = (x0 + x1) / 2, (y0 + y1) / 2
+    hx, hy = cxm - (x1 - x0) * 0.15, cym - (y1 - y0) * 0.19
+    for i in range(steps):
+        t = i / (steps - 1)
+        a = 1 - t * 0.93
+        col = (dim(fill, dim_f * (1 - t / 0.5)) if t < 0.5
+               else lit(fill, lit_f * ((t - 0.5) / 0.5) ** 1.8))
+        sd.ellipse([hx + (x0 - hx) * a, hy + (y0 - hy) * a,
+                    hx + (x1 - hx) * a, hy + (y1 - hy) * a], fill=col)
+
+
 def vcyl(sd, x0, y0, x1, y1, fill, bands=7):
     """Vertical cylinder: horizontal lighting ramp, brightest just left of
     center, darkest at both silhouette edges."""
@@ -427,8 +444,22 @@ def vcyl(sd, x0, y0, x1, y1, fill, bands=7):
         sd.rect([x0 + w * t0, y0, x0 + w * t1, y1], fill=c)
 
 
-def contact_shadow(sd, cx, cy, rx, ry, alpha=70):
-    sd.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=(0, 0, 0, alpha))
+def contact_shadow(sd, cx, cy, rx, ry, f=0.45, base=CONCRETE):
+    """Opaque ambient-occlusion pool where a mass meets the pad it stands on.
+
+    Deliberately opaque (docs/BACKLOG.md issue #72). This used to draw
+    (0, 0, 0, alpha=70), which the indexed pipeline does not merely fail to
+    darken: to_indexed maps anything under a=128 to TRANSPARENT_IDX, so every
+    pixel the ellipse covered was *erased*, punching a lens-shaped hole through
+    the building's own ground pad that terrain showed through. Painting the
+    shadow as a solid dim() of whatever it lands on is the same fix sgvlt_draw
+    already used, and it is also what the stock art does -- decoding fact.shp
+    (Construction Yard) against temperat.pal shows RA buildings bake no long
+    cast shadow at all, just a 1-3px ShadowIndex rim hugging the lower edge of
+    a silhouette that already fills its own frame. So the shadow a building
+    here needs is this: a painted pool on its own pad, not a projection."""
+    sd.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=dim(base, f))
+
 
 
 def scorch(sd, blotches):
@@ -754,6 +785,39 @@ def capped_box(sd, x0, y0, x1, y1, fill, depth=3.0, edge=0.34):
     sd.line([(x0, y1), (x1, y1)], fill=dim(fill, edge))
 
 
+class Roof:
+    """The receding top plane of a building mass, plus the mapping needed to
+    put things *on* it.
+
+    capped_box gives ground-level equipment volume by drawing a lit top face
+    receding up-and-right; a building needs the same top face, but big enough
+    that rooftop plant (chiller banks, vents, a beacon mast) has to sit on it in
+    the right perspective rather than floating over the eaves. `at(u, v)` maps
+    roof-space -- u across the eaves 0..1, v from eaves (0) to ridge (1) -- onto
+    screen pixels, so a rooftop unit can be drawn as a capped_box at at(u, v)
+    with its own small depth and still line up with the plane under it."""
+
+    def __init__(self, x0, y_eaves, x1, depth):
+        self.x0, self.x1, self.y = x0, x1, y_eaves
+        self.dx, self.dy = depth, depth * 0.6
+
+    def at(self, u, v):
+        return (self.x0 + (self.x1 - self.x0) * u + self.dx * v, self.y - self.dy * v)
+
+    def quad(self):
+        return [self.at(0, 0), self.at(1, 0), self.at(1, 1), self.at(0, 1)]
+
+    def draw(self, sd, fill, edge=0.34, seams=0):
+        sd.poly(self.quad(), fill=lit(fill, edge))
+        sd.line([self.at(0, 1), self.at(1, 1)], fill=lit(fill, edge + 0.22), width=0.6)
+        sd.line([self.at(0, 0), self.at(0, 1)], fill=lit(fill, edge + 0.1), width=0.4)
+        sd.line([self.at(1, 0), self.at(1, 1)], fill=dim(fill, 0.18), width=0.4)
+        for i in range(1, seams):
+            u = i / seams
+            sd.line([self.at(u, 0.04), self.at(u, 0.96)], fill=dim(fill, 0.12), width=0.4)
+        return self
+
+
 def tilted_collector(sd, x0, y0, x1, y1, depth=6.0, damaged_crack=False):
     """A solar collector seen from front-above: the cell surface is a shallow
     parallelogram tilted back-and-up so it reads as an angled panel catching
@@ -803,7 +867,7 @@ def sgpwr_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
     panel_y0, panel_y1 = 10, gold_y0 - 7
     for i, (px0, px1) in enumerate(((6, 30), (35, 59))):
-        contact_shadow(sd, (px0 + px1) / 2, gold_y0 - 1, (px1 - px0) / 2, 2)
+        contact_shadow(sd, (px0 + px1) / 2 + 1, gold_y0 + 0.7, (px1 - px0) / 2, 1.7, base=SUN_GOLD)
         # Support struts down to the conduit.
         for px in (px0 + 5, px1 - 3):
             sd.line([(px, panel_y1 - 1), (px + 2, gold_y0)], fill=POLE_DARK, width=1.1)
@@ -824,7 +888,7 @@ def sgapwr_draw(sd, w=FAM33_W, h=FAM33_H, damaged=False):
     draw_gold_band(sd, 5, w - 5, gold_y0, gold_y1)
     panel_y0, panel_y1 = 9, gold_y0 - 8
     for i, (px0, px1) in enumerate(((5, 27), (33, 55), (61, 83))):
-        contact_shadow(sd, (px0 + px1) / 2, gold_y0 - 1, (px1 - px0) / 2, 2)
+        contact_shadow(sd, (px0 + px1) / 2 + 1, gold_y0 + 0.7, (px1 - px0) / 2, 1.7, base=SUN_GOLD)
         for px in (px0 + 5, px1 - 3):
             sd.line([(px, panel_y1 - 1), (px + 2, gold_y0)], fill=POLE_DARK, width=1.1)
             sd.line([(px - 0.4, panel_y1 - 1), (px + 1.6, gold_y0)], fill=lit(POLE_DARK, 0.35), width=0.4)
@@ -852,7 +916,7 @@ def sgcry_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     gap = 3
     total_w = cols * block_w + (cols - 1) * gap
     x0 = (w - total_w) // 2
-    contact_shadow(sd, w / 2, gold_y0 - 0.5, total_w / 2 + 2, 2.5)
+    contact_shadow(sd, w / 2 + 2, gold_y0 + 0.7, total_w / 2, 1.7, base=SUN_GOLD)
     # Back row first, then front row, so the volumetric racks overlap correctly.
     for r in (rows - 1, 0):
         for c in range(cols):
@@ -878,157 +942,381 @@ def sgcry_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
 
 
 def sgdai_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
-    """Datacenter for AI: dense, perfectly aligned blue-black server grid with
-    gold trim and a green data line -- the tidy foil to sgcry."""
+    """Datacenter for AI: a sealed machine hall under a regular rooftop chiller
+    bank -- the tidy, capital-intensive foil to sgcry's open rack of scavenged
+    boxes.
+
+    Volumetric pass (issue #48 batch 3): the flat 4x3 grid of front-elevation
+    tiles became one enclosed mass with a real receding roof plane (Roof)
+    carrying plant, so it reads as a building rather than a tiled wall, and the
+    server identity moved onto lit window bands in the front face."""
     ground_y0, ground_y1 = h - 12, h
     gold_y0, gold_y1 = ground_y0 - 8, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=2)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
-    cols, rows = 4, 3
-    block_w, block_h = 10, 8
-    gap = 1
-    total_w = cols * block_w + (cols - 1) * gap
-    x0 = (w - total_w) // 2
-    top = gold_y0 - rows * (block_h + gap)
-    contact_shadow(sd, w / 2, gold_y0 - 0.5, total_w / 2 + 2, 2.5)
-    for r in range(rows):
-        for c in range(cols):
-            bx = x0 + c * (block_w + gap)
-            by = top + r * (block_h + gap)
-            box3d(sd, bx, by, bx + block_w, by + block_h, PANEL_BLUEBLACK, edge=0.45)
-            sd.rect([bx, by, bx + block_w, by + block_h], outline=dim(SUN_GOLD, 0.25), width=0.4)
-            # Tiny green activity LEDs, dark when damaged.
+    hx0, hx1, eaves, depth = 7, 53, 18, 8.0
+    wall = mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.14)
+    contact_shadow(sd, (hx0 + hx1) / 2 + 2, gold_y0 + 0.7, (hx1 - hx0) / 2, 1.7, base=SUN_GOLD)
+    roof = Roof(hx0, eaves, hx1, depth)
+    roof.draw(sd, wall, edge=0.34, seams=4)
+    # Rooftop chiller bank: identical units on a regular pitch, which is where
+    # the "industrial-scale, bought not scavenged" read comes from.
+    for i, u in enumerate((0.17, 0.5, 0.83)):
+        bx, by = roof.at(u, 0.6)
+        sag = 1.6 if (damaged and i == 1) else 0.0
+        capped_box(sd, bx - 5, by - 4 + sag, bx + 5, by + sag,
+                   mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.35), depth=2.0, edge=0.34)
+        for k in range(3):
+            sd.line([(bx - 3.4 + k * 3, by - 3.2 + sag), (bx - 3.4 + k * 3, by - 0.8 + sag)],
+                    fill=dim(LEGACY_GRAY, 0.45), width=0.5)
+        sd.px(bx + 3.6, by - 4.6 + sag, GREEN_ACCENT if not damaged else dim(LEGACY_GRAY, 0.35))
+    # Ridge mast: the one asymmetric silhouette cue at this distance.
+    mx, my = roof.at(0.5, 0.99)
+    sd.line([(mx, my), (mx, my - 7)], fill=LEGACY_GRAY_DARK, width=0.8)
+    sd.line([(mx - 0.4, my), (mx - 0.4, my - 7)], fill=lit(LEGACY_GRAY_DARK, 0.4), width=0.3)
+    sd.px(mx, my - 8, SUN_GOLD if not damaged else dim(LEGACY_GRAY, 0.3))
+    # Front wall: eaves shadow at the top, slight left-to-right falloff.
+    for i in range(5):
+        t0, t1 = i / 5, (i + 1) / 5
+        sd.rect([hx0 + (hx1 - hx0) * t0, eaves, hx0 + (hx1 - hx0) * t1, gold_y0],
+                fill=lit(wall, 0.12 * (1 - t0)))
+    sd.line([(hx0, eaves), (hx1, eaves)], fill=dim(wall, 0.4), width=0.8)
+    sd.line([(hx0, gold_y0 - 0.4), (hx1, gold_y0 - 0.4)], fill=dim(wall, 0.35), width=0.5)
+    sd.line([(hx0, eaves + 1.6), (hx1, eaves + 1.6)], fill=lit(wall, 0.28), width=0.4)
+    # Server window bands: two perfectly regular rows of lit apertures.
+    for r, wy in enumerate((eaves + 4, eaves + 9.5)):
+        for c in range(6):
+            wx = hx0 + 3 + c * 6
+            sd.rect([wx, wy, wx + 4.2, wy + 3.2], fill=dim(wall, 0.62))
+            sd.line([(wx, wy), (wx + 4.2, wy)], fill=dim(wall, 0.8), width=0.4)
+            broke = damaged and (c, r) in ((1, 0), (4, 1))
             if not damaged:
-                sd.px(bx + 2, by + block_h - 2, GREEN_ACCENT if (r * cols + c) % 3 else dim(GREEN_ACCENT, 0.4))
-    # Data line linking the rack tops -- the "AI" identity signal, with a
-    # soft glow. Flickers out when damaged.
-    if not damaged:
-        sd.line([(x0, top - 2), (x0 + total_w, top - 2)], fill=GREEN_ACCENT + (90,), width=1.6)
-        sd.line([(x0, top - 2), (x0 + total_w, top - 2)], fill=lit(GREEN_ACCENT, 0.3), width=0.6)
-        for i in range(4):
-            sd.px(x0 + 3 + i * (total_w // 4), top - 2, lit(GREEN_ACCENT, 0.6))
-    else:
-        sd.line([(x0, top - 2), (x0 + total_w * 0.4, top - 2)], fill=dim(GREEN_ACCENT, 0.5), width=0.6)
-        scorch(sd, [(x0 + total_w // 2, top + 6, 3), (x0 + total_w - 6, gold_y0 - 3, 2.5)])
+                glow = GREEN_ACCENT if (c + r) % 4 else lit(GREEN_ACCENT, 0.4)
+                sd.rect([wx + 0.7, wy + 0.8, wx + 3.6, wy + 2.4], fill=glow)
+                sd.line([(wx + 0.7, wy + 0.8), (wx + 3.6, wy + 0.8)], fill=lit(GREEN_ACCENT, 0.55), width=0.4)
+            elif not broke:
+                sd.rect([wx + 0.7, wy + 0.8, wx + 3.6, wy + 2.4], fill=dim(GREEN_ACCENT, 0.72))
+    # Service door with a recessed jamb and a gold threshold strip.
+    dx0, dx1 = hx1 - 8, hx1 - 2
+    sd.rect([dx0, eaves + 8, dx1, gold_y0], fill=dim(wall, 0.5))
+    sd.rect([dx0 + 0.8, eaves + 9, dx1 - 0.8, gold_y0], fill=dim(wall, 0.72))
+    sd.line([(dx0, eaves + 8), (dx1, eaves + 8)], fill=lit(wall, 0.3), width=0.5)
+    sd.rect([dx0 + 0.8, gold_y0 - 1.2, dx1 - 0.8, gold_y0 - 0.6],
+            fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.6))
+    if damaged:
+        scorch(sd, [(hx0 + 13, eaves + 6, 3), (hx1 - 14, gold_y0 - 4, 2.5)])
+
+
+def rotor_blur(sd, cx, cy, r, ry=None, tint=(0xA8, 0xA8, 0x9C), dashes=3, phase=0.0,
+               stopped=False):
+    """A spinning rotor, drawn opaque.
+
+    The indexed pipeline's 1-bit alpha throws away anything translucent (see
+    to_indexed), so the swept disc the first pass drew at alpha 70 was simply
+    deleted -- and, worse, deleted the pixels under it (issue #72). The read
+    has to be built from opaque marks instead: a thin dark swept ring with a
+    few bright trailing dashes riding on it, which is the same solution the
+    Wind Turbine Array's blades needed in issue #58."""
+    ry = r if ry is None else ry
+    n = 2 if stopped else dashes
+    for i in range(n):
+        a = math.radians(phase + i * 360 / n)
+        ex, ey = cx + r * math.cos(a), cy - ry * math.sin(a)
+        sd.line([(cx, cy), (ex, ey)], fill=dim(tint, 0.35) if stopped else tint, width=1.3)
+        if stopped:
+            sd.line([(cx, cy), (cx - r * math.cos(a), cy + ry * math.sin(a))],
+                    fill=dim(tint, 0.35), width=1.3)
+    if not stopped:
+        # One trailing streak off the leading blade: the cue that says this is
+        # turning rather than parked, and the only one that survives the 1-bit
+        # alpha (a swept disc does not -- issue #72). One, not three, because
+        # at four rotors per frame three each turns the sprite into lace.
+        sd.arc([cx - r, cy - ry, cx + r, cy + ry], -phase - 46, -phase - 12,
+               fill=dim(tint, 0.45), width=0.9)
+    sd.ellipse([cx - 1.3, cy - 1.3, cx + 1.3, cy + 1.3], fill=LEGACY_GRAY_DARK)
+    sd.px(cx - 0.5, cy - 0.5, lit(LEGACY_GRAY, 0.35))
 
 
 def sgdrn_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
-    """Drone Bay: improvised, asymmetric open scaffold/gantry with a parked
-    drone -- Assembly's field-workshop answer to sgdra's hardened hangar."""
+    """Drone Bay: an open gantry over a landing apron with a drone parked on
+    it -- Assembly's field-workshop answer to sgdra's hardened hangar.
+
+    Volumetric pass (issue #48 batch 3): the near-invisible 1px A-frame line
+    trusses became box-section masts and a cross beam with real thickness, and
+    the apron became a raised slab whose *top* plane (Roof) is what the drone
+    stands on, so the parked drone sits in the scene instead of floating in
+    front of it."""
     ground_y0, ground_y1 = h - 12, h
     gold_y0, gold_y1 = ground_y0 - 8, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=3)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
-    # Truss legs with X-bracing; deliberately unequal heights.
-    def truss(bx0, apex_x, apex_y, bx1):
-        sd.line([(bx0, gold_y0), (apex_x, apex_y)], fill=GREEN_PRIMARY, width=1.4)
-        sd.line([(bx1, gold_y0), (apex_x, apex_y)], fill=GREEN_PRIMARY, width=1.4)
-        sd.line([(bx0, gold_y0), (apex_x, apex_y)], fill=lit(GREEN_PRIMARY, 0.3), width=0.4)
-        mid_y = (gold_y0 + apex_y) / 2
-        sd.line([((bx0 + apex_x) / 2, mid_y), ((bx1 + apex_x) / 2, mid_y)], fill=dim(GREEN_PRIMARY, 0.2), width=0.5)
-    truss(9, 17, gold_y0 - 22, 25)
-    truss(w - 25, w - 19, gold_y0 - 18, w - 11)
-    # Sagging cross-cable between the two masts, with a work lamp.
-    sd.line([(17, gold_y0 - 21), (w / 2, gold_y0 - 17), (w - 19, gold_y0 - 17)], fill=dim(LEGACY_GRAY, 0.1), width=0.5)
-    sd.px(w // 2, gold_y0 - 16, SUN_GOLD if not damaged else dim(LEGACY_GRAY, 0.3))
-    # Raised landing pad with the parked drone.
-    pad_x0, pad_x1 = w // 2 - 11, w // 2 + 11
-    contact_shadow(sd, w / 2, gold_y0 - 0.5, 13, 2.5)
-    box3d(sd, pad_x0, gold_y0 - 6, pad_x1, gold_y0, LEGACY_GRAY)
-    sd.rect([pad_x0 + 2, gold_y0 - 5, pad_x1 - 2, gold_y0 - 4.4], fill=dim(SUN_GOLD, 0.25))
-    cx, cy = w // 2, gold_y0 - 10
-    contact_shadow(sd, cx, gold_y0 - 6.5, 6, 1.2, alpha=90)
-    sd.poly([(cx, cy - 5), (cx + 5, cy), (cx, cy + 5), (cx - 5, cy)], fill=GREEN_PRIMARY, outline=GREEN_ACCENT)
-    sd.poly([(cx, cy - 3.4), (cx + 2.6, cy - 0.6), (cx, cy - 0.6), (cx - 2.6, cy - 0.6)], fill=lit(GREEN_PRIMARY, 0.3))
-    for ddx, ddy in ((-5.5, -3.5), (5.5, -3.5), (-5.5, 3.5), (5.5, 3.5)):
-        sd.ellipse([cx + ddx - 1.6, cy + ddy - 1.6, cx + ddx + 1.6, cy + ddy + 1.6], fill=(0xB0, 0xB0, 0xA8, 110))
+    ax0, ax1, apron = 14, 52, 30
+    steel = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.18)
+    contact_shadow(sd, (ax0 + ax1) / 2 + 2, gold_y0 + 0.7, (ax1 - ax0) / 2, 1.7, base=SUN_GOLD)
+    # Gantry: two box-section masts and the beam they carry. Drawn before the
+    # apron so the apron slab reads as standing in front of the legs.
+    for mx in (10, 56):
+        capped_box(sd, mx - 2, 12, mx + 2, gold_y0, steel, depth=2.2, edge=0.34)
+        for ry in range(16, int(gold_y0) - 3, 6):
+            sd.line([(mx - 1.6, ry), (mx + 1.6, ry)], fill=dim(steel, 0.4), width=0.4)
+    if not damaged:
+        capped_box(sd, 7, 9, 59, 13, steel, depth=2.2, edge=0.36)
+        sd.line([(9, 10.6), (57, 10.6)], fill=lit(steel, 0.34), width=0.5)
+    else:
+        # Beam sheared through: the gantry is what fails first on a raid.
+        capped_box(sd, 7, 9, 30, 13, steel, depth=2.2, edge=0.36)
+        capped_box(sd, 37, 11, 59, 15, steel, depth=2.2, edge=0.36)
+        sd.line([(30, 9.5), (35, 13)], fill=dim(steel, 0.5), width=0.7)
+    # Knee braces from the masts down to the apron.
+    for mx, bx in ((12, 21), (54, 45)):
+        sd.line([(mx, 17), (bx, apron - 1)], fill=dim(steel, 0.2), width=1.0)
+        sd.line([(mx - 0.3, 17), (bx - 0.3, apron - 1)], fill=lit(steel, 0.3), width=0.35)
+    # Work lamp: the gold "powered" tell.
+    lamp = SUN_GOLD if not damaged else dim(LEGACY_GRAY, 0.35)
+    capped_box(sd, 21, 13, 25, 15, dim(steel, 0.25), depth=1.2, edge=0.3)
+    sd.rect([21.5, 15, 24.5, 15.8], fill=lamp)
+    # Landing apron: front edge, then the top plane the drone stands on.
+    plane = Roof(ax0, apron, ax1, 6.0)
+    plane.draw(sd, CONCRETE, edge=0.30)
+    px_, py_ = plane.at(0.5, 0.5)
+    sd.rect([ax0, apron, ax1, gold_y0], fill=dim(CONCRETE, 0.3))
+    sd.line([(ax0, apron), (ax1, apron)], fill=lit(CONCRETE, 0.15), width=0.5)
+    sd.line([(ax0, gold_y0 - 0.4), (ax1, gold_y0 - 0.4)], fill=dim(CONCRETE, 0.5), width=0.5)
+    for i in range(1, 5):
+        sd.line([(ax0 + (ax1 - ax0) * i / 5, apron + 0.6), (ax0 + (ax1 - ax0) * i / 5, gold_y0 - 1)],
+                fill=dim(CONCRETE, 0.42), width=0.4)
+    # Hazard striping along the apron lip -- the pad's "live" marking, and the
+    # team-coloured element on an otherwise grey structure.
+    stripe = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.5)
+    for i in range(6):
+        sx = ax0 + 2 + i * 6
+        sd.rect([sx, apron + 1.2, sx + 3, apron + 2.2], fill=stripe)
+    # Parked drone, standing on the apron plane. Rotors are drawn *stopped* --
+    # a parked airframe on a service pad isn't spinning, and at this scale two
+    # clean blades read where a swept ring turns to noise.
+    dcx, dcy = px_, py_ - 2.0
+    contact_shadow(sd, dcx + 1, dcy + 3.6, 9, 2.2, f=0.28)
+    for k, (ox, oy) in enumerate(((-7.5, -2.8), (7.5, -2.8), (-7.5, 2.8), (7.5, 2.8))):
+        sd.line([(dcx, dcy), (dcx + ox, dcy + oy)], fill=LEGACY_GRAY_DARK, width=1.2)
+        sd.line([(dcx - 0.3, dcy - 0.3), (dcx + ox - 0.3, dcy + oy - 0.3)],
+                fill=lit(LEGACY_GRAY_DARK, 0.35), width=0.4)
+        if not (damaged and k == 1):
+            rotor_blur(sd, dcx + ox, dcy + oy, 3.8, ry=2.0, phase=25 + 35 * k, stopped=True)
+    sd.poly([(dcx, dcy - 4.6), (dcx + 5.4, dcy), (dcx, dcy + 4.6), (dcx - 5.4, dcy)],
+            fill=GREEN_PRIMARY, outline=dim(GREEN_PRIMARY, 0.45))
+    sd.poly([(dcx, dcy - 3.4), (dcx + 3.4, dcy - 0.6), (dcx - 3.4, dcy - 0.6)],
+            fill=lit(GREEN_PRIMARY, 0.35))
+    sd.ellipse([dcx - 1.3, dcy + 0.2, dcx + 1.3, dcy + 2.6], fill=PANEL_BLUEBLACK)
+    sd.px(dcx, dcy - 3.8, lamp)
     if damaged:
-        scorch(sd, [(cx, cy, 2.5), (18, gold_y0 - 4, 2.5)])
+        scorch(sd, [(45, apron + 3.5, 2.8), (19, apron + 2.5, 2.2)])
+
+
+def _arch(cx, rx, ry, sy, n=20):
+    """Points along a semicircular arch, left springing to right springing."""
+    return [(cx - rx * math.cos(math.pi * i / n), sy - ry * math.sin(math.pi * i / n))
+            for i in range(n + 1)]
 
 
 def sgdra_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
-    """Aerial Fabrication Bay: enclosed, symmetric hangar -- the hardened
-    Consortium mirror of sgdrn's open scaffold."""
+    """Aerial Fabrication Bay: a barrel-vault hangar with an arched door big
+    enough to fly through -- the hardened, symmetric Consortium mirror of
+    sgdrn's open field gantry.
+
+    Volumetric pass (issue #48 batch 3): the flat rectangular box with a
+    rounded strip on top became a real vault -- the roof is a curved surface
+    swept back from the front arch and shaded per segment off the same
+    top-left key light, so the roof line reads as a cylinder lying down rather
+    than a highlight painted on a wall. Choosing a vault (rather than sgdai's
+    flat plant-covered roof) is also what keeps the two halls apart at a
+    glance."""
     ground_y0, ground_y1 = h - 12, h
     gold_y0, gold_y1 = ground_y0 - 8, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=4)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
-    hx0, hx1 = 8, w - 8
-    hy0, hy1 = gold_y0 - 26, gold_y0
-    contact_shadow(sd, w / 2, gold_y0 - 0.5, (hx1 - hx0) / 2 + 2, 2.5)
-    # Main hall with a lit, slightly vaulted roof strip.
-    box3d(sd, hx0, hy0 + 3, hx1, hy1, PANEL_BLUEBLACK, edge=0.4)
-    sd.rrect([hx0 + 1, hy0, hx1 - 1, hy0 + 5], 2, fill=lit(PANEL_BLUEBLACK, 0.3))
-    sd.line([(hx0 + 1, hy0 + 5), (hx1 - 1, hy0 + 5)], fill=dim(PANEL_BLUEBLACK, 0.4), width=0.5)
-    # Big front door: vertical slats, gold header rail.
-    dx0, dx1 = w // 2 - 12, w // 2 + 12
-    sd.rect([dx0, hy0 + 8, dx1, hy1 - 1], fill=dim(PANEL_BLUEBLACK, 0.25))
-    for i in range(6):
-        slat = dx0 + i * 4
-        sd.line([(slat, hy0 + 8), (slat, hy1 - 1)], fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
-    sd.rect([dx0 - 1, hy0 + 6, dx1 + 1, hy0 + 8], fill=SUN_GOLD)
-    sd.line([(dx0 - 1, hy0 + 8), (dx1 + 1, hy0 + 8)], fill=dim(SUN_GOLD, 0.4), width=0.4)
-    # Corner service pylons + roof beacon.
-    for px in (hx0 + 3, hx1 - 3):
-        sd.line([(px, hy0 + 4), (px, hy1)], fill=dim(SUN_GOLD, 0.15), width=0.8)
-    sd.px(w // 2, hy0 + 1, GREEN_ACCENT if not damaged else dim(LEGACY_GRAY, 0.3))
+    cx, rx, ry, spring = w / 2, 25.0, 10.0, 24.0
+    wall = mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.10)
+    contact_shadow(sd, cx + 2, gold_y0 + 0.7, rx - 1, 1.7, base=SUN_GOLD)
+    # Vault roof: the arch swept back up-and-right, shaded per segment.
+    arc = _arch(cx, rx, ry, spring)
+    ox, oy = 7.0, 4.2
+    for i in range(len(arc) - 1):
+        a = math.pi * (i + 0.5) / (len(arc) - 1)
+        b = max(0.0, 0.6 * math.cos(a) + 0.8 * math.sin(a))
+        col = lit(wall, 0.42 * b) if b > 0.28 else dim(wall, 0.3 * (1 - b / 0.28))
+        (x0_, y0_), (x1_, y1_) = arc[i], arc[i + 1]
+        sd.poly([(x0_, y0_), (x1_, y1_), (x1_ + ox, y1_ - oy), (x0_ + ox, y0_ - oy)], fill=col)
+    sd.line([(p[0] + ox, p[1] - oy) for p in arc], fill=dim(wall, 0.45), width=0.5)
+    # Front gable: the arch face itself.
+    sd.poly(arc + [(cx + rx, gold_y0), (cx - rx, gold_y0)], fill=wall)
+    sd.line(arc, fill=lit(wall, 0.3), width=0.6)
+    for k in (0.28, 0.72):
+        sd.line([(cx - rx + 2 * rx * k, spring), (cx - rx + 2 * rx * k, gold_y0)],
+                fill=dim(wall, 0.28), width=0.4)
+    # Arched hangar door, recessed, with a gold header rail over it.
+    darc = _arch(cx, 15.0, 6.5, 28.0)
+    sd.poly(darc + [(cx + 15, gold_y0), (cx - 15, gold_y0)], fill=dim(wall, 0.42))
+    sd.poly([(x + 0.8, y + 1.0) for x, y in darc] + [(cx + 14.2, gold_y0), (cx - 14.2, gold_y0)],
+            fill=dim(wall, 0.68))
+    for i in range(7):
+        sx = cx - 12 + i * 4
+        bent = damaged and i == 4
+        sd.line([(sx, 22.5 if not bent else 23.5), (sx + (1.2 if bent else 0), gold_y0)],
+                fill=dim(wall, 0.82), width=0.5)
+    sd.line(darc, fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.55), width=0.7)
+    # Buttress pylons at the springing line, and the approach beacon mast.
+    for bx in (cx - rx - 1, cx + rx - 3):
+        capped_box(sd, bx, spring - 1, bx + 4, gold_y0, mix(CONCRETE, wall, 0.4), depth=1.8, edge=0.32)
+    mx, my = cx + 9, spring - ry * 0.86
+    sd.line([(mx, my), (mx, my - 6)], fill=LEGACY_GRAY_DARK, width=0.7)
+    sd.px(mx, my - 7, GREEN_ACCENT if not damaged else dim(LEGACY_GRAY, 0.3))
     if damaged:
-        scorch(sd, [(w // 2, (hy0 + hy1) / 2 + 2, 3.5), (hx1 - 6, hy0 + 6, 2.5)])
+        # Torn vault panel: the ribs under the skin show through the gap.
+        gx, gy = cx - 13, spring - ry * 0.93
+        sd.poly([(gx, gy + 1), (gx + 9, gy - 1.5), (gx + 10, gy + 3), (gx + 1, gy + 4.5)],
+                fill=dim(wall, 0.8))
+        for i in range(3):
+            sd.line([(gx + 1.5 + i * 3, gy + 0.5), (gx + 2.5 + i * 3, gy + 4)],
+                    fill=dim(LEGACY_GRAY, 0.35), width=0.4)
+        scorch(sd, [(cx - 4, 30, 3.2), (cx + 18, spring + 4, 2.4)])
 
 
 def sgshl_draw(sd, w=SGSHL_W, h=SGSHL_H, damaged=False):
-    """Resilience Shelter: hardened dome with a sandbag row along the front
-    edge, per ART_DIRECTION.md's "not utopian" guardrail."""
+    """Resilience Shelter: a hardened dome banked into an earth berm, with a
+    sandbagged entry throat -- ART_DIRECTION.md's "not utopian" guardrail.
+
+    Volumetric pass (issue #48 batch 3): dome3d's three stacked blobs are
+    replaced by a real sphere ramp (sphere()) with projected meridian ribs, and
+    the dome now meets the ground through a berm and a stepped entry throat
+    rather than sitting on the pad like a dropped bead."""
     ground_y0, ground_y1 = h - 10, h
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=5)
-    dome_y0 = 8
-    contact_shadow(sd, w / 2, ground_y0 + 2, w / 2 - 6, 3)
-    dome3d(sd, 6, dome_y0, w - 6, ground_y0 + 6, GREEN_PRIMARY)
-    # Panel seams following the dome curve.
-    sd.arc([6, dome_y0, w - 6, ground_y0 + 6], 210, 330, fill=dim(GREEN_PRIMARY, 0.25), width=0.6)
-    sd.arc([12, dome_y0 + 4, w - 12, ground_y0 + 2], 200, 340, fill=dim(GREEN_PRIMARY, 0.2), width=0.5)
-    # Entry airlock front and center.
-    door_w = 7
-    sd.rrect([w / 2 - door_w / 2, ground_y0 - 9, w / 2 + door_w / 2, ground_y0 + 1], 2, fill=dim(PANEL_BLUEBLACK, 0.1))
-    sd.line([(w / 2 - door_w / 2 + 1, ground_y0 - 8), (w / 2 + door_w / 2 - 1, ground_y0 - 8)], fill=lit(PANEL_BLUEBLACK, 0.5), width=0.5)
-    # Gold beacon cap.
-    sd.ellipse([w / 2 - 3, dome_y0 + 1, w / 2 + 3, dome_y0 + 6], fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.55))
-    sd.ellipse([w / 2 - 1.8, dome_y0 + 1.8, w / 2 + 0.6, dome_y0 + 3.6], fill=lit(SUN_GOLD, 0.45) if not damaged else dim(SUN_GOLD, 0.4))
-    # Sandbag row: two-tone bags with lit tops.
+    cx = w / 2
+    dx0, dx1 = 7, w - 7
+    dy0, dy1 = 5, ground_y0 + 5
+    contact_shadow(sd, cx + 3, ground_y0 + 1.5, (dx1 - dx0) / 2 + 1, 2.6)
+    sphere(sd, dx0, dy0, dx1, dy1, GREEN_PRIMARY)
+    # Meridian ribs: a sphere's meridians project to ellipses sharing its
+    # vertical extent, so each is just a narrower top-half arc.
+    for k in (0.58, 0.92):
+        rw = (dx1 - dx0) / 2 * k
+        sd.arc([cx - rw, dy0, cx + rw, dy1], 190, 350, fill=dim(GREEN_PRIMARY, 0.15), width=0.5)
+    # Latitude seam.
+    sd.arc([dx0 + 3, dy0 + 5, dx1 - 3, dy1 - 3], 190, 350, fill=dim(GREEN_PRIMARY, 0.15), width=0.5)
+    if damaged:
+        # Split panel: the rib cage under the skin shows through.
+        sd.poly([(cx + 9, dy0 + 7), (cx + 17, dy0 + 10), (cx + 15, dy0 + 18), (cx + 8, dy0 + 15)],
+                fill=dim(GREEN_PRIMARY, 0.72))
+        for i in range(3):
+            sd.line([(cx + 10 + i * 2.4, dy0 + 8.5), (cx + 9.4 + i * 2.4, dy0 + 16)],
+                    fill=dim(LEGACY_GRAY, 0.3), width=0.4)
+    # Earth berm banked against the base, with grass catching the top edge.
+    sd.arc([dx0 - 1, ground_y0 - 11, dx1 + 1, ground_y0 + 7], 192, 348, fill=DIRT, width=3.2)
+    sd.arc([dx0 - 1, ground_y0 - 11.8, dx1 + 1, ground_y0 + 6.2], 196, 344,
+           fill=lit(GRASS, 0.1), width=0.8)
+    # Entry throat: a stepped concrete box projecting from the dome, with a
+    # recessed airlock door and a lit lintel.
+    tx0, tx1 = cx - 7, cx + 7
+    capped_box(sd, tx0, ground_y0 - 11, tx1, ground_y0 + 1, CONCRETE, depth=2.4, edge=0.3)
+    sd.rect([tx0 + 2, ground_y0 - 8, tx1 - 2, ground_y0 + 1], fill=dim(PANEL_BLUEBLACK, 0.15))
+    sd.rect([tx0 + 3, ground_y0 - 7, tx1 - 3, ground_y0 + 1], fill=dim(PANEL_BLUEBLACK, 0.45))
+    sd.line([(tx0 + 2, ground_y0 - 8.4), (tx1 - 2, ground_y0 - 8.4)], fill=lit(CONCRETE, 0.35), width=0.6)
+    sd.rect([tx0 + 3.4, ground_y0 - 6.6, tx1 - 3.4, ground_y0 - 6],
+            fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.55))
+    # Filtration/vent stack rising beside the dome, planted on the berm.
+    vx, vy = dx1 - 3, ground_y0 - 17
+    vcyl(sd, vx - 2.4, vy, vx + 2.4, ground_y0 - 1, mix(LEGACY_GRAY, GREEN_PRIMARY, 0.25), bands=5)
+    sd.ellipse([vx - 2.4, vy - 1.8, vx + 2.4, vy + 1.8], fill=lit(LEGACY_GRAY, 0.18))
+    sd.ellipse([vx - 1.4, vy - 1.1, vx + 0.7, vy + 0.6], fill=dim(PANEL_BLUEBLACK, 0.1))
+    sd.line([(vx - 2.4, vy + 6), (vx + 2.4, vy + 6)], fill=dim(LEGACY_GRAY, 0.4), width=0.5)
+    # Apex beacon.
+    sd.ellipse([cx - 2.6, dy0 + 0.4, cx + 2.6, dy0 + 5],
+               fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.5))
+    sd.ellipse([cx - 1.6, dy0 + 1.2, cx + 0.4, dy0 + 3],
+               fill=lit(SUN_GOLD, 0.45) if not damaged else dim(SUN_GOLD, 0.35))
+    # Sandbag revetment flanking the throat: two-tone bags with lit tops.
     bag_w = 6
-    for i, bx in enumerate(range(4, w - 4 - bag_w, bag_w + 1)):
+    for i, bx in enumerate(list(range(5, int(tx0) - bag_w, bag_w + 1))
+                           + list(range(int(tx1) + 2, w - 6 - bag_w, bag_w + 1))):
+        if damaged and i == 1:
+            continue
         by = ground_y0 - 3 + (i % 2)
         sd.ellipse([bx, by, bx + bag_w, by + 5], fill=DIRT)
         sd.arc([bx, by, bx + bag_w, by + 5], 180, 320, fill=lit(DIRT, 0.3), width=0.7)
         sd.arc([bx, by, bx + bag_w, by + 5], 20, 160, fill=dim(DIRT, 0.35), width=0.6)
     if damaged:
-        scorch(sd, [(w / 2 + 8, dome_y0 + 14, 4), (w / 2 - 14, ground_y0 - 4, 2.5)])
+        scorch(sd, [(cx + 12, dy0 + 20, 3.2), (cx - 21, ground_y0 - 8, 2.5)])
 
 
 def sgsns_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
-    """Sensor Array: tripod-mounted dish with a concentric-ring motif."""
+    """Sensor Array: a parabolic dish on a mast, over its equipment cabinet.
+
+    Volumetric pass (issue #48 batch 3): the three 1px tripod lines become a
+    tapering cylindrical mast on a plinth with a yoke, and the dish becomes a
+    genuine concave bowl -- lit on the *lower-right* of its inner surface,
+    which is what a dish facing up-and-left does under this key light, and the
+    cue that tells a bowl apart from a disc at 20px across. This is also the
+    sprite issue #72 was reproduced on: its pad used to have a lens-shaped hole
+    punched through it by the old translucent contact_shadow."""
     ground_y0, ground_y1 = h - 8, h
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=6)
     cx = w // 2
-    mast_top = 10
-    contact_shadow(sd, cx, ground_y0 + 1, 9, 2)
-    # Tripod with lit near-edges and a cross-brace.
-    for off, wd in ((-6, 1), (6, 1), (0, 1.2)):
-        sd.line([(cx + off, ground_y0), (cx, mast_top)], fill=LEGACY_GRAY_DARK, width=wd)
-    sd.line([(cx - 6, ground_y0), (cx, mast_top)], fill=lit(LEGACY_GRAY_DARK, 0.35), width=0.4)
-    sd.line([(cx - 3.2, ground_y0 - 5), (cx + 3.2, ground_y0 - 5)], fill=dim(LEGACY_GRAY, 0.1), width=0.5)
-    # Dish: shaded bowl + concentric scan rings + gold feed point.
-    sd.ellipse([cx - 10, mast_top - 8, cx + 10, mast_top + 6], fill=dim(PANEL_BLUEBLACK, 0.15))
-    sd.ellipse([cx - 8.4, mast_top - 6.8, cx + 8.4, mast_top + 4.2], fill=PANEL_BLUEBLACK)
-    sd.ellipse([cx - 7, mast_top - 6, cx + 3, mast_top + 1], fill=lit(PANEL_BLUEBLACK, 0.22))
-    sd.ellipse([cx - 10, mast_top - 8, cx + 10, mast_top + 6], outline=dim(SUN_GOLD, 0.2), width=0.5)
-    ring = GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.45)
-    sd.arc([cx - 7, mast_top - 5, cx + 7, mast_top + 3], 195, 345, fill=ring, width=0.7)
-    sd.arc([cx - 4, mast_top - 3, cx + 4, mast_top + 1], 195, 345, fill=ring, width=0.6)
-    sd.line([(cx, mast_top - 1), (cx + 4, mast_top - 6)], fill=lit(LEGACY_GRAY, 0.2), width=0.5)
-    sd.ellipse([cx + 3, mast_top - 7, cx + 5.4, mast_top - 4.6], fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.5))
+    steel = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.2)
+    contact_shadow(sd, cx + 2, ground_y0 + 0.5, 11, 2.2)
+    # Equipment cabinet beside the mast, with a status light.
+    capped_box(sd, 5, ground_y0 - 6, 13, ground_y0, steel, depth=1.8, edge=0.32)
+    for i in range(3):
+        sd.line([(6.4, ground_y0 - 4.6 + i * 1.4), (11.6, ground_y0 - 4.6 + i * 1.4)],
+                fill=dim(steel, 0.42), width=0.4)
+    sd.px(11.4, ground_y0 - 5.4, GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.5))
+    # Concrete plinth and tapering mast.
+    capped_box(sd, cx - 5, ground_y0 - 3, cx + 5, ground_y0, CONCRETE, depth=1.6, edge=0.28)
+    mast_top = 13
+    bands = 5
+    for i in range(bands):
+        t0, t1 = i / bands, (i + 1) / bands
+        c = (t0 + t1) / 2
+        b = 1.0 - abs(c - 0.35) * 2.0
+        col = lit(steel, 0.3 * max(0.0, b)) if b > 0 else dim(steel, 0.3 * min(1.0, -b + 0.3))
+        sd.poly([(cx - 2.4 + 4.8 * t0, ground_y0 - 2), (cx - 2.4 + 4.8 * t1, ground_y0 - 2),
+                 (cx - 1.5 + 3.0 * t1, mast_top), (cx - 1.5 + 3.0 * t0, mast_top)], fill=col)
+    sd.line([(cx - 2.1, ground_y0 - 11), (cx + 2.1, ground_y0 - 11)], fill=dim(steel, 0.4), width=0.4)
+    # Conduit collar: the "grid-live" tell, and the mast's team-coloured band.
+    collar = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.55)
+    sd.rect([cx - 2.3, ground_y0 - 7, cx + 2.3, ground_y0 - 5.4], fill=collar)
+    sd.line([(cx - 2.3, ground_y0 - 7), (cx + 2.3, ground_y0 - 7)], fill=lit(SUN_GOLD, 0.4), width=0.4)
+    sd.rect([5.8, ground_y0 - 1.6, 12.2, ground_y0 - 0.8], fill=collar)
+    # Yoke carrying the dish off the mast head.
+    sd.line([(cx - 1, mast_top + 1), (cx - 5, mast_top - 3)], fill=steel, width=1.0)
+    sd.line([(cx + 1, mast_top + 1), (cx + 5, mast_top - 3)], fill=dim(steel, 0.2), width=1.0)
+    # Dish. Outer rim, then the bowl as nested ellipses brightening toward the
+    # lower-right inner face (concave = the highlight sits opposite the light).
+    dcx, dcy, drx, dry = cx, 10.0, 10.5, 7.5
+    sd.ellipse([dcx - drx, dcy - dry, dcx + drx, dcy + dry], fill=dim(steel, 0.45))
+    steps = 7
+    for i in range(steps):
+        t = i / (steps - 1)
+        a = 1 - t * 0.9
+        fx, fy = dcx + drx * 0.24, dcy + dry * 0.26
+        col = dim(PANEL_BLUEBLACK, 0.35 * (1 - t)) if t < 0.45 else lit(PANEL_BLUEBLACK, 0.34 * (t - 0.45) / 0.55)
+        sd.ellipse([fx + (dcx - drx + 1.2 - fx) * a, fy + (dcy - dry + 1.0 - fy) * a,
+                    fx + (dcx + drx - 1.2 - fx) * a, fy + (dcy + dry - 1.0 - fy) * a], fill=col)
+    # Rim lip, brightest where it faces the light.
+    sd.arc([dcx - drx, dcy - dry, dcx + drx, dcy + dry], 170, 320, fill=lit(steel, 0.4), width=0.7)
+    sd.arc([dcx - drx, dcy - dry, dcx + drx, dcy + dry], 20, 150, fill=dim(steel, 0.3), width=0.6)
+    ring = GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.5)
+    sd.arc([dcx - 6.4, dcy - 4.6, dcx + 6.4, dcy + 4.6], 200, 340, fill=ring, width=0.6)
+    sd.arc([dcx - 3.4, dcy - 2.4, dcx + 3.4, dcy + 2.4], 200, 340, fill=ring, width=0.5)
     if damaged:
-        scorch(sd, [(cx + 2, mast_top + 2, 2.5), (cx - 4, ground_y0 - 2, 2)])
+        # A bite out of the rim: the state reads from the outline, not decals.
+        sd.poly([(dcx + 3, dcy - dry - 0.5), (dcx + 9, dcy - dry + 2.5),
+                 (dcx + 7, dcy - 1), (dcx + 2.5, dcy - 3)], fill=dim(steel, 0.62))
+    # Feed boom and horn, on the remap ramp.
+    sd.line([(dcx, dcy), (dcx - 4.5, dcy - 5.5)], fill=lit(steel, 0.25), width=0.6)
+    sd.ellipse([dcx - 6, dcy - 7.2, dcx - 3.4, dcy - 4.6],
+               fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.5))
+    if damaged:
+        scorch(sd, [(cx + 9, ground_y0 + 2.5, 2.2), (7, ground_y0 + 3, 1.6)])
 
 
 _REL_TANK = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.22)   # transformer tank
@@ -1642,7 +1930,7 @@ def sgwnd_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     for k, cx in enumerate((w // 3, 2 * w // 3)):
         hub_y = gold_y0 - 26
         stopped = damaged and k == 0
-        contact_shadow(sd, cx, gold_y0 - 1, 5, 1.8)
+        contact_shadow(sd, cx + 1, gold_y0 + 0.7, 5, 1.5, base=SUN_GOLD)
         # Concrete footing block with volume.
         capped_box(sd, cx - 3, gold_y0 - 3, cx + 3, gold_y0 - 0.5, CONCRETE, depth=1.4, edge=0.3)
         # Tapered cylindrical mast: brightness peaks left of center, darkest
@@ -1717,32 +2005,63 @@ def sghyd_draw(sd, w=FAM33_W, h=FAM33_H, damaged=False):
     draw_gold_band(sd, 5, w - 5, gold_y0, gold_y1)
     tank_w, tank_h = 26, 30
     tank_top = gold_y0 - tank_h
+    steel = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.25)
     for k, cx in enumerate((w // 2 - 20, w // 2 + 20)):
         tx0, tx1 = cx - tank_w // 2, cx + tank_w // 2
-        contact_shadow(sd, cx, gold_y0 - 1, tank_w / 2 + 1, 2.5)
-        # Cylinder body with a proper horizontal lighting ramp + domed cap.
-        vcyl(sd, tx0, tank_top + 4, tx1, gold_y0, PANEL_BLUEBLACK)
-        sd.ellipse([tx0, tank_top, tx1, tank_top + 9], fill=PANEL_BLUEBLACK)
-        sd.ellipse([tx0 + 3, tank_top + 1, tx1 - 9, tank_top + 5.5], fill=lit(PANEL_BLUEBLACK, 0.3))
-        # Gold hoop bands (following the cylinder shading).
-        for by in (tank_top + 10, tank_top + 20):
-            sd.line([(tx0 + 0.6, by), (tx1 - 0.6, by)], fill=SUN_GOLD, width=1.2)
-            sd.line([(tx0 + 0.6, by + 0.8), (tx1 - 0.6, by + 0.8)], fill=dim(SUN_GOLD, 0.4), width=0.4)
-        # Vent stack on the far tank / gauge box on the near one.
+        contact_shadow(sd, cx + 2, gold_y0 + 0.7, tank_w / 2, 1.7, base=SUN_GOLD)
+        # Concrete skirt the tank stands on.
+        capped_box(sd, tx0 - 1, gold_y0 - 3.5, tx1 + 1, gold_y0, CONCRETE, depth=1.8, edge=0.3)
+        # Cylinder body with a horizontal lighting ramp, capped by a real dome
+        # (nested ellipses converging on an up-left highlight) instead of one
+        # flat ellipse with a bright patch stuck on it.
+        vcyl(sd, tx0, tank_top + 5, tx1, gold_y0 - 3, PANEL_BLUEBLACK)
+        sphere(sd, tx0, tank_top, tx1, tank_top + 11, PANEL_BLUEBLACK, steps=7,
+               lit_f=0.30, dim_f=0.3)
+        sd.arc([tx0, tank_top + 1, tx1, tank_top + 12], 12, 168,
+               fill=dim(PANEL_BLUEBLACK, 0.45), width=0.6)
+        # Gold hoop bands, following the cylinder shading.
+        for by in (tank_top + 13, tank_top + 22):
+            broke = damaged and k == 1 and by > tank_top + 20
+            sd.line([(tx0 + 0.6, by), (tx1 - (9 if broke else 0.6), by)], fill=SUN_GOLD, width=1.2)
+            sd.line([(tx0 + 0.6, by + 0.8), (tx1 - (9 if broke else 0.6), by + 0.8)],
+                    fill=dim(SUN_GOLD, 0.4), width=0.4)
         if k == 0:
-            box3d(sd, tx1 - 6, gold_y0 - 8, tx1 - 1, gold_y0 - 2, LEGACY_GRAY)
-            sd.px(tx1 - 4, gold_y0 - 6, GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.4))
+            # Relief stack rising off the far tank's crown.
+            sd.line([(tx0 + 6, tank_top + 3), (tx0 + 6, tank_top - 7)], fill=steel, width=1.4)
+            sd.line([(tx0 + 5.4, tank_top + 3), (tx0 + 5.4, tank_top - 7)], fill=lit(steel, 0.35), width=0.4)
+            sd.ellipse([tx0 + 4.2, tank_top - 9, tx0 + 7.8, tank_top - 6.4], fill=lit(steel, 0.15))
         else:
-            sd.line([(tx0 + 4, tank_top + 2), (tx0 + 4, tank_top - 4)], fill=LEGACY_GRAY, width=1)
-            sd.px(tx0 + 4, tank_top - 5, lit(LEGACY_GRAY, 0.3))
-    # Transfer pipe with a valve wheel between the tanks.
-    pipe_y = tank_top + 14
-    sd.line([(w // 2 - 20 + tank_w // 2, pipe_y), (w // 2 + 20 - tank_w // 2, pipe_y)], fill=SUN_GOLD, width=1.6)
-    sd.line([(w // 2 - 20 + tank_w // 2, pipe_y - 0.8), (w // 2 + 20 - tank_w // 2, pipe_y - 0.8)], fill=lit(SUN_GOLD, 0.4), width=0.4)
-    sd.ellipse([w / 2 - 2.4, pipe_y - 2.4, w / 2 + 2.4, pipe_y + 2.4], fill=dim(SUN_GOLD, 0.2))
-    sd.ellipse([w / 2 - 1.2, pipe_y - 1.2, w / 2 + 1.2, pipe_y + 1.2], fill=lit(SUN_GOLD, 0.3))
+            # Caged access ladder up the near tank -- the "you could walk on
+            # this" scale cue the flat cylinders were missing.
+            lx = tx1 - 7
+            sd.line([(lx - 1.6, gold_y0 - 4), (lx - 1.6, tank_top + 7)], fill=dim(steel, 0.15), width=0.5)
+            sd.line([(lx + 1.6, gold_y0 - 4), (lx + 1.6, tank_top + 7)], fill=dim(steel, 0.15), width=0.5)
+            for ry in range(int(tank_top) + 9, int(gold_y0) - 4, 4):
+                if damaged and ry > gold_y0 - 12:
+                    continue
+                sd.line([(lx - 1.6, ry), (lx + 1.6, ry)], fill=lit(steel, 0.2), width=0.4)
+    # Compressor skid between the tanks, with the transfer pipe arching over it.
+    sx0, sx1 = w // 2 - 8, w // 2 + 8
+    capped_box(sd, sx0, gold_y0 - 9, sx1, gold_y0, steel, depth=2.2, edge=0.34)
+    for i in range(3):
+        sd.line([(sx0 + 2, gold_y0 - 7 + i * 2), (sx1 - 2, gold_y0 - 7 + i * 2)],
+                fill=dim(steel, 0.4), width=0.4)
+    sd.px(sx1 - 2.5, gold_y0 - 8.4, GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.45))
+    pipe_y = tank_top + 17
+    for x0_, x1_ in ((w // 2 - 20 + tank_w // 2, sx0 + 3), (sx1 - 3, w // 2 + 20 - tank_w // 2)):
+        sd.line([(x0_, pipe_y), (x1_, pipe_y)], fill=SUN_GOLD, width=1.6)
+        sd.line([(x0_, pipe_y - 0.9), (x1_, pipe_y - 0.9)], fill=lit(SUN_GOLD, 0.4), width=0.4)
+    sd.line([(sx0 + 3, pipe_y), (sx0 + 3, gold_y0 - 9)], fill=SUN_GOLD, width=1.4)
+    sd.line([(sx1 - 3, pipe_y), (sx1 - 3, gold_y0 - 9)], fill=dim(SUN_GOLD, 0.25), width=1.4)
+    sd.ellipse([w / 2 - 2.6, pipe_y - 2.6, w / 2 + 2.6, pipe_y + 2.6], fill=dim(SUN_GOLD, 0.25))
+    sd.ellipse([w / 2 - 1.4, pipe_y - 1.4, w / 2 + 1.4, pipe_y + 1.4], fill=lit(SUN_GOLD, 0.3))
     if damaged:
-        scorch(sd, [(w / 2, pipe_y + 4, 3.5), (w / 2 - 24, tank_top + 8, 3), (w / 2 + 16, gold_y0 - 4, 2.5)])
+        # Crumpled crown on the near tank: the outline carries the state.
+        cxd = w // 2 + 20
+        sd.poly([(cxd + 1, tank_top + 1), (cxd + 11, tank_top + 3.5), (cxd + 10, tank_top + 8),
+                 (cxd + 1, tank_top + 6)], fill=dim(PANEL_BLUEBLACK, 0.5))
+        scorch(sd, [(w / 2, pipe_y + 5, 3.5), (w / 2 - 26, tank_top + 12, 3),
+                    (w / 2 + 15, gold_y0 + 3, 2.5)])
 
 
 # ---------------------------------------------------------------------------
@@ -1875,49 +2194,80 @@ def sgtur_base_draw(sd, w, h, damaged=False):
     sgtur_turret_draw(sd, w, h, damaged=damaged, facing=28.0)
 
 
-def _rotor_disc(sd, ex, ey, r):
-    """Spinning rotor read: translucent disc + brighter rim + hub dot."""
-    sd.ellipse([ex - r, ey - r, ex + r, ey + r], fill=(0xB0, 0xB0, 0xA8, 70))
-    sd.ellipse([ex - r, ey - r, ex + r, ey + r], outline=(0xC8, 0xC8, 0xC0, 140), width=0.5)
-    sd.ellipse([ex - 0.8, ey - 0.8, ex + 0.8, ey + 0.8], fill=LEGACY_GRAY_DARK)
+def _drone_boom(sd, cx, cy, ex, ey, col, wide=1.5):
+    """Tapered rotor boom with a lit upper edge, so the arms read as tubes."""
+    sd.line([(cx, cy), (ex, ey)], fill=col, width=wide)
+    sd.line([(cx - 0.35, cy - 0.35), (ex - 0.35, ey - 0.35)], fill=lit(col, 0.4), width=0.45)
+    sd.ellipse([ex - 1.5, ey - 1.5, ex + 1.5, ey + 1.5], fill=col)
+    sd.px(ex - 0.6, ey - 0.6, lit(col, 0.3))
 
 
 def sgdro_body_draw(sd, w, h):
-    """Recon Drone: light green quadcopter."""
+    """Recon Drone: a light, slim quadcopter with a gimbal camera slung under
+    the nose.
+
+    Volumetric pass (issue #48 batch 3): the four rotors used to be translucent
+    discs, which the 1-bit indexed alpha deleted outright (issue #72), leaving
+    the drone reading as a diamond ringed by four empty circles. They are now
+    opaque swept rings with trailing dashes (rotor_blur), and the flat diamond
+    body has become a faceted airframe with a raised spine."""
     cx, cy = w // 2, h // 2
-    # Rotor arms first (under the body), then discs.
-    for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
-        ex, ey = cx + dx * 10, cy + dy * 7
-        sd.line([(cx, cy), (ex, ey)], fill=LEGACY_GRAY_DARK, width=1.2)
-        sd.line([(cx, cy), (ex, ey)], fill=lit(LEGACY_GRAY_DARK, 0.3), width=0.4)
-    for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
-        _rotor_disc(sd, cx + dx * 10, cy + dy * 7, 3.4)
-    # Diamond body with a lit nose facet and camera eye.
-    sd.poly([(cx, cy - 8), (cx + 6, cy), (cx, cy + 8), (cx - 6, cy)], fill=GREEN_PRIMARY, outline=GREEN_ACCENT)
-    sd.poly([(cx, cy - 6.4), (cx + 3.6, cy - 1), (cx - 3.6, cy - 1)], fill=lit(GREEN_PRIMARY, 0.3))
-    sd.ellipse([cx - 1.4, cy - 0.6, cx + 1.4, cy + 2.2], fill=PANEL_BLUEBLACK)
-    sd.px(cx, cy - 6, SUN_GOLD)
+    arms = ((-1, -1), (1, -1), (-1, 1), (1, 1))
+    for dx, dy in arms:
+        _drone_boom(sd, cx, cy, cx + dx * 10, cy + dy * 7, LEGACY_GRAY_DARK, 1.4)
+    for k, (dx, dy) in enumerate(arms):
+        rotor_blur(sd, cx + dx * 10, cy + dy * 7, 3.0, dashes=3, phase=35 + 40 * k)
+    # Faceted airframe: dark underside chine, lit upper-left facets, spine.
+    sd.poly([(cx, cy - 9), (cx + 4.6, cy - 3.4), (cx + 4.2, cy + 5), (cx, cy + 8.6),
+             (cx - 4.2, cy + 5), (cx - 4.6, cy - 3.4)], fill=dim(GREEN_PRIMARY, 0.32))
+    sd.poly([(cx, cy - 7.6), (cx + 3.4, cy - 2.8), (cx + 2.6, cy + 3.4), (cx, cy + 5.6),
+             (cx - 3.2, cy + 3.4), (cx - 3.8, cy - 2.8)], fill=GREEN_PRIMARY)
+    sd.poly([(cx, cy - 6.4), (cx + 1.6, cy - 3), (cx - 0.6, cy + 2.6), (cx - 2.8, cy - 2.4)],
+            fill=lit(GREEN_PRIMARY, 0.3))
+    sd.line([(cx, cy - 6.6), (cx, cy + 4.4)], fill=lit(GREEN_PRIMARY, 0.45), width=0.5)
+    # Gimbal camera ball under the nose.
+    sphere(sd, cx - 2.2, cy - 3.4, cx + 2.2, cy + 1.0,
+           mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.55), steps=5, lit_f=0.45)
+    sd.px(cx - 0.6, cy - 2.4, lit(LEGACY_GRAY, 0.5))
+    # Nav strip on the remap ramp: which drone this is, and whose.
+    sd.rect([cx - 1.2, cy + 5.6, cx + 1.2, cy + 7.4], fill=SUN_GOLD)
+    sd.px(cx, cy - 8.4, SUN_GOLD)
 
 
 def sgdrs_body_draw(sd, w, h):
-    """Strike Drone: heavier blue-black-and-gold body with weapon pods."""
+    """Strike Drone: a heavier armoured airframe with rail-mounted munitions.
+
+    Same volumetric pass as sgdro (issue #48 batch 3): opaque rotor blur, a
+    stepped armoured hull with a raised sensor turret rather than a flat
+    diamond, and munition rails that read as objects hung under the booms."""
     cx, cy = w // 2, h // 2
-    for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
-        ex, ey = cx + dx * 11, cy + dy * 8
-        sd.line([(cx, cy), (ex, ey)], fill=LEGACY_GRAY_DARK, width=1.4)
-        sd.line([(cx, cy), (ex, ey)], fill=lit(LEGACY_GRAY_DARK, 0.3), width=0.4)
-        # Underslung weapon pods on the rear arms.
-        if dy == 1:
-            mx, my = cx + dx * 6.5, cy + dy * 4.5
-            sd.rect([mx - 1.4, my - 1, mx + 1.4, my + 3.4], fill=dim(PANEL_BLUEBLACK, 0.2))
-            sd.rect([mx - 1.4, my + 2.4, mx + 1.4, my + 3.4], fill=SUN_GOLD)
-    for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
-        _rotor_disc(sd, cx + dx * 11, cy + dy * 8, 3.8)
-    sd.poly([(cx, cy - 9), (cx + 7, cy), (cx, cy + 9), (cx - 7, cy)], fill=PANEL_BLUEBLACK, outline=SUN_GOLD)
-    sd.poly([(cx, cy - 7.2), (cx + 4.2, cy - 1), (cx - 4.2, cy - 1)], fill=lit(PANEL_BLUEBLACK, 0.35))
-    sd.line([(cx, cy - 9), (cx, cy + 9)], fill=dim(SUN_GOLD, 0.35), width=0.4)
-    sd.ellipse([cx - 1.6, cy - 0.8, cx + 1.6, cy + 2.4], fill=RUST)
-    sd.px(cx, cy - 7, SUN_GOLD)
+    arms = ((-1, -1), (1, -1), (-1, 1), (1, 1))
+    for dx, dy in arms:
+        _drone_boom(sd, cx, cy, cx + dx * 11, cy + dy * 8, LEGACY_GRAY_DARK, 1.7)
+        if dy == -1:
+            # Munition rail slung under the forward booms.
+            mx, my = cx + dx * 6.8, cy + dy * 4.8
+            sd.poly([(mx - 1.6, my - 2.4), (mx + 1.6, my - 2.4), (mx + 1.6, my + 2.8),
+                     (mx, my + 4.2), (mx - 1.6, my + 2.8)], fill=dim(PANEL_BLUEBLACK, 0.18))
+            sd.line([(mx - 1.0, my - 2.0), (mx - 1.0, my + 2.4)], fill=lit(PANEL_BLUEBLACK, 0.4), width=0.5)
+            sd.rect([mx - 1.4, my - 2.8, mx + 1.4, my - 1.9], fill=SUN_GOLD)
+    for k, (dx, dy) in enumerate(arms):
+        rotor_blur(sd, cx + dx * 11, cy + dy * 8, 3.4, dashes=3, phase=20 + 40 * k)
+    # Armoured hull: dark chine, plated deck, chamfered nose.
+    sd.poly([(cx, cy - 10), (cx + 5.6, cy - 4.6), (cx + 5.2, cy + 6), (cx, cy + 9.4),
+             (cx - 5.2, cy + 6), (cx - 5.6, cy - 4.6)], fill=dim(PANEL_BLUEBLACK, 0.35))
+    sd.poly([(cx, cy - 8.4), (cx + 4.2, cy - 3.8), (cx + 3.6, cy + 4.6), (cx, cy + 6.6),
+             (cx - 3.8, cy + 4.6), (cx - 4.4, cy - 3.8)], fill=PANEL_BLUEBLACK)
+    sd.poly([(cx, cy - 7), (cx + 2.2, cy - 3.6), (cx - 0.6, cy + 2), (cx - 3.2, cy - 3)],
+            fill=lit(PANEL_BLUEBLACK, 0.42))
+    sd.line([(cx - 4.0, cy - 1.2), (cx + 4.0, cy - 1.2)], fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
+    # Raised sensor/targeting turret amidships.
+    sphere(sd, cx - 2.6, cy - 1.0, cx + 2.6, cy + 4.2, mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.45),
+           steps=6, lit_f=0.42)
+    sd.px(cx - 0.8, cy + 0.4, lit(LEGACY_GRAY, 0.45))
+    # Tail flash + nose light on the remap ramp.
+    sd.poly([(cx - 1.8, cy + 6.4), (cx + 1.8, cy + 6.4), (cx, cy + 8.8)], fill=SUN_GOLD)
+    sd.px(cx, cy - 9.2, SUN_GOLD)
 
 
 # ---------------------------------------------------------------------------
