@@ -1433,6 +1433,14 @@ RCYD:
 		Range: 4c0
 	WithBuildingBib:
 		HasMinibib: true
+	# The depot's stored Scrap drives its sprite, the same way the Battery Bank's
+	# Reserve drives its charge readout (docs/BACKLOG.md issues #70/#71): the
+	# heap in the tipping bay and the gauge on the hall both grow with the level,
+	# so what the building is holding is readable without selecting it. The
+	# WithResourceStoragePipsDecoration below stays as the exact readout.
+	-WithSpriteBody:
+	WithResourceLevelSpriteBody:
+		Sequence: stages
 	CashTrickler:
 		InitialDelay: 25
 		Interval: 125
