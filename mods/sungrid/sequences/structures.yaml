@@ -102,9 +102,8 @@ rcyd:
 		Start: 9
 		Length: 9
 	make:
-		Filename: rcyd.png
-		Start: 0
-		Length: 1
+		Filename: rcydmake.png
+		Length: *
 	bib:
 		TilesetFilenames:
 			SNOW: mbSILO.sno
@@ -265,10 +264,10 @@ sgpwr:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgpwrmake.png
+		Length: *
 	dead:
-		Filename: powrdead.shp
+		Filename: sgpwrdead.png
 		Tick: 800
 	bib:
 		Filename: bib3.tem
@@ -287,12 +286,11 @@ sgapwr:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgapwrmake.png
+		Length: *
 	dead:
-		Filename: apwrdead.shp
+		Filename: sgapwrdead.png
 		Tick: 800
-		Offset: 0,-10
 	bib:
 		Filename: bib2.tem
 		TilesetFilenames:
@@ -320,8 +318,8 @@ sgcry:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgcrymake.png
+		Length: *
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:
@@ -338,8 +336,8 @@ sgdai:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgdaimake.png
+		Length: *
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:
@@ -356,8 +354,8 @@ sgdrn:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgdrnmake.png
+		Length: *
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:
@@ -374,14 +372,14 @@ sgdra:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgdramake.png
+		Length: *
 	icon:
 		Filename: sgdraicon.png
 
-sgtur: # Empty first frame reusing gunmake.shp, same workaround/convention `sam:` uses above --
-	idle: # WithSpriteBody needs a placeholder default sequence for the (shared, unmodified) base pad.
-		Filename: gunmake.shp
+sgtur: # WithSpriteBody draws the fixed emplacement pad; the weapon station on top
+	idle: # is the separate `turret:` sheet, the same split `sam:` uses above. The pad
+		Filename: sgturpad.png # used to be stock gunmake.shp (docs/BACKLOG.md issue #74).
 	turret:
 		Filename: sgturturret.png
 		Facings: 32
@@ -392,7 +390,7 @@ sgtur: # Empty first frame reusing gunmake.shp, same workaround/convention `sam:
 		Facings: 32
 		UseClassicFacings: True
 	make:
-		Filename: gunmake.shp
+		Filename: sgturmake.png
 		Length: *
 	muzzle:
 		Filename: samfire.shp
@@ -416,8 +414,8 @@ sgrel:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgrelmake.png
+		Length: *
 	bib:
 		TilesetFilenames:
 			SNOW: mbGAP.sno
@@ -435,8 +433,8 @@ sgshl:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgshlmake.png
+		Length: *
 	bib:
 		TilesetFilenames:
 			SNOW: mbIRON.sno
@@ -455,8 +453,8 @@ sgsns:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgsnsmake.png
+		Length: *
 	bib:
 		TilesetFilenames:
 			SNOW: mbSILO.sno
@@ -474,8 +472,8 @@ sgwnd:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sgwndmake.png
+		Length: *
 	bib:
 		Filename: bib3.tem
 		TilesetFilenames:
@@ -492,12 +490,11 @@ sghyd:
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: sghydmake.png
+		Length: *
 	dead:
-		Filename: apwrdead.shp
+		Filename: sghyddead.png
 		Tick: 800
-		Offset: 0,-10
 	bib:
 		Filename: bib2.tem
 		TilesetFilenames:
@@ -532,9 +529,8 @@ sgvlt:
 		Start: 9
 		Length: 9
 	make:
-		Filename: sgvlt.png
-		Start: 0
-		Length: 1
+		Filename: sgvltmake.png
+		Length: *
 	bib:
 		TilesetFilenames:
 			SNOW: mbSILO.sno
@@ -931,8 +927,8 @@ arct: # Body sheet is the fixed pedestal only; the emitter head rotates as a
 	damaged-idle:
 		Start: 1
 	make:
-		Start: 0
-		Length: 1
+		Filename: arctmake.png
+		Length: *
 	turret:
 		Filename: arctturret.png
 		Facings: 32

@@ -2194,6 +2194,31 @@ def sgtur_base_draw(sd, w, h, damaged=False):
     sgtur_turret_draw(sd, w, h, damaged=damaged, facing=28.0)
 
 
+def sgtur_pad_draw(sd, w, h, damaged=False):
+    """The fixed emplacement pad the rotating station stands on.
+
+    Previously stock gunmake.shp (the Turret's own concrete pad), which also
+    meant the build-up was a different building's -- see issue #74. Drawn to
+    the same contact point the station's turntable sits on (SGTUR_PIVOT_DY),
+    so the two line up."""
+    cy = h // 2 + SGTUR_PIVOT_DY
+    cx = w // 2
+    rx, ry = 15.0, 8.0
+    # Octagonal hardstand: lit top face, shaded lower rim, anchor bolts.
+    oct_pts = [(cx + rx * dx, cy + ry * dy) for dx, dy in
+               ((-1, -0.42), (-0.42, -1), (0.42, -1), (1, -0.42),
+                (1, 0.42), (0.42, 1), (-0.42, 1), (-1, 0.42))]
+    sd.poly([(x, y + 1.6) for x, y in oct_pts], fill=dim(CONCRETE, 0.45))
+    sd.poly(oct_pts, fill=CONCRETE)
+    sd.line([oct_pts[7], oct_pts[0], oct_pts[1], oct_pts[2]], fill=lit(CONCRETE, 0.22), width=0.6)
+    sd.line([oct_pts[3], oct_pts[4], oct_pts[5], oct_pts[6]], fill=dim(CONCRETE, 0.3), width=0.6)
+    for dx, dy in ((-0.66, -0.5), (0.66, -0.5), (-0.66, 0.5), (0.66, 0.5)):
+        sd.px(cx + rx * dx, cy + ry * dy, dim(CONCRETE, 0.4))
+    # Cable trench feeding the mount, on the remap ramp like every other
+    # building's conduit.
+    sd.rect([cx - 3, cy + ry * 0.4, cx + 3, cy + ry * 0.4 + 1.6], fill=dim(SUN_GOLD, 0.25))
+
+
 def _drone_boom(sd, cx, cy, ex, ey, col, wide=1.5):
     """Tapered rotor boom with a lit upper edge, so the arms read as tubes."""
     sd.line([(cx, cy), (ex, ey)], fill=col, width=wide)
@@ -2852,15 +2877,10 @@ def disr_frames():
 
 
 # ---------------------------------------------------------------------------
-# Sheet assembly: two-frame building sheets (idle + genuinely-damaged) and
-# cameo-style sidebar icons.
+# Sheet assembly: cameo-style sidebar icons. (The two-frame idle+damaged
+# building sheet is assembled inline in main() now, since issue #74's build-up
+# strip needs the idle frame itself, not just the finished sheet.)
 # ---------------------------------------------------------------------------
-
-def two_frame_sheet(draw_fn, frame_w, frame_h):
-    idle = render(draw_fn, frame_w, frame_h, damaged=False)
-    damaged = render(draw_fn, frame_w, frame_h, damaged=True)
-    return sheet_of([idle, damaged], frame_w, frame_h)
-
 
 ICON_W, ICON_H = 64, 48
 
@@ -3036,6 +3056,263 @@ def make_icon_from_motif(big, label=None):
     return icon
 
 
+# ---------------------------------------------------------------------------
+# Sprite *states*: build-up, death rubble, vehicle husk (issue #74).
+#
+# Every pass up to here drew a better *picture*. This one draws the states the
+# engine already asks each actor for and which were still being answered with
+# another actor's art (or with nothing at all):
+#
+#   - `make:`  every Sungrid building held a single frame, so it popped in
+#              fully formed while every ported stock building next to it rose
+#              out of the ground over ~9 frames.
+#   - `dead:`  the three buildings that have one pointed at stock RA rubble
+#              (powrdead.shp / apwrdead.shp).
+#   - husks    the Hauler Drone left an Ore Truck wreck -- the exact sprite
+#              issue #34's follow-up gave it dedicated art to stop colliding
+#              with -- and the two drones left a Chinook and a Black Hawk.
+#
+# Shadows here are derived from the frame's own silhouette rather than drawn:
+# indexed_strip only writes SHADOW_IDX where the body is transparent, so an
+# offset copy of the silhouette leaves exactly the 1-3px down-right rim that
+# decoding fact.shp showed stock buildings use (issue #73). Unlike a finished
+# building, a wreck genuinely leaves terrain visible around itself, so it gets
+# one -- and the stock art agrees: powrdead.shp is 789 opaque pixels with 77
+# of them ShadowIndex, hhusk2.shp bakes one per facing.
+# ---------------------------------------------------------------------------
+
+MAKE_FRAMES = 9   # matches stock fcommake.shp's 9; gapmake.shp runs 13
+
+
+def silhouette_shadow(frame, dx=2, dy=2):
+    """Ground-shadow stencil for indexed_strip: the frame's own 1-bit
+    silhouette, offset down-right."""
+    solid = frame.getchannel("A").point(lambda v: 255 if v >= 128 else 0)
+    mask = Image.new("L", frame.size, 0)
+    mask.paste(solid, (dx, dy))
+    return mask
+
+
+def construction_tint(img):
+    """Bare, unpowered structure: RA's *make.shp frames are monochrome until
+    the last one, so a building only takes its colours -- and, here, its
+    owner's, since the gold accents live on the player-remap ramp -- at the
+    moment it finishes. Greys are far from the gold reference ramp, so
+    _index_for lands them on fixed palette entries and nothing in a
+    half-built structure is team-coloured."""
+    px = img.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = px[x, y]
+            if a < 8:
+                continue
+            lum = 0.30 * r + 0.59 * g + 0.11 * b
+            v = min(255, int(lum * 0.80) + 12)
+            px[x, y] = (v, v, v, a)
+    return img
+
+
+def make_frames(draw_fn, w, h, final=None, n=MAKE_FRAMES, **kwargs):
+    """Build-up strip: the finished mass rising out of the ground, anchored on
+    the sprite's own contact row, monochrome until the final frame.
+
+    Deliberately a bottom-anchored vertical scale of the finished sprite
+    rather than a hand-drawn scaffold sequence -- that is what stock RA's own
+    build-up reads as (decoding fcommake.shp shows frame 1 is a squat version
+    of the whole building, base included, growing to full height with a
+    constant footprint width), and it keeps the 15 build-ups here in step with
+    their draw functions automatically instead of needing 15 more of them.
+
+    `final` overrides the last frame for actors whose shipped idle frame is not
+    a plain render() of draw_fn (sgrel re-stamps its accents at native
+    resolution; arct carries a baked shadow), so construction completing never
+    shows a one-frame pop."""
+    big = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
+    draw_fn(SD(big), w, h, **kwargs)
+    bbox = big.getbbox()
+    base_y = bbox[3] if bbox else big.height
+    mass = big.crop((0, 0, big.width, base_y))
+    frames = []
+    for i in range(n - 1):
+        t = (i + 1) / n
+        mh = max(SS, round(mass.height * t))
+        f = Image.new("RGBA", big.size, (0, 0, 0, 0))
+        f.paste(mass.resize((mass.width, mh), Image.LANCZOS), (0, base_y - mh))
+        frames.append(construction_tint(f.resize((w, h), Image.LANCZOS)))
+    frames.append(final if final is not None else render(draw_fn, w, h, **kwargs))
+    return frames
+
+
+# --- Death rubble ----------------------------------------------------------
+#
+# Stock building rubble (powrdead.shp/apwrdead.shp, decoded here) is a single
+# frame -- no concrete pad, because WithBuildingBib keeps drawing the bib
+# underneath -- of collapsed mass with a few remap-ramp pixels still in it, so
+# the wreck reads as still having been someone's. Same grammar below, with two
+# or three recognisable pieces of the original building left in the pile so
+# you can tell what you just killed.
+
+def _rubble_bed(sd, x0, x1, y0, y1, seed):
+    """Mound of collapsed structure, built column by column so the crest is
+    jagged and the ends taper into shoulders.
+
+    Drawn as broken *material* rather than one dark polygon: a solid silhouette
+    the size of a building footprint reads as a black box at RTS zoom, whereas
+    stock rubble (powrdead.shp decoded) is a chaotic mid-tone mass with lit
+    edges catching all through it."""
+    span = max(1, int(x1 - x0))
+    # One solid mass under a wandering crest line, then tonal variation laid
+    # *across* it as short broken blocks. Varying the tone per full-height
+    # column instead reads as a picket fence, and a jagged silhouette also
+    # lets the SHADOW_IDX rim show through the gaps.
+    crest = []
+    for i in range(span + 1):
+        n = ((i * 37 + seed * 53) % 17) / 16.0
+        m = ((i * 11 + seed * 29) % 7) / 6.0
+        rise = (y1 - y0) * (0.70 + 0.30 * (0.55 * n + 0.45 * m))
+        shoulder = min(1.0, min(i, span - i) / max(1.0, span * 0.10))
+        crest.append((x0 + i, y1 - rise * shoulder))
+    sd.poly([(x0, y1)] + crest + [(x1, y1)], fill=dim(CONCRETE, 0.12))
+    tones = (LEGACY_GRAY_DARK, lit(CONCRETE, 0.12), DAMAGE_SCORCH, dim(CONCRETE, 0.42))
+    for k in range(span // 2):
+        bx = x0 + (k * 13 + seed * 7) % max(1, span - 4)
+        by = crest[min(len(crest) - 1, int(bx - x0))][1]
+        by += 1 + (k * 5 + seed) % max(1, int(y1 - by) - 1)
+        bw = 2 + (k + seed) % 3
+        sd.rect([bx, by, bx + bw, by + 1], fill=tones[(k + seed) % 4])
+    # Lit crest, so the top edge catches the key light like broken slab does.
+    for i in range(0, span, 2):
+        sd.px(crest[i][0], crest[i][1], lit(CONCRETE, 0.3))
+    # Charred pockets where the fire burned through, kept shallow: deep round
+    # blobs on the lower edge read as holes in the sprite, not as soot.
+    for k in range(2):
+        cxp = x0 + span * (0.34 + 0.3 * k)
+        sd.ellipse([cxp - 4, y1 - 3.5, cxp + 4, y1 - 1.5], fill=DAMAGE_SCORCH)
+
+
+def _slab(sd, cx, cy, wid, hgt, col, lean=0.0):
+    """One canted slab of debris, lit along its upper edge."""
+    pts = [(cx - wid / 2, cy + hgt / 2 + lean), (cx - wid / 2 + 1.5, cy - hgt / 2),
+           (cx + wid / 2, cy - hgt / 2 - lean), (cx + wid / 2 - 1.5, cy + hgt / 2)]
+    sd.poly(pts, fill=col)
+    sd.line([pts[1], pts[2]], fill=lit(col, 0.32), width=0.6)
+
+
+def _embers(sd, spots):
+    for i, (x, y) in enumerate(spots):
+        sd.px(x, y, RUST if i % 2 else lit(RUST, 0.35))
+
+
+def _conduit_stub(sd, x0, x1, y):
+    """Severed length of the gold conduit band -- the remap-ramp pixels that
+    keep the wreck legible as the owner's, matching stock rubble."""
+    sd.rect([x0, y, x1, y + 1.6], fill=dim(SUN_GOLD, 0.4))
+    sd.line([(x0, y), (x1, y)], fill=dim(SUN_GOLD, 0.15))
+
+
+def sgpwr_dead_draw(sd, w=FAM23_W, h=FAM23_H):
+    """Solar Array rubble: both collector surfaces down, one still leaning on
+    its snapped strut."""
+    gy = h - 12
+    _rubble_bed(sd, 8, w - 8, gy - 2, gy + 7, seed=11)
+    # Collapsed collectors: one flat in the ash, one canted on a bent strut.
+    _slab(sd, 22, gy - 4, 22, 5, mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.35), lean=0.8)
+    _slab(sd, 44, gy - 8, 18, 5, dim(PANEL_BLUEBLACK, 0.2), lean=-3.2)
+    sd.line([(38, gy - 6), (41, gy - 1)], fill=POLE_DARK, width=1.1)
+    sd.line([(52, gy - 5), (49, gy - 1)], fill=POLE_DARK, width=1.0)
+    _conduit_stub(sd, 12, 26, gy - 2)
+    _embers(sd, [(20, gy - 3), (33, gy - 2), (48, gy - 3), (27, gy - 5)])
+
+
+def sgapwr_dead_draw(sd, w=FAM33_W, h=FAM33_H):
+    """Advanced Solar Array rubble: a wider spill, with the storage cell burst
+    open in the middle of it."""
+    gy = h - 13
+    _rubble_bed(sd, 6, w - 6, gy - 2, gy + 8, seed=12)
+    _slab(sd, 22, gy - 4, 24, 5, mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.35), lean=1.0)
+    _slab(sd, 66, gy - 5, 22, 5, dim(PANEL_BLUEBLACK, 0.2), lean=-2.4)
+    _slab(sd, 45, gy - 9, 14, 6, dim(LEGACY_GRAY, 0.25), lean=-1.2)
+    for x in (34, 58):
+        sd.line([(x, gy - 7), (x + 3, gy - 1)], fill=POLE_DARK, width=1.1)
+    _conduit_stub(sd, 10, 30, gy - 2)
+    _conduit_stub(sd, 60, 74, gy - 3)
+    _embers(sd, [(24, gy - 3), (45, gy - 6), (63, gy - 3), (37, gy - 2), (71, gy - 4)])
+
+
+def sghyd_dead_draw(sd, w=FAM33_W, h=FAM33_H):
+    """Hydrogen Plant rubble: both cylinders split and toppled, hoops sprung
+    clear of the shells -- the outline says 'tank', not 'generic pile'."""
+    gy = h - 13
+    _rubble_bed(sd, 6, w - 6, gy - 2, gy + 8, seed=9)
+    steel = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.25)
+    # Toppled cylinders, seen end-on and flank-on.
+    sd.ellipse([12, gy - 11, 34, gy - 2], fill=dim(steel, 0.3))
+    sd.ellipse([15, gy - 9.5, 31, gy - 4], fill=dim(PANEL_BLUEBLACK, 0.15))
+    sd.arc([12, gy - 11, 34, gy - 2], 190, 350, fill=lit(steel, 0.2), width=0.7)
+    _slab(sd, 62, gy - 6, 30, 8, dim(steel, 0.15), lean=1.6)
+    sd.line([(48, gy - 9), (76, gy - 7)], fill=dim(steel, 0.45), width=0.8)
+    # Sprung hoops, still gold.
+    sd.arc([44, gy - 10, 62, gy - 1], 200, 20, fill=dim(SUN_GOLD, 0.35), width=1.1)
+    _conduit_stub(sd, 30, 44, gy - 2)
+    _embers(sd, [(23, gy - 6), (52, gy - 4), (68, gy - 5), (38, gy - 2), (60, gy - 8)])
+
+
+# --- Hauler Drone husk -----------------------------------------------------
+
+def sghau_husk_draw(sd, w, h, laden=False):
+    """Wrecked Hauler Drone: the hex chassis burnt out and canted, the magnetic
+    scoop torn off at the mounts, the cargo canister split down one side.
+
+    Its own silhouette rather than HARV's (hhusk2.shp): a Hauler Drone that
+    dies into an Ore Truck wreck undoes exactly the identity issue #34's
+    follow-up pass was for."""
+    cx, cy = w // 2, h // 2
+    # Burnt metal, not black: a 14px wreck under a 1px dark outline has no
+    # room to lose contrast, and stock hhusk2.shp is a mid-tone scorched olive
+    # rather than a silhouette.
+    char = mix(dim(LEGACY_GRAY, 0.22), RUST, 0.22)
+    # Chassis, canted: the near-side facets collapse, so the hex reads bent.
+    sd.poly([(cx, cy - 9), (cx + 9, cy - 4), (cx + 8, cy + 6), (cx - 1, cy + 10),
+             (cx - 9, cy + 5), (cx - 8, cy - 4)], fill=char)
+    sd.poly([(cx - 1, cy - 7.4), (cx + 7, cy - 3), (cx - 1, cy - 0.6), (cx - 6.8, cy - 3.4)],
+            fill=lit(char, 0.26))
+    sd.poly([(cx - 9, cy + 5), (cx - 1, cy + 10), (cx - 1, cy + 7.4), (cx - 7.6, cy + 3.6)],
+            fill=dim(char, 0.45))
+    # Buckled deck plate peeled up out of the hull roof.
+    sd.poly([(cx + 1, cy - 6), (cx + 6.5, cy - 3.6), (cx + 4.5, cy - 1), (cx + 0.5, cy - 2.6)],
+            fill=dim(char, 0.3))
+    sd.line([(cx + 1, cy - 6), (cx + 6.5, cy - 3.6)], fill=lit(char, 0.4), width=0.5)
+    # Skid rails, one buckled outward.
+    sd.line([(cx - 8, cy - 4), (cx - 7, cy + 7)], fill=POLE_DARK, width=0.8)
+    sd.line([(cx + 8, cy - 5), (cx + 10, cy + 4)], fill=POLE_DARK, width=0.8)
+    # Torn scoop mounts: two bent stubs where the emitter ring used to arc.
+    sd.line([(cx - 5, cy - 8), (cx - 6.5, cy - 10.5)], fill=lit(char, 0.15), width=0.9)
+    sd.line([(cx + 5, cy - 8), (cx + 6, cy - 11)], fill=lit(char, 0.15), width=0.9)
+    # Cargo canister, split down the near side: the breach is the dark, the
+    # hull around it stays readable.
+    box3d(sd, cx - 5, cy + 1, cx + 5, cy + 9, dim(char, 0.35), edge=0.35)
+    sd.poly([(cx - 2.5, cy + 2), (cx + 2, cy + 3), (cx + 1.5, cy + 8), (cx - 2.5, cy + 7)],
+            fill=DAMAGE_SCORCH)
+    if laden:
+        # Scrap spilling out of the breach, the cargo it was carrying.
+        sd.poly([(cx - 2, cy + 3.4), (cx + 1.4, cy + 4.2), (cx + 1, cy + 7), (cx - 2, cy + 6.2)],
+                fill=dim(GREEN_ACCENT, 0.3))
+        for i, (dx, dy) in enumerate(((6.5, 6), (-6.5, 7.5), (4, 10))):
+            sd.px(cx + dx, cy + dy, GREEN_ACCENT if i % 2 else dim(GREEN_ACCENT, 0.35))
+    # A little scattered wreckage, kept tight to the hull: isolated single
+    # pixels each pick up their own shadow rim and read as speckle.
+    for i, (dx, dy) in enumerate(((-10.5, -5.5), (10.5, 7.5), (-2, -11))):
+        sd.rect([cx + dx, cy + dy, cx + dx + 1, cy + dy + 0.6],
+                fill=LEGACY_GRAY_DARK if i % 2 else dim(char, 0.4))
+    _embers(sd, [(cx - 3, cy - 4), (cx + 4, cy + 5)])
+
+
+def sghau_husk_frames(laden):
+    """32 facings, matching the intact sled's layout and hhusk2.shp's own."""
+    bodies = rotated_frames(sghau_husk_draw, SGHAU_W, SGHAU_H, 32, laden=laden)
+    return bodies, [silhouette_shadow(b, 1, 1) for b in bodies]
+
+
 # Buildings that bake a cast shadow into their sprite the way the stock art
 # does. The rest of the roster still has none -- a deliberate follow-up, not
 # an oversight (docs/BACKLOG.md issue #65).
@@ -3067,20 +3344,31 @@ def main():
     ]
 
     for name, draw_fn, w, h in flat_buildings:
+        idle_shadow = None
         if name in ACCENT_FRAMES:
-            sheet = sheet_of([ACCENT_FRAMES[name](damaged=d) for d in (False, True)], w, h)
+            frames = [ACCENT_FRAMES[name](damaged=d) for d in (False, True)]
+            sheet = sheet_of(frames, w, h)
+            idle = frames[0]
         elif name in SHADOW_DRAWS:
             # Buildings whose sprite carries a baked ground shadow have to go
             # through indexed_strip so SHADOW_IDX survives (see its docstring).
-            sheet = indexed_strip(
-                [render(draw_fn, w, h, damaged=d) for d in (False, True)],
-                [render_shadow_mask(SHADOW_DRAWS[name], w, h, damaged=d) for d in (False, True)],
-                w, h)
+            bodies = [render(draw_fn, w, h, damaged=d) for d in (False, True)]
+            shadows = [render_shadow_mask(SHADOW_DRAWS[name], w, h, damaged=d) for d in (False, True)]
+            sheet = indexed_strip(bodies, shadows, w, h)
+            idle, idle_shadow = bodies[0], shadows[0]
         else:
-            sheet = two_frame_sheet(draw_fn, w, h)
+            idle = render(draw_fn, w, h, damaged=False)
+            sheet = sheet_of([idle, render(draw_fn, w, h, damaged=True)], w, h)
         save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
         icon = make_icon(ICON_DRAWS.get(name, draw_fn), w, h, label=ICON_LABELS.get(name))
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
+
+        # Build-up (issue #74): the structure rising out of the ground, ending
+        # on this sheet's own idle frame so completion never pops.
+        mk = make_frames(draw_fn, w, h, final=idle)
+        mk_shadows = [None] * (len(mk) - 1) + [idle_shadow]
+        save_pngsheet(indexed_strip(mk, mk_shadows, w, h), f"{name}make.png",
+                      w, h, len(mk), indexed=True)
 
     # Battery Bank (the Grid Reserve Vault): one strip of 9 charge stages
     # followed by 9 damaged charge stages, which is what `stages:` /
@@ -3091,6 +3379,11 @@ def main():
                   SG1x1_W, SG1x1_H, len(vlt), indexed=True)
     save_pngsheet(make_icon(sgvlt_draw, SG1x1_W, SG1x1_H, label=ICON_LABELS["sgvlt"]),
                   "sgvlticon.png", ICON_W, ICON_H, 1)
+    # Build-up ends on charge stage 0 -- a Battery Bank comes online empty,
+    # which is also the frame the `make:` sequence used to hold on its own.
+    vlt_mk = make_frames(sgvlt_draw, SG1x1_W, SG1x1_H, final=sgvlt_frame(charge=0), charge=0)
+    save_pngsheet(sheet_of(vlt_mk, SG1x1_W, SG1x1_H), "sgvltmake.png",
+                  SG1x1_W, SG1x1_H, len(vlt_mk), indexed=True)
 
     # Recycling Depot: same layout as the Battery Bank -- 9 fill stages then 9
     # damaged fill stages, indexed by `stages:` / `damaged-stages:`. The cameo
@@ -3102,6 +3395,9 @@ def main():
                   SG1x1_W, SG1x1_H, len(rcy), indexed=True)
     save_pngsheet(make_icon(rcyd_draw, SG1x1_W, SG1x1_H, label=ICON_LABELS["rcyd"]),
                   "rcydicon.png", ICON_W, ICON_H, 1)
+    rcy_mk = make_frames(rcyd_draw, SG1x1_W, SG1x1_H, final=rcyd_frame(charge=0), charge=0)
+    save_pngsheet(sheet_of(rcy_mk, SG1x1_W, SG1x1_H), "rcydmake.png",
+                  SG1x1_W, SG1x1_H, len(rcy_mk), indexed=True)
 
     # Arc Turret: the head is its own 32-facing turret sprite (issue #66), so
     # arct.png above is the pedestal alone and this is what rotates on top.
@@ -3121,6 +3417,33 @@ def main():
                   "sgturturret.png", SGTUR_W, SGTUR_H, 64, indexed=True)
     save_pngsheet(make_icon(sgtur_base_draw, SGTUR_W, SGTUR_H, label=ICON_LABELS["sgtur"]),
                   "sgturicon.png", ICON_W, ICON_H, 1)
+
+    # Emplacement pad: the fixed body under the rotating station, replacing the
+    # stock gunmake.shp placeholder it borrowed for both its idle frame and its
+    # build-up (issue #74). The station itself is gated on !build-incomplete,
+    # so the build-up shows the pad alone and the turret pops in on completion
+    # -- exactly how SAM/GUN/AGUN behave.
+    pad = render(sgtur_pad_draw, SGTUR_W, SGTUR_H)
+    pad_shadow = silhouette_shadow(pad, 2, 2)
+    save_pngsheet(indexed_strip([pad], [pad_shadow], SGTUR_W, SGTUR_H),
+                  "sgturpad.png", SGTUR_W, SGTUR_H, 1, indexed=True)
+    pad_mk = make_frames(sgtur_pad_draw, SGTUR_W, SGTUR_H, final=pad)
+    save_pngsheet(indexed_strip(pad_mk, [None] * (len(pad_mk) - 1) + [pad_shadow],
+                                SGTUR_W, SGTUR_H),
+                  "sgturmake.png", SGTUR_W, SGTUR_H, len(pad_mk), indexed=True)
+
+    # Death rubble (issue #74), replacing stock powrdead.shp/apwrdead.shp. One
+    # frame each, matching the stock rubble's own layout, with a real
+    # SHADOW_IDX rim -- a collapsed building, unlike a standing one, leaves
+    # terrain visible around itself.
+    for name, dead_fn, w, h in (
+        ("sgpwrdead", sgpwr_dead_draw, FAM23_W, FAM23_H),
+        ("sgapwrdead", sgapwr_dead_draw, FAM33_W, FAM33_H),
+        ("sghyddead", sghyd_dead_draw, FAM33_W, FAM33_H),
+    ):
+        wreck = render(dead_fn, w, h)
+        save_pngsheet(indexed_strip([wreck], [silhouette_shadow(wreck, 2, 2)], w, h),
+                      f"{name}.png", w, h, 1, indexed=True)
 
     # Drones: 32-facing body only (no damaged state, matching tran/mh60/heli).
     for name, draw_fn, fw, fh in (
@@ -3142,6 +3465,15 @@ def main():
         make_icon(sghau_draw, SGHAU_W, SGHAU_H, "full", "idle", label=ICON_LABELS["sghau"]),
         "sghauicon.png", ICON_W, ICON_H, 1,
     )
+
+    # Hauler Drone wrecks (issue #74): laden and empty, 32 facings each,
+    # matching hhusk.shp/hhusk2.shp's split. Until now SGHAU died into those
+    # two stock Ore Truck husks, which put back the exact sprite collision the
+    # Hauler Drone was given its own art to end.
+    for laden, filename in ((True, "sghauhuskfull.png"), (False, "sghauhusk.png")):
+        bodies, shadows = sghau_husk_frames(laden)
+        save_pngsheet(indexed_strip(bodies, shadows, SGHAU_W, SGHAU_H), filename,
+                      SGHAU_W, SGHAU_H, len(bodies), indexed=True)
 
     # Disruptor Trooper (DISR): one self-contained 437-frame sheet, plus icon.
     # Authored natively in palette indices (see PC/disr_upright), so the sheet

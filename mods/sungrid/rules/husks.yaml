@@ -61,6 +61,28 @@ HARV.EmptyHusk:
 	RenderSprites:
 		Image: hhusk2
 
+SGHAU.FullHusk:
+	Inherits: ^Husk
+	Tooltip:
+		Name: actor-sghau-fullhusk-name
+	TransformOnCapture:
+		IntoActor: sghau
+	InfiltrateForTransform:
+		IntoActor: sghau
+	RenderSprites:
+		Image: sghauhuskfull
+
+SGHAU.EmptyHusk:
+	Inherits: ^Husk
+	Tooltip:
+		Name: actor-sghau-emptyhusk-name
+	TransformOnCapture:
+		IntoActor: sghau
+	InfiltrateForTransform:
+		IntoActor: sghau
+	RenderSprites:
+		Image: sghauhusk
+
 MCV.Husk:
 	Inherits: ^Husk
 	Tooltip:
@@ -111,6 +133,64 @@ TRAN.Husk:
 		Type: GroundPosition
 	RenderSprites:
 		Image: tran
+
+# Drone wrecks (docs/BACKLOG.md issue #74). Both drones used to spawn a stock
+# transport husk on death -- SGDRO a Chinook, SGDRS a Black Hawk -- so a 32x30
+# quadcopter left a twin-rotor airframe several times its size spiralling down.
+# Each now falls in its own sprite, which is the stock helicopter-husk
+# convention (TRAN.Husk/MH60.Husk render the intact image too; the wreck is the
+# spin-down and the ground explosion, not a separate burnt sheet).
+SGDRO.Husk:
+	Inherits: ^HelicopterHusk
+	Tooltip:
+		Name: actor-sgdro-husk-name
+	Aircraft:
+		TurnSpeed: 24
+		Speed: 170
+	WithIdleOverlay@PRIMARY:
+		Offset: 350,0,130
+		Sequence: slow-rotor
+	WithIdleOverlay@SECONDARY:
+		Offset: -350,0,200
+		Sequence: slow-rotor2
+	RevealsShroud:
+		MinRange: 6c0
+		Range: 8c0
+		Type: GroundPosition
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 6c0
+		Type: GroundPosition
+	RenderSprites:
+		Image: sgdro
+
+SGDRS.Husk:
+	Inherits: ^HelicopterHusk
+	Tooltip:
+		Name: actor-sgdrs-husk-name
+	Aircraft:
+		TurnSpeed: 20
+		Speed: 150
+	WithIdleOverlay:
+		Sequence: slow-rotor
+	LeavesTrails:
+		Offsets: -427,0,0
+		Image: smokey
+		MovingInterval: 3
+		SpawnAtLastPosition: False
+		Type: CenterPosition
+		TrailWhileStationary: True
+		StationaryInterval: 3
+	RevealsShroud:
+		MinRange: 6c0
+		Range: 8c0
+		Type: GroundPosition
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 6c0
+		Type: GroundPosition
+	RenderSprites:
+		Image: sgdrs
 
 TRAN.Husk1:
 	Inherits: ^Husk
