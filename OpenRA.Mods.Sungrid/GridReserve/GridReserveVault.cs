@@ -23,7 +23,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public readonly int Capacity = 8000;
 
 		[Desc("Maximum Credits converted into Reserve per tick. Prevents dumping an entire treasury into Reserve in one move.")]
-		public readonly int DepositRate = 10;
+		public readonly int DepositRate = 3;
 
 		[Desc("Spendable Credits the Vault will never draw the owner below. Vaults bank the *surplus* above this,",
 			"not every Credit that arrives - without it a Vault absorbs income the instant it lands and the owner",

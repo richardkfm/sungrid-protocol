@@ -1824,3 +1824,29 @@ Per actor:
 **Phase:** 6/7 — first-pass programmatic art, quality iteration.
 
 **Definition of done:** No Sungrid-original actor answers a build-up, death or husk state with another actor's art, and none of them answers one with a single held frame.
+
+---
+
+### 75. Easy Grid Broker AI won via Grid Reserve in ~15 minutes with zero attacks — `DepositRate` made banking too fast to be worth raiding — FIXED
+
+**Reported from a playtest screenshot:** post-game objectives panel showing `Easy Grid Broker AI (Won)` at a Grid Reserve victory against `Commander (Lost)`, on a 2-player map, with the player's summary: "easy grid ai beats me without any attack after 15 minutes and three grid batteries."
+
+**Not a bug — the deposit-rate arithmetic working exactly as coded, and it isn't AI-specific.** Traced directly through `GridReserveVault.Tick` and `GridReserveBotModule.BotTick`:
+
+- A single Vault fills from 0 to its 8000 `Capacity` in `8000 / DepositRate(10) = 800 ticks ≈ 32 real-time seconds`, and every standing Vault deposits *in parallel* — each ticks independently, gated only by the shared `MinimumOperatingBalance` floor and the `MaximumTargetPercent` ceiling on the owner's total (see issue #69). Neither gate limits how fast the fill happens, only how much total gets banked and how much spendable cash survives it.
+- A 2-player map's Target (`BaseTargetPerPlayer(15000) × 2` = 30,000) needs ~4 Vaults to reach under the `MaximumTargetPercent: 100` ceiling. Building and filling those sequentially — respecting `ExpandAtFillPercent` so roughly one Vault fills at a time — is only ~3–4 real-time minutes once banking starts, plus the 90-second Lockdown hold.
+- The Easy Grid Broker's own `StartDelayTicks: 15000` (~10 minutes) blocks banking until minute 10; add the ~3–4 minute fill and the 90-second Lockdown and the total lands almost exactly on the reported ~15 minutes. The same fill-time math applies to a human player banking the same way — the Easy AI's zero-attack, capped-army design (issue #69) just means nothing distracts from noticing it, and its capped spending (few buildings/units to sink Credits into) hands it a cash surplus that lets it hit the deposit cap the instant `StartDelayTicks` lifts instead of ramping up gradually.
+
+**Design discussion.** `docs/VISION.md` and `docs/GAME_MODES.md` both intend that Grid Reserve *can* be won without firing a shot — that is the mode's whole point, not a bug to close off. What was missing is the payoff for the opponent: committing to an economic win is supposed to carry a real vulnerability window (the minimap beacon reveal at 50% of Target, then time to redirect an army and kill a Vault before Lockdown resolves, per Core Rule 4) — and at the old rate that window was under a minute in practice, too short to be a usable counterplay for anyone, human or bot.
+
+Two fixes were discussed: decoupling Vault *count* (capacity/raid-redundancy) from banking *speed* with a new per-player aggregate deposit-rate cap on `GridReserveManager`, versus a simpler direct retune of the existing per-Vault `DepositRate`. The aggregate-cap approach is more durable against the same class of issue recurring a fourth time (issues #67 → #68 → #69 were each a different numeric miss on this same trait family), but the plain constant tune was chosen to keep this fix scoped and reversible.
+
+**Fix:** `GridReserveVaultInfo.DepositRate` 10 → 3 Credits/tick (250 → 75 Credits/second per Vault). A single Vault's fill-to-cap time goes from ~32 seconds to ~107 seconds (~1.8 minutes); with several Vaults depositing in parallel near the end of a bank run, the real-time window between the beacon reveal and Lockdown completion stretches from roughly a minute to several minutes. No YAML override existed for this field (`mods/sungrid/rules/structures.yaml` attaches `GridReserveVault:` to `SILO` with no field overrides), so the C# default change alone is sufficient.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveVault.cs`, `docs/GAME_MODES.md` (constants table and the "current shipped defaults" note), `CLAUDE.md`. No rules, sequence, AI (`ai.yaml`), or art changes — this pass was deliberately scoped to the deposit-rate number only, not the Easy Grid Broker's own tuning.
+
+**Labels:** `type:bug`, `type:balance`, `area:grid-reserve`, `needs:playtest`
+
+**Phase:** 3 follow-up.
+
+**Definition of done:** The fill-time arithmetic above is correct for the new constant (checked by hand, not by a build — see caveat below). Not verified in a live client or a real skirmish: this environment has no OpenRA engine fetched (`engine/` is gitignored, not present here) and no RA content installed, so `3` is a reasoned-not-measured first-pass estimate, same as every prior retune of this trait family. A follow-up playtest should confirm the new window is long enough to be a usable raid opportunity without swinging the other way into feeling unresponsive or reopening issue #68's paralysis risk (it shouldn't — `MinimumOperatingBalance` is untouched — but that's exactly the kind of interaction this trait family has produced before).
