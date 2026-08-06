@@ -25,6 +25,12 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[FluentReference("current", "target")]
 		const string Tooltip = "label-grid-reserve-hud.tooltip";
 
+		[FluentReference("seconds")]
+		const string LockdownText = "label-grid-reserve-hud-lockdown.text";
+
+		[FluentReference("seconds")]
+		const string LockdownTooltip = "label-grid-reserve-hud-lockdown.tooltip";
+
 		[ObjectCreator.UseCtor]
 		public GridReserveHudLogic(Widget widget, World world)
 		{
@@ -44,12 +50,31 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 			bar.GetPercentage = () => manager.Target > 0 ? Math.Min(100, manager.TotalReserve * 100 / manager.Target) : 0;
 
-			label.GetText = () => string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}",
-				manager.TotalReserve, manager.Target);
+			// Once Lockdown is counting down the current/target numbers stop changing (Reserve is held at
+			// target while it holds), so swap the label to a countdown instead - otherwise the only sign a
+			// countdown is even running is the one-time start broadcast, easy to miss mid-match.
+			label.GetText = () =>
+			{
+				var remaining = controller.LockdownTicksRemaining(player);
+				if (remaining >= 0)
+					return FluentProvider.GetMessage(LockdownText, "seconds", SecondsRemaining(remaining, world).ToString(CultureInfo.CurrentCulture));
+
+				return string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}", manager.TotalReserve, manager.Target);
+			};
 			label.GetColor = () => manager.LockdownEligible ? Color.LimeGreen : Color.White;
-			label.GetTooltipText = () => FluentProvider.GetMessage(Tooltip,
-				"current", manager.TotalReserve.ToString(CultureInfo.CurrentCulture),
-				"target", manager.Target.ToString(CultureInfo.CurrentCulture));
+			label.GetTooltipText = () =>
+			{
+				var remaining = controller.LockdownTicksRemaining(player);
+				if (remaining >= 0)
+					return FluentProvider.GetMessage(LockdownTooltip, "seconds", SecondsRemaining(remaining, world).ToString(CultureInfo.CurrentCulture));
+
+				return FluentProvider.GetMessage(Tooltip,
+					"current", manager.TotalReserve.ToString(CultureInfo.CurrentCulture),
+					"target", manager.Target.ToString(CultureInfo.CurrentCulture));
+			};
 		}
+
+		// Rounded up so the last partial tick still reads as "1s" rather than "0s" before Lockdown completes.
+		static int SecondsRemaining(int ticksRemaining, World world) => (ticksRemaining * world.Timestep + 999) / 1000;
 	}
 }

@@ -1850,3 +1850,25 @@ Two fixes were discussed: decoupling Vault *count* (capacity/raid-redundancy) fr
 **Phase:** 3 follow-up.
 
 **Definition of done:** The fill-time arithmetic above is correct for the new constant (checked by hand, not by a build — see caveat below). Not verified in a live client or a real skirmish: this environment has no OpenRA engine fetched (`engine/` is gitignored, not present here) and no RA content installed, so `3` is a reasoned-not-measured first-pass estimate, same as every prior retune of this trait family. A follow-up playtest should confirm the new window is long enough to be a usable raid opportunity without swinging the other way into feeling unresponsive or reopening issue #68's paralysis risk (it shouldn't — `MinimumOperatingBalance` is untouched — but that's exactly the kind of interaction this trait family has produced before).
+
+---
+
+### 76. Grid Lockdown countdown has no visible timer — the player can't tell how long they need to defend it — FIXED
+
+**Reported from a live alpha25 match, two screenshots:** the first showed a large, healthy Sungrid Protocol economy (multiple Ore Refineries, `+$250` delivery pop-ups, a full production roster) with the player confused about why their own Reserve wasn't climbing faster than the AI's despite having "10 ore trucks." The second showed the Reserve HUD bar at `30.000 / 30.000` — target reached — with the follow-up: "when i hit the 30k a timer is being started in alpha25 but i cannot see it."
+
+**Two separate questions, only one of them a gap worth fixing.**
+
+**Not a bug: income size doesn't speed up banking, and that's intentional.** Walked through `GridReserveVault.Tick` with the player: `DepositRate` (3 Credits/tick per Vault as of issue #75) is a flat per-Vault cap, completely decoupled from how much Credits income a player generates — `docs/GAME_MODES.md`'s own framing is "hoarding has to be a sustained commitment, not a last-second reflex." A wallet pinned at `MinimumOperatingBalance` (3000) while Reserve climbs is the Vault working correctly, not stalling. The only two levers that move Reserve total are Vault count (deposits run in parallel, one `DepositRate` share each) and elapsed time. The player confirmed they had 4 Battery Banks built — the correct number for a 30,000 2-player target under the `MaximumTargetPercent: 100` ceiling — and the second screenshot shows they did reach target normally. No code change here; this was a design walkthrough, not a fix.
+
+**Bug: the Lockdown countdown itself was invisible.** `GridReserveController` tracks `lockdownRemaining` per player internally (a private `Dictionary<Player, int>`) and only ever surfaces it as a one-time system-text-line + `Speech` broadcast at the moment Lockdown starts (and again if it cancels) — nothing on-screen updates for the 90 seconds in between. `GridReserveHudLogic`'s Reserve bar just turns its `current / target` label green (`LockdownEligible`) and otherwise keeps showing the same static numbers for the whole hold, since Reserve doesn't move once it's sitting at target. A player who missed or didn't parse the one-line broadcast — easy to do mid-match — had no way to check how much longer they needed to defend the Vaults, undercutting the exact "there's a real window to notice and react" property issue #75 was about restoring.
+
+**Fix:** `GridReserveController` gains a public `LockdownTicksRemaining(Player player)` accessor (mirrors the existing `Enabled` property's role of exposing internal state to HUD widgets read-only). `GridReserveHudLogic` uses it to swap the bar's label to a live `GRID LOCKDOWN — Ns` countdown for the duration of the hold, reverting to the normal `current / target` display the instant the countdown ends (win) or cancels (a Vault raid dropped Reserve below target). New fluent strings (`label-grid-reserve-hud-lockdown`, text + tooltip) follow the existing `label-grid-reserve-hud` pattern; seconds are derived from `world.Timestep` rather than a hardcoded ticks-per-second constant, so the countdown reads correctly at any game speed.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveController.cs`, `OpenRA.Mods.Sungrid/GridReserve/GridReserveHudLogic.cs`, `mods/sungrid/fluent/chrome.ftl`, `docs/GAME_MODES.md`, `CLAUDE.md`. No rules, sequence, AI, or balance-constant changes.
+
+**Labels:** `type:bug`, `area:grid-reserve`, `area:ui`
+
+**Phase:** 3 follow-up.
+
+**Definition of done:** During an active Lockdown, the Reserve HUD label shows a counting-down number of seconds instead of a static current/target readout, and reverts correctly on both win and cancel. Not verified in a live client or a real build — this environment has no OpenRA engine fetched and no dotnet SDK installed, so `World.Timestep` (used to convert ticks to seconds) is used on the strength of it being a long-standing, stable engine API rather than a compiled check; CI and a follow-up playtest should confirm both the build and that the countdown is legible in the 260×32 HUD container without overflowing.
