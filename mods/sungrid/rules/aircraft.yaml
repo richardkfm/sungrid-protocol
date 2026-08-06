@@ -332,7 +332,7 @@ SGDRO:
 		Sequence: slow-rotor2
 		RequiresCondition: !airborne
 	SpawnActorOnDeath:
-		Actor: TRAN.Husk
+		Actor: SGDRO.Husk
 	Selectable:
 		DecorationBounds: 1706, 1536
 
@@ -664,6 +664,6 @@ SGDRS:
 		Sequence: slow-rotor
 		RequiresCondition: !airborne
 	SpawnActorOnDeath:
-		Actor: MH60.Husk
+		Actor: SGDRS.Husk
 	Selectable:
 		DecorationBounds: 1621, 1365

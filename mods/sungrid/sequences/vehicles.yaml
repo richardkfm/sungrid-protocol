@@ -71,6 +71,25 @@ sghau:
 	icon:
 		Filename: sghauicon.png
 
+# Hauler Drone wrecks (docs/BACKLOG.md issue #74). SGHAU used to die into
+# HARV.FullHusk/HARV.EmptyHusk -- i.e. back into hhusk.shp/hhusk2.shp, the Ore
+# Truck wreck -- which put back the exact sprite collision issue #34's SGHAU
+# follow-up gave the Hauler Drone its own art to end. Same laden/empty split
+# and same 32-facing layout the stock husks use.
+sghauhuskfull:
+	idle:
+		Filename: sghauhuskfull.png
+		Facings: 32
+		UseClassicFacings: True
+		ZOffset: -1023
+
+sghauhusk:
+	idle:
+		Filename: sghauhusk.png
+		Facings: 32
+		UseClassicFacings: True
+		ZOffset: -1023
+
 sghauhalf:
 	Inherits: sghau
 	Defaults:

@@ -293,6 +293,13 @@ actor-heli-husk-name = Longbow
 actor-hind-husk-name = Wasp Gunship
 actor-u2-husk-name = Husk (Recon Plane)
 actor-mh60-husk-name = Black Hawk
+actor-sghau-fullhusk-name = Husk (Hauler Drone)
+actor-sghau-emptyhusk-name = Husk (Hauler Drone)
+# The two drone husks keep the intact name, matching the stock helicopter
+# husks above (Chinook / Black Hawk): they render the intact sprite while
+# they spin down, and only explode once they hit the ground.
+actor-sgdro-husk-name = Recon Drone
+actor-sgdrs-husk-name = Strike Drone
 
 ## infantry.yaml
 notification-building-infiltrated = Building infiltrated.

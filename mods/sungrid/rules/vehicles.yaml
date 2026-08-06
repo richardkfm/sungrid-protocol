@@ -409,9 +409,9 @@ SGHAU:
 	GpsDot:
 		String: Harvester
 	SpawnActorOnDeath:
-		Actor: HARV.EmptyHusk
+		Actor: SGHAU.EmptyHusk
 	HarvesterHuskModifier:
-		FullHuskActor: HARV.FullHusk
+		FullHuskActor: SGHAU.FullHusk
 		FullnessThreshold: 50
 	FireWarheadsOnDeath:
 		RequiresCondition: !no-scrap
