@@ -105,7 +105,7 @@ Three traits, `OpenRA.Mods.Sungrid/GridReserve/`:
 | Trait | Field | Default | ~Real time (Normal speed) |
 |---|---|---|---|
 | `GridReserveVaultInfo` | `Capacity` | 8000 Reserve per Vault | — |
-| `GridReserveVaultInfo` | `DepositRate` | 10 Credits/tick per Vault | 250 Credits/second per Vault |
+| `GridReserveVaultInfo` | `DepositRate` | 3 Credits/tick per Vault | 75 Credits/second per Vault |
 | `GridReserveVaultInfo` | `MinimumOperatingBalance` | 3000 Credits | spendable floor a Vault never banks below |
 | `GridReserveVaultInfo` | `MaximumTargetPercent` | 100% of Target | ceiling on the owner's *total* banked Reserve |
 | `GridReserveVaultInfo` | `DestructionDrainPercent` | 50% | — |
@@ -120,6 +120,8 @@ Three traits, `OpenRA.Mods.Sungrid/GridReserve/`:
 | `GridReserveControllerInfo` | `DecayPercent` | 1% of each Vault's Reserve per interval | — |
 
 At these defaults, a single Vault (8000 capacity) can never reach even the cheapest 2-player Target (~30000): reaching Target always requires multiple Vaults, which is the intended anti-turtle property, not an incidental side effect of the numbers.
+
+**`DepositRate` was retuned from 10 to 3 Credits/tick (see `docs/BACKLOG.md` issue #75).** A report of a Grid Reserve win in ~15 minutes with zero attacks traced back to the old rate: a single Vault capped in ~32 real-time seconds, and several Vaults deposit in parallel, so the window between the 50%-Target beacon reveal and Lockdown completion was too short for raiding a Vault to be a realistic counterplay — even though winning without ever fighting is fully intended by design, the vulnerability that's supposed to come with committing to that path wasn't real. The new rate stretches a single Vault's fill time to ~107 seconds, giving an attentive opponent several real-time minutes between the reveal and Lockdown to scout, redirect an army, and break the countdown per Core Rule 4.
 
 **Minimap reveal reuses the stock `RevealsShroud` trait**, not new rendering code: the Vault has `RevealsShroud@GridReserveBeacon` with `ValidRelationships: Enemy` and `RequiresCondition: gridreserve-beacon`. `GridReserveVault` grants/revokes that condition each tick based on `GridReserveManager.BeaconActive` (Reserve ≥ 50% of target). This is the same condition-gated trait pattern already used throughout the engine (e.g. `GrantConditionOnDamageState`), so the reveal itself carries no bespoke visibility/rendering risk.
 
