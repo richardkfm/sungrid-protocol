@@ -12,6 +12,9 @@ label-grid-reserve-standings-header = Grid Reserve
 ## ingame-player.yaml
 label-grid-reserve-hud =
     .tooltip = Grid Reserve: { $current } / { $target }
+label-grid-reserve-hud-lockdown =
+    .text = GRID LOCKDOWN — { $seconds }s
+    .tooltip = Hold Reserve at target for { $seconds }s more to win via Grid Lockdown.
 label-grid-reserve-briefing-title = Grid Reserve Enabled
 label-grid-reserve-briefing-line1 = Battery Banks now convert Credits into Reserve automatically.
 label-grid-reserve-briefing-line2 = Deposits are permanent: that money can never be spent again.

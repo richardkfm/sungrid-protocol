@@ -98,6 +98,11 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			this.info = info;
 		}
 
+		// -1 while the player isn't holding Grid Lockdown; otherwise ticks left to hold Reserve at target to
+		// win. Exposed so GridReserveHudLogic can show a countdown - the one-time start/cancel broadcast alone
+		// left players with no way to tell how much longer they need to defend it.
+		public int LockdownTicksRemaining(Player player) => lockdownRemaining.TryGetValue(player, out var remaining) ? remaining : -1;
+
 		void INotifyCreated.Created(Actor self)
 		{
 			Enabled = self.World.LobbyInfo.GlobalSettings.OptionOrDefault("gridreserve", info.CheckboxEnabled);
