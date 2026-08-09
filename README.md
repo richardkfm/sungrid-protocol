@@ -1,15 +1,15 @@
 # Sungrid Protocol
 
-A solarpunk reinterpretation of the classic Red Alert RTS formula — renewable power, smart grids, drone logistics, and resilient settlements, built on the [OpenRA](https://www.openra.net) engine. Still a real RTS: base building, unit counters, scouting, raiding, and map control are all intact. The first big design departure is an optional **economic victory mode** ("Grid Reserve") that makes saving money a real alternative win path, alongside the classic destruction victory.
+A solarpunk reinterpretation of the classic Red Alert RTS formula — renewable power, smart grids, drone logistics, and resilient settlements, built on the [OpenRA](https://www.openra.net) engine. Still a real RTS: base building, unit counters, scouting, raiding, and map control are all intact. The first big design departure is an **economic victory mode** ("Grid Reserve") that makes saving money a real alternative win path, alongside the classic destruction victory. It's on by default and toggleable per-lobby; destruction victory is always available either way.
 
-This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pattern — the OpenRA engine is a pinned, fetched build dependency (see [Technical Architecture](docs/ARCHITECTURE.md) for why, and the trade-offs of that choice). Sungrid Protocol content lives in `mods/sungrid`: real Red Alert-derived gameplay, the full building roster, and the Grid Reserve economic victory mode are implemented and playable, with a first pass of the game's own visual identity (UI chrome, terrain palette) now landing on top of that — see [Roadmap](docs/ROADMAP.md) for exact phase-by-phase status.
+This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pattern — the OpenRA engine is a pinned, fetched build dependency (see [Technical Architecture](docs/ARCHITECTURE.md) for why, and the trade-offs of that choice). Sungrid Protocol content lives in `mods/sungrid`: real Red Alert-derived gameplay, the full building roster, the Grid Reserve mode (including AI opponents that play it), and the game's own visual identity for UI, cursors, menu, terrain palettes, and every Sungrid-specific building and unit sprite. Core inherited unit sprites and all audio beyond the menu sting are still stock — see [Roadmap](docs/ROADMAP.md) for exact phase-by-phase status and [CHANGELOG.md](CHANGELOG.md) for what has shipped.
 
 <img width="848" height="1264" alt="sungridprotocol_newart_v3b" src="https://github.com/user-attachments/assets/4239032a-973f-4a87-b995-455762c8a19d" />
 
 
 ## Start here
 
-* [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) — the full project blueprint: vision, technical strategy, phased roadmap, MVP definition, economic victory mode spec, building plan, and GitHub workflow, all in one place.
+* [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) — the original project blueprint in one place: vision, technical strategy, phased roadmap, MVP definition, economic victory mode spec, building plan, and workflow. Read it for the reasoning; it's a Phase 0 snapshot, so the docs below are the maintained versions.
 * [`docs/VISION.md`](docs/VISION.md) — design pillars and what differentiates Sungrid Protocol from vanilla Red Alert-style play.
 * [`docs/ROADMAP.md`](docs/ROADMAP.md) — phase-by-phase deliverables, exit criteria, and explicit non-goals.
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how this is structured as an OpenRA mod, and what's data-driven vs. engine-level.
@@ -20,12 +20,17 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 * [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/phase5-pixel-mockups.html">via githack</a> 
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 * [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) — license inheritance and EA non-affiliation.
-* [`docs/BACKLOG.md`](docs/BACKLOG.md) — first 10 engineering issues, held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
+* [`docs/BACKLOG.md`](docs/BACKLOG.md) — the engineering issue log (76 issues and counting), held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
+* [`CHANGELOG.md`](CHANGELOG.md) — what has actually shipped, in plain language, grouped by phase.
 * [`CLAUDE.md`](CLAUDE.md) — navigation map for AI-assisted development sessions in this repo.
 
 ## Play
 
-Playable today: `mods/sungrid` holds real Red Alert-derived gameplay (Phase 1), the full Phase 2/5 building roster, and the Grid Reserve economic victory mode (Phase 3), all confirmed working end-to-end in a local skirmish. Sungrid Protocol launches as its own entry in the OpenRA mod chooser — see [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for exact build/launch/troubleshooting steps. Visual identity work is underway (Phase 6): UI chrome and the temperate terrain tileset have a first-pass palette reskin toward `docs/ART_DIRECTION.md`'s locked palette. Cursors, the remaining tilesets, and unit/audio identity (Phase 7) are still stock OpenRA/RA art — see `docs/ROADMAP.md`'s Phase 6/7 for the plan.
+Playable today: `mods/sungrid` holds real Red Alert-derived gameplay (Phase 1), the full Phase 2/5 building roster, and the Grid Reserve economic victory mode (Phase 3), all confirmed working end-to-end in a local skirmish. Sungrid Protocol launches as its own entry in the OpenRA mod chooser — see [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for exact build/launch/troubleshooting steps.
+
+Grid Reserve is enabled by default in the lobby, and a one-time in-match popup explains the rules the first time you play a match with it on. Six AI personalities are selectable, including two — **Grid Broker AI** and **Easy Grid Broker AI** — that actually play the economic mode rather than ignoring it.
+
+Phase 6's visual identity work is essentially complete: original UI chrome, cursors, main menu and menu music, per-faction badges and lobby flags, reskinned palettes for all three terrain tilesets, and original in-world sprites, build-ups, rubble, husks and cameos for every Sungrid-specific building and unit. Still stock OpenRA/RA art: the core inherited unit and vehicle sprites, terrain scenery, and all voice/sound/in-game music — that's Phase 7, which hasn't started beyond a few unit renames. See `docs/ROADMAP.md`'s Phase 6/7 for the plan and [`CHANGELOG.md`](CHANGELOG.md) for the detail.
 
 EA has not endorsed and does not support this product. See [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) for the full non-affiliation and licensing notes.
 
@@ -36,6 +41,8 @@ Gameplay (alpha23)
 ### Download
 
 You don't need to build from source to try it — pre-built Windows installers, macOS disk images, and Linux AppImages are published on the [Releases](https://github.com/richardkfm/sungrid-protocol/releases) page for each tagged version. Grab the package for your platform and run it; building (below) is only needed if you want the latest `main` or plan to make changes.
+
+**Game content:** like OpenRA's own Red Alert mod, Sungrid Protocol doesn't ship the underlying Red Alert asset files — it reads them from your own copy. On first launch it offers the same options OpenRA does: download the official freeware Red Alert package (~13MB, no purchase required), or install from an original disc, Steam, or Origin copy. Everything Sungrid Protocol-specific — buildings, drones, UI, cursors, cameos, menu music — is original art shipped in the package itself.
 
 ## Building
 

@@ -4,7 +4,7 @@
 
 Sungrid Protocol is a solarpunk reinterpretation of the classic Red Alert RTS formula, built on the OpenRA engine. It keeps the readable, skill-testing bones of 90s RTS design — base building, unit counters, scouting, raiding, map control — and reframes the fiction and the economy around renewable power, smart grids, drone logistics, and resilient settlements. It is hopeful and strategic, not utopian or goofy: factions are still at war, resources are still contested, and losing your base still hurts.
 
-The project's first real design innovation is not the art direction, it's the **economic victory mode**: an optional win condition that makes *saving* money a legitimate alternative to spending it on offense or defense, without turning the game into a passive economy race.
+The project's first real design innovation is not the art direction, it's the **economic victory mode**: a win condition that makes *saving* money a legitimate alternative to spending it on offense or defense, without turning the game into a passive economy race. It ships enabled by default and stays toggleable per-lobby; destruction victory is never removed either way.
 
 <img width="1024" height="1280" alt="620400473-31a89549-de39-42be-add0-bf962f9ca148" src="https://github.com/user-attachments/assets/fe6875e5-6922-4f87-8945-5418e4d09742" />
 
@@ -24,7 +24,7 @@ The project's first real design innovation is not the art direction, it's the **
 | Vanilla RA-style play | Sungrid Protocol |
 |---|---|
 | Ore/Tiberium-style single resource, spend it or lose tempo | Power and capital are legible, gridded systems (solar, batteries, storage) with a real "bank it" option |
-| Only win condition is elimination | Elimination **and** an optional economic victory (hold a capital threshold) |
+| Only win condition is elimination | Elimination **and** an economic victory (hold a capital threshold), on by default and toggleable |
 | Turtling is usually just slow, not punished | Turtling under the economic mode is actively exposed (visible reserves, raidable vaults, decay pressure) |
 | Tech tree is purely military escalation | Tech tree includes eco-infrastructure (recycling, batteries, drone logistics) that trades off against military tech |
 | Aesthetic: Cold War industrial/military | Aesthetic: lush eco-industrial — solar arrays, green retrofits, drone logistics, resilient settlements over ruins |
@@ -32,5 +32,5 @@ The project's first real design innovation is not the art direction, it's the **
 ## What Sungrid Protocol is explicitly not (yet)
 
 - Not a diplomacy or alliance simulator — treaties, reparations, and resource-sharing are later-phase ideas, only pursued if the economic victory mode proves itself first.
-- Not a economy-only "builder" game — combat, raiding, and destruction remain core, non-optional systems.
+- Not an economy-only "builder" game — combat, raiding, and destruction remain core, non-optional systems.
 - Not a new engine or a total conversion of OpenRA's renderer/netcode — we build within OpenRA's data-driven trait system as far as it will take us.

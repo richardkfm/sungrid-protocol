@@ -31,7 +31,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[Desc("Tooltip description for the Grid Reserve checkbox in the lobby.")]
 		public readonly string CheckboxDescription = "checkbox-gridreserve.description";
 
-		[Desc("Default value of the Grid Reserve checkbox in the lobby. Off by default: destruction victory is never at risk of feeling deprecated.")]
+		[Desc("Default value of the Grid Reserve checkbox in the lobby. This trait default is off so a ruleset",
+			"opts in deliberately; the shipped Sungrid Protocol ruleset overrides it to true in",
+			"mods/sungrid/rules/world.yaml (see docs/BACKLOG.md issue #39). Destruction victory stays",
+			"available either way.")]
 		public readonly bool CheckboxEnabled = false;
 
 		[Desc("Prevent the Grid Reserve state from being changed in the lobby.")]

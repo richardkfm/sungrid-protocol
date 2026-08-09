@@ -4,17 +4,21 @@ Scope control is the whole game here. Each phase must ship something playable or
 
 ## Phase overview
 
-| Phase | Objective | GitHub milestone |
-|---|---|---|
-| 0 | Repository bootstrap and architecture setup | `P0: Bootstrap` |
-| 1 | Baseline playable shell on OpenRA | `P1: Baseline Shell` |
-| 2 | First solarpunk content layer | `P2: First Content Pass` |
-| 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` |
-| 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` |
-| 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` |
-| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` |
-| 7 | Unit & audio identity pass (vehicle/infantry sprites, voice, music) | `P7: Unit & Audio Identity` |
-| 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` |
+| Phase | Objective | GitHub milestone | Status |
+|---|---|---|---|
+| 0 | Repository bootstrap and architecture setup | `P0: Bootstrap` | Done |
+| 1 | Baseline playable shell on OpenRA | `P1: Baseline Shell` | Done |
+| 2 | First solarpunk content layer | `P2: First Content Pass` | Done |
+| 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` | Done — shipped, and on by default |
+| 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` | Substantially done — AI plays Grid Reserve, CI green, all three platforms package. Open: structured external multiplayer playtests |
+| 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` | Done |
+| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done except terrain **scenery** (palette reskins shipped for all three tilesets) |
+| 7 | Unit & audio identity pass (vehicle/infantry sprites, voice, music) | `P7: Unit & Audio Identity` | Barely started — three unit renames only |
+| 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` | Deferred by design |
+
+Status is summarized from `docs/BACKLOG.md` (the issue log) and `CHANGELOG.md` (what shipped). The
+per-phase sections below are the original plan and are kept as written — they describe intent, not
+current state.
 
 ## Phase 0 — Repository bootstrap and architecture setup
 
@@ -23,7 +27,7 @@ Scope control is the whole game here. Each phase must ship something playable or
 - **Code scope:** None beyond the SDK's own example-mod stub, renamed to Sungrid branding.
 - **Data/content scope:** None beyond the SDK's placeholder example content, renamed. No real gameplay rules yet.
 - **Testing scope:** Docs review (links resolve, tables render, no contradictions) plus a build check: `fetch-engine.sh`/`make` successfully fetches the pinned engine and the stub mod builds/launches to the main menu.
-- **Exit criteria:** All docs merged to `bleed`; milestones and labels exist; contributors (even a future solo-plus-Claude workflow) can onboard from `README.md` alone; `make` + `launch-game.sh Game.Mod=sungrid` reaches the main menu on a clean checkout.
+- **Exit criteria:** All docs merged to the integration branch (`bleed` at the time — `main` since the Mod SDK migration; see `CLAUDE.md`'s "Working conventions"); milestones and labels exist; contributors (even a future solo-plus-Claude workflow) can onboard from `README.md` alone; `make` + `launch-game.sh Game.Mod=sungrid` reaches the main menu on a clean checkout.
 - **Biggest risk:** Scope creep into writing real gameplay content in `mods/sungrid` before Phase 1 properly starts — this phase proves the scaffold works, it doesn't populate it with Red Alert-derived rules yet.
 - **Do NOT attempt yet:** Any C# traits beyond the SDK's stub, any real gameplay YAML, any art asset pipeline decisions.
 
