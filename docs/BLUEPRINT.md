@@ -1,6 +1,8 @@
 # Sungrid Protocol — Development Blueprint
 
-This is the master planning document for Sungrid Protocol. It's written for a solo technical founder executing with Claude Code assistance, optimized for the fastest realistic route to a playable prototype on the OpenRA engine. Companion docs go deeper on individual topics and are linked throughout; this document is the one to read start-to-finish.
+This is the original planning document for Sungrid Protocol. It's written for a solo technical founder executing with Claude Code assistance, optimized for the fastest realistic route to a playable prototype on the OpenRA engine. Companion docs go deeper on individual topics and are linked throughout; this document is the one to read start-to-finish for the *why*.
+
+> **Read this as a Phase 0 snapshot, not as current state.** It was written before any mod content existed and is deliberately preserved as written — the reasoning behind the decisions here is still the reasoning in force, but the project has since shipped through Phase 6. Sections 9 ("First 10 GitHub issues"), 10 ("Next 3 Claude Code prompts"), B ("Phase 0 checklist") and D ("Single next action") are historical. For where things actually stand: `CHANGELOG.md` (what shipped), `docs/ROADMAP.md` (per-phase status), `docs/BACKLOG.md` (the live issue log), `CLAUDE.md` (orientation).
 
 ---
 

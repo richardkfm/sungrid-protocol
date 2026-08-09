@@ -1,5 +1,10 @@
 # OpenRA Mod SDK Contributing Guidelines
 
+> **Contributing to Sungrid Protocol? Read [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) instead.**
+> This file is inherited verbatim from the upstream OpenRA Mod SDK and is kept for its C# coding-standard
+> and cross-platform scripting guidance. Where it says "this repository," it means the Mod SDK itself,
+> not Sungrid Protocol — its issue tracker, supported-platform list, and IRC pointers are upstream's.
+
 Thank you for your interest in OpenRA, OpenRA modding, and the OpenRA Mod SDK.  OpenRA is an open source project, and our community members – you – are the driving force behind it.  There are many ways to contribute, from writing tutorials or blog posts, improving the documentation, submitting bug reports and feature requests or writing code which can be incorporated into OpenRA, the Mod SDK, or our other sub-projects.
 
 Please note that this repository is specifically for the scripts and infrastructure used to develop and build mods; bugs and feature requests against OpenRA itself should be directed to [the main OpenRA/OpenRA repository](https://github.com/OpenRA/OpenRA).  If you do come across a bug with the Mod SDK, or would like to request a new feature, then please take a look at the issue tracker first to see if it has already been reported.

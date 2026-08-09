@@ -7,9 +7,12 @@ This document covers Sungrid Protocol's project workflow: branching, issues, RFC
 ```
 engine/                              # fetched by fetch-engine.sh, pinned via mod.config — gitignored, never commit or edit
 mods/sungrid/                        # Sungrid Protocol mod content — this is where almost all work happens
-OpenRA.Mods.Sungrid/                 # mod-specific C# traits (Grid Reserve lands here)
+mods/sungrid-content/                # content-installer mod (players' own Red Alert asset files)
+OpenRA.Mods.Sungrid/                 # mod-specific C# traits (GridReserve/ holds the economic victory mode)
 mod.config, fetch-engine.sh, Makefile, launch-*, utility.*, Sungrid.sln, packaging/   # SDK scaffolding
-docs/                                # design docs (this file, VISION, ROADMAP, ARCHITECTURE, GAME_MODES, BUILDINGS, ART_DIRECTION, LICENSE_NOTES, BLUEPRINT, BACKLOG)
+docs/                                # design docs (this file, VISION, ROADMAP, ARCHITECTURE, GAME_MODES, BUILDINGS,
+                                     #   ENERGY_BALANCE, ART_DIRECTION, PLAYTESTING, LICENSE_NOTES, BLUEPRINT, BACKLOG)
+CHANGELOG.md                         # what shipped, in plain language
 CLAUDE.md                            # navigation map for AI-assisted sessions
 ```
 
@@ -64,13 +67,13 @@ Pure `type:content` changes (a new building's YAML stats, a balance tweak) don't
 
 ## Release strategy
 
-- Internal/dev builds off `main` after every merged phase-exit-criteria milestone (see `docs/ROADMAP.md` exit criteria per phase).
-- First tagged release intended for external humans is the Phase 5 exit point — see the MVP definition in `docs/BLUEPRINT.md`.
-- Pre-MVP, tags are for the founder's/testers' own tracking (`v0.0.x-phaseN`) — not public releases.
+- Tags are named `alphaN` (`alpha1` … `alpha25` so far) and are cut off `main` whenever there's something worth putting in front of a player — in practice far more often than once per phase.
+- Pushing a tag triggers `.github/workflows/packaging.yml`, which publishes Linux AppImages, Windows installers, and a macOS disk image to the GitHub Releases page. These are genuinely public downloads, not private tracking tags — check the packaging run actually went green on all three platforms before treating a release as shipped (it silently didn't, on one platform or another, for most of this project's history — see `docs/BACKLOG.md` issues #21, #23, #29, #30).
+- Releases still ship no Red Alert asset files; the packaged game installs them from the player's own copy on first launch (`mods/sungrid-content`, see `docs/LICENSE_NOTES.md`).
 
 ## Changelog
 
-Keep a `CHANGELOG.md` at the repo root once Phase 1 ships a playable build (not needed for Phase 0's docs-only bootstrap). One entry per merged PR, grouped by phase, written in plain language a playtester would understand (not raw commit messages).
+`CHANGELOG.md` at the repo root is the playtester-facing record of what shipped: grouped by phase and theme, written in plain language (not raw commit messages), citing `docs/BACKLOG.md` issue numbers for the engineering detail rather than repeating it. Update it in the PR that ships the work — a merged PR that changed player-visible behavior and left the changelog alone is an incomplete PR.
 
 ## Contributor onboarding
 
@@ -81,7 +84,7 @@ Keep a `CHANGELOG.md` at the repo root once Phase 1 ships a playable build (not 
 
 ## Using Claude Code safely in this repo
 
-- Default Claude Code sessions to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/` — nothing under `engine/` should ever be touched (it's fetched, gitignored). If a friction point genuinely needs an engine-level change, see `docs/ARCHITECTURE.md`'s guidance on pinning to a personal engine fork instead of vendoring source into this repo.
+- Default Claude Code sessions to `mods/sungrid/`, `OpenRA.Mods.Sungrid/`, and `docs/` — nothing under `engine/` should ever be touched (it's fetched, gitignored). If a friction point genuinely needs an engine-level change, see `CLAUDE.md`'s "Engine version pinning" section first — the answer is almost always an `engine-patch/*` branch in this repo, not a personal fork, and never vendoring engine source back in.
 - Prefer data-driven (YAML/Lua) changes; a Claude session proposing a new C# trait should point to which "New C# traits" row in `docs/ARCHITECTURE.md` it satisfies.
 - Never push directly to `main` from an automated session — always a branch + PR, even for docs.
 - Keep sessions scoped to one issue/phase item at a time; a session that starts drifting into unrelated files or future-phase content is a signal to stop and re-scope, not to keep going.
