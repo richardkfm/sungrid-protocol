@@ -62,7 +62,25 @@ A full skirmish (build queue, Recycling Depot, Grid Reserve HUD bar, Phase 5 bui
 
 ## Multiplayer / dedicated server
 
-Use `launch-dedicated.sh` (`.cmd` on Windows) to host a headless dedicated server instead of a local skirmish. Not yet covered by a structured external-playtest package (see `docs/BACKLOG.md` issue #10) — treat this as LAN/direct-connect only for now.
+Use `launch-dedicated.sh` (`.cmd` on Windows) to host a headless dedicated server instead of a local skirmish, or use the in-client "Host Game" flow from the Multiplayer menu — both go through the same engine server code below. Not yet covered by a structured external-playtest package (see `docs/BACKLOG.md` issue #10) — treat this as LAN/direct-connect only for now.
+
+### Troubleshooting: hosted online, but the other player couldn't find or join it
+
+Confirmed by reading the actual pinned-engine source (`OpenRA.Mods.Common/ServerTraits/MasterServerPinger.cs`, `OpenRA.Game/Network/GameServer.cs`, `OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs` at `ENGINE_VERSION`), not guessed — this mod ships no `WebServices:` override in `mods/sungrid/mod.yaml`, so it uses the engine's stock, shared endpoints (`https://master.openra.net/games` for listing, `.../ping` for advertising). Two independent failure modes can each produce "the other player never saw it," and this playtest apparently hit both:
+
+1. **Version/mod mismatch hides the game from the browser by default.** A listed game is only shown as joinable if the connecting client has a *locally registered* mod with the exact same Mod ID **and** Version string the host advertised (`GameServer.cs`'s `IsCompatible` check via `ExternalMod.MakeKey(Mod, Version)`); `ServerListLogic.cs` then hides anything not `IsCompatible` unless the "show incompatible games" filter is turned on — it doesn't show as broken, it just doesn't show. `mods/sungrid/mod.yaml`'s `Metadata.Version` is the literal placeholder `{DEV_VERSION}` until `packaging/*/buildpackage.sh` stamps a real value (e.g. `alpha25`), so:
+   - Two players both running from source (`./launch-game.sh`/`launch-game.cmd`, unpackaged) will match on Version, since both register the literal `{DEV_VERSION}` string — that pairing is fine.
+   - Mixing a **packaged release build** (downloaded from [Releases](https://github.com/richardkfm/sungrid-protocol/releases), Version stamped to a real tag) with a **from-source build**, or two different alpha tags, will not match and the game silently won't appear for the other player.
+   - **First check:** in the Multiplayer server browser, enable "show incompatible games" — if the host's game appears there (greyed out), this is the cause, not a networking problem. Fix by having both players run the identical build (same Release tag, or both from source at the same commit).
+
+2. **The master server itself refused to advertise — check this first, it's diagnosed automatically.** `MasterServerPinger` POSTs to the master server on host, and if the master server's own connect-back probe to the advertised public IP:port fails, it returns protocol error code 1, which the client maps to the fluent string `notification-no-port-forward` and prints directly into the host's own lobby chat / `server.log` the moment hosting starts — **look there first**, it's a direct answer, not a guess. Root cause is almost always one of:
+   - No inbound port-forward on the host's router for `Server.ListenPort` (engine default **1234/TCP**, overridable via `ListenPort` in `launch-dedicated.sh`'s environment or `user.config`) to the host machine's LAN IP.
+   - A firewall on the host machine itself (ufw/firewalld/Windows Defender Firewall) blocking inbound TCP on that port.
+   - **The host is behind CGNAT / double-NAT** (common on many ISPs, especially mobile/some cable/fiber plans) — port-forwarding your own router does nothing here because the ISP's own NAT sits upstream of you, so the "public IP" your router shows isn't actually internet-routable. This is the most likely explanation for *this specific report*, since the direct public-IP:port connect attempt failed too — if forwarding and the local firewall are both already correct, a failed direct connect from outside the LAN is the classic CGNAT symptom, not a config mistake.
+
+   **Fixes, in order of effort:** verify/add the router port-forward and host firewall rule first; test from truly outside the LAN (an online open-port checker against the host's public IP:port, run while the server is up, is a faster signal than a friend's client); if that still fails, assume CGNAT and either ask the ISP for a public IP / to disable CGNAT, or — the reliable option for a 2-3 person playtest — put both machines on a mesh VPN (Tailscale, ZeroTier, etc.) and connect using the VPN-assigned IP instead of the public one, sidestepping NAT/CGNAT entirely.
+
+Not yet verified: an actual successful cross-machine online (non-LAN) match for this mod — this is exactly the open gap in `docs/BACKLOG.md` issue #10 ("cross-machine dry-run still open"). If the checks above get a match connecting, that closes real verification work on that issue; note it there.
 
 ## Headless / automated testing
 
