@@ -2032,3 +2032,64 @@ settled: whether medium-tier drones are correctly priced against the 1500-Credit
 now share a tier with, and whether the T3 bot fractions produce a sensible build order — those numbers
 are reasoned from each personality's existing values and each building's cost/power, not measured
 against an observed bot match. Both fold naturally into issue #31's playtest list.
+
+---
+
+### 79. The Smart Grid Relay's actual selling points are invisible — undocumented, untooltipped, and possibly unintentional
+
+**Raised by the project owner asking "what is the point exactly of the Smart Grid Relay?" and, on being
+shown the answer, "I did not know about it."** When the person who designed the roster cannot state why
+a building exists, the building does not effectively exist.
+
+**What the rules say.** `SGREL` is 400 Credits for `+60 Power` — 6.67 cr/power, more than double a
+Solar Array's 3.00 and the worst ratio in the game. Against that it carries four properties no other
+power building has:
+
+| Property | `SGREL` | `POWR` / `APWR` / `SGWND` / `SGHYD` |
+|---|---|---|
+| Footprint | 1 cell | 4–6 cells |
+| HP per cell | 50000 | 7500–15000 |
+| Armour | Heavy | Wood (except `SGHYD`) |
+| `ScalePowerWithHealth` | **absent** | present on all four |
+| `^DisabledByPowerOutage` | **absent** | present on all four |
+
+So a Relay at 5% health still delivers its full +60 where a Solar Array at 25% delivers ~+25, and a
+Spy infiltration that blacks out every other power building on the map leaves Relays running
+(`InfiltrateForPowerOutage` + `AffectedByPowerOutage` both live in the `^DisabledByPowerOutage`
+fragment that `SGREL` does not inherit). Since issue #78 it also provides `anypower`.
+
+**Why this is an issue and not just a doc gap.** The in-game description reads "A grid-balancing relay
+station providing a modest secondary supply of power. Counts as a power source for the tech tree." A
+player comparing build options sees the worst power deal in the game and no reason to take it. This is
+the same failure mode as issue #77's finding T1 — a genuine incentive that exists only in the rules,
+with nothing in the fluent text or the docs pointing at it. `docs/ENERGY_BALANCE.md` did not mention
+`SGREL` at all before this issue, and no document anywhere mentioned power outage.
+
+**The open decision, which needs the owner and probably a playtest.** The two absent `Inherits` lines
+are equally consistent with a deliberate survivability niche and with an oversight from when the
+building was scoped down from its descoped cluster-pooling fantasy to a flat power source. Nothing
+records which. Two coherent resolutions:
+
+- **Keep them and say so.** The Relay becomes the explicit "power that can't be raided down or blacked
+  out" pick — bulk supply from Solar Arrays, a floor under it from Relays. Needs the fluent
+  description rewritten to state the trade, and arguably the cr/power premium re-examined against how
+  much the survivability is actually worth. Fits design pillar #4 (pressure never disappears).
+- **Remove them.** Add `ScalePowerWithHealth` and `Inherits@POWER_OUTAGE: ^DisabledByPowerOutage` to
+  match the other four. This makes the roster uniform — and leaves the Relay with only its 1×1
+  footprint to justify a 2.2× price premium, which reopens roster survey gap G4's question of whether
+  it earns a slot at all.
+
+**Scope of this issue:** documentation only — `docs/ENERGY_BALANCE.md` (new section), `docs/BUILDINGS.md`
+(entry #8), `docs/BACKLOG.md`. **No rules changed**, deliberately: which way this goes is a design call,
+and the repo's standing convention is survey first, fixes in a scoped follow-up.
+
+**Labels:** `type:docs`, `type:design-question`, `area:rules`, `needs:playtest`
+
+**Phase:** 5 follow-up.
+
+**Definition of done:** The properties are written down with their engine mechanism, the intent is
+explicitly marked as unrecorded rather than asserted either way, and the decision above is captured for
+the owner. Numbers read from `--resolved-rules`, not source YAML. **Correction worth keeping:** an
+earlier verbal claim that `SGREL` has the highest HP-per-cell of any building in the mod was wrong —
+`FIX` is 80000/cell and `MSLO`/`IRON`/`GAP` also reach 50000. The accurate claim is that it leads all
+*power* buildings by 3.3×.

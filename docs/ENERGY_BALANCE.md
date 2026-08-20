@@ -84,6 +84,50 @@ produce a dedicated `Drone` type nothing else in the mod declares, and both dron
 `~techlevel.medium` to match their bay's tier and are gated on the bay alone (`~sgdrn`/`~sgdra`);
 `sgdai` keeps gating the three superweapons. See `docs/BACKLOG.md` issues #77 (survey) and #78 (fix).
 
+## Smart Grid Relay (`SGREL`): what the 400 Credits actually buy
+
+This building was missing from this document entirely until issue #79, which is a problem, because
+its numbers look bad and the reason to build one is invisible. At 400 Credits for `+60 Power` it is
+**by far the worst credits-per-power in the game** — more than double a Solar Array:
+
+| | Cost | Power | cr/power | HP | Cells | HP/cell | Power scales with damage | Disabled by outage |
+|---|---|---|---|---|---|---|---|---|
+| `POWR` Solar Array | 300 | +100 | **3.00** | 40000 | 4 | 10000 | yes | yes |
+| `SGWND` Wind Turbine Array | 250 | +70 | 3.57 | 30000 | 4 | 7500 | yes | yes |
+| `SGHYD` Hydrogen Plant | 1200 | +350 | 3.43 | 90000 | 6 | 15000 | yes | yes |
+| `APWR` Advanced Solar Array | 1000 | +200 | 5.00 | 70000 | 6 | 11667 | yes | yes |
+| `SGREL` Smart Grid Relay | 400 | +60 | **6.67** | 50000 | **1** | **50000** | **no** | **no** |
+
+The premium buys four properties no other power building has, none of which is stated anywhere the
+player can see them:
+
+1. **A 1×1 footprint**, against 4 or 6 occupied cells. It fits gaps, packs behind walls, and can't be
+   splashed in bulk.
+2. **50000 HP in that single cell** — 3.3× the HP density of the next-toughest power building
+   (`SGHYD` at 15000/cell) and 5× a Solar Array's. It is not the densest building in the mod
+   (`FIX` is 80000/cell; `MSLO`, `IRON` and `GAP` also reach 50000), but among power sources it is
+   in a class of its own. Heavy armour, shared only with `SGHYD`.
+3. **No `ScalePowerWithHealth`.** Every other power building bleeds output as it takes damage — a
+   Solar Array at 25% health supplies roughly +25. A Relay at 5% health still supplies the full +60.
+4. **Not affected by power outage.** Exactly four buildings inherit `^DisabledByPowerOutage`
+   (`POWR`, `APWR`, `SGWND`, `SGHYD`), which carries both `InfiltrateForPowerOutage` and
+   `AffectedByPowerOutage`. A Spy infiltrating any one of them blacks out *all* of them across the
+   owner's base. Relays run straight through it.
+
+Since issue #78 it also provides `anypower`, so a base surviving on Relays alone can still rebuild.
+
+**The coherent reading** is that Solar Arrays are bulk supply and Relays are the floor under it: in a
+mod where the Cryptominer's income, the Datacenter's output and the Grid Defense Turret's firepower
+all degrade with grid state, paying a premium for power that cannot be raided down or blacked out is
+a real trade, and design pillar #4 ("pressure never disappears") is the argument for wanting one.
+
+**What is not established** is whether any of this was designed. `docs/BUILDINGS.md` records the
+Relay's original cluster-pooling fantasy as deliberately descoped to "a modest flat secondary power
+source"; it says nothing about outage immunity or health-independence, and neither did this document
+before now. The two missing `Inherits` lines are equally consistent with a deliberate survivability
+niche and with an oversight from when the building was scoped down. **Treat the properties as real
+but the intent as unrecorded** — see `docs/BACKLOG.md` issue #79 for the open decision.
+
 ## Ant / Zombie replacement
 
 The neutral, capturable "Bio-Research Lab" (`bio` prerequisite, used by the `chernobyl` map's Creeps player)
