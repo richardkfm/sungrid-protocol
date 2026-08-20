@@ -6,7 +6,7 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha25**.
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha26**.
 
 ## Where the project stands
 
