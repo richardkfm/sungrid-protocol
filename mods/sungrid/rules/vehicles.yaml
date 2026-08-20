@@ -386,6 +386,11 @@ SGHAU:
 	Selectable:
 		DecorationBounds: 1792, 1792
 	Harvester:
+		# Matches RCYD's DockHost.Type. Harvester.Type defaults to "Unload", which is
+		# what PROC and HARV use -- so this keeps Scrap going to the Depot and Ore
+		# going to the Refinery instead of both docking anywhere.
+		# See docs/BACKLOG.md issue #77, finding T8.
+		Type: UnloadScrap
 		Resources: Scrap
 		BaleUnloadDelay: 1
 		SearchFromProcRadius: 15

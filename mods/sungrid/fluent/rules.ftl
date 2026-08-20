@@ -676,7 +676,8 @@ actor-rcyd =
     .description =
     Reclaims scrap from the battlefield and
     recycles it into a steady trickle of credits.
-    Draws a modest amount of power.
+    Takes deliveries from Hauler Drones only, not
+    Ore Trucks. Draws a modest amount of power.
 
 actor-hpad =
     .name = Helipad
@@ -840,8 +841,9 @@ actor-sghau =
     .name = Hauler Drone
     .generic-name = Hauler
     .description =
-    Collects small amounts of Scrap
-    for recycling at a Recycling Depot.
+    Collects small amounts of Scrap and delivers
+    it to a Recycling Depot, the only structure
+    that accepts it.
       Unarmed
 
 actor-mcv =
@@ -1182,44 +1184,43 @@ actor-sgdai =
     .name = Datacenter for AI
     .description =
     Racks of compute serving grid logistics and battlefield
-    analytics. Enormous, constant power draw. Income and
-    cloak detection both fall away once the grid is strained,
-    and stop outright under critical power. Its coordination
-    is required to build the most advanced structures and
-    drone units.
+    analytics. Enormous, constant power draw. Its income falls
+    away once the grid is strained, and stops outright under
+    critical power. Its coordination is required to build
+    superweapons.
 
 actor-sgdrn =
     .name = Drone Bay
     .description =
-    Assembly infrastructure. Autonomous delivery drones speed
-    up nearby friendly vehicles, easing logistics across a
-    spread-out base. Produces Recon Drones once a Datacenter
-    for AI is built. Drones lose their weapons fleet-wide
+    Assembly infrastructure. Builds Recon Drones - the only
+    structure that can. Its autonomous delivery drones also
+    speed up nearby friendly vehicles, easing logistics across
+    a spread-out base. Drones lose their weapons fleet-wide
     once the grid drops to critical power.
 
 actor-sgdro =
     .name = Recon Drone
     .description =
     A cheap, fast Assembly scout drone armed with small
-    rockets. Wide sensor range, very light armour. Requires
-    a Drone Bay and a Datacenter for AI. Weapons cut out if
-    the Assembly's grid falls to critical power.
+    rockets. Wide sensor range, very light armour. Built at
+    a Drone Bay. Weapons cut out if the Assembly's grid
+    falls to critical power.
 
 actor-sgdrs =
     .name = Strike Drone
     .description =
     A pricier, harder-hitting Consortium counterpart to the
-    Assembly's Recon Drone. Still very light armour. Requires
-    an Aerial Fabrication Bay and a Datacenter for AI. Weapons
-    cut out if the Consortium's grid falls to critical power.
+    Assembly's Recon Drone. Still very light armour. Built at
+    an Aerial Fabrication Bay. Weapons cut out if the
+    Consortium's grid falls to critical power.
 
 actor-sgdra =
     .name = Aerial Fabrication Bay
     .description =
     Consortium infrastructure. The Consortium's dedicated
-    counterpart to the Assembly's Drone Bay: autonomous
+    counterpart to the Assembly's Drone Bay: builds Strike
+    Drones - the only structure that can - and its autonomous
     delivery drones speed up nearby friendly vehicles.
-    Produces Strike Drones once a Datacenter for AI is built.
 
 actor-sgtur =
     .name = Grid Defense Turret
@@ -1232,7 +1233,8 @@ actor-sgrel =
     .name = Smart Grid Relay
     .description =
     A grid-balancing relay station providing a modest
-    secondary supply of power.
+    secondary supply of power. Counts as a power source
+    for the tech tree.
 
 actor-sgshl =
     .name = Resilience Shelter
@@ -1244,5 +1246,6 @@ actor-sgsns =
     .name = Sensor Array
     .description =
     A distributed sensor mesh reading grid load, drone
-    traffic, and terrain. Wide vision radius; detects
-    cloaked units.
+    traffic, and terrain. Wide vision radius, and the only
+    structure that detects cloaked units beyond the reach
+    of a base defense.

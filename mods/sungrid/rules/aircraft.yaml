@@ -276,9 +276,9 @@ SGDRO:
 		Image: sgdro
 	Buildable:
 		Queue: Aircraft
-		BuildAtProductionType: Helicopter
+		BuildAtProductionType: Drone
 		BuildPaletteOrder: 60
-		Prerequisites: sgdrn, sgdai, ~techlevel.high
+		Prerequisites: ~sgdrn, ~techlevel.medium
 		Description: actor-sgdro.description
 	Valued:
 		Cost: 350
@@ -621,9 +621,9 @@ SGDRS:
 		Image: sgdrs
 	Buildable:
 		Queue: Aircraft
-		BuildAtProductionType: Helicopter
+		BuildAtProductionType: Drone
 		BuildPaletteOrder: 70
-		Prerequisites: sgdra, sgdai, ~techlevel.high
+		Prerequisites: ~sgdra, ~techlevel.medium
 		Description: actor-sgdrs.description
 	Valued:
 		Cost: 600
