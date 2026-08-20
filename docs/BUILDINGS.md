@@ -290,3 +290,196 @@ Campaign-only / non-skirmish actors, listed for completeness: `Zombie` (Blighted
 6. ~~**G6:** delete the HIND block or rebrand it as an Assembly drone-carrier/gunship if the Assembly should get rotary air.~~ **Done** — rebranded and enabled as the Assembly's `AFLD`-built "Wasp Gunship."
 7. **G7/G8:** no rules change yet — flagged for the next playtest (`docs/PLAYTESTING.md`) via `docs/BACKLOG.md` issue #31: drone cost-efficiency by faction, and Cryptominer opportunity-cost vs a second Harvester + refinery.
 8. **G9/G10:** fold into the existing Phase 6/7 visual/audio identity scope rather than one-off renames now.
+
+## Tech-tree & prerequisite logic audit (August 2026)
+
+The July survey above (gaps G1–G10) compared **stats** — cost, HP, power, weapons — and found the
+strictly-dominated buildings that way. It did not look at the **tech tree**: what unlocks what, at
+which `~techlevel.*` tier, and whether a building's own gate is consistent with the gate on
+everything it exists to enable. This pass does, plus the two consumers of the roster that the stat
+survey didn't touch (`ai.yaml` and the build-palette ordering).
+
+Method: prerequisites and `BuildPaletteOrder` read out of `mods/sungrid/rules/*.yaml` with
+`Inherits` resolved; prerequisite and production semantics verified against the pinned
+`ENGINE_VERSION` commit (`461c7c73`) rather than assumed — specifically
+`OpenRA.Mods.Common/Traits/Player/TechTree.cs`, `ClassicProductionQueue.cs`,
+`Traits/Buildings/Refinery.cs`, and `Widgets/Logic/Ingame/ProductionTooltipLogic.cs`.
+
+Two engine facts the findings below depend on, both confirmed in that source:
+
+- **`~` on a prerequisite means "hide the icon", not "ignore it".** `TechTree.Watcher.IsHidden`
+  returns true when any `~`-prefixed prerequisite is unmet, which hides the build icon entirely;
+  `HasPrerequisites` strips `~` and treats it exactly like a normal prerequisite for availability.
+  A non-`~` prerequisite leaves the icon visible-but-disabled, and `ProductionTooltipLogic` lists
+  exactly the non-`~` ones in the "Requires:" tooltip.
+- **`BuildAtProductionType` picks a producer by *type*, not by building.**
+  `ClassicProductionQueue.BuildUnit` builds at *any* owned `Production` actor whose `Produces` list
+  contains the requested type, ordered by primary-building then actor ID. So a unit is tied to a
+  specific structure only if that structure's production type is unique to it.
+
+### Gaps found
+
+- **T1 — The Drone Bay / Aerial Fabrication Bay is unlockable a whole tech tier before anything it
+  can build.** `SGDRN`/`SGDRA` are `~techlevel.medium` (prereqs `proc, rcyd`); the only units they
+  exist for, `SGDRO`/`SGDRS`, are `~techlevel.high` **and** additionally gated on `sgdai`, which is
+  itself `~techlevel.high`. Consequences, in ascending order of severity:
+  - In a **Medium**-tech lobby the bay is buildable and can produce **literally nothing** — its unit
+    is hidden by the `~techlevel.high` gate. 900 Credits and −20 power for a building with an empty
+    production list. (Default lobby tech level is `unrestricted`, per `MapOptionsInfo.TechLevel`, so
+    this only bites in Medium games — but Medium is a shipped, selectable option.)
+  - Worse, because `Production.Produces` on the bay is `Aircraft, Helicopter`, owning one is enough
+    to **enable the whole Aircraft queue tab** (`ClassicProductionQueue.Tick` enables the queue if
+    any owned producer lists the queue type). A Medium-tech player who builds a bay and no
+    Helipad/Airfield gets an Aircraft tab with zero icons in it.
+  - At High/Unrestricted the medium gate is simply decorative: the only correct order is
+    `dome` → `sgdai` (1600) → bay (900) → drone, so the bay's advertised tier never describes when
+    you would actually build one. This is the "why would I build a Drone Bay before the AI Data
+    Center?" question, and the answer is that you wouldn't — the tier gate says otherwise.
+
+  The one *real* pre-drone incentive is undocumented and almost certainly accidental: queues set
+  `SpeedUp: True` (`mods/sungrid/rules/player.yaml`), and `ClassicProductionQueue.GetBuildTime`
+  counts producers matching `BuildAtProductionType` — so a bay is a 900-Credit, −20-power
+  **helicopter build-speed booster** (100% → 86% build time) that works from the moment it finishes,
+  drones or not. Nothing in the fluent description or `docs/BUILDINGS.md` says so.
+
+- **T2 — The Drone Bay is not actually required to *build* drones, contradicting the shipped
+  design note.** `docs/ENERGY_BALANCE.md`'s "Drone Bay parity" section states `SGDRS` "no longer
+  builds from `HPAD`" now that `SGDRA` exists, and that its prerequisites moved from `~hpad, sgdai`
+  to `sgdra, sgdai`. That change moved the *gate* but not the *production site*: `SGDRS` is still
+  `BuildAtProductionType: Helicopter`, and `HPAD` still declares `Produces: Aircraft, Helicopter`.
+  Per `ClassicProductionQueue.BuildUnit`, once a Consortium player owns one `SGDRA` anywhere on the
+  map, Strike Drones roll out of the Helipad exactly as before. Same on the Assembly side, where
+  `AFLD` gained `Helicopter` in the G6 fix — Recon Drones build from the Airfield.
+  Net effect: both bays are prerequisite tokens with a rally point, not production buildings, and
+  the parity work's stated goal is unmet. A bay is also destructible while its drones keep coming
+  from the Helipad, which is the opposite of the raid-pressure property the mod is built around.
+
+- **T3 — No bot ever builds, defends, or attacks a single Sungrid-original building.** `ai.yaml`
+  contains **zero** occurrences of `sgcry`, `sgdai`, `sgdrn`, `sgdra`, `sgtur`, `sgwnd`, `sghyd`,
+  `sgrel`, `sgsns`, `sgshl`, or `rcyd` — verified by grep across all 729 lines. Every one of the
+  five `BaseBuilderBotModule` instances lists only stock RA actors in `BuildingFractions` /
+  `BuildingLimits`, and the supporting type lists are stock-only too:
+  `PowerTypes: powr,apwr` (so a bot never builds a Wind Turbine Array or Hydrogen Plant, and the
+  whole faction power-identity pass in `docs/ENERGY_BALANCE.md` is human-only),
+  `RefineryTypes: proc`, and `EnemyBaseBuildingTypes` / `ProtectionTypes` which omit every Sungrid
+  building — so bot squads don't recognise a Grid Defense Turret as enemy defense to break, and
+  won't defend a Cryptominer or Data Center. `SILO` is the sole exception, handled through
+  `SiloTypes` plus `GridReserveBotModule` (issue #67).
+  This is the same blind spot as issues #37/#68/#69, one layer out: the Grid Reserve *mode* was
+  taught to the AI, but the building roster it plays on wasn't. It also means every bot game
+  silently tests only the stock RA tech tree.
+
+- **T4 — Three of the four "high tech" Sungrid buildings have identical prerequisites, and none of
+  them is the Tech Center the docs claim.** `SGCRY`, `SGDAI` and `SGSNS` are all exactly
+  `dome, ~techlevel.high`; `SGSHL` is `fact, dome, ~techlevel.high`, and `fact` is a no-op since
+  every player has a Construction Yard to build anything at all. But entry #4 above says
+  Cryptominer requires "Solar Array, Tech Center-equivalent", #5 says Datacenter requires "Tech
+  Center-equivalent, Solar Array", #9 says Resilience Shelter requires "Tech Center-equivalent",
+  and #10 says the same for Sensor Array. No `techcenter` prerequisite exists on any of them. This
+  is the same doc/rules drift class as G2, on four buildings at once, and it has a real
+  consequence: `dome` needs only `proc`, so `proc` (1400) → `dome` (1500) → `SGCRY` (1800) reaches
+  a permanent, in-base, un-raidable ~1,350 Credits/min income (G8) with **no military structure
+  built at all** — no Barracks, no War Factory, no Tech Center. In a mode whose victory condition
+  is banking Credits, that ordering deserves to be deliberate rather than accidental.
+
+- **T5 — `SGREL` generates power but does not provide the `anypower` prerequisite.** `POWR`, `APWR`,
+  `SGWND` and `SGHYD` all carry `ProvidesPrerequisite: Prerequisite: anypower`; the Smart Grid
+  Relay (+60 power) carries only `ProvidesPrerequisite@buildingname`. So a player whose last Solar
+  Array dies while three Relays keep the lights on cannot rebuild a Refinery, Barracks, Sub Pen,
+  Naval Yard, Recycling Depot, Wind Turbine, Grid Defense Turret — or another Relay. Almost
+  certainly an oversight, and it compounds G4: the retune to 400 Credits made the Relay's power
+  affordable, but it is still the only power building that doesn't count as one.
+
+- **T6 — The Sungrid tech tree is flat: `sgdai` is the only original building that gates
+  anything.** Every other Sungrid building (`SGCRY`, `SGREL`, `SGSNS`, `SGSHL`, `SGTUR`, `SGWND`,
+  `SGHYD`, and the bays past their drones) is a terminal leaf whose auto-provided
+  `ProvidesPrerequisite@buildingname` token no consumer references. Combined with T4, the entire
+  original roster hangs off two stock prerequisites, `anypower` and `dome`. Not a bug — but it means
+  the solarpunk layer adds no *ordering* decisions of its own, which sits awkwardly against design
+  pillar #2 ("solarpunk as a lens that changes gameplay, not just reskinned names").
+
+- **T7 — `SGSNS` is largely subsumed by `SGDAI`.** Both are `dome, ~techlevel.high`. `SGDAI`
+  (1600) already grants `DetectCloaked` range 6 plus vision 9, and you build it anyway for
+  superweapons and drones. `SGSNS` (800) adds `DetectCloaked` range 8 and vision 10 — +2 detection
+  range over a building the same tech path already required, with `RenderDetectionCircle` as its
+  only unique feature. Its one genuine edge is that its detection doesn't cut out under strain,
+  which is invisible to a player deciding whether to spend the 800.
+
+- **T8 — The Recycling Depot is an ore drop-off, which is not what it is for.** `RCYD` has a bare
+  `Refinery:` trait and `DockHost: Type: Unload`, and `Refinery.AcceptResources` (engine source,
+  confirmed) filters on nothing but `PlayerResources.ResourceValues` — it accepts **any** resource
+  type. `HARV`'s `DockClientManager` is likewise unrestricted. So a 600-Credit Depot is a valid Ore
+  Truck drop-off point that also adds 1000 to ore storage capacity, versus `PROC` at 1400. Whether
+  cheap forward drop-offs are desirable is a design call; that they arrived by omission is not.
+  (The reverse holds too — `SGHAU` will haul Scrap to a `PROC`. That direction seems harmless.)
+  Note this is currently masked by the G1 finding that no shipped map has Scrap painted, which
+  leaves `RCYD` in the odd position of being 600 Credits for an ore drop-off, +1000 storage, a
+  25 cr/125-tick trickle, and a free 500-Credit Hauler that has nothing to haul.
+
+- **T9 — Build-palette ordering puts the Grid Defense Turret after the superweapons.** Defense-queue
+  `BuildPaletteOrder` runs walls (10–30), `SILO` (35), then the turret block `PBOX` 40 → `SAM` 100,
+  then `GAP` 110, then the three superweapons `PDOX` 120 / `IRON` 130 / `MSLO` 140 — and then
+  `SGTUR` at **145**, dead last. A mid-tier anti-harassment turret sits past the Chronosphere and
+  the Missile Silo instead of next to the other turrets, against design pillar #1 ("classic RTS
+  legibility first"). Related: the Vault (`SILO`, order 35) — the centerpiece of the mode that is on
+  by default — is wedged between the Concrete Wall and the Pillbox.
+
+- **T10 — The two mirror bays occupy different Building-queue slots.** `SGDRN` is 202, `SGDRA` is
+  206, so the Assembly's tab reads CRY / DAI / **DRN** / SHL / SNS / REL while the Consortium's
+  reads CRY / DAI / SHL / SNS / REL / **DRA**. `SGWND` (111) and `SGHYD` (112) — the other
+  faction-exclusive mirror pair — are adjacent, which is the convention this breaks. Cosmetic, but
+  it undoes the "exact mirror" framing for anyone switching factions.
+
+- **T11 — `SGCRY` and `SGSHL` inherit `^ScienceBuilding`; `SGDAI` doesn't.** `^ScienceBuilding` adds
+  `SpawnActorsOnSell` with 23 actors (4× `e1`, 10× technicians, 5× `e6` Engineers, 4× `c10`). So
+  selling a Cryptominer or a Resilience Shelter yields five free Engineers, while selling the
+  same-tier, same-footprint Datacenter for AI yields nothing. Stock RA applies this to `ATEK`/`STEK`
+  only; here it landed on two of three Sungrid tech buildings and not the third, with no note
+  anywhere saying which behaviour was intended.
+
+- **T12 — Consistency note, not a bug: `SGDRO`/`SGDRS` are the only units whose production building
+  is a non-`~` prerequisite.** Every other unit hides behind its producer (`~hpad`, `~afld`,
+  `~barr`, `~tent`, `~spen`, `~syrd`, `~kenn`); the drones use bare `sgdrn`/`sgdra`. Per
+  `TechTree.Watcher.IsHidden` and `ProductionTooltipLogic`, that means the drone icon appears
+  greyed-out with a "Requires: Drone Bay, Datacenter for AI" tooltip as soon as the Aircraft tab
+  exists, rather than being hidden. That is arguably *better* UX — it's the only thing in the mod
+  that tells a player what the Drone Bay is for — but it's the odd one out, and if T2 is fixed by
+  giving the bays a unique production type, the prerequisite should become `~sgdrn`/`~sgdra` to
+  match the rest of the roster.
+
+### Suggestions
+
+Ordered by confidence. Nothing here is applied — this is a survey, matching how G1–G10 were handled
+(survey first, fixes in follow-ups). T2, T5 and T9/T10 are bug-shaped and have obvious fixes; T1 and
+T4 are design calls; T3 is real work.
+
+1. **T5** — add `ProvidesPrerequisite: Prerequisite: anypower` to `SGREL`. One line, no balance risk;
+   it only removes a lockout.
+2. **T2** — give `SGDRN`/`SGDRA` a dedicated production type (`Produces: Aircraft, Drone`) and set
+   `BuildAtProductionType: Drone` on `SGDRO`/`SGDRS`. This is what makes the bays real production
+   buildings and matches `docs/ENERGY_BALANCE.md`'s stated intent. Note the side effect worth
+   deciding on explicitly: the bays would stop doubling as Helipads/Airfields (and stop granting the
+   T1 helicopter speed-up). Pair with T12's `~` change.
+3. **T1** — pick one: move the bays to `~techlevel.high` so their tier matches their contents; or
+   drop `sgdai` from the drones' prerequisites and let the bay alone unlock its drone (leaving
+   `sgdai` gating the superweapons, which is issue #22's actual requirement); or give the bay a
+   real medium-tier function that stands on its own. The middle option is the cheapest and makes
+   the building's name true — build a Drone Bay, get drones. If the speed-up in T1 is meant to be a
+   reason to build one early, say so in the fluent description either way.
+4. **T9/T10** — renumber `SGTUR` to ~105 (after `SAM`, before `GAP`) and align `SGDRA` with `SGDRN`
+   at 202. Pure ordering, no rules effect.
+5. **T4** — decide whether Cryptominer/Datacenter/Sensor Array/Resilience Shelter are meant to sit
+   behind a Tech Center. If yes, add `techcenter` and the docs already match. If no, fix entries #4,
+   #5, #9 and #10 above so they stop claiming a gate that doesn't exist. Either way this interacts
+   with G8 (Cryptominer payback) and should probably be resolved with it under issue #31.
+6. **T3** — teach the bots the roster: Sungrid entries in `BuildingFractions`/`BuildingLimits`,
+   `sgwnd`/`sghyd`/`sgrel` in `PowerTypes`, `rcyd` in `RefineryTypes`, and the Sungrid buildings in
+   `EnemyBaseBuildingTypes`/`ProtectionTypes`. Sizeable, and — like every previous AI-tuning pass —
+   the numbers can only be guesses until a bot match is actually observed. Worth its own issue.
+7. **T7/T8/T11** — fold into the next balance pass rather than one-off changes: state whether
+   `SGSNS` is meant to be redundant once `SGDAI` is up, whether `RCYD` should be resource-restricted
+   (`Refinery` has no type filter, so restricting it needs a distinct `DockHost.Type` plus a
+   matching `DockClientManager.DockType` on the haulers), and whether `SGDAI` should join
+   `^ScienceBuilding` or `SGCRY`/`SGSHL` should leave it.
+8. **T6** — no action. Recorded as a structural observation for whoever plans the next content
+   phase.
