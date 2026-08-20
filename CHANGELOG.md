@@ -104,6 +104,49 @@ phase plan and `CLAUDE.md` for detailed current status.
 - Renamed the real-world-coded sub-factions and corrected their flags: Ukraine → **Iran** (issue #54); England, France, Germany, and Russia renamed (issue #55), then corrected on request to **Greece** (England's slot), **USA** (France's slot), and **China** (Russia's slot), each flying its real flag instead of inherited stock art (issue #57); Germany reverted to plain Germany (issue #59). "British Spy" became "Auditor." All of these are display-text and flag changes only — no rules, AI, or actor-id changes.
 - First-boot menu/intro pass (issue #16): fixed a regression where the main-menu shellmap still placed the removed Flame Tower in six spots, replaced the window/taskbar/mod-chooser icon (a literal stock Soviet star and hammer-and-sickle) with the project emblem, and reworded two off-theme loading-screen tips.
 
+## Building system — tech-tree and bot-support fix pass
+
+An audit of the whole building roster (issue #77) started from one question: *why would I build a Drone
+Bay if I can only build drones after building the AI Data Center?* The answer was that you wouldn't —
+and the audit found eleven more problems of the same shape. Issue #78 fixes all of them.
+
+- **Drone Bays are now where drones are built.** Both bays used to share the Helipad's production type,
+  so Strike Drones actually rolled out of the Helipad and Recon Drones out of the Airfield — you could
+  destroy a bay without interrupting a single drone. The bays now have their own production type and are
+  the only structures that can build drones.
+- **Drones no longer need the Datacenter for AI.** Bay and drone now sit at the same tech tier, gated on
+  the bay alone: build a Drone Bay, get drones. Previously the bay unlocked a whole tier early, so in a
+  Medium-tech lobby it could produce literally nothing while still opening an empty Aircraft tab. The
+  Datacenter still gates the three superweapons, which is what it was given that job for.
+- **Cryptominer, Datacenter for AI and Resilience Shelter now need a Tech Center**, as their descriptions
+  have said since Phase 5. In particular the Cryptominer's ~1,350 credits/minute was reachable two cheap
+  buildings from a Construction Yard with no military structure built at all.
+- **The Sensor Array is now the detection building.** It used to cost 800 credits for +2 detection range
+  over the Datacenter, which the same tech path already required. The Datacenter loses cloak detection,
+  the Sensor Array becomes the only structure that spots cloaked units away from a base defense, and it
+  drops to radar tier so it arrives when scouting actually matters.
+- **The Smart Grid Relay counts as a power source.** It was the only power building that didn't, so a base
+  kept alive entirely on Relays couldn't rebuild a Refinery, Barracks, Naval Yard, Depot — or another Relay.
+- **Ore Trucks can no longer unload at a Recycling Depot.** A 600-credit Depot was a working substitute for
+  the 1400-credit Refinery. Haulers deliver Scrap to Depots, Ore Trucks deliver Ore to Refineries.
+- **Build menus read correctly.** The Grid Defense Turret moved out of the tail of the Defense tab (it sat
+  *after* all three superweapons) into the turret block, and the Consortium's Aerial Fabrication Bay now
+  occupies the same slot as the Assembly's Drone Bay, so the two faction tabs are exact mirrors.
+- **The AI plays the Sungrid roster.** Until now no bot ever built a Wind Turbine Array, Hydrogen Plant,
+  Smart Grid Relay, Recycling Depot, Cryptominer, Datacenter, Sensor Array, Resilience Shelter, Grid
+  Defense Turret or either Drone Bay — every bot match silently played the stock Red Alert tech tree, and
+  bot squads didn't even recognise a Grid Defense Turret as enemy defense. All five personalities now
+  build, defend and target the roster, and build drones. **Side effect worth knowing:** because all three
+  superweapons were given a Datacenter prerequisite and no bot built one, *no bot has been able to finish
+  a superweapon* since that change. They can again. One knock-on caught and fixed in the same pass:
+  bots that build Recycling Depots get the free Hauler Drone that comes with one, and the squad
+  manager would have sent that unarmed hauler along on attacks — it's now excluded from attack
+  squads the same way Ore Trucks are.
+
+Not verified in a live client, per the standing blocker below. Two things specifically want a playtest:
+whether medium-tier drones are priced right against the 1500-credit helicopters they now share a tier
+with, and whether the new bot build fractions produce a sensible opening.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

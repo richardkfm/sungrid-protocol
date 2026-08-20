@@ -73,6 +73,17 @@ pattern) with faction-flipped prerequisites. `SGDRS`'s prerequisites moved from 
 recon-vs-strike differentiation (`SGDRO` 350cost/light-recon, `SGDRS` 600cost/heavier-strike) remains the real
 flavor axis between the two drones — both factions now just have a properly symmetric building for it.
 
+**Correction (issue #78).** "Bolted onto the Helipad" and "moved from `~hpad`" describe a prerequisite
+change, and only a prerequisite change — the paragraph above overstated what it accomplished. Both bays
+still declared `Produces: Aircraft, Helicopter`, the same production type `HPAD` and `AFLD` declare, and
+`ClassicProductionQueue.BuildUnit` dispatches to *any* owned producer carrying the requested type. So
+Strike Drones kept rolling out of the Helipad and Recon Drones out of the Airfield; the bays were
+prerequisite tokens with a rally point, destructible without interrupting a single drone. The bays now
+produce a dedicated `Drone` type nothing else in the mod declares, and both drones set
+`BuildAtProductionType: Drone`, which is what this section always meant. Both drones also dropped to
+`~techlevel.medium` to match their bay's tier and are gated on the bay alone (`~sgdrn`/`~sgdra`);
+`sgdai` keeps gating the three superweapons. See `docs/BACKLOG.md` issues #77 (survey) and #78 (fix).
+
 ## Ant / Zombie replacement
 
 The neutral, capturable "Bio-Research Lab" (`bio` prerequisite, used by the `chernobyl` map's Creeps player)

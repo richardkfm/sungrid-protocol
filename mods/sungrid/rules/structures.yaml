@@ -1448,7 +1448,7 @@ RCYD:
 		ShowTicks: true
 	Refinery:
 	DockHost:
-		Type: Unload
+		Type: UnloadScrap
 		DockAngle: 256
 		DockOffset: 0, 700, 0
 	StoresPlayerResources:
@@ -2376,7 +2376,7 @@ SGCRY:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 200
-		Prerequisites: dome, ~techlevel.high
+		Prerequisites: techcenter, dome, ~techlevel.high
 		Description: actor-sgcry.description
 	Valued:
 		Cost: 1800
@@ -2422,7 +2422,7 @@ SGCRY:
 	ProvidesPrerequisite@buildingname:
 
 SGDAI:
-	Inherits: ^Building
+	Inherits: ^ScienceBuilding
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
 		Image: sgdai
@@ -2434,7 +2434,7 @@ SGDAI:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 201
-		Prerequisites: dome, ~techlevel.high
+		Prerequisites: techcenter, dome, ~techlevel.high
 		Description: actor-sgdai.description
 	Valued:
 		Cost: 1600
@@ -2475,9 +2475,6 @@ SGDAI:
 		InitialDelay: 50
 		Amount: 8
 		ShowTicks: True
-	DetectCloaked:
-		RequiresCondition: grid-normal
-		Range: 6c0
 	Power:
 		Amount: -140
 	ProvidesPrerequisite@buildingname:
@@ -2521,7 +2518,7 @@ SGDRN:
 		ValidRelationships: Ally
 		Condition: dronebay-network
 	RallyPoint:
-		ForceSetType: Helicopter
+		ForceSetType: Drone
 	CommandBarBlacklist:
 		DisableStop: false
 	Exit@1:
@@ -2529,8 +2526,13 @@ SGDRN:
 		SpawnOffset: 0,-256,0
 		ExitCell: 0,0
 		Facing: 896
+	# "Drone", not "Helicopter": ClassicProductionQueue.BuildUnit dispatches to any
+	# owned Production actor whose Produces list contains the requested type, so a
+	# bay sharing HPAD/AFLD's "Helicopter" type meant drones rolled out of the
+	# Helipad/Airfield and the bay was a prerequisite token with a rally point.
+	# See docs/BACKLOG.md issue #77, finding T2.
 	Production:
-		Produces: Aircraft, Helicopter
+		Produces: Aircraft, Drone
 	Reservable:
 	ProductionBar:
 		ProductionType: Aircraft
@@ -2550,7 +2552,7 @@ SGDRA:
 		TargetableOffsets: 0,0,0, 768,-512,0, 768,512,0, -281,-512,0, -630,512,0
 	Buildable:
 		Queue: Building
-		BuildPaletteOrder: 206
+		BuildPaletteOrder: 202
 		Prerequisites: proc, rcyd, ~structures.allies, ~techlevel.medium
 		Description: actor-sgdra.description
 	Valued:
@@ -2576,7 +2578,7 @@ SGDRA:
 		ValidRelationships: Ally
 		Condition: dronebay-network
 	RallyPoint:
-		ForceSetType: Helicopter
+		ForceSetType: Drone
 	CommandBarBlacklist:
 		DisableStop: false
 	Exit@1:
@@ -2584,8 +2586,13 @@ SGDRA:
 		SpawnOffset: 0,-256,0
 		ExitCell: 0,0
 		Facing: 896
+	# "Drone", not "Helicopter": ClassicProductionQueue.BuildUnit dispatches to any
+	# owned Production actor whose Produces list contains the requested type, so a
+	# bay sharing HPAD/AFLD's "Helicopter" type meant drones rolled out of the
+	# Helipad/Airfield and the bay was a prerequisite token with a rally point.
+	# See docs/BACKLOG.md issue #77, finding T2.
 	Production:
-		Produces: Aircraft, Helicopter
+		Produces: Aircraft, Drone
 	Reservable:
 	ProductionBar:
 		ProductionType: Aircraft
@@ -2607,7 +2614,7 @@ SGTUR:
 			BottomRight: 768,512
 	Buildable:
 		Queue: Defense
-		BuildPaletteOrder: 145
+		BuildPaletteOrder: 105
 		Prerequisites: anypower, ~techlevel.medium
 		Description: actor-sgtur.description
 	Valued:
@@ -2684,6 +2691,12 @@ SGREL:
 		Cost: 400
 	Tooltip:
 		Name: actor-sgrel.name
+	# A building that generates power counts as a power source for the tech tree,
+	# the same way POWR/APWR/SGWND/SGHYD do (docs/BACKLOG.md issue #77, finding T5).
+	# Without this, a base kept alive entirely on Relays could not rebuild a
+	# Refinery, Barracks, Naval Yard, Recycling Depot -- or another Relay.
+	ProvidesPrerequisite:
+		Prerequisite: anypower
 	Health:
 		HP: 50000
 	Armor:
@@ -2715,7 +2728,7 @@ SGSHL:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 203
-		Prerequisites: fact, dome, ~techlevel.high
+		Prerequisites: techcenter, dome, ~techlevel.high
 		BuildLimit: 1
 		Description: actor-sgshl.description
 	Valued:
@@ -2764,7 +2777,7 @@ SGSNS:
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 204
-		Prerequisites: dome, ~techlevel.high
+		Prerequisites: dome, ~techlevel.medium
 		Description: actor-sgsns.description
 	Valued:
 		Cost: 800

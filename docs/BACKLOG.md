@@ -1877,7 +1877,7 @@ Two fixes were discussed: decoupling Vault *count* (capacity/raid-redundancy) fr
 
 ---
 
-### 77. Building-system tech-tree audit: the Drone Bay unlocks a tier before its drones, isn't required to build them, and no bot builds any Sungrid structure — SURVEY, not fixed
+### 77. Building-system tech-tree audit: the Drone Bay unlocks a tier before its drones, isn't required to build them, and no bot builds any Sungrid structure — SURVEY (fixes shipped in issue #78)
 
 **Reported by the project owner:** "why would I build a Drone Bay if I can only build drones after building the AI Data Center?" — plus a request to check for issues of the same class across the building system.
 
@@ -1906,3 +1906,129 @@ Remaining findings, in the doc: **T1** the tier inversion itself (including the 
 **Phase:** 5 follow-up / 4 (AI).
 
 **Definition of done:** The audit section exists in `docs/BUILDINGS.md` with every finding traced to a specific file and line, and every engine-behaviour claim checked against the pinned engine source rather than assumed. Not verified in a live client: this environment has no engine fetched and no RA content installed, so the tier-inversion and production-dispatch findings are read from rules plus engine source, not observed in a match. Each follow-up above lands as its own scoped PR.
+
+---
+
+### 78. Building-system fix pass: make every building's tech gate, production site and bot support match what it's for
+
+**Follow-up to issue #77**, implementing every finding of that survey except T6. Requested by the
+project owner as "implement changes you have suggested. Goal is that every building has a function
+and it's balanced out within and outside the faction." The per-building narrative lives in
+`docs/BUILDINGS.md` (each roster entry carries a **Revised (issue #77, tech-tree audit follow-up)**
+note, and the audit section gained a "Fixes applied" index table); this entry is the engineering record.
+
+**The drone chain (T1, T2, T12) — the question that started #77.** Three separate problems compounded:
+
+1. The bays declared `Produces: Aircraft, Helicopter`, the same production type `HPAD` and `AFLD`
+   declare. `ClassicProductionQueue.BuildUnit` dispatches to *any* owned `Production` actor whose
+   `Produces` list contains the requested type, so Strike Drones rolled out of the Helipad and Recon
+   Drones out of the Airfield — the bay was a prerequisite token with a rally point, destructible
+   without interrupting a single drone. Both bays now produce a dedicated `Drone` type that nothing
+   else in the mod declares, and `SGDRO`/`SGDRS` set `BuildAtProductionType: Drone`. This is what
+   `docs/ENERGY_BALANCE.md`'s "Drone Bay parity" section always claimed; the original change moved the
+   prerequisite but not the production site.
+2. The bays are `~techlevel.medium`; the drones were `~techlevel.high` *and* gated on `sgdai`, itself
+   high-tier. Both drones are now `~techlevel.medium` and gated on the bay alone. `sgdai` keeps gating
+   `PDOX`/`IRON`/`MSLO`, which is all issue #22 required of it. Of the three options #77 offered, this
+   is the middle one — it makes the building's name true, and it is the only one that also fixes the
+   Medium-tech lobby where a bay could produce literally nothing.
+3. Drone prerequisites `sgdrn`/`sgdra` → `~sgdrn`/`~sgdra`, matching how every other unit in the mod
+   hides behind its producer (`~hpad`, `~afld`, `~barr`, `~tent`, `~spen`, `~syrd`, `~kenn`).
+
+Side effect accepted deliberately: the bays lose their accidental second job as Helipads, including
+the undocumented build-time bonus they gave helicopters via the queues' `SpeedUp: True` and
+`ClassicProductionQueue.GetBuildTime`. That incentive was never described anywhere and was the only
+pre-drone reason to build one, which is precisely the confusion #77 was reported about.
+
+**Tech gates (T4, T7).** `techcenter` added to `SGCRY`, `SGDAI` and `SGSHL` — the gate
+`docs/BUILDINGS.md` entries #4/#5/#9 have claimed since Phase 5 and that was never in the rules.
+`SGSHL` also loses its `fact` prerequisite, which is a no-op (a player without a Construction Yard
+cannot build anything at all). The balance reason is T4's: `proc` → `dome` → `SGCRY` reached a
+permanent, in-base, un-raidable ~1,350 cr/min with **no military structure built**, in a mode whose
+victory condition is banking Credits.
+
+`SGSNS` went the other way, and it is the one place the docs were changed to match the rules rather
+than the reverse. It and `SGDAI` were both exactly `dome, ~techlevel.high`, and `SGDAI` — which you
+build anyway for superweapons — already carried `DetectCloaked` 6 plus vision 9, so the Sensor Array's
+800 Credits bought +2 detection range over a building the same tech path already required. `SGDAI`
+loses `DetectCloaked` entirely (keeping vision and its power-scaled income), making `SGSNS` the mod's
+only structure that detects cloaked units outside a base defense's own footprint; and `SGSNS` drops to
+`~techlevel.medium`, because gating the only field detector behind a Tech Center would leave cloaked
+units unanswerable for most of a match. Entry #10's "Tech Center-equivalent" was never true either.
+
+**Economy separation (T8).** `Refinery.AcceptResources` filters on nothing but
+`PlayerResources.ResourceValues`, so `RCYD`'s bare `Refinery:` + `DockHost: Type: Unload` made a
+600-Credit Depot a valid Ore Truck drop-off undercutting the 1400-Credit `PROC`, while also adding
+1000 to shared ore storage. `RCYD`'s `DockHost` and `SGHAU`'s `Harvester` both move to a dedicated
+`UnloadScrap` dock type (`Harvester.Type` defaults to `Unload`, which is what `HARV`/`PROC` use), so
+Scrap goes to the Depot and Ore goes to the Refinery. The `StoresPlayerResources: Capacity: 1000` is
+unchanged.
+
+**Consistency (T5, T9, T10, T11).** `SGREL` provides `anypower` — it was the only power building that
+didn't, so a base kept alive on Relays alone could not rebuild a Refinery, Barracks, Naval Yard,
+Recycling Depot, Grid Defense Turret, or another Relay. `SGTUR` moves from Defense palette order 145
+(past all three superweapons) to 105, between `SAM` and `GAP`. `SGDRA` moves from Building order 206
+to 202, matching `SGDRN`, so the two factions' tabs are exact mirrors — the convention `SGWND` 111 /
+`SGHYD` 112 already followed. `SGDAI` inherits `^ScienceBuilding`, joining `SGCRY`/`SGSHL` and matching
+stock RA, which applies it to every top-tier building (`ATEK`/`STEK`/`GAP`/`PDOX`/`IRON`/`MSLO`).
+`SILO` was left at order 35: walls, then the Vault, then the turret block is already legible.
+
+**Bots (T3), the largest part.** `ai.yaml` had zero occurrences of any Sungrid building. Now:
+`BuildingFractions`/`BuildingLimits`/`BuildingDelays` entries in all five `BaseBuilderBotModule`
+instances, scaled per personality; `sgwnd`/`sghyd`/`sgrel` in `PowerTypes`; `sgtur` in `DefenseTypes`;
+`sgdai`/`sgcry` in `TechTypes` where those are built; the roster in `EnemyBaseBuildingTypes` and all
+six `ProtectionTypes`; `sgdro`/`sgdrs` in all six `AirUnitsTypes` and in four `UnitsToBuild`/`UnitLimits`.
+
+One thing this pass broke and then fixed, worth recording because the failure mode is not obvious:
+`SquadManagerBotModule.FindNewUnits` recruits **every** `IPositionable` actor a bot owns that is not
+listed in `ExcludeFromSquadsTypes` (which is why `harv` and `mcv` are there). Bots had never built a
+Recycling Depot before, so they never owned the `SGHAU` Hauler Drone its `FreeActor` hands out —
+teaching them to build Depots meant every bot would immediately walk an unarmed Scrap hauler into an
+attack squad. `sghau` is now excluded alongside `harv` in all six squad managers. Note it is
+deliberately **not** added to `HarvesterBotModule.HarvesterTypes` either: that list drives harvester
+*replacement* ("if harvester count drops below refinery count, build a new one"), so a Hauler counted
+there would be substituted for an Ore Truck — the same category of mistake as `rcyd` in `RefineryTypes`.
+
+Two deliberate departures from #77's own suggestion list:
+
+- **`rcyd` was not added to `RefineryTypes`.** That list drives the ore-economy adequacy check
+  (`HasAdequateRefineryCount`) and refinery-near-resources placement, and a Depot refines Scrap, not
+  Ore — adding it would have let a bot count Depots toward its refinery quota and stop building
+  `PROC`s. It is a normal `BuildingFractions` entry instead.
+- **Easy Grid Broker gets only `rcyd`, `sgwnd`, `sgrel`, `sgtur`, `sgsns`** — no bays, no
+  Cryptominer/Datacenter/Shelter/Hydrogen Plant. Four of those five are unreachable for it *by
+  construction* now that T4 is in place, since it deliberately never builds `atek`/`stek` and they
+  need `techcenter` (`sghyd` needs `atek` directly); the bays are the one reachable omission, and
+  they are left out to keep its existing framing intact ("no air, no naval, no Tesla/mammoth tech").
+
+Every other personality — Rush, Normal, Grid Broker, Turtle, Naval — carries all eleven Sungrid
+buildings and both drones.
+
+**A bug this surfaced that #77 didn't record:** since issue #22 made all three superweapons require
+`sgdai`, and no bot ever built `sgdai`, the `mslo: 1` entry that four of the five personalities carry
+has been dead — **no bot could finish a superweapon in any match since**. Adding `sgdai` to their
+build lists is what makes it live again.
+
+**Fluent text** updated for `sgdai`, `sgdrn`, `sgdra`, `sgdro`, `sgdrs`, `sgrel`, `sgsns`, `rcyd` and
+`sghau` so no description still promises the old behaviour (the Datacenter no longer claims cloak
+detection or drone gating; the bays say they are the only place drones are built; the Depot and Hauler
+say deliveries are Scrap-only). Names and ids untouched, per the fluent-text-only rename convention.
+
+**Scope:** `mods/sungrid/rules/structures.yaml`, `mods/sungrid/rules/aircraft.yaml`,
+`mods/sungrid/rules/vehicles.yaml`, `mods/sungrid/rules/ai.yaml`, `mods/sungrid/fluent/rules.ftl`,
+`docs/BUILDINGS.md`, `docs/ENERGY_BALANCE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`. No C#, no art, no
+sequence changes, and no Grid Reserve tuning constants touched.
+
+**Labels:** `type:bug`, `type:balance`, `area:rules`, `area:ai`, `needs:playtest`
+
+**Phase:** 5 follow-up / 4 (AI).
+
+**Definition of done:** `./utility.sh --check-yaml` exits 0 across the mod and all 75 maps (it does),
+and every changed prerequisite, dock type, production type and `SpawnActorsOnSell` list was read back
+with `--resolved-rules` rather than assumed from source YAML (they were) — including a check that no
+actor other than the two bays declares `Produces: … Drone`. **Not verified in a live client**, per the
+standing blocker in `CLAUDE.md`. Two things in particular need a playtest before they can be called
+settled: whether medium-tier drones are correctly priced against the 1500-Credit `MH60`/`HIND` they
+now share a tier with, and whether the T3 bot fractions produce a sensible build order — those numbers
+are reasoned from each personality's existing values and each building's cost/power, not measured
+against an observed bot match. Both fold naturally into issue #31's playtest list.

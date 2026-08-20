@@ -105,6 +105,18 @@ preferentially raid enemy Vaults and Turtle AI doesn't drop turtling against an 
 Gotcha for any future personality: `McvExpansionManagerBotModule` is what deploys the starting MCV, so
 a personality with no instance of it never builds anything at all.
 
+**The roster the bots play on (issue #78).** Until this pass `ai.yaml` contained zero occurrences of any
+Sungrid-original building, so #67 taught the AI the *mode* but not the *content*: every bot match
+silently exercised the stock RA tech tree, and — because issue #22 gave all three superweapons an `sgdai`
+prerequisite no bot could satisfy — no bot could finish a superweapon either. All five
+`BaseBuilderBotModule` instances now carry the roster, with `sgwnd`/`sghyd`/`sgrel` in `PowerTypes`,
+`sgtur` in `DefenseTypes`, the roster in `EnemyBaseBuildingTypes`/`ProtectionTypes`, and drones in
+`AirUnitsTypes`/`UnitsToBuild`. Two rules that cost thought and are easy to get wrong again: `rcyd`
+stays **out** of `RefineryTypes` (that list drives the ore-economy adequacy check and refinery-near-ore
+placement — a Depot refines Scrap), and Easy Grid Broker deliberately gets only the low-tech subset,
+which stays self-consistent because it never builds `atek`/`stek` and the tech buildings now need
+`techcenter`. Same caveat as the Grid Reserve constants: the fractions are reasoned, not measured.
+
 Not verified: that the tuning constants are *right*. They're reasoned from the engine's own cash gates
 and config, not measured against observed income.
 
