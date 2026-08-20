@@ -138,7 +138,10 @@ and the audit found eleven more problems of the same shape. Issue #78 fixes all 
   bot squads didn't even recognise a Grid Defense Turret as enemy defense. All five personalities now
   build, defend and target the roster, and build drones. **Side effect worth knowing:** because all three
   superweapons were given a Datacenter prerequisite and no bot built one, *no bot has been able to finish
-  a superweapon* since that change. They can again.
+  a superweapon* since that change. They can again. One knock-on caught and fixed in the same pass:
+  bots that build Recycling Depots get the free Hauler Drone that comes with one, and the squad
+  manager would have sent that unarmed hauler along on attacks — it's now excluded from attack
+  squads the same way Ore Trucks are.
 
 Not verified in a live client, per the standing blocker below. Two things specifically want a playtest:
 whether medium-tier drones are priced right against the 1500-credit helicopters they now share a tier

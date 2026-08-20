@@ -168,6 +168,8 @@ Player:
 			sgdra: 1
 			sgdai: 1
 			sgcry: 1
+			sgsns: 1
+			sgshl: 1
 			sghyd: 2
 			sgrel: 3
 		BuildingFractions:
@@ -198,6 +200,8 @@ Player:
 			sgdra: 2
 			sgdai: 1
 			sgcry: 2
+			sgsns: 1
+			sgshl: 1
 		BuildingDelays:
 			dome: 7000
 			fix: 3000
@@ -213,6 +217,8 @@ Player:
 			sgdra: 4000
 			sgcry: 12000
 			sgdai: 12000
+			sgsns: 8000
+			sgshl: 13000
 	BaseBuilderBotModule@normal:
 		RequiresCondition: enable-normal-ai || enable-gridbroker-ai
 		MinimumExcessPower: 0
@@ -486,6 +492,7 @@ Player:
 			sgdai: 1
 			sgcry: 2
 			sgsns: 1
+			sgshl: 1
 			sghyd: 3
 			sgrel: 3
 		BuildingFractions:
@@ -518,6 +525,7 @@ Player:
 			sgdai: 1
 			sgcry: 2
 			sgsns: 1
+			sgshl: 1
 		BuildingDelays:
 			dome: 3000
 			fix: 20000
@@ -526,6 +534,7 @@ Player:
 			sgsns: 8000
 			sgcry: 12000
 			sgdai: 12000
+			sgshl: 13000
 	PowerDownBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-easygridbroker-ai
 		PowerDownTypes: dome,tsla,mslo,agun,sam
@@ -535,7 +544,7 @@ Player:
 		RequiresCondition: enable-rush-ai
 		SquadSize: 20
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
-		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		ConstructionYardTypes: fact
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
 		AircraftTargetType: AirborneActor
@@ -612,7 +621,7 @@ Player:
 		RequiresCondition: enable-normal-ai
 		SquadSize: 40
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
-		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		ConstructionYardTypes: fact
 		NavalProductionTypes: spen, syrd
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
@@ -628,7 +637,7 @@ Player:
 		RequiresCondition: enable-gridbroker-ai
 		SquadSize: 18
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
-		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		ConstructionYardTypes: fact
 		NavalProductionTypes: spen, syrd
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
@@ -648,7 +657,7 @@ Player:
 		SquadSizeRandomBonus: 0
 		MinimumAttackForceDelay: 1500
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
-		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		ConstructionYardTypes: fact
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
 		AircraftTargetType: AirborneActor
@@ -728,7 +737,7 @@ Player:
 		RequiresCondition: enable-turtle-ai
 		SquadSize: 10
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
-		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2, mnly
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, mnly
 		ConstructionYardTypes: fact
 		NavalProductionTypes: spen, syrd
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
@@ -791,7 +800,7 @@ Player:
 	SquadManagerBotModule@naval:
 		RequiresCondition: enable-naval-ai
 		SquadSize: 1
-		ExcludeFromSquadsTypes: harv, mcv, dog, badr.bomber, u2
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ConstructionYardTypes: fact
 		NavalProductionTypes: spen, syrd

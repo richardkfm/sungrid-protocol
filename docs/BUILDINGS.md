@@ -498,7 +498,7 @@ is the index, including the three places a different option was taken than the o
 |---|---|---|
 | **T1** | Both drones moved to `~techlevel.medium` and gated on their bay alone — option 2 of the three offered ("build a Drone Bay, get drones"). `sgdai` keeps gating `PDOX`/`IRON`/`MSLO`, which is all issue #22 required. The undocumented helicopter build-speed side effect disappears on its own with T2. | `rules/aircraft.yaml` |
 | **T2** | Bays produce a dedicated `Drone` type that nothing else in the mod declares; `SGDRO`/`SGDRS` set `BuildAtProductionType: Drone`. Verified with `--resolved-rules`: `HPAD`/`AFLD` produce `Helicopter`/`Plane`, the bays produce `Drone`, and no third actor produces `Drone`. | `rules/structures.yaml`, `rules/aircraft.yaml` |
-| **T3** | All five `BaseBuilderBotModule` instances now carry the Sungrid roster in `BuildingFractions`/`BuildingLimits`/`BuildingDelays`; `sgwnd`/`sghyd`/`sgrel` added to `PowerTypes`; `sgtur` to `DefenseTypes`; `sgdai`/`sgcry` to `TechTypes`; the roster to `EnemyBaseBuildingTypes` and all six `ProtectionTypes`; `sgdro`/`sgdrs` to `AirUnitsTypes` and four `UnitsToBuild`. **`rcyd` was deliberately *not* added to `RefineryTypes`**, against the survey's own suggestion: that list drives the ore-economy adequacy check and refinery-near-resources placement, and a Depot refines Scrap, not Ore — it is a normal `BuildingFractions` entry instead. | `rules/ai.yaml` |
+| **T3** | All five `BaseBuilderBotModule` instances now carry the Sungrid roster in `BuildingFractions`/`BuildingLimits`/`BuildingDelays`; `sgwnd`/`sghyd`/`sgrel` added to `PowerTypes`; `sgtur` to `DefenseTypes`; `sgdai`/`sgcry` to `TechTypes`; the roster to `EnemyBaseBuildingTypes` and all six `ProtectionTypes`; `sgdro`/`sgdrs` to `AirUnitsTypes` and four `UnitsToBuild`; `sghau` to all six `ExcludeFromSquadsTypes`. Rush, Normal, Grid Broker, Turtle and Naval each carry all eleven Sungrid buildings and both drones; Easy Grid Broker carries the five its own no-air/no-advanced-tech framing allows. Two things were deliberately *not* done, against the survey's own suggestion list: **`rcyd` is not in `RefineryTypes`** (that list drives the ore-economy adequacy check and refinery-near-resources placement, and a Depot refines Scrap), and **`sghau` is not in `HarvesterBotModule.HarvesterTypes`** (that drives harvester *replacement*, so a Hauler there would be built in place of an Ore Truck). | `rules/ai.yaml` |
 | **T4** | `techcenter` added to `SGCRY`, `SGDAI` and `SGSHL` (the last also loses its no-op `fact`), so the rules match what entries #4/#5/#9 have claimed since Phase 5. **`SGSNS` went the other way** — see T7. | `rules/structures.yaml` |
 | **T5** | `ProvidesPrerequisite: Prerequisite: anypower` on `SGREL`. | `rules/structures.yaml` |
 | **T6** | **Not done, as recommended.** Still a structural observation, not a bug. | — |
@@ -513,6 +513,12 @@ Two consequences worth calling out separately, because neither was in the origin
 - **Bots could never build a superweapon.** Issue #22 made `PDOX`/`IRON`/`MSLO` require `sgdai`, and
   no bot built `sgdai` — so the `mslo: 1` entry that four of the five personalities carry has been
   dead since. Adding `sgdai` to their build lists (T3) is what makes it live.
+- **Teaching bots to build Depots would have handed each of them a suicidal Hauler.**
+  `SquadManagerBotModule.FindNewUnits` recruits every `IPositionable` actor a bot owns that is not in
+  `ExcludeFromSquadsTypes` — that is why `harv` and `mcv` are listed there. No bot had ever built an
+  `RCYD`, so no bot had ever owned the `SGHAU` its `FreeActor` grants; the moment they did, the
+  unarmed Scrap hauler would have joined the next attack squad. `sghau` now sits beside `harv` in all
+  six squad managers.
 - **The Grid Defense Turret's tier is now honest across both consumers.** It was `anypower,
   ~techlevel.medium` in the rules but sat past all three superweapons in the palette *and* was absent
   from every bot's `DefenseTypes`. T9 and T3 fix the two halves.

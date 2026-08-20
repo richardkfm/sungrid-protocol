@@ -1979,6 +1979,16 @@ instances, scaled per personality; `sgwnd`/`sghyd`/`sgrel` in `PowerTypes`; `sgt
 `sgdai`/`sgcry` in `TechTypes` where those are built; the roster in `EnemyBaseBuildingTypes` and all
 six `ProtectionTypes`; `sgdro`/`sgdrs` in all six `AirUnitsTypes` and in four `UnitsToBuild`/`UnitLimits`.
 
+One thing this pass broke and then fixed, worth recording because the failure mode is not obvious:
+`SquadManagerBotModule.FindNewUnits` recruits **every** `IPositionable` actor a bot owns that is not
+listed in `ExcludeFromSquadsTypes` (which is why `harv` and `mcv` are there). Bots had never built a
+Recycling Depot before, so they never owned the `SGHAU` Hauler Drone its `FreeActor` hands out —
+teaching them to build Depots meant every bot would immediately walk an unarmed Scrap hauler into an
+attack squad. `sghau` is now excluded alongside `harv` in all six squad managers. Note it is
+deliberately **not** added to `HarvesterBotModule.HarvesterTypes` either: that list drives harvester
+*replacement* ("if harvester count drops below refinery count, build a new one"), so a Hauler counted
+there would be substituted for an Ore Truck — the same category of mistake as `rcyd` in `RefineryTypes`.
+
 Two deliberate departures from #77's own suggestion list:
 
 - **`rcyd` was not added to `RefineryTypes`.** That list drives the ore-economy adequacy check
@@ -1986,9 +1996,13 @@ Two deliberate departures from #77's own suggestion list:
   Ore — adding it would have let a bot count Depots toward its refinery quota and stop building
   `PROC`s. It is a normal `BuildingFractions` entry instead.
 - **Easy Grid Broker gets only `rcyd`, `sgwnd`, `sgrel`, `sgtur`, `sgsns`** — no bays, no
-  Cryptominer/Datacenter/Shelter. That matches its existing framing ("no air, no naval, no
-  Tesla/mammoth tech"), and with T4 in place the tech buildings are unreachable for it by
-  construction, since it deliberately never builds `atek`/`stek`.
+  Cryptominer/Datacenter/Shelter/Hydrogen Plant. Four of those five are unreachable for it *by
+  construction* now that T4 is in place, since it deliberately never builds `atek`/`stek` and they
+  need `techcenter` (`sghyd` needs `atek` directly); the bays are the one reachable omission, and
+  they are left out to keep its existing framing intact ("no air, no naval, no Tesla/mammoth tech").
+
+Every other personality — Rush, Normal, Grid Broker, Turtle, Naval — carries all eleven Sungrid
+buildings and both drones.
 
 **A bug this surfaced that #77 didn't record:** since issue #22 made all three superweapons require
 `sgdai`, and no bot ever built `sgdai`, the `mslo: 1` entry that four of the five personalities carry
