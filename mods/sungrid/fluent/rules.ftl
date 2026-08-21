@@ -1233,8 +1233,11 @@ actor-sgrel =
     .name = Smart Grid Relay
     .description =
     A grid-balancing relay station providing a modest
-    secondary supply of power. Counts as a power source
-    for the tech tree.
+    secondary supply of power. Tough for its footprint,
+    its output holds steady as it takes damage, and it
+    can't be knocked dark by an infiltration blackout
+    the way other power plants can. Counts as a power
+    source for the tech tree.
 
 actor-sgshl =
     .name = Resilience Shelter

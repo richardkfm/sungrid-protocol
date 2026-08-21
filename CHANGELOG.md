@@ -127,6 +127,9 @@ and the audit found eleven more problems of the same shape. Issue #78 fixes all 
   drops to radar tier so it arrives when scouting actually matters.
 - **The Smart Grid Relay counts as a power source.** It was the only power building that didn't, so a base
   kept alive entirely on Relays couldn't rebuild a Refinery, Barracks, Naval Yard, Depot — or another Relay.
+- **The Smart Grid Relay's tooltip now says what it's for** (issue #79). At 400 credits for +60 power it
+  reads as the worst deal in the roster with nothing to explain why — it's actually the one power source
+  that survives a Spy blackout and doesn't lose output as it takes damage, and the description now says so.
 - **Ore Trucks can no longer unload at a Recycling Depot.** A 600-credit Depot was a working substitute for
   the 1400-credit Refinery. Haulers deliver Scrap to Depots, Ore Trucks deliver Ore to Refineries.
 - **Build menus read correctly.** The Grid Defense Turret moved out of the tail of the Defense tab (it sat
