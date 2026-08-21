@@ -2093,3 +2093,13 @@ the owner. Numbers read from `--resolved-rules`, not source YAML. **Correction w
 earlier verbal claim that `SGREL` has the highest HP-per-cell of any building in the mod was wrong —
 `FIX` is 80000/cell and `MSLO`/`IRON`/`GAP` also reach 50000. The accurate claim is that it leads all
 *power* buildings by 3.3×.
+
+**Follow-up: the in-game tooltip was still the pre-issue text.** The docs pass above (this issue, shipped
+in PR #104, alpha27) wrote the trade-off down in `docs/ENERGY_BALANCE.md` and `docs/BUILDINGS.md` but
+left `mods/sungrid/fluent/rules.ftl`'s `actor-sgrel.description` untouched — it still just said "providing
+a modest secondary supply of power. Counts as a power source for the tech tree," the exact text quoted
+above as the problem. Caught by the project owner checking the actual in-game build menu after reading
+the new docs. Fixed: the description now states both properties (holds steady under damage, immune to
+infiltration blackout) in-client, acting on the "keep them and say so" resolution above. The broader
+roster-slot/pricing question (the other resolution branch, and G4) is still open for playtest — this
+follow-up only closes the "untooltipped" part of this issue's title.
