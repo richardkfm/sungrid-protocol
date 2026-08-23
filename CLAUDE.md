@@ -180,6 +180,18 @@ is the regression check.
 12. **Decorative copies of a unit have to track that unit's size.** `SGDRN`/`SGDRA` park an airframe on
     their pad; when the flyable drones shrank, a bigger parked model would have read as a different,
     larger aircraft (issue #80).
+13. **If the facings were made by image-plane rotation, moving parts belong in the body sheet, not in a
+    `WithIdleOverlay`.** An overlay is placed by a `WVec` run through `BodyOrientation.LocalToWorld`,
+    which with the default `UseClassicPerspectiveFudge` shears y by sin(40°) — an ellipse where
+    `rotated_frames()` made a circle, so a part pinned to a boom tip at north drifts ~2px off it by west
+    on a 15px sprite. Baked-in animation is exact at every facing, and `WithShadow` clones the body
+    renderable so it turns in the ground shadow for free (issue #81, `rotated_anim_frames()`).
+14. **`Facings` x `Length` is the frame count, facing-major, and the engine will tell you.**
+    `DefaultSpriteSequence` indexes `facingIndex * Length + frame % Length`, so the drones' 32 x 4 sheets
+    hold 128 frames. `./utility.sh --check-missing-sprites` runs `SpriteCache.LoadReservations` and
+    reports the out-of-range frames — the same error that crashed the shellmap in issue #35 — so an
+    animated sheet's math is checkable here rather than by inspection. Verify with a negative control
+    (bump `Length` by one, see it fail) before trusting a silent pass.
 
 ### What can and can't be verified in this environment
 
@@ -218,10 +230,13 @@ widely, including `.lua`, when removing an actor).
   stock `PROC`), so the Wind Turbine's blades don't turn and the Sensor Array's dish doesn't sweep;
   the `grid-normal`/`grid-strained` power-tier conditions on `SGCRY`/`SGDAI`/`SGTUR` and
   `drone-uplink`/`drone-uplink-degraded` on both drones change output with no visual cue; `ARCT` has
-  no `WithMuzzleOverlay`, so the Arc Turret fires with no flash. Two items came off this list in issue
-  #80: the drones' doubled rotors (the stock overlays are gone, leaving the baked ones — so the drones
-  now have *no* flight animation, which is the open half of that one), and `SGHAU`'s hex-sled fullness
-  sheets (redrawn as the six-wheel scrap rover, cargo shown as the load itself).
+  no `WithMuzzleOverlay`, so the Arc Turret fires with no flash. Three items came off this list: in
+  issue #80, the drones' doubled rotors (the stock overlays are gone) and `SGHAU`'s hex-sled fullness
+  sheets (redrawn as the six-wheel scrap rover, cargo shown as the load itself); in issue #81, the
+  drones' flight animation — both drone sheets are now `Facings: 32` x `Length: 4` and their rotors
+  turn, which is also the worked example for how to animate anything else here. Still open on the
+  drones: no separate slow-rotor state while landed (deliberate — a second 128-frame sheet and a pair
+  of conditional sprite bodies for a state a 15px drone barely occupies).
 - **Terrain scenery** — the Phase 6 item that isn't palette work.
 - **Phase 7 proper** — unit sprites, voices, announcer, in-game music.
 - **Issue #60** — consolidating European sub-factions into an EU faction (and Iran et al. into a

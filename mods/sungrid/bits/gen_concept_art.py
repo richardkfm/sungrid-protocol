@@ -2197,6 +2197,39 @@ def rotated_frames(draw_fn, frame_w, frame_h, n=32, outlined=True, **kwargs):
     return frames
 
 
+def rotated_anim_frames(draw_fn, frame_w, frame_h, n=32, length=4, outlined=True, **kwargs):
+    """Same as rotated_frames, but each facing carries `length` animation frames
+    and the strip is laid out **facing-major** -- facing 0's whole animation,
+    then facing 1's, and so on.
+
+    That is the layout `Facings: n` + `Length: length` resolves to: the engine
+    indexes a sequence as `facingIndex * Length + frame % Length`
+    (DefaultSpriteSequence.GetSprite), so the sheet has to hold n * length
+    frames. Getting this wrong is what crashed the shellmap in issue #35, so
+    the frame count is asserted against the sequence math at the call site.
+
+    `draw_fn` is called once per animation step with `spin=` set to that step's
+    phase in degrees, and the result is rotated into the facing the same way a
+    static body is -- so a moving part stays registered with the airframe it is
+    bolted to at every facing, which is the whole reason the animation lives in
+    the body sheet rather than in a WithIdleOverlay (see docs/BACKLOG.md #81)."""
+    bases = []
+    for k in range(length):
+        base = Image.new("RGBA", (frame_w * SS, frame_h * SS), (0, 0, 0, 0))
+        draw_fn(SD(base), frame_w, frame_h, spin=k * (360.0 / length), **kwargs)
+        bases.append(base)
+    frames = []
+    for i in range(n):
+        angle = i * (360.0 / n)
+        for base in bases:
+            f = base.rotate(angle, resample=Image.BICUBIC, center=(frame_w * SS / 2, frame_h * SS / 2))
+            f = f.resize((frame_w, frame_h), Image.LANCZOS)
+            if outlined:
+                f = outline_sprite(f)
+            frames.append(f)
+    return frames
+
+
 # ---------------------------------------------------------------------------
 # Grid Defense Turret (SGTUR) rotating assembly -- 32 facings x 2 damage
 # states, drawn as 32 genuine viewpoints of one 3D weapon station (issue #65).
@@ -2331,6 +2364,12 @@ def _drone_boom(sd, cx, cy, ex, ey, col, wide=1.5):
     sd.line([(cx - 0.35, cy - 0.35), (ex - 0.35, ey - 0.35)], fill=lit(col, 0.4), width=0.45)
 
 
+# Rotor-spin frames per facing on both drone sheets. Must match `Length:` on
+# sgdro/sgdrs's `idle:` sequence in mods/sungrid/sequences/aircraft.yaml --
+# the engine reads Facings x Length frames out of the sheet (issue #35).
+DRONE_SPIN_FRAMES = 4
+
+
 def _small_rotor(sd, cx, cy, r, phase=0.0, tint=(0xA8, 0xA8, 0x9C)):
     """A turning rotor at the shrunk drones' scale: a swept *ring*, not blades.
 
@@ -2342,12 +2381,20 @@ def _small_rotor(sd, cx, cy, r, phase=0.0, tint=(0xA8, 0xA8, 0x9C)):
     image-plane rotations. An opaque ring with one brighter leading quadrant
     keeps its shape at every facing and still says 'this is turning'."""
     sd.ellipse([cx - r, cy - r, cx + r, cy + r], outline=dim(tint, 0.22), width=0.8)
-    sd.arc([cx - r, cy - r, cx + r, cy + r], -phase - 105, -phase - 15,
-           fill=lit(tint, 0.45), width=0.8)
+    # Blade inside the ring, plus a brighter tip on its leading edge. The blade
+    # is what actually moves frame to frame; the ring holds the silhouette (and
+    # therefore the ground shadow) steady while it does, which is what keeps a
+    # rotating radial mark from reading as the caltrop spike a bare blade does
+    # at this radius.
+    a = math.radians(phase)
+    sd.line([(cx, cy), (cx + r * 0.95 * math.cos(a), cy - r * 0.95 * math.sin(a))],
+            fill=dim(tint, 0.28), width=0.7)
+    sd.arc([cx - r, cy - r, cx + r, cy + r], -phase - 34, -phase + 12,
+           fill=lit(tint, 0.4), width=0.9)
     sd.px(cx - 0.5, cy - 0.5, LEGACY_GRAY_DARK)
 
 
-def sgdro_body_draw(sd, w, h):
+def sgdro_body_draw(sd, w, h, spin=0.0):
     """Recon Drone: a light, slim quadcopter with a gimbal camera slung under
     the nose.
 
@@ -2369,7 +2416,7 @@ def sgdro_body_draw(sd, w, h):
     for dx, dy in arms:
         _drone_boom(sd, cx, cy, cx + dx * 5.6, cy + dy * 4.0, LEGACY_GRAY_DARK, 1.0)
     for k, (dx, dy) in enumerate(arms):
-        _small_rotor(sd, cx + dx * 5.6, cy + dy * 4.0, 2.2, phase=35 + 90 * k)
+        _small_rotor(sd, cx + dx * 5.6, cy + dy * 4.0, 2.2, phase=35 + 90 * k + spin)
     # Faceted airframe: dark underside chine, lit upper-left facet, spine.
     sd.poly([(cx, cy - 5.4), (cx + 2.8, cy - 2.0), (cx + 2.6, cy + 3.0), (cx, cy + 5.2),
              (cx - 2.6, cy + 3.0), (cx - 2.8, cy - 2.0)], fill=dim(GREEN_PRIMARY, 0.32))
@@ -2386,7 +2433,7 @@ def sgdro_body_draw(sd, w, h):
     sd.px(cx, cy - 5.0, SUN_GOLD)
 
 
-def sgdrs_body_draw(sd, w, h):
+def sgdrs_body_draw(sd, w, h, spin=0.0):
     """Strike Drone: a heavier armoured airframe with rail-mounted munitions.
 
     Same volumetric pass as sgdro (issue #48 batch 3): opaque rotor blur, a
@@ -2408,7 +2455,7 @@ def sgdrs_body_draw(sd, w, h):
                      (mx, my + 2.5), (mx - 1.0, my + 1.6)], fill=dim(PANEL_BLUEBLACK, 0.18))
             sd.px(mx - 0.5, my - 1.0, SUN_GOLD)
     for k, (dx, dy) in enumerate(arms):
-        _small_rotor(sd, cx + dx * 6.6, cy + dy * 4.8, 2.5, phase=20 + 90 * k)
+        _small_rotor(sd, cx + dx * 6.6, cy + dy * 4.8, 2.5, phase=20 + 90 * k + spin)
     # Armoured hull: dark chine, plated deck, chamfered nose.
     sd.poly([(cx, cy - 6.0), (cx + 3.4, cy - 2.6), (cx + 3.2, cy + 3.6), (cx, cy + 5.8),
              (cx - 3.2, cy + 3.6), (cx - 3.4, cy - 2.6)], fill=dim(PANEL_BLUEBLACK, 0.35))
@@ -3687,13 +3734,23 @@ def main():
         save_pngsheet(indexed_strip([wreck], [silhouette_shadow(wreck, 2, 2)], w, h),
                       f"{name}.png", w, h, 1, indexed=True)
 
-    # Drones: 32-facing body only (no damaged state, matching tran/mh60/heli).
+    # Drones: 32 facings x DRONE_SPIN_FRAMES rotor-spin frames, facing-major, no
+    # damaged state (matching tran/mh60/heli). The spin lives in the body sheet
+    # rather than in a WithIdleOverlay rotor disc for three reasons (issue #81):
+    # the rotors stay registered with the booms at every facing because they are
+    # rotated with the airframe rather than positioned by a WVec the engine's
+    # classic perspective fudge shears differently than the image-plane rotation
+    # that made the facings; WithShadow clones the body renderable, so the
+    # ground shadow gets the turning rotors for free; and it keeps the rule that
+    # an actor with bespoke art doesn't wear a generic overlay for a part its
+    # own sprite draws.
     for name, draw_fn, fw, fh in (
         ("sgdro", sgdro_body_draw, 32, 30),
         ("sgdrs", sgdrs_body_draw, 36, 32),
     ):
-        frames = rotated_frames(draw_fn, fw, fh, n=32)
-        save_pngsheet(sheet_of(frames, fw, fh), f"{name}.png", fw, fh, 32, indexed=True)
+        frames = rotated_anim_frames(draw_fn, fw, fh, n=32, length=DRONE_SPIN_FRAMES)
+        assert len(frames) == 32 * DRONE_SPIN_FRAMES, "Facings x Length must equal the sheet"
+        save_pngsheet(sheet_of(frames, fw, fh), f"{name}.png", fw, fh, len(frames), indexed=True)
         save_pngsheet(make_icon(draw_fn, fw, fh, label=ICON_LABELS.get(name)), f"{name}icon.png", ICON_W, ICON_H, 1)
 
     # Hauler Drone (SGHAU): three parallel fullness-state images, identical
