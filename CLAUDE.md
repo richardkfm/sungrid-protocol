@@ -164,6 +164,22 @@ is the regression check.
    alike (issues #34, #36, #58, #64, #65). *Wrong mechanic* — perfectly legible art describing
    something the actor doesn't do: the Vault as an ore silo, the Recycling Depot as an oil pumpjack,
    the Smart Grid Relay depicting a descoped pooling mechanic (issues #70, #71). Both are real bugs.
+   Issue #80 adds two more: *wrong scale* — a correct drawing at the wrong size (the drones read as
+   gunships next to a 14px trooper) — and *wrong subject* — a well-drawn building that isn't this
+   building (the Aerial Fab as a masonry vault). Neither is fixable by shading.
+10. **Changing a sprite's size means re-choosing its marks, not scaling its coordinates.** Below about
+    1px of stroke, detail either disappears into the 1-bit alpha or welds to its neighbour under the
+    readability outline. `rotor_blur()`'s dashes-and-streak recipe reads at a 3-4px disc and turns into
+    a direction-changing spike at 2px, which is why the shrunk drones use `_small_rotor()`'s opaque
+    ring instead (issue #80). Same rule the other way for fine structure: the Aerial Fab's truss web is
+    *filled triangles*, because 0.9px diagonals come back from the 4× downscale as a chain of loops.
+11. **An actor with bespoke art shouldn't also wear a generic overlay for a part its own sprite draws.**
+    Both drones baked four rotors *and* mounted stock RA helicopter rotor discs on top (issue #80);
+    scale changes made it obvious, but it was wrong at any size. Check `WithIdleOverlay` against what
+    the sheet already contains before regenerating a body.
+12. **Decorative copies of a unit have to track that unit's size.** `SGDRN`/`SGDRA` park an airframe on
+    their pad; when the flyable drones shrank, a bigger parked model would have read as a different,
+    larger aircraft (issue #80).
 
 ### What can and can't be verified in this environment
 
@@ -202,9 +218,10 @@ widely, including `.lua`, when removing an actor).
   stock `PROC`), so the Wind Turbine's blades don't turn and the Sensor Array's dish doesn't sweep;
   the `grid-normal`/`grid-strained` power-tier conditions on `SGCRY`/`SGDAI`/`SGTUR` and
   `drone-uplink`/`drone-uplink-degraded` on both drones change output with no visual cue; `ARCT` has
-  no `WithMuzzleOverlay`, so the Arc Turret fires with no flash; both drone bodies bake rotors *and*
-  mount stock RA rotor overlays on top, so a drone in flight wears two sets of blades; `SGHAU`'s
-  fullness sheets still use the abstract hex sled.
+  no `WithMuzzleOverlay`, so the Arc Turret fires with no flash. Two items came off this list in issue
+  #80: the drones' doubled rotors (the stock overlays are gone, leaving the baked ones — so the drones
+  now have *no* flight animation, which is the open half of that one), and `SGHAU`'s hex-sled fullness
+  sheets (redrawn as the six-wheel scrap rover, cargo shown as the load itself).
 - **Terrain scenery** — the Phase 6 item that isn't palette work.
 - **Phase 7 proper** — unit sprites, voices, announcer, in-game music.
 - **Issue #60** — consolidating European sub-factions into an EU faction (and Iran et al. into a
