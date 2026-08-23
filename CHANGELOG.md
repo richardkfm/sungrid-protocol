@@ -102,6 +102,7 @@ phase plan and `CLAUDE.md` for detailed current status.
   - **The Hauler Drone is a scrap rover again.** It had drifted into a smooth grey pod with a green panel on the back (the "vacuum cleaner" read) and is redrawn as the six-wheeled salvage rover from the project's own concept render: ploughed prow, open bed, and a bed you can actually see the scrap piled in — full, half and empty now read from the load itself rather than from a level bar. Its wreck was redrawn to match.
   - **The Recycling Depot is an open bay, not a box.** It shared the Battery Bank's shape — a closed cabinet with a lit gauge on the front — so the two read as the same building. It is now a canopy on posts with the scrap heap piled underneath in the open and the shredder off to one end.
   - **The Aerial Fabrication Bay is a hangar, not a bunker.** The dark barrel vault with a black arched mouth read as a kiln; it is now a light steel space frame under a field of solar panels, open on all sides, with an airframe being built on the apron underneath.
+- **Drone rotors turn again** (issue #81), and this time they are the drone's own rotors rather than a stock helicopter disc bolted on top: each drone sheet now carries four rotor-spin frames per facing, so the blades sweep while the airframe flies — and because the spin is part of the body sprite, it shows in the drone's ground shadow too. Drones have always had that shadow, inherited from the same trait every other aircraft uses; what shrank it was the size fix, not a missing shadow.
 
 ## Ongoing — tone, naming, and content fixes
 

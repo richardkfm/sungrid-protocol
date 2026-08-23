@@ -130,10 +130,19 @@ mh60:
 # 32-37px wide -- Chinook/Black Hawk scale -- and once the airframes were shrunk
 # to ~15px they were wider than the drone carrying them, so both the overlays
 # and these sequences are gone (see rules/aircraft.yaml).
+#
+# The rotors instead turn inside `idle` itself: `Length: 4` x `Facings: 32` =
+# the 128 facing-major frames each sheet now holds (issue #81). The engine
+# indexes this as `facingIndex * Length + frame % Length`, so Length here and
+# DRONE_SPIN_FRAMES in gen_concept_art.py have to stay equal -- a mismatch is
+# the out-of-range frame crash from issue #35. Keeping the spin in the body
+# sheet is also what puts it in the ground shadow, since WithShadow clones the
+# body renderable.
 sgdro:
 	idle:
 		Filename: sgdro.png
 		Facings: 32
+		Length: 4
 		UseClassicFacings: True
 	icon:
 		Filename: sgdroicon.png
@@ -142,6 +151,7 @@ sgdrs:
 	idle:
 		Filename: sgdrs.png
 		Facings: 32
+		Length: 4
 		UseClassicFacings: True
 	icon:
 		Filename: sgdrsicon.png

@@ -2205,3 +2205,77 @@ balance or Grid Reserve changes.
 **Definition of done:** Each of the four reported reads is answered by a change to what the sprite depicts
 (size, subject, composition, building type), not by shading; the Hauler's cargo state and the Depot's fill
 state still read at nine/three levels respectively; and no frame layout, sequence offset or cameo changed.
+
+---
+
+### 81. Drones fly with dead rotors — spin baked into the body sheet, and the ground shadow confirmed — DONE
+
+**Request (project owner):** "Drones: Could you try to give them animated rotors and shadows (all flying
+units do have shadows that match their shape)."
+
+**Rotors.** Issue #80 removed the stock helicopter rotor discs both drones wore as `WithIdleOverlay` —
+correctly, since after the shrink a 32-37px `lrotor`/`yrotorlg` disc was wider than the 15px airframe
+carrying it — and accepted the resulting loss of any flight animation as the cost. This closes that gap
+without putting a generic overlay back.
+
+The spin lives in the body sheet: `sgdro.png`/`sgdrs.png` are now 128 frames each, laid out
+**facing-major** as `Facings: 32` x `Length: 4`, and `_small_rotor()` takes the phase so each rotor's
+blade and its bright leading tip advance 90° per frame. Three reasons this beats a separate rotor
+overlay, which was the obvious first design:
+
+1. **Registration.** An overlay is positioned by a `WVec` the engine rotates through
+   `BodyOrientation.LocalToWorld`, which (with `UseClassicPerspectiveFudge`, on by default) shears the
+   y axis by sin(40°). Our drone facings are made by rotating one top-down drawing *in the image plane*
+   — a circle, not that ellipse. Working the offsets through both transforms, a rotor pinned at the
+   north-facing boom tip lands about 2px off it by the time the drone faces west, on a 15px sprite.
+   Rotating the rotors *with* the airframe is exact at all 32 facings by construction.
+2. **The shadow gets it for free.** `WithShadow` clones the body renderable, so a turning rotor drawn in
+   the body sheet turns in the ground shadow too.
+3. It keeps issue #80's own rule: an actor with bespoke art doesn't wear a generic overlay for a part
+   its own sprite draws.
+
+Cost, accepted: no separate slow-rotor state when a drone is landed (stock helicopters switch to
+`slow-rotor` on `!airborne`). Doing that here means a second 128-frame sheet and a pair of conditional
+`WithFacingSpriteBody` traits, for a state a 15px drone spends almost no time in. The sheets grew from
+5.4KB/6.6KB to 12KB/14KB.
+
+**Shadows: already there, and now verified rather than assumed.** Both drones inherit `WithShadow` from
+`^NeutralPlane` (`Offset: 43,128,0`, `ZOffset: -129`) — the same trait, with the same values, that every
+other aircraft in the mod gets; `--resolved-rules SGDRO` confirms it on the resolved actor, and nothing
+in `mods/sungrid/` removes or conditions it. `WithShadow` clones every non-decoration renderable, tints
+it black at alpha 140 and offsets it to ground level, so the shadow *is* the sprite's own silhouette by
+construction — it matches the shape because it is the shape. At the engine default `CruiseAltitude`
+(1280, no override on either drone) that puts the shadow 1px right and 33px below the airframe, which is
+what `docs/concept-art/issue81-drone-rotor-shadow.png`'s bottom row composites.
+
+So there was no missing-shadow bug to fix. What did change is how much shadow there is to see: before
+issue #80 the silhouette included a 26px body and two 32-37px stock rotor discs, and it now includes a
+15px airframe whose rotor rings are rings. That is a consequence of the size fix the same request asked
+for, and the rotors are back inside it.
+
+**Verified in this environment** (engine fetched and built): `--check-yaml` exits 0 across all maps.
+`--check-missing-sprites` is the real test here, because it runs `SpriteCache.LoadReservations` — the
+exact code path that threw issue #35's `does not contain frames` crash — and it reports no frame error
+and no missing mod-owned sprite. Confirmed by negative control: setting `Length: 5` on `sgdro`'s `idle`
+makes it fail with `sgdro.png does not contain frames: 128,...,159`, and `Length: 4` is silent, so
+`Facings x Length` is checked against the real 128-frame sheet by the engine rather than by inspection.
+Re-running both generators leaves every other sprite and every cameo byte-identical.
+
+**Not verified:** no live client — this environment has no RA game content installed. The spin has been
+checked frame by frame and as a 40ms/frame animation preview, but not on a moving battlefield, and the
+shadow argument above is read off the traits and the engine source rather than off a screenshot.
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py` (new `rotated_anim_frames()`, `DRONE_SPIN_FRAMES`,
+`spin=` on both drone bodies, moving blade in `_small_rotor()`), regenerated `sgdro.png`/`sgdrs.png`,
+`mods/sungrid/sequences/aircraft.yaml` (`Length: 4` on both `idle:` blocks),
+`docs/concept-art/issue81-drone-rotor-shadow.png` (new), `docs/ART_DIRECTION.md`, `CHANGELOG.md`,
+`CLAUDE.md`. No rules changes — the shadow needed none.
+
+**Labels:** `type:art`, `area:units`, `phase:6`
+
+**Phase:** 6/7 — programmatic art, quality iteration.
+
+**Definition of done:** Both drones' rotors turn while the airframe is drawn, at every facing, with the
+turning rotors inside the ground shadow; the sheet's frame count is proven against the sequence math by
+the engine's own reservation check; and the shadow's presence is established from the resolved actor
+rather than assumed.
