@@ -2103,3 +2103,105 @@ the new docs. Fixed: the description now states both properties (holds steady un
 infiltration blackout) in-client, acting on the "keep them and say so" resolution above. The broader
 roster-slot/pricing question (the other resolution branch, and G4) is still open for playtest — this
 follow-up only closes the "untooltipped" part of this issue's title.
+
+---
+
+### 80. Four owner-reported art reads: drone scale, the Hauler as an appliance, the Depot as a second battery, the Aerial Fab as a bunker — DONE
+
+**Request (project owner, verbatim):** "drones are too big, make them much smaller both / recycling bay
+looks too much like a battery make it more like a bay / hauler drone looks like a vacuum cleaner. Make it
+look more like a harvester but full of trash and more like the graphic we made in 3d / Areal fab does not
+look good enough."
+
+Four separate reads, and none of them is a *rendering* fault — every one of these sprites came out of
+issue #73's volumetric pass and #74's state pass and is shaded, outlined and stated correctly. They are
+faults in what is depicted: wrong size, wrong subject, wrong composition, wrong building.
+
+**1. Both drones were ~1.8× too big (`sgdro.png`, `sgdrs.png`).** `SGDRO` spanned 26×20 px of its 32×30
+frame and `SGDRS` 28×22 of 36×32, against the Disruptor Trooper's ~14 px and the Hauler's 24 px — a
+350-credit, 3000 hp scout rendered at gunship scale. Both airframes are now ~15 px (Strike deliberately
+still the larger). The detail was **redrawn rather than scaled**: single-pixel booms, one lit facet
+instead of a three-facet ramp, and a new `_small_rotor()` that draws an opaque swept *ring* with one
+bright leading quadrant. `rotor_blur()`'s dashes-plus-trailing-streak recipe is built for a 3–4 px disc;
+at 2 px the dashes and the streak land on the same handful of pixels and the 1 px readability outline
+welds them into a spike whose direction changes frame to frame across the 32 image-plane rotations — the
+drone read as a caltrop. `rotor_blur()` itself is unchanged and still used by the two bays' parked
+airframes.
+
+**2. The shrink exposed a second bug: both drones wore two sets of blades.** `SGDRO` mounted stock
+`lrotor.shp`/`rrotor.shp` and `SGDRS` `yrotorlg.shp` as `WithIdleOverlay` on top of the four rotors their
+own sprites already bake (a known-open item in `CLAUDE.md`). Those discs are 32–37 px — Chinook and Black
+Hawk scale — so after the shrink the overlay was wider than the airframe carrying it. Both actors' rotor
+overlays, both husks' (`SGDRO.Husk`, `SGDRS.Husk` render the intact image), and the four now-unreferenced
+`rotor:`/`rotor2:`/`slow-rotor:`/`slow-rotor2:` sequences are removed. `Selectable.DecorationBounds` came
+down with the art: 1706,1536 → 939,939 and 1621,1365 → 1024,1024, measured off the widest facing's actual
+bbox (22 px and 24 px at 1024 world units per 24 px cell). Consequence to accept: the drones no longer
+animate in flight. The alternative — generating a bespoke small rotor sheet — buys a spin cue on a 15 px
+sprite that already has four baked rings, and stock RA's own fixed-wing aircraft animate nothing either.
+
+**3. The Hauler Drone (`sghau*.png`).** Issue #34's follow-up moved `SGHAU` off `HARV`'s sprite by going
+deliberately far from a truck — a hex sled on skids, cargo shown as a level bar. That satisfied "not
+`HARV`" and lost "is a harvester": a domed grey body with a green rectangle on it, i.e. an appliance.
+Redrawn from the concept render the owner pointed at (`docs/concept-art/cameo-sources/desert_base2.png`,
+the same six-wheel scrap rover its photographic cameo is already cut from): plated chassis, ploughed prow,
+three road wheels a side standing clear of the hull with transparent gaps between them so the readability
+outline wraps each tyre separately, and an open bed. **The load is the readout** — real scrap filled from
+the tailgate forward, on the Recycling Depot's own material palette (`_rcyd_scrap_col`, re-hashed because
+that function's 7-step cycle lines up into stripes across a 7 px bed where it reads as texture across the
+Depot's 20 px heap), overtopping the rim with loose pipe and plate ends at full. Laden/empty now reads
+from the silhouette while the rover is driving away. The wreck sheets (`sghauhusk.png`,
+`sghauhuskfull.png`) were redrawn to match: a husk that is a burnt hex sled left by a six-wheeled rover is
+another unit's husk, which is exactly the failure issue #74 fixed the first time.
+
+**4. The Recycling Depot (`rcyd.png`).** It shared the Battery Bank's composition — a closed box with a
+lit segment gauge across its face — so it read as another battery regardless of theme or colour. Now an
+open **bay**: a wide flat canopy on slim posts, open at the front and both ends, the heap on the apron
+underneath, daylight between roof and pile, and the machinery (shredder jaw with teeth, feed chute, stack)
+pushed to one end so the outline stays posts-and-air rather than wall. The gauge moved to the canopy
+fascia. The nine fill stages, `WithResourceLevelSpriteBody` wiring, `_rcyd_col_height()` mound profile and
+native-resolution accent re-stamping (`_rcyd_accents`) are all unchanged; damage still lands in the
+silhouette — the near canopy corner comes off its post and the roof sags.
+
+**5. The Aerial Fabrication Bay (`sgdra.png`).** Issue #73 gave it a genuine barrel vault, which was well
+drawn and the wrong building: a windowless masonry tunnel with a black arched mouth reads as a bunker or a
+kiln, said nothing about aircraft, and put the darkest mass in the roster next to the second darkest
+(`SGDAI`). Rebuilt from the same concept render as a pale space-frame hangar — zigzag truss band along the
+front eave, six slim columns with daylight between them, a collector-panel field on the roof plane tying
+it to the Solar Array family, a rear workshop module, and a half-built airframe on the apron on its
+assembly trestle (a *fabrication* bay, not a landing pad). The truss web is drawn as filled triangles, not
+diagonals: a 5 px-deep band of 0.9 px lines comes back from the 4× downscale as a chain of soft loops,
+where solid triangles hold their edges and leave the inverted triangles between them as real holes.
+Against `SGDRN` — two heavy masts and a beam — the difference is now a roof: this is a building, that is a
+rig.
+
+**Collateral, deliberate:** `SGDRN`'s *parked* drone was shrunk to the flyable drones' new span. A service
+pad whose model is bigger than the drone that lands on it reads as a different, larger aircraft.
+
+**Verified in this environment** (engine fetched and built): `./utility.sh --check-yaml` exits 0 across all
+maps; `--png-sheet-export` confirms the engine's own PNG reader parses every regenerated sheet at its
+**unchanged** `FrameSize`/`FrameAmount` (32,30 ×32; 36,32 ×32; 34,28 ×55 ×3; 34,28 ×32 ×2; 40,36 ×18;
+66,54 ×2 ×2; and the three build-ups at 40,36 ×9 and 66,54 ×9 ×2), so no sequence layout changed and only
+the four dead rotor sequence nodes were edited; `--check-missing-sprites` reports zero missing mod-owned sprites (its remaining output
+is stock `.shp`/`.des` assets absent because no RA content is installed here). A `git status` after
+re-running **both** generators shows exactly the 12 sheets touched plus the script — every other sprite
+and every cameo in `mods/sungrid/bits` is byte-identical, cameos included because `gen_photo_cameos.py`
+still overwrites the programmatic ones.
+
+**Not verified:** no live client render — this environment has no RA game content installed, so none of
+this has been seen in an actual match, and the drones' new size has not been checked against a moving
+battlefield.
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py`; regenerated `sgdro.png`, `sgdrs.png`, `sghau.png`,
+`sghauhalf.png`, `sghauempty.png`, `sghauhusk.png`, `sghauhuskfull.png`, `rcyd.png`, `rcydmake.png`,
+`sgdra.png`, `sgdramake.png`, `sgdrn.png`, `sgdrnmake.png`; `mods/sungrid/rules/aircraft.yaml`,
+`mods/sungrid/rules/husks.yaml`, `mods/sungrid/sequences/aircraft.yaml`; `docs/ART_DIRECTION.md`,
+`docs/concept-art/issue80-units-buildings-pass.png` (new), `CHANGELOG.md`, `CLAUDE.md`. No cameo, palette,
+balance or Grid Reserve changes.
+
+**Labels:** `type:art`, `type:bug`, `area:mod-content`, `phase:6`
+
+**Phase:** 6/7 — programmatic art, quality iteration.
+
+**Definition of done:** Each of the four reported reads is answered by a change to what the sprite depicts
+(size, subject, composition, building type), not by shading; the Hauler's cargo state and the Depot's fill
+state still read at nine/three levels respectively; and no frame layout, sequence offset or cameo changed.

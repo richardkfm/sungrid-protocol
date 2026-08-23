@@ -313,28 +313,17 @@ SGDRO:
 		LocalOffset: 0,0,-85
 		RequiresCondition: drone-uplink || drone-uplink-degraded
 	AttackAircraft:
-	# Offsets scaled down from tran's (597,0,213 / -597,0,341) to match sgdro.png's
-	# much smaller quadcopter-drone body (docs/BACKLOG.md issue #34).
-	WithIdleOverlay@ROTOR1AIR:
-		Offset: 350,0,130
-		Sequence: rotor
-		RequiresCondition: airborne
-	WithIdleOverlay@ROTOR1GROUND:
-		Offset: 350,0,130
-		Sequence: slow-rotor
-		RequiresCondition: !airborne
-	WithIdleOverlay@ROTOR2AIR:
-		Offset: -350,0,200
-		Sequence: rotor2
-		RequiresCondition: airborne
-	WithIdleOverlay@ROTOR2GROUND:
-		Offset: -350,0,200
-		Sequence: slow-rotor2
-		RequiresCondition: !airborne
+	# No WithIdleOverlay rotors. Both drones used to mount stock RA's helicopter
+	# rotor discs (lrotor/rrotor here, yrotorlg on SGDRS) on *top* of the four
+	# rotors their own sprite already bakes, so a drone in flight wore two sets
+	# of blades. Those stock discs are 32-37px wide -- drawn for a Chinook, and
+	# now wider than the whole airframe after the drones were shrunk to ~15px --
+	# so the overlay is dropped rather than rescaled: the sprite's own four
+	# swept rings are per-facing correct and shrink with the body.
 	SpawnActorOnDeath:
 		Actor: SGDRO.Husk
 	Selectable:
-		DecorationBounds: 1706, 1536
+		DecorationBounds: 939, 939
 
 HELI:
 	Inherits: ^Helicopter
@@ -657,13 +646,9 @@ SGDRS:
 		LocalOffset: 0,0,-85
 		RequiresCondition: drone-uplink || drone-uplink-degraded
 	AttackAircraft:
-	WithIdleOverlay@ROTORAIR:
-		Sequence: rotor
-		RequiresCondition: airborne
-	WithIdleOverlay@ROTORGROUND:
-		Sequence: slow-rotor
-		RequiresCondition: !airborne
+	# No WithIdleOverlay rotor -- see SGDRO above; yrotorlg.shp is a 37x23 disc
+	# on a 19px airframe.
 	SpawnActorOnDeath:
 		Actor: SGDRS.Husk
 	Selectable:
-		DecorationBounds: 1621, 1365
+		DecorationBounds: 1024, 1024

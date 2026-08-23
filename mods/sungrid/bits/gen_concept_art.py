@@ -1094,20 +1094,23 @@ def sgdrn_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
     # Parked drone, standing on the apron plane. Rotors are drawn *stopped* --
     # a parked airframe on a service pad isn't spinning, and at this scale two
     # clean blades read where a swept ring turns to noise.
-    dcx, dcy = px_, py_ - 2.0
-    contact_shadow(sd, dcx + 1, dcy + 3.6, 9, 2.2, f=0.28)
-    for k, (ox, oy) in enumerate(((-7.5, -2.8), (7.5, -2.8), (-7.5, 2.8), (7.5, 2.8))):
-        sd.line([(dcx, dcy), (dcx + ox, dcy + oy)], fill=LEGACY_GRAY_DARK, width=1.2)
+    # Drawn to the same span the flyable drones now have (~15px): a service
+    # pad whose parked airframe is bigger than the drone that lands on it
+    # reads as a different, larger aircraft.
+    dcx, dcy = px_, py_ - 1.6
+    contact_shadow(sd, dcx + 1, dcy + 3.0, 7, 1.9, f=0.28)
+    for k, (ox, oy) in enumerate(((-5.6, -2.1), (5.6, -2.1), (-5.6, 2.1), (5.6, 2.1))):
+        sd.line([(dcx, dcy), (dcx + ox, dcy + oy)], fill=LEGACY_GRAY_DARK, width=1.0)
         sd.line([(dcx - 0.3, dcy - 0.3), (dcx + ox - 0.3, dcy + oy - 0.3)],
                 fill=lit(LEGACY_GRAY_DARK, 0.35), width=0.4)
         if not (damaged and k == 1):
-            rotor_blur(sd, dcx + ox, dcy + oy, 3.8, ry=2.0, phase=25 + 35 * k, stopped=True)
-    sd.poly([(dcx, dcy - 4.6), (dcx + 5.4, dcy), (dcx, dcy + 4.6), (dcx - 5.4, dcy)],
+            rotor_blur(sd, dcx + ox, dcy + oy, 2.9, ry=1.5, phase=25 + 35 * k, stopped=True)
+    sd.poly([(dcx, dcy - 3.6), (dcx + 4.2, dcy), (dcx, dcy + 3.6), (dcx - 4.2, dcy)],
             fill=GREEN_PRIMARY, outline=dim(GREEN_PRIMARY, 0.45))
-    sd.poly([(dcx, dcy - 3.4), (dcx + 3.4, dcy - 0.6), (dcx - 3.4, dcy - 0.6)],
+    sd.poly([(dcx, dcy - 2.6), (dcx + 2.6, dcy - 0.4), (dcx - 2.6, dcy - 0.4)],
             fill=lit(GREEN_PRIMARY, 0.35))
-    sd.ellipse([dcx - 1.3, dcy + 0.2, dcx + 1.3, dcy + 2.6], fill=PANEL_BLUEBLACK)
-    sd.px(dcx, dcy - 3.8, lamp)
+    sd.ellipse([dcx - 1.1, dcy + 0.2, dcx + 1.1, dcy + 2.2], fill=PANEL_BLUEBLACK)
+    sd.px(dcx, dcy - 3.0, lamp)
     if damaged:
         scorch(sd, [(45, apron + 3.5, 2.8), (19, apron + 2.5, 2.2)])
 
@@ -1119,66 +1122,141 @@ def _arch(cx, rx, ry, sy, n=20):
 
 
 def sgdra_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
-    """Aerial Fabrication Bay: a barrel-vault hangar with an arched door big
-    enough to fly through -- the hardened, symmetric Consortium mirror of
-    sgdrn's open field gantry.
+    """Aerial Fabrication Bay: a solar-roofed space-frame hangar standing over
+    an open apron -- the Consortium's built, permanent answer to sgdrn's bare
+    field gantry.
 
-    Volumetric pass (issue #48 batch 3): the flat rectangular box with a
-    rounded strip on top became a real vault -- the roof is a curved surface
-    swept back from the front arch and shaded per segment off the same
-    top-left key light, so the roof line reads as a cylinder lying down rather
-    than a highlight painted on a wall. Choosing a vault (rather than sgdai's
-    flat plant-covered roof) is also what keeps the two halls apart at a
-    glance."""
+    History: this shipped first as a closed barrel vault with an arched door.
+    The vault was legible but it was the wrong building -- a windowless masonry
+    tunnel with a black mouth reads as a bunker or a kiln, and nothing about it
+    said either *aircraft* or *solarpunk*; it was also the darkest mass in the
+    roster sitting next to the second darkest (sgdai). Redrawn from the concept
+    render (docs/concept-art/cameo-sources/desert_base2.png, the same subject
+    its photographic cameo is cut from): a pale steel space frame carrying a
+    field of collector panels, open on every side, with the airframes it builds
+    parked underneath in plain sight.
+
+    The read is carried by three things, in this order: the zigzag truss band
+    along the front eave (nothing else in the roster has one, and it is what
+    says lightweight space frame rather than wall), the row of slim columns
+    with daylight between them, and the panel field on the roof plane tying it
+    to the Solar Array family. Against sgdrn -- two heavy masts and a beam --
+    the difference is a roof: this one is a building, that one is a rig."""
     ground_y0, ground_y1 = h - 12, h
     gold_y0, gold_y1 = ground_y0 - 8, ground_y0
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=4)
     draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
-    cx, rx, ry, spring = w / 2, 25.0, 10.0, 24.0
-    wall = mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.10)
-    contact_shadow(sd, cx + 2, gold_y0 + 0.7, rx - 1, 1.7, base=SUN_GOLD)
-    # Vault roof: the arch swept back up-and-right, shaded per segment.
-    arc = _arch(cx, rx, ry, spring)
-    ox, oy = 7.0, 4.2
-    for i in range(len(arc) - 1):
-        a = math.pi * (i + 0.5) / (len(arc) - 1)
-        b = max(0.0, 0.6 * math.cos(a) + 0.8 * math.sin(a))
-        col = lit(wall, 0.42 * b) if b > 0.28 else dim(wall, 0.3 * (1 - b / 0.28))
-        (x0_, y0_), (x1_, y1_) = arc[i], arc[i + 1]
-        sd.poly([(x0_, y0_), (x1_, y1_), (x1_ + ox, y1_ - oy), (x0_ + ox, y0_ - oy)], fill=col)
-    sd.line([(p[0] + ox, p[1] - oy) for p in arc], fill=dim(wall, 0.45), width=0.5)
-    # Front gable: the arch face itself.
-    sd.poly(arc + [(cx + rx, gold_y0), (cx - rx, gold_y0)], fill=wall)
-    sd.line(arc, fill=lit(wall, 0.3), width=0.6)
-    for k in (0.28, 0.72):
-        sd.line([(cx - rx + 2 * rx * k, spring), (cx - rx + 2 * rx * k, gold_y0)],
-                fill=dim(wall, 0.28), width=0.4)
-    # Arched hangar door, recessed, with a gold header rail over it.
-    darc = _arch(cx, 15.0, 6.5, 28.0)
-    sd.poly(darc + [(cx + 15, gold_y0), (cx - 15, gold_y0)], fill=dim(wall, 0.42))
-    sd.poly([(x + 0.8, y + 1.0) for x, y in darc] + [(cx + 14.2, gold_y0), (cx - 14.2, gold_y0)],
-            fill=dim(wall, 0.68))
-    for i in range(7):
-        sx = cx - 12 + i * 4
-        bent = damaged and i == 4
-        sd.line([(sx, 22.5 if not bent else 23.5), (sx + (1.2 if bent else 0), gold_y0)],
-                fill=dim(wall, 0.82), width=0.5)
-    sd.line(darc, fill=SUN_GOLD if not damaged else dim(SUN_GOLD, 0.55), width=0.7)
-    # Buttress pylons at the springing line, and the approach beacon mast.
-    for bx in (cx - rx - 1, cx + rx - 3):
-        capped_box(sd, bx, spring - 1, bx + 4, gold_y0, mix(CONCRETE, wall, 0.4), depth=1.8, edge=0.32)
-    mx, my = cx + 9, spring - ry * 0.86
-    sd.line([(mx, my), (mx, my - 6)], fill=LEGACY_GRAY_DARK, width=0.7)
-    sd.px(mx, my - 7, GREEN_ACCENT if not damaged else dim(LEGACY_GRAY, 0.3))
+
+    steel = mix(LEGACY_GRAY, (0xFF, 0xFF, 0xFF), 0.34)   # pale space-frame steel
     if damaged:
-        # Torn vault panel: the ribs under the skin show through the gap.
-        gx, gy = cx - 13, spring - ry * 0.93
-        sd.poly([(gx, gy + 1), (gx + 9, gy - 1.5), (gx + 10, gy + 3), (gx + 1, gy + 4.5)],
-                fill=dim(wall, 0.8))
-        for i in range(3):
-            sd.line([(gx + 1.5 + i * 3, gy + 0.5), (gx + 2.5 + i * 3, gy + 4)],
-                    fill=dim(LEGACY_GRAY, 0.35), width=0.4)
-        scorch(sd, [(cx - 4, 30, 3.2), (cx + 18, spring + 4, 2.4)])
+        steel = mix(steel, DAMAGE_SCORCH, 0.22)
+    apron_y = 32.0
+    eave_y, chord_h = 17.0, 5.0                          # truss band, front elevation
+    rx0, rx1 = 4.0, 62.0
+    contact_shadow(sd, w / 2 + 2, gold_y0 + 0.7, (rx1 - rx0) / 2 - 2, 1.7, base=SUN_GOLD)
+
+    # --- apron ---------------------------------------------------------------
+    # Drawn first: everything under the canopy stands on this plane.
+    plane = Roof(7, apron_y, 59, 6.0)
+    plane.draw(sd, CONCRETE, edge=0.28)
+    sd.rect([7, apron_y, 59, gold_y0], fill=dim(CONCRETE, 0.3))
+    sd.line([(7, apron_y), (59, apron_y)], fill=lit(CONCRETE, 0.15), width=0.5)
+    sd.line([(7, gold_y0 - 0.4), (59, gold_y0 - 0.4)], fill=dim(CONCRETE, 0.5), width=0.5)
+    stripe = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.5)
+    for i in range(7):
+        sx = 10 + i * 7
+        sd.rect([sx, apron_y + 1.2, sx + 3, apron_y + 2.2], fill=stripe)
+
+    # --- rear workshop module -------------------------------------------------
+    # The one solid volume, tucked under the back-left corner of the canopy, so
+    # the fabrication bay has a workshop without the canopy becoming a wall.
+    capped_box(sd, 10, 22, 27, apron_y - 0.5, mix(GREEN_PRIMARY, LEGACY_GRAY_DARK, 0.55),
+               depth=2.6, edge=0.3)
+    sd.rect([13, 25, 18, apron_y - 1], fill=dim(PANEL_BLUEBLACK, 0.25))     # roller door
+    for dy_ in (26.4, 28.0, 29.6):
+        sd.line([(13.2, dy_), (17.8, dy_)], fill=dim(LEGACY_GRAY, 0.5), width=0.4)
+    sd.rect([20, 25.5, 25, 27.5], fill=dim(PANEL_BLUEBLACK, 0.1))           # lit window band
+    sd.px(21, 26.4, lit(GREEN_ACCENT, 0.25) if not damaged else dim(LEGACY_GRAY, 0.35))
+
+    # --- airframe on the apron ------------------------------------------------
+    # Half-built: one boom still on the assembly trestle, which is the thing
+    # that makes this a *fabrication* bay rather than a landing pad.
+    dcx, dcy = plane.at(0.72, 0.45)
+    dcy -= 1.5
+    contact_shadow(sd, dcx + 1, dcy + 3.4, 7.5, 2.0, f=0.26)
+    for k, (ox, oy) in enumerate(((-6.0, -2.4), (6.0, -2.4), (-6.0, 2.4), (6.0, 2.4))):
+        if damaged and k == 1:
+            continue
+        sd.line([(dcx, dcy), (dcx + ox, dcy + oy)], fill=LEGACY_GRAY_DARK, width=1.1)
+        rotor_blur(sd, dcx + ox, dcy + oy, 3.0, ry=1.7, phase=25 + 35 * k, stopped=True)
+    sd.poly([(dcx, dcy - 3.6), (dcx + 4.2, dcy), (dcx, dcy + 3.6), (dcx - 4.2, dcy)],
+            fill=GREEN_PRIMARY, outline=dim(GREEN_PRIMARY, 0.45))
+    sd.poly([(dcx, dcy - 2.6), (dcx + 2.6, dcy - 0.4), (dcx - 2.6, dcy - 0.4)],
+            fill=lit(GREEN_PRIMARY, 0.35))
+    sd.px(dcx, dcy - 3.0, stripe)
+    # Assembly trestle under the near boom, and the arm working on it.
+    sd.rect([dcx - 7.4, dcy + 3.2, dcx - 4.2, dcy + 4.0], fill=dim(LEGACY_GRAY, 0.25))
+    sd.line([(dcx - 7.0, dcy + 4.0), (dcx - 7.0, dcy + 6.4)], fill=LEGACY_GRAY_DARK, width=0.7)
+    sd.line([(dcx - 4.6, dcy + 4.0), (dcx - 4.6, dcy + 6.4)], fill=LEGACY_GRAY_DARK, width=0.7)
+
+    # --- columns --------------------------------------------------------------
+    # Slim, and evenly spaced with real daylight between them: the gaps are what
+    # make the canopy read as standing over the apron rather than enclosing it.
+    for i in range(6):
+        cxp = 7.0 + i * 10.0
+        bent = damaged and i == 4
+        top_x = cxp + (1.6 if bent else 0)
+        sd.line([(top_x, eave_y + chord_h), (cxp, apron_y + 1.5)], fill=dim(steel, 0.32), width=1.3)
+        sd.line([(top_x - 0.5, eave_y + chord_h), (cxp - 0.5, apron_y + 1.5)],
+                fill=lit(steel, 0.25), width=0.5)
+        sd.rect([cxp - 1.6, apron_y + 1.0, cxp + 1.6, apron_y + 2.0], fill=dim(steel, 0.42))
+
+    # --- roof: panel field on the receding plane ------------------------------
+    roof = Roof(rx0, eave_y, rx1, 9.0)
+    sd.poly(roof.quad(), fill=dim(steel, 0.5))
+    for i in range(5):
+        u0, u1 = 0.02 + i * 0.196, 0.02 + i * 0.196 + 0.176
+        for v0, v1 in ((0.08, 0.48), (0.52, 0.92)):
+            if damaged and i == 3 and v0 > 0.5:
+                continue                                  # panel blown off the frame
+            quad = [roof.at(u0, v0), roof.at(u1, v0), roof.at(u1, v1), roof.at(u0, v1)]
+            sd.poly(quad, fill=lit(PANEL_BLUEBLACK, 0.04 + 0.24 * v0))
+            sd.line([quad[3], quad[2]], fill=lit(PANEL_BLUEBLACK, 0.55), width=0.5)
+            sd.line([quad[0], quad[3]], fill=dim(PANEL_BLUEBLACK, 0.3), width=0.4)
+    # Ridge purlin along the back of the plane, and the rafters under the panels.
+    sd.line([roof.at(0, 1), roof.at(1, 1)], fill=lit(steel, 0.3), width=0.8)
+    for i in range(1, 5):
+        u = i / 5
+        sd.line([roof.at(u, 0.0), roof.at(u, 1.0)], fill=dim(steel, 0.25), width=0.5)
+
+    # --- front truss band -----------------------------------------------------
+    # Top and bottom chords with a zigzag web between them. This is the shape
+    # doing the identifying work, so it is drawn last and lit hardest.
+    sd.line([(rx0, eave_y), (rx1, eave_y)], fill=lit(steel, 0.35), width=1.2)
+    sd.line([(rx0, eave_y + chord_h), (rx1, eave_y + chord_h)], fill=dim(steel, 0.3), width=1.2)
+    bays = 8
+    for i in range(bays):
+        x0_ = rx0 + (rx1 - rx0) * i / bays
+        x1_ = rx0 + (rx1 - rx0) * (i + 1) / bays
+        if damaged and i == 5:
+            continue                                      # web snapped over the hit column
+        # Filled sawtooth rather than drawn diagonals: a 5px-deep band of 0.9px
+        # lines comes back from the 4x downscale as a chain of soft loops, where
+        # solid triangles keep hard edges and leave the inverted triangles
+        # between them as real holes -- which is what a truss looks like.
+        top, bot = (eave_y + 0.9, eave_y + chord_h - 0.6)
+        sd.poly([(x0_ + 0.4, bot), ((x0_ + x1_) / 2, top), (x1_ - 0.4, bot)],
+                fill=steel if i % 2 == 0 else dim(steel, 0.16))
+    # Approach beacon on the eave, over the open end.
+    sd.line([(rx1 - 3, eave_y), (rx1 - 3, eave_y - 4)], fill=dim(steel, 0.35), width=0.7)
+    sd.px(rx1 - 3, eave_y - 5, GREEN_ACCENT if not damaged else dim(LEGACY_GRAY, 0.3))
+
+    if damaged:
+        # The hit bay: torn frame over the bent column, and the panel it dropped.
+        sd.line([(rx0 + 40, eave_y + 1), (rx0 + 44, eave_y + chord_h + 2)], fill=RUST, width=0.6)
+        sd.poly([(45, apron_y + 3), (52, apron_y + 1.5), (52.5, apron_y + 3.5), (45.5, apron_y + 5)],
+                fill=dim(PANEL_BLUEBLACK, 0.25))
+        scorch(sd, [(48, apron_y + 4, 3.0), (30, eave_y + chord_h + 3, 2.2)])
 
 
 def sgshl_draw(sd, w=SGSHL_W, h=SGSHL_H, damaged=False):
@@ -1620,19 +1698,27 @@ def sgvlt_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, charge=SGVLT_STAGES - 1)
 # rather than dark, so all nine stay distinguishable from each other -- issue
 # #40's identical-damaged-frames trap.
 #
-# Silhouette is deliberately unlike the Battery Bank, the only other 1x1
-# Sungrid building with a rear mass: a wide-mouthed shredder hopper breaks the
-# roofline and an open tipping bay holds the heap, where the Vault is a closed
-# box behind three upright canisters. Damage lands in the silhouette (the
-# hopper's near lip shears away) rather than only in decals, per issue #65.
+# Silhouette (revised): an open-sided *bay*, not a cabinet. The first pass put
+# the tipping bay in the lower third of a tall closed hall with a segment gauge
+# across its face, which is the Battery Bank's own composition -- a box with a
+# lit readout on it -- and the player read it as another battery. What separates
+# a recycling bay from any other block in the roster is that you can see
+# *through* it: a wide flat canopy standing on slim posts, open at the front and
+# both ends, with daylight between the roof and the pile underneath. The mass
+# that is left (shredder, chute, stack) is pushed to one end so the canopy stays
+# an outline of air and posts rather than a wall. Damage lands in that
+# silhouette (the near canopy corner shears off its post and sags) rather than
+# only in decals, per issue #65.
 # ---------------------------------------------------------------------------
 
 RCYD_STAGES = 9                      # matches `stages:` Length in sequences
 RCYD_SEGMENTS = RCYD_STAGES - 1      # stage n lights n of them (0 = empty)
-_RCY_HALL = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.30)     # sorting hall shell
-_RCY_BAR_X0, _RCY_BAR_Y0, _RCY_BAR_Y1 = 8, 13, 15       # gauge origin, 3px pitch
-_RCY_BAY_X0, _RCY_BAY_X1 = 9, 29                        # heap interior columns
+_RCY_HALL = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.30)     # canopy/shredder shell
+_RCY_BAR_X0, _RCY_BAR_Y0, _RCY_BAR_Y1 = 5, 9, 11        # gauge origin, 3px pitch
+_RCY_BAY_X0, _RCY_BAY_X1 = 5, 27                        # heap interior columns
 _RCY_BAY_FLOOR = 27                                     # heap bottom row
+_RCY_ROOF_Y = 5                                         # canopy front-lip row
+_RCY_POSTS = (5.0, 15.0, 25.0)                          # canopy post centres
 
 
 def _rcyd_col_height(x, charge):
@@ -1707,82 +1793,102 @@ def rcyd_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, charge=RCYD_STAGES - 1):
     ground_y0, ground_y1 = h - 8, h
     draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=13)
 
-    hall = _RCY_HALL if live else mix(_RCY_HALL, DAMAGE_SCORCH, 0.3)
-    hall_x0, hall_x1, hall_y0, hall_y1 = 7, 31, 7, 18
-    depth = 3.0
+    shell = _RCY_HALL if live else mix(_RCY_HALL, DAMAGE_SCORCH, 0.3)
+    floor_y = _RCY_BAY_FLOOR + 1
+    wall_top = 19.0                       # low back wall: air above it, under the roof
+    roof_x0, roof_x1 = 2.0, 33.0
+    fascia_y0, fascia_y1 = _RCY_ROOF_Y, _RCY_ROOF_Y + 4
 
-    # --- shredder hopper, above the roofline ---------------------------------
-    # A wide-mouthed funnel narrowing into the hall: the one shape that still
-    # says "material is tipped in here" at a 24px footprint, and the main thing
-    # separating this outline from the Battery Bank's.
-    hop_l, hop_r = (7, 22) if live else (11, 22)   # near lip shears off when hit
-    hop_top, hop_bot = 0, hall_y0 + 1
-    sd.poly([(hop_l, hop_top), (hop_r, hop_top), (16.5, hop_bot), (12.5, hop_bot)],
-            fill=dim(hall, 0.18))
-    # Open throat: a dark mouth over a strongly tapered wall is what makes this
-    # read as a funnel rather than a solid wedge at this size.
-    sd.poly([(hop_l + 1.6, hop_top + 1), (hop_r - 1.6, hop_top + 1),
-             (15.7, hop_bot - 1.5), (13.3, hop_bot - 1.5)], fill=dim(PANEL_BLUEBLACK, 0.3))
-    sd.line([(hop_l, hop_top), (12.5, hop_bot)], fill=lit(hall, 0.42), width=0.6)
-    sd.line([(hop_r, hop_top), (16.5, hop_bot)], fill=dim(hall, 0.4), width=0.6)
-    sd.line([(hop_l, hop_top), (hop_r, hop_top)], fill=lit(hall, 0.55), width=0.7)
-
-    # --- sorting hall (rear mass) --------------------------------------------
-    capped_box(sd, hall_x0, hall_y0, hall_x1, hall_y1, hall, depth=depth, edge=0.34)
-    # Roof ribs following the receding top face.
-    for t in (0.25, 0.45, 0.65, 0.85):
-        ry = hall_y0 - depth * 0.6 * t
-        sd.line([(hall_x0 + depth * t + 2, ry), (hall_x1 + depth * t - 3, ry)],
-                fill=dim(hall, 0.4), width=0.4)
-    # Exhaust stack, breaking the roofline clear of the hopper on the right.
-    sd.rect([26.5, 1, 28.6, hall_y0], fill=dim(hall, 0.25))
-    sd.line([(26.5, 1), (26.5, hall_y0)], fill=lit(hall, 0.35), width=0.5)
-    sd.ellipse([26, 0.2, 29.1, 2], fill=dim(LEGACY_GRAY_DARK, 0.1))
-    # Running light: stays lit at zero fill so an empty depot still reads as
-    # powered rather than destroyed.
-    sd.px(hall_x0 + 2, hall_y0 + 2, lit(GREEN_ACCENT, 0.3) if live else dim(LEGACY_GRAY, 0.35))
-
-    # --- fill gauge on the hall face -----------------------------------------
-    on_col = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
-    off_col = dim(LEGACY_GRAY_DARK, 0.15)
-    sd.rect([_RCY_BAR_X0 - 2, _RCY_BAR_Y0 - 1, _RCY_BAR_X0 + RCYD_SEGMENTS * 3, _RCY_BAR_Y1 + 1],
-            fill=mix(PANEL_BLUEBLACK, hall, 0.25))
-    sd.line([(_RCY_BAR_X0 - 2, _RCY_BAR_Y0 - 1), (_RCY_BAR_X0 + RCYD_SEGMENTS * 3, _RCY_BAR_Y0 - 1)],
-            fill=lit(hall, 0.3), width=0.5)
-    for i in range(RCYD_SEGMENTS):
-        sx = _RCY_BAR_X0 + i * 3
-        _vlt_charge_px(sd, sx, sx + 1, _RCY_BAR_Y0, _RCY_BAR_Y1, on_col if i < charge else off_col)
-
-    # --- tipping bay and its scrap heap --------------------------------------
     # Painted contact shadow rather than a SHADOW_IDX one, same reasoning as the
     # Battery Bank: the pad is opaque, so a cast shadow would only show through
     # the gaps and read as holes in the sprite.
-    sd.ellipse([6, _RCY_BAY_FLOOR + 0.5, 33, _RCY_BAY_FLOOR + 3.5], fill=dim(CONCRETE, 0.25))
-    bay_x0, bay_x1 = hall_x0, hall_x1
-    # Bay floor/back, lit enough that an *empty* bay reads as a swept apron
-    # rather than a hole punched through the sprite, and kept the full width of
-    # the hall so the depot reads as one block instead of a top-heavy mushroom.
-    sd.rect([bay_x0, hall_y1, bay_x1, _RCY_BAY_FLOOR + 1], fill=dim(CONCRETE, 0.12))
-    sd.line([(bay_x0 + 1, hall_y1 + 1), (bay_x1 - 1, hall_y1 + 1)], fill=dim(CONCRETE, 0.4), width=0.5)
-    # Sorting grate across the back of the bay, so the empty frames still have
-    # some structure to read instead of one flat field.
-    for gx in range(bay_x0 + 4, bay_x1 - 2, 5):
-        sd.line([(gx, hall_y1 + 2), (gx, _RCY_BAY_FLOOR)], fill=dim(CONCRETE, 0.3), width=0.4)
-    # Heap, drawn on whole pixels so every stage moves the profile by exact rows.
+    sd.ellipse([3, floor_y - 0.5, 37, floor_y + 3], fill=dim(CONCRETE, 0.25))
+    # Apron the bay is poured on, with the tipping lip along its front edge.
+    sd.rect([3, wall_top, 35, floor_y], fill=dim(CONCRETE, 0.12))
+    sd.line([(3, floor_y), (35, floor_y)], fill=dim(CONCRETE, 0.5), width=0.7)
+    sd.line([(3, wall_top), (35, wall_top)], fill=dim(CONCRETE, 0.35), width=0.4)
+
+    # --- back wall and rear post, both behind the heap ------------------------
+    # Kept low so the gap between its top and the canopy stays open: that strip
+    # of daylight is the whole difference between a bay and a shed.
+    sd.rect([4, wall_top, 30, floor_y], fill=dim(CONCRETE, 0.3))
+    sd.line([(4, wall_top), (30, wall_top)], fill=lit(CONCRETE, 0.2), width=0.5)
+    for gx in range(7, 30, 5):
+        sd.line([(gx, wall_top + 1), (gx, floor_y - 1)], fill=dim(CONCRETE, 0.45), width=0.4)
+    sd.rect([_RCY_POSTS[1] - 0.7, fascia_y1, _RCY_POSTS[1] + 0.7, wall_top + 1],
+            fill=dim(shell, 0.12))
+    sd.line([(_RCY_POSTS[1] - 0.7, fascia_y1), (_RCY_POSTS[1] - 0.7, wall_top)],
+            fill=lit(shell, 0.25), width=0.4)
+
+    # --- shredder end ---------------------------------------------------------
+    # All the machinery is pushed to one end: the jaw box that eats what the
+    # bay holds, its feed chute, and the stack. Keeping it off to the side is
+    # what leaves the rest of the outline as posts and air.
+    capped_box(sd, 30, 12, 37, floor_y, lit(shell, 0.12), depth=2.4, edge=0.34)
+    # Jaw mouth: a dark slot with the shredder's teeth showing in it, the one
+    # detail that says this end of the bay is a machine and not a shed wall.
+    sd.rect([30.8, 13.6, 36.2, 17.4], fill=dim(PANEL_BLUEBLACK, 0.15))
+    for jx in (31.6, 33.0, 34.4, 35.6):
+        sd.line([(jx, 13.8), (jx, 17.2)], fill=lit(shell, 0.45), width=0.5)
+    sd.line([(30.8, 15.5), (36.2, 15.5)], fill=dim(PANEL_BLUEBLACK, 0.45), width=0.5)
+    # Feed chute, running down out of the jaw into the bay.
+    sd.poly([(30.4, 18.4), (23, 21.4), (23, 23.4), (30.4, 20.6)], fill=dim(shell, 0.05))
+    sd.line([(30.4, 18.4), (23, 21.4)], fill=lit(shell, 0.4), width=0.6)
+    sd.line([(30.4, 20.6), (23, 23.4)], fill=dim(shell, 0.45), width=0.5)
+    sd.rect([33.4, 2, 35.4, 12], fill=dim(shell, 0.25))                           # stack
+    sd.line([(33.4, 2), (33.4, 12)], fill=lit(shell, 0.35), width=0.5)
+    sd.ellipse([32.9, 1.2, 35.9, 3], fill=dim(LEGACY_GRAY_DARK, 0.1))
+    # Running light: stays lit at zero fill so an empty bay still reads as
+    # powered rather than destroyed.
+    sd.px(31, 19, lit(GREEN_ACCENT, 0.3) if live else dim(LEGACY_GRAY, 0.35))
+
+    # --- the heap the bay exists to hold -------------------------------------
+    # Drawn on whole pixels so every stage moves the profile by exact rows.
     for x in range(_RCY_BAY_X0, _RCY_BAY_X1 + 1):
         n = _rcyd_col_height(x, charge)
         for k in range(n):
             y = _RCY_BAY_FLOOR - k
             sd.px(x, y, _rcyd_scrap_col(x, y) if live else mix(_rcyd_scrap_col(x, y), DAMAGE_SCORCH, 0.25))
-    # Bay side walls last, so the heap sits inside them.
-    for wx in (bay_x0, bay_x1 - 1):
-        sd.rect([wx, hall_y1 + 1, wx + 1, _RCY_BAY_FLOOR + 1], fill=CONCRETE)
-        sd.line([(wx, hall_y1 + 1), (wx, _RCY_BAY_FLOOR + 1)], fill=lit(CONCRETE, 0.3), width=0.4)
-    sd.line([(bay_x0, _RCY_BAY_FLOOR + 1), (bay_x1, _RCY_BAY_FLOOR + 1)], fill=dim(CONCRETE, 0.45), width=0.6)
+
+    # --- canopy: front posts, then the roof they carry ------------------------
+    for i, px_ in enumerate(_RCY_POSTS):
+        if i == 1:
+            continue                                   # rear post, drawn above
+        lean = 1.4 if (damaged and i == 0) else 0.0    # near post kicked out
+        sd.poly([(px_ - 1.0 - lean, floor_y), (px_ + 1.0 - lean, floor_y),
+                 (px_ + 1.0, fascia_y1), (px_ - 1.0, fascia_y1)], fill=shell)
+        sd.line([(px_ - 1.0 - lean * 0.5, floor_y - 1), (px_ - 1.0, fascia_y1)],
+                fill=lit(shell, 0.3), width=0.4)
+        # Foot plate, so the posts stand on the apron instead of floating.
+        sd.rect([px_ - 1.8 - lean, floor_y - 0.8, px_ + 1.8 - lean, floor_y], fill=dim(shell, 0.45))
+    sag = 2.2 if damaged else 0.0                      # near corner drops with its post
+    roof = Roof(roof_x0, fascia_y0, roof_x1, 5.0)
+    quad = roof.quad()
+    sd.poly([(quad[0][0], quad[0][1] + sag), quad[1], quad[2], quad[3]], fill=lit(shell, 0.34))
+    sd.line([roof.at(0, 1), roof.at(1, 1)], fill=lit(shell, 0.5), width=0.6)
+    for i in range(1, 5):
+        u = i / 5
+        sd.line([roof.at(u, 0.06), roof.at(u, 0.94)], fill=dim(shell, 0.14), width=0.4)
+    # Fascia: the roof's front face, and the strip the fill gauge is read off.
+    sd.poly([(roof_x0, fascia_y0 + sag), (roof_x1, fascia_y0), (roof_x1, fascia_y1),
+             (roof_x0, fascia_y1 + sag)], fill=shell)
+    sd.line([(roof_x0, fascia_y1 + sag), (roof_x1, fascia_y1)], fill=dim(shell, 0.4), width=0.5)
+
+    # --- fill gauge on the fascia --------------------------------------------
+    on_col = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
+    off_col = dim(LEGACY_GRAY_DARK, 0.15)
+    sd.rect([_RCY_BAR_X0 - 1.5, _RCY_BAR_Y0 - 1, _RCY_BAR_X0 + RCYD_SEGMENTS * 3, _RCY_BAR_Y1 + 1],
+            fill=mix(PANEL_BLUEBLACK, shell, 0.25))
+    for i in range(RCYD_SEGMENTS):
+        sx = _RCY_BAR_X0 + i * 3
+        _vlt_charge_px(sd, sx, sx + 1, _RCY_BAR_Y0, _RCY_BAR_Y1, on_col if i < charge else off_col)
 
     if damaged:
-        sd.line([(23, hall_y0 + 4), (21.6, hall_y1 - 3)], fill=RUST, width=0.5)
-        scorch(sd, [(26, hall_y0 + 5, 1.8), (11, hall_y1 - 3, 1.5)])
+        # The near corner has come off its post: torn fascia, buckled roof edge.
+        sd.line([(roof_x0, fascia_y0 + sag), (roof_x0 + 7, fascia_y0 + sag * 0.4)],
+                fill=RUST, width=0.5)
+        sd.line([(35.4, 4), (34.2, 8)], fill=RUST, width=0.5)
+        scorch(sd, [(6, fascia_y1 + 2, 2.0), (32, 20, 1.8)])
 
 
 # The Arc Turret's head is a rotating sprite of its own (issue #66), so the
@@ -2223,8 +2329,22 @@ def _drone_boom(sd, cx, cy, ex, ey, col, wide=1.5):
     """Tapered rotor boom with a lit upper edge, so the arms read as tubes."""
     sd.line([(cx, cy), (ex, ey)], fill=col, width=wide)
     sd.line([(cx - 0.35, cy - 0.35), (ex - 0.35, ey - 0.35)], fill=lit(col, 0.4), width=0.45)
-    sd.ellipse([ex - 1.5, ey - 1.5, ex + 1.5, ey + 1.5], fill=col)
-    sd.px(ex - 0.6, ey - 0.6, lit(col, 0.3))
+
+
+def _small_rotor(sd, cx, cy, r, phase=0.0, tint=(0xA8, 0xA8, 0x9C)):
+    """A turning rotor at the shrunk drones' scale: a swept *ring*, not blades.
+
+    rotor_blur's dashes-plus-trailing-streak recipe is drawn for a 3-4px disc.
+    At the ~2px radius the smaller airframes carry, two dashes and a streak
+    land on the same handful of pixels, and the 1px readability outline then
+    welds them into a spike -- the drone reads as a caltrop rather than a
+    quadcopter, and the spike direction changes frame to frame through the 32
+    image-plane rotations. An opaque ring with one brighter leading quadrant
+    keeps its shape at every facing and still says 'this is turning'."""
+    sd.ellipse([cx - r, cy - r, cx + r, cy + r], outline=dim(tint, 0.22), width=0.8)
+    sd.arc([cx - r, cy - r, cx + r, cy + r], -phase - 105, -phase - 15,
+           fill=lit(tint, 0.45), width=0.8)
+    sd.px(cx - 0.5, cy - 0.5, LEGACY_GRAY_DARK)
 
 
 def sgdro_body_draw(sd, w, h):
@@ -2235,28 +2355,35 @@ def sgdro_body_draw(sd, w, h):
     discs, which the 1-bit indexed alpha deleted outright (issue #72), leaving
     the drone reading as a diamond ringed by four empty circles. They are now
     opaque swept rings with trailing dashes (rotor_blur), and the flat diamond
-    body has become a faceted airframe with a raised spine."""
+    body has become a faceted airframe with a raised spine.
+
+    Scale pass: the airframe used to span ~26x20 of its 32x30 frame, which put
+    a *hand-launched scout* on screen at roughly the footprint of a Longbow --
+    both drones now sit near half that (~15x12), so an in-flight drone reads as
+    the small, cheap thing its cost and 3000hp say it is next to the vehicles
+    it flies over. Detail is redrawn rather than scaled: single-pixel booms,
+    two-dash rotors, and one flat lit facet instead of a three-facet ramp, so
+    nothing is left below the resolution the 1-bit indexed alpha can keep."""
     cx, cy = w // 2, h // 2
     arms = ((-1, -1), (1, -1), (-1, 1), (1, 1))
     for dx, dy in arms:
-        _drone_boom(sd, cx, cy, cx + dx * 10, cy + dy * 7, LEGACY_GRAY_DARK, 1.4)
+        _drone_boom(sd, cx, cy, cx + dx * 5.6, cy + dy * 4.0, LEGACY_GRAY_DARK, 1.0)
     for k, (dx, dy) in enumerate(arms):
-        rotor_blur(sd, cx + dx * 10, cy + dy * 7, 3.0, dashes=3, phase=35 + 40 * k)
-    # Faceted airframe: dark underside chine, lit upper-left facets, spine.
-    sd.poly([(cx, cy - 9), (cx + 4.6, cy - 3.4), (cx + 4.2, cy + 5), (cx, cy + 8.6),
-             (cx - 4.2, cy + 5), (cx - 4.6, cy - 3.4)], fill=dim(GREEN_PRIMARY, 0.32))
-    sd.poly([(cx, cy - 7.6), (cx + 3.4, cy - 2.8), (cx + 2.6, cy + 3.4), (cx, cy + 5.6),
-             (cx - 3.2, cy + 3.4), (cx - 3.8, cy - 2.8)], fill=GREEN_PRIMARY)
-    sd.poly([(cx, cy - 6.4), (cx + 1.6, cy - 3), (cx - 0.6, cy + 2.6), (cx - 2.8, cy - 2.4)],
+        _small_rotor(sd, cx + dx * 5.6, cy + dy * 4.0, 2.2, phase=35 + 90 * k)
+    # Faceted airframe: dark underside chine, lit upper-left facet, spine.
+    sd.poly([(cx, cy - 5.4), (cx + 2.8, cy - 2.0), (cx + 2.6, cy + 3.0), (cx, cy + 5.2),
+             (cx - 2.6, cy + 3.0), (cx - 2.8, cy - 2.0)], fill=dim(GREEN_PRIMARY, 0.32))
+    sd.poly([(cx, cy - 4.4), (cx + 2.0, cy - 1.6), (cx + 1.6, cy + 2.0), (cx, cy + 3.4),
+             (cx - 1.9, cy + 2.0), (cx - 2.2, cy - 1.6)], fill=GREEN_PRIMARY)
+    sd.poly([(cx - 0.2, cy - 3.6), (cx + 1.0, cy - 1.6), (cx - 0.4, cy + 1.4), (cx - 1.7, cy - 1.4)],
             fill=lit(GREEN_PRIMARY, 0.3))
-    sd.line([(cx, cy - 6.6), (cx, cy + 4.4)], fill=lit(GREEN_PRIMARY, 0.45), width=0.5)
     # Gimbal camera ball under the nose.
-    sphere(sd, cx - 2.2, cy - 3.4, cx + 2.2, cy + 1.0,
-           mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.55), steps=5, lit_f=0.45)
-    sd.px(cx - 0.6, cy - 2.4, lit(LEGACY_GRAY, 0.5))
+    sphere(sd, cx - 1.4, cy - 2.2, cx + 1.4, cy + 0.6,
+           mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.55), steps=4, lit_f=0.45)
+    sd.px(cx - 0.4, cy - 1.6, lit(LEGACY_GRAY, 0.5))
     # Nav strip on the remap ramp: which drone this is, and whose.
-    sd.rect([cx - 1.2, cy + 5.6, cx + 1.2, cy + 7.4], fill=SUN_GOLD)
-    sd.px(cx, cy - 8.4, SUN_GOLD)
+    sd.rect([cx - 0.8, cy + 3.0, cx + 0.8, cy + 4.4], fill=SUN_GOLD)
+    sd.px(cx, cy - 5.0, SUN_GOLD)
 
 
 def sgdrs_body_draw(sd, w, h):
@@ -2264,84 +2391,185 @@ def sgdrs_body_draw(sd, w, h):
 
     Same volumetric pass as sgdro (issue #48 batch 3): opaque rotor blur, a
     stepped armoured hull with a raised sensor turret rather than a flat
-    diamond, and munition rails that read as objects hung under the booms."""
+    diamond, and munition rails that read as objects hung under the booms.
+
+    Same scale pass as sgdro, and it stays the visibly bigger of the two: a
+    wider rotor square, a longer hull and the munition rails still hanging off
+    the forward booms, so the size cue that separates the two drones survives
+    at the smaller size."""
     cx, cy = w // 2, h // 2
     arms = ((-1, -1), (1, -1), (-1, 1), (1, 1))
     for dx, dy in arms:
-        _drone_boom(sd, cx, cy, cx + dx * 11, cy + dy * 8, LEGACY_GRAY_DARK, 1.7)
+        _drone_boom(sd, cx, cy, cx + dx * 6.6, cy + dy * 4.8, LEGACY_GRAY_DARK, 1.2)
         if dy == -1:
             # Munition rail slung under the forward booms.
-            mx, my = cx + dx * 6.8, cy + dy * 4.8
-            sd.poly([(mx - 1.6, my - 2.4), (mx + 1.6, my - 2.4), (mx + 1.6, my + 2.8),
-                     (mx, my + 4.2), (mx - 1.6, my + 2.8)], fill=dim(PANEL_BLUEBLACK, 0.18))
-            sd.line([(mx - 1.0, my - 2.0), (mx - 1.0, my + 2.4)], fill=lit(PANEL_BLUEBLACK, 0.4), width=0.5)
-            sd.rect([mx - 1.4, my - 2.8, mx + 1.4, my - 1.9], fill=SUN_GOLD)
+            mx, my = cx + dx * 4.2, cy + dy * 3.0
+            sd.poly([(mx - 1.0, my - 1.4), (mx + 1.0, my - 1.4), (mx + 1.0, my + 1.6),
+                     (mx, my + 2.5), (mx - 1.0, my + 1.6)], fill=dim(PANEL_BLUEBLACK, 0.18))
+            sd.px(mx - 0.5, my - 1.0, SUN_GOLD)
     for k, (dx, dy) in enumerate(arms):
-        rotor_blur(sd, cx + dx * 11, cy + dy * 8, 3.4, dashes=3, phase=20 + 40 * k)
+        _small_rotor(sd, cx + dx * 6.6, cy + dy * 4.8, 2.5, phase=20 + 90 * k)
     # Armoured hull: dark chine, plated deck, chamfered nose.
-    sd.poly([(cx, cy - 10), (cx + 5.6, cy - 4.6), (cx + 5.2, cy + 6), (cx, cy + 9.4),
-             (cx - 5.2, cy + 6), (cx - 5.6, cy - 4.6)], fill=dim(PANEL_BLUEBLACK, 0.35))
-    sd.poly([(cx, cy - 8.4), (cx + 4.2, cy - 3.8), (cx + 3.6, cy + 4.6), (cx, cy + 6.6),
-             (cx - 3.8, cy + 4.6), (cx - 4.4, cy - 3.8)], fill=PANEL_BLUEBLACK)
-    sd.poly([(cx, cy - 7), (cx + 2.2, cy - 3.6), (cx - 0.6, cy + 2), (cx - 3.2, cy - 3)],
+    sd.poly([(cx, cy - 6.0), (cx + 3.4, cy - 2.6), (cx + 3.2, cy + 3.6), (cx, cy + 5.8),
+             (cx - 3.2, cy + 3.6), (cx - 3.4, cy - 2.6)], fill=dim(PANEL_BLUEBLACK, 0.35))
+    sd.poly([(cx, cy - 5.0), (cx + 2.5, cy - 2.2), (cx + 2.1, cy + 2.6), (cx, cy + 4.0),
+             (cx - 2.2, cy + 2.6), (cx - 2.6, cy - 2.2)], fill=PANEL_BLUEBLACK)
+    sd.poly([(cx - 0.2, cy - 4.2), (cx + 1.3, cy - 2.2), (cx - 0.4, cy + 1.2), (cx - 1.9, cy - 1.8)],
             fill=lit(PANEL_BLUEBLACK, 0.42))
-    sd.line([(cx - 4.0, cy - 1.2), (cx + 4.0, cy - 1.2)], fill=dim(PANEL_BLUEBLACK, 0.5), width=0.5)
     # Raised sensor/targeting turret amidships.
-    sphere(sd, cx - 2.6, cy - 1.0, cx + 2.6, cy + 4.2, mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.45),
-           steps=6, lit_f=0.42)
-    sd.px(cx - 0.8, cy + 0.4, lit(LEGACY_GRAY, 0.45))
+    sphere(sd, cx - 1.6, cy - 0.6, cx + 1.6, cy + 2.6, mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.45),
+           steps=4, lit_f=0.42)
+    sd.px(cx - 0.5, cy + 0.2, lit(LEGACY_GRAY, 0.45))
     # Tail flash + nose light on the remap ramp.
-    sd.poly([(cx - 1.8, cy + 6.4), (cx + 1.8, cy + 6.4), (cx, cy + 8.8)], fill=SUN_GOLD)
-    sd.px(cx, cy - 9.2, SUN_GOLD)
+    sd.poly([(cx - 1.1, cy + 3.8), (cx + 1.1, cy + 3.8), (cx, cy + 5.4)], fill=SUN_GOLD)
+    sd.px(cx, cy - 5.6, SUN_GOLD)
 
 
 # ---------------------------------------------------------------------------
-# Hauler Drone (SGHAU): a small hex-chassis cargo sled, deliberately NOT a
-# truck silhouette so it can never again be mistaken for HARV (Ore Truck) --
-# see docs/BACKLOG.md issue #34's SGHAU follow-up. Needs three parallel
-# fullness-state images (empty/half/full) with an identical idle(32)/
-# harvest(8)/dock(8)/dock-loop(7) frame layout across all three, matching
-# WithHarvesterSpriteBody.ImageByFullness: harvempty, harvhalf, harv's
-# convention -- the fullness itself is which image is active, not an
+# Hauler Drone (SGHAU): the six-wheel unmanned scrap rover from the concept
+# render (docs/concept-art/cameo-sources/desert_base2.png, the same subject its
+# photographic cameo is cut from) -- a plated hull on three wheel pairs, a
+# ploughed prow, and an open bed heaped with salvage.
+#
+# History: issue #34's follow-up moved SGHAU off HARV's Ore Truck sprite, and
+# deliberately went *away* from a truck silhouette -- a hex sled on skids --
+# so the two could never be confused again. That over-corrected: the sled read
+# as a domed appliance with a green panel on it (a robot vacuum, in the
+# player's words) rather than as the mod's harvester, and the cargo state was
+# an abstract level bar rather than the load itself. This pass keeps the "not
+# HARV" requirement but satisfies it the way the 3D concept does -- a wheeled
+# rover, unmistakably a hauler, whose cargo is visible *scrap* rather than a
+# gauge, and whose plan view (long, narrow, six wheels proud of the hull, open
+# bed) is nothing like HARV's short boxy tracked body.
+#
+# Needs three parallel fullness-state images (empty/half/full) with an
+# identical idle(32)/harvest(8)/dock(8)/dock-loop(7) frame layout across all
+# three, matching WithHarvesterSpriteBody.ImageByFullness: harvempty, harvhalf,
+# harv's convention -- the fullness itself is which image is active, not an
 # animation baked into any one image's frames.
 # ---------------------------------------------------------------------------
 
 SGHAU_W, SGHAU_H = 34, 28
 SGHAU_FULLNESS_FRAC = {"empty": 0.0, "half": 0.5, "full": 1.0}
+_HAU_HULL = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.42)   # plated chassis
+_HAU_BED_X0, _HAU_BED_X1 = -3.2, 3.2                  # bed interior, from cx
+_HAU_BED_Y0, _HAU_BED_Y1 = -2.0, 7.6                  # bed interior, from cy
+_HAU_WHEEL_Y = (-6.4, 0.0, 6.4)                       # bogie centres, from cy
+
+
+def _sghau_wheel(sd, cx, cy, side):
+    """One road wheel seen from above: a dark tyre standing clear of the hull
+    with a lit outer shoulder and two tread notches.
+
+    Three a side, with real gaps between them, is what carries the rover read
+    at 24px: the gaps are transparent, so the readability outline wraps each
+    tyre separately and the six-wheel plan survives every facing. A tyre that
+    only just clears the hull side is swallowed by that same outline."""
+    x0, x1 = cx + side * 4.0, cx + side * 8.0
+    sd.rect([min(x0, x1), cy - 2.0, max(x0, x1), cy + 2.0], fill=POLE_DARK)
+    sd.line([(cx + side * 7.8, cy - 1.7), (cx + side * 7.8, cy + 1.7)],
+            fill=lit(LEGACY_GRAY_DARK, 0.3), width=0.6)
+    for ty in (-1.0, 1.0):
+        sd.line([(cx + side * 4.6, cy + ty), (cx + side * 7.4, cy + ty)],
+                fill=lit(LEGACY_GRAY_DARK, 0.12), width=0.5)
+
+
+def _sghau_scrap_col(x, y):
+    """Scrap tone for a rover load: the Recycling Depot's own material palette
+    (_rcyd_scrap_col, so a load and the pile it is tipped onto are made of the
+    same stuff), broken up by a second hash. The depot's heap is 20px wide and
+    its 7-step cycle reads as texture there; across a 7px bed the same cycle
+    lines up into stripes, so a third of the pixels are re-rolled darker or
+    left as shadow between the pieces."""
+    k = (x * 13 + y * 29 + ((x * y) % 5)) % 11
+    if k in (0, 7):
+        return dim(LEGACY_GRAY_DARK, 0.1)
+    if k == 4:
+        return dim(RUST, 0.25)
+    if k in (2, 9):
+        return lit(LEGACY_GRAY, 0.42)
+    return mix(_rcyd_scrap_col(x + (y % 3), y), LEGACY_GRAY, 0.45)
+
+
+def _sghau_load(sd, cx, cy, frac):
+    """The salvage in the bed, drawn as material rather than as a level bar.
+
+    Filled from the tailgate forward. A full load overtops the bed rim and
+    grows loose pipe and plate ends that break the hull outline -- the
+    silhouette itself says laden, which is what has to read while the rover is
+    driving away from you."""
+    if frac <= 0:
+        return
+    x0, x1 = cx + _HAU_BED_X0, cx + _HAU_BED_X1
+    y0, y1 = cy + _HAU_BED_Y0, cy + _HAU_BED_Y1
+    over = 1.4 if frac >= 1.0 else 0.0      # heap overtopping the rim
+    front = y1 - (y1 - y0 + over) * frac    # ragged leading edge of the load
+    for x in range(int(math.floor(x0)), int(math.ceil(x1)) + 1):
+        jag = ((x * 7 + 5) % 4) * 0.5       # broken, not a straight line
+        for y in range(int(math.floor(front + jag)), int(math.ceil(y1)) + 1):
+            sd.px(x, y, _sghau_scrap_col(x, y))
+    # Long stock -- pipe, angle iron, a torn plate -- lying across the load.
+    if frac >= 0.5:
+        sd.line([(x0 - 0.5, y1 - 1.0), (x1 + 0.5, y1 - 3.0)], fill=lit(LEGACY_GRAY, 0.35), width=0.5)
+    if frac >= 1.0:
+        sd.line([(x0 - 1.8, y0 + 0.6), (x1 + 1.4, y0 - 1.0)], fill=lit(LEGACY_GRAY, 0.45), width=0.5)
+        sd.line([(x0 + 0.6, y0 - 1.8), (x1 - 0.4, y0 + 2.2)], fill=dim(LEGACY_GRAY, 0.05), width=0.5)
+        sd.poly([(x1 - 1.6, y0 - 1.6), (x1 + 2.0, y0 - 0.6), (x1 + 0.8, y0 + 1.4)], fill=RUST)
 
 
 def sghau_draw(sd, w, h, fullness="full", pose="idle", light_on=True):
     cx, cy = w // 2, h // 2
-    # Low hex chassis on a sled base -- reads as a cargo sled, not a truck
-    # bed. Top facet lit, side facets shaded.
-    hexpts = [(cx, cy - 10), (cx + 9, cy - 4), (cx + 9, cy + 6), (cx, cy + 11), (cx - 9, cy + 6), (cx - 9, cy - 4)]
-    sd.poly(hexpts, fill=LEGACY_GRAY, outline=LEGACY_GRAY_DARK)
-    sd.poly([(cx, cy - 8.6), (cx + 7.6, cy - 3.4), (cx, cy - 1), (cx - 7.6, cy - 3.4)], fill=lit(LEGACY_GRAY, 0.25))
-    sd.poly([(cx - 9, cy + 6), (cx, cy + 11), (cx, cy + 8.6), (cx - 7.4, cy + 4.8)], fill=dim(LEGACY_GRAY, 0.3))
-    sd.poly([(cx + 9, cy + 6), (cx, cy + 11), (cx, cy + 8.6), (cx + 7.4, cy + 4.8)], fill=dim(LEGACY_GRAY, 0.35))
-    # Skid rails.
-    sd.line([(cx - 8, cy - 5), (cx - 8, cy + 7)], fill=POLE_DARK, width=0.8)
-    sd.line([(cx + 8, cy - 5), (cx + 8, cy + 7)], fill=POLE_DARK, width=0.8)
-    # Front magnetic scoop, lowered during the harvest pose, with a faint
-    # field glow while working.
-    scoop_cy = cy - 8 if pose == "idle" else cy - 4
-    if pose != "idle":
-        sd.ellipse([cx - 5, scoop_cy - 3, cx + 5, scoop_cy + 3], fill=GREEN_ACCENT + (45,))
-    sd.arc([cx - 7, scoop_cy - 4, cx + 7, scoop_cy + 4], 200, 340, fill=GREEN_ACCENT, width=1.4)
-    sd.arc([cx - 5.6, scoop_cy - 3, cx + 5.6, scoop_cy + 3], 210, 330, fill=lit(GREEN_ACCENT, 0.35), width=0.5)
-    # Rear cargo canister -- fill level reads the fullness state directly, the
-    # same "show the cargo" grammar HARV's own bed uses.
-    can_x0, can_x1 = cx - 5, cx + 5
-    can_y0, can_y1 = cy + 1, cy + 9
-    box3d(sd, can_x0, can_y0, can_x1, can_y1, PANEL_BLUEBLACK, edge=0.45)
-    sd.rect([can_x0, can_y0, can_x1, can_y1], outline=dim(SUN_GOLD, 0.25), width=0.4)
     frac = SGHAU_FULLNESS_FRAC[fullness]
-    if frac > 0:
-        fill_y0 = can_y1 - round((can_y1 - can_y0) * frac)
-        sd.rect([can_x0 + 1, fill_y0, can_x1 - 1, can_y1 - 1], fill=GREEN_ACCENT)
-        sd.line([(can_x0 + 1, fill_y0), (can_x1 - 1, fill_y0)], fill=lit(GREEN_ACCENT, 0.4), width=0.5)
+    # Six road wheels, drawn first so the hull plating overlaps their inner
+    # shoulders and they read as running under it.
+    for side in (-1, 1):
+        for wy in _HAU_WHEEL_Y:
+            _sghau_wheel(sd, cx, cy + wy, side)
+    # Hull: a long plated chassis with a ploughed prow, lit along the port side
+    # from the same top-left key light every other sprite here uses.
+    hull = [(cx, cy - 11.0), (cx + 2.6, cy - 8.6), (cx + 4.2, cy - 6.2), (cx + 4.2, cy + 9.2),
+            (cx - 4.2, cy + 9.2), (cx - 4.2, cy - 6.2), (cx - 2.6, cy - 8.6)]
+    sd.poly(hull, fill=_HAU_HULL, outline=dim(_HAU_HULL, 0.45))
+    sd.line([(cx - 3.8, cy - 6.0), (cx - 3.8, cy + 8.8)], fill=lit(_HAU_HULL, 0.3), width=0.6)
+    sd.line([(cx - 3.0, cy - 8.0), (cx - 0.4, cy - 10.2)], fill=lit(_HAU_HULL, 0.22), width=0.5)
+    sd.line([(cx + 3.7, cy - 5.6), (cx + 3.7, cy + 8.8)], fill=dim(_HAU_HULL, 0.35), width=0.6)
+    # Prow plough: the blunt blade the rover shoves debris with, and the front
+    # of the silhouette that says which way it is pointing.
+    dy = -0.6 if pose == "idle" else 0.8
+    sd.poly([(cx, cy - 12.0 - dy), (cx + 5.2, cy - 8.6 - dy), (cx + 4.4, cy - 7.2 - dy),
+             (cx, cy - 9.8 - dy), (cx - 4.4, cy - 7.2 - dy), (cx - 5.2, cy - 8.6 - dy)],
+            fill=dim(PANEL_BLUEBLACK, 0.1))
+    sd.line([(cx - 5.2, cy - 8.6 - dy), (cx, cy - 12.0 - dy), (cx + 5.2, cy - 8.6 - dy)],
+            fill=lit(PANEL_BLUEBLACK, 0.5), width=0.5)
+    # Sensor/uplink block on the forward deck, ahead of the bed.
+    box3d(sd, cx - 1.8, cy - 5.8, cx + 1.8, cy - 3.8, dim(PANEL_BLUEBLACK, 0.15), edge=0.28)
+    sd.px(cx - 0.8, cy - 5.2, lit(LEGACY_GRAY, 0.25))
+    # Open cargo bed: dark floor with cross ribs, so an *empty* rover still
+    # reads as a load-carrier rather than a slab.
+    bx0, bx1 = cx + _HAU_BED_X0, cx + _HAU_BED_X1
+    by0, by1 = cy + _HAU_BED_Y0, cy + _HAU_BED_Y1
+    sd.rect([bx0, by0, bx1, by1], fill=dim(PANEL_BLUEBLACK, 0.35))
+    for ry in (1.2, 3.6, 6.0):
+        sd.line([(bx0 + 0.5, by0 + ry), (bx1 - 0.5, by0 + ry)], fill=dim(_HAU_HULL, 0.5), width=0.4)
+    _sghau_load(sd, cx, cy, frac)
+    # Bed rim caps on the player-remap ramp: the team-coloured element. Short
+    # segments at the corners rather than full-length rails -- a bright bar
+    # down each side outlines the sprite and flattens it back into a crate.
+    for rx in (bx0 - 0.9, bx1 + 0.1):
+        for ry in (by0 - 0.6, by1 - 1.8):
+            sd.rect([rx, ry, rx + 0.8, ry + 2.4], fill=SUN_GOLD)
+    # Working gear: the grapple arm swings out over the prow on the harvest and
+    # dock poses. Opaque marks only -- a translucent field glow is deleted
+    # outright by the 1-bit indexed alpha (issue #72).
+    if pose != "idle":
+        arm_y = cy - 10.4
+        sd.line([(cx - 2.8, cy - 4.6), (cx - 1.8, arm_y)], fill=LEGACY_GRAY_DARK, width=0.8)
+        sd.line([(cx + 2.8, cy - 4.6), (cx + 1.8, arm_y)], fill=LEGACY_GRAY_DARK, width=0.8)
+        sd.line([(cx - 2.4, arm_y), (cx + 2.4, arm_y)], fill=GREEN_ACCENT, width=0.9)
+        for gx in (-1.8, 0.0, 1.8):
+            sd.px(cx + gx, arm_y - 1.4, lit(GREEN_ACCENT, 0.35))
     if light_on:
-        sd.px(cx, cy - 10, SUN_GOLD)
+        sd.px(cx, cy - 9.2, SUN_GOLD)
 
 
 def _sghau_frame(fullness, pose, light_on=True):
@@ -3260,51 +3488,65 @@ def sghyd_dead_draw(sd, w=FAM33_W, h=FAM33_H):
 # --- Hauler Drone husk -----------------------------------------------------
 
 def sghau_husk_draw(sd, w, h, laden=False):
-    """Wrecked Hauler Drone: the hex chassis burnt out and canted, the magnetic
-    scoop torn off at the mounts, the cargo canister split down one side.
+    """Wrecked Hauler Drone: the rover burnt out and sitting on its rims, the
+    prow plough torn off at the mounts, one bogie sprung out of line and the
+    bed split open.
 
     Its own silhouette rather than HARV's (hhusk2.shp): a Hauler Drone that
     dies into an Ore Truck wreck undoes exactly the identity issue #34's
-    follow-up pass was for."""
+    follow-up pass was for. Redrawn with the intact rover (see sghau_draw) so
+    the wreck is recognisably the same vehicle -- a burnt hex sled left behind
+    by a six-wheeled rover reads as a different unit's husk."""
     cx, cy = w // 2, h // 2
     # Burnt metal, not black: a 14px wreck under a 1px dark outline has no
     # room to lose contrast, and stock hhusk2.shp is a mid-tone scorched olive
     # rather than a silhouette.
     char = mix(dim(LEGACY_GRAY, 0.22), RUST, 0.22)
-    # Chassis, canted: the near-side facets collapse, so the hex reads bent.
-    sd.poly([(cx, cy - 9), (cx + 9, cy - 4), (cx + 8, cy + 6), (cx - 1, cy + 10),
-             (cx - 9, cy + 5), (cx - 8, cy - 4)], fill=char)
-    sd.poly([(cx - 1, cy - 7.4), (cx + 7, cy - 3), (cx - 1, cy - 0.6), (cx - 6.8, cy - 3.4)],
-            fill=lit(char, 0.26))
-    sd.poly([(cx - 9, cy + 5), (cx - 1, cy + 10), (cx - 1, cy + 7.4), (cx - 7.6, cy + 3.6)],
-            fill=dim(char, 0.45))
-    # Buckled deck plate peeled up out of the hull roof.
-    sd.poly([(cx + 1, cy - 6), (cx + 6.5, cy - 3.6), (cx + 4.5, cy - 1), (cx + 0.5, cy - 2.6)],
-            fill=dim(char, 0.3))
-    sd.line([(cx + 1, cy - 6), (cx + 6.5, cy - 3.6)], fill=lit(char, 0.4), width=0.5)
-    # Skid rails, one buckled outward.
-    sd.line([(cx - 8, cy - 4), (cx - 7, cy + 7)], fill=POLE_DARK, width=0.8)
-    sd.line([(cx + 8, cy - 5), (cx + 10, cy + 4)], fill=POLE_DARK, width=0.8)
-    # Torn scoop mounts: two bent stubs where the emitter ring used to arc.
-    sd.line([(cx - 5, cy - 8), (cx - 6.5, cy - 10.5)], fill=lit(char, 0.15), width=0.9)
-    sd.line([(cx + 5, cy - 8), (cx + 6, cy - 11)], fill=lit(char, 0.15), width=0.9)
-    # Cargo canister, split down the near side: the breach is the dark, the
-    # hull around it stays readable.
-    box3d(sd, cx - 5, cy + 1, cx + 5, cy + 9, dim(char, 0.35), edge=0.35)
-    sd.poly([(cx - 2.5, cy + 2), (cx + 2, cy + 3), (cx + 1.5, cy + 8), (cx - 2.5, cy + 7)],
+    # Wheels: the middle pair blown clear on one side, the rest sitting flat.
+    for side in (-1, 1):
+        for k, wy in enumerate(_HAU_WHEEL_Y):
+            if side < 0 and k == 1:
+                continue
+            x0, x1 = cx + side * 4.0, cx + side * (7.4 if k != 2 else 6.8)
+            sd.rect([min(x0, x1), cy + wy - 1.7, max(x0, x1), cy + wy + 1.7],
+                    fill=dim(POLE_DARK, 0.1))
+    # The sprung wheel, off the hull and canted.
+    sd.poly([(cx - 10.4, cy - 1.6), (cx - 7.2, cy - 0.4), (cx - 7.8, cy + 2.6),
+             (cx - 11.0, cy + 1.4)], fill=POLE_DARK)
+    # Hull, canted: the near-side plating collapses, so the chassis reads bent.
+    sd.poly([(cx + 0.6, cy - 10.2), (cx + 3.0, cy - 8.0), (cx + 4.2, cy - 5.6),
+             (cx + 3.6, cy + 9.0), (cx - 4.4, cy + 8.6), (cx - 4.0, cy - 6.0),
+             (cx - 2.0, cy - 8.4)], fill=char)
+    sd.line([(cx - 3.6, cy - 5.6), (cx - 3.2, cy + 8.0)], fill=lit(char, 0.26), width=0.6)
+    # Buckled deck plate peeled up out of the forward hull.
+    sd.poly([(cx - 1.6, cy - 7.0), (cx + 2.6, cy - 5.6), (cx + 1.8, cy - 3.0),
+             (cx - 2.2, cy - 4.4)], fill=dim(char, 0.3))
+    sd.line([(cx - 1.6, cy - 7.0), (cx + 2.6, cy - 5.6)], fill=lit(char, 0.4), width=0.5)
+    # Torn plough mounts: two bent stubs where the blade used to sit.
+    sd.line([(cx - 3.4, cy - 8.6), (cx - 5.2, cy - 10.6)], fill=lit(char, 0.15), width=0.9)
+    sd.line([(cx + 2.6, cy - 9.0), (cx + 4.0, cy - 11.2)], fill=lit(char, 0.15), width=0.9)
+    # Cargo bed, split down the near side: the breach is the dark, the hull
+    # around it stays readable.
+    sd.rect([cx - 3.4, cy - 2.0, cx + 3.0, cy + 7.6], fill=dim(char, 0.42))
+    sd.poly([(cx - 1.8, cy - 1.0), (cx + 2.2, cy - 0.2), (cx + 1.6, cy + 6.6), (cx - 2.2, cy + 6.0)],
             fill=DAMAGE_SCORCH)
     if laden:
-        # Scrap spilling out of the breach, the cargo it was carrying.
-        sd.poly([(cx - 2, cy + 3.4), (cx + 1.4, cy + 4.2), (cx + 1, cy + 7), (cx - 2, cy + 6.2)],
-                fill=dim(GREEN_ACCENT, 0.3))
-        for i, (dx, dy) in enumerate(((6.5, 6), (-6.5, 7.5), (4, 10))):
-            sd.px(cx + dx, cy + dy, GREEN_ACCENT if i % 2 else dim(GREEN_ACCENT, 0.35))
+        # The load it was carrying, part burnt in the bed and part thrown out
+        # over the tailgate -- the laden/empty split has to read from the
+        # wreck the same way it read from the rover.
+        for x in range(int(cx - 2), int(cx + 3)):
+            for y in range(int(cy + 1), int(cy + 7)):
+                if (x * 5 + y * 3) % 3:
+                    sd.px(x, y, mix(_sghau_scrap_col(x, y), DAMAGE_SCORCH, 0.35))
+        for i, (dx, dy) in enumerate(((6.0, 8.0), (-6.0, 9.0), (2.5, 10.5), (-2.0, 9.5))):
+            sd.rect([cx + dx, cy + dy, cx + dx + 1.2, cy + dy + 0.8],
+                    fill=RUST if i % 2 else dim(LEGACY_GRAY, 0.2))
     # A little scattered wreckage, kept tight to the hull: isolated single
     # pixels each pick up their own shadow rim and read as speckle.
-    for i, (dx, dy) in enumerate(((-10.5, -5.5), (10.5, 7.5), (-2, -11))):
+    for i, (dx, dy) in enumerate(((-9.5, -6.5), (9.0, 6.5), (-1.0, -11.5))):
         sd.rect([cx + dx, cy + dy, cx + dx + 1, cy + dy + 0.6],
                 fill=LEGACY_GRAY_DARK if i % 2 else dim(char, 0.4))
-    _embers(sd, [(cx - 3, cy - 4), (cx + 4, cy + 5)])
+    _embers(sd, [(cx - 2, cy - 4), (cx + 3, cy + 4)])
 
 
 def sghau_husk_frames(laden):

@@ -147,12 +147,8 @@ SGDRO.Husk:
 	Aircraft:
 		TurnSpeed: 24
 		Speed: 170
-	WithIdleOverlay@PRIMARY:
-		Offset: 350,0,130
-		Sequence: slow-rotor
-	WithIdleOverlay@SECONDARY:
-		Offset: -350,0,200
-		Sequence: slow-rotor2
+	# Rotor overlays dropped with the live drone's (see rules/aircraft.yaml):
+	# the husk renders the intact sgdro image, whose own rotors are baked in.
 	RevealsShroud:
 		MinRange: 6c0
 		Range: 8c0
@@ -171,8 +167,6 @@ SGDRS.Husk:
 	Aircraft:
 		TurnSpeed: 20
 		Speed: 150
-	WithIdleOverlay:
-		Sequence: slow-rotor
 	LeavesTrails:
 		Offsets: -427,0,0
 		Image: smokey
