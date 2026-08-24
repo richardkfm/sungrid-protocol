@@ -105,6 +105,14 @@ preferentially raid enemy Vaults and Turtle AI doesn't drop turtling against an 
 Gotcha for any future personality: `McvExpansionManagerBotModule` is what deploys the starting MCV, so
 a personality with no instance of it never builds anything at all.
 
+**Easy Grid Broker AI never opens a second base** — `MinimumConstructionYardCount: 1` /
+`AdditionalConstructionYardCount: 0` is deliberate (issue #69). A player who reports it "expanding" is
+seeing its pace, not a second Construction Yard: issue #82 found its War Factory was undelayed (so it
+reached production parity with a human on the bot's usual no-hesitation clock) and its 25-unit attack
+force was most of its ~43-unit army cap in one wave. Both eased (War Factory now delayed like its other
+buildings; attack force 25→16 with a longer rebuilding gap; army cap ~43→~30) — ground-war tuning only,
+separate from issue #75's banking-speed retune of the same personality.
+
 **The roster the bots play on (issue #78).** Until this pass `ai.yaml` contained zero occurrences of any
 Sungrid-original building, so #67 taught the AI the *mode* but not the *content*: every bot match
 silently exercised the stock RA tech tree, and — because issue #22 gave all three superweapons an `sgdai`

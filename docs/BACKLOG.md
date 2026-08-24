@@ -2083,6 +2083,35 @@ records which. Two coherent resolutions:
 (entry #8), `docs/BACKLOG.md`. **No rules changed**, deliberately: which way this goes is a design call,
 and the repo's standing convention is survey first, fixes in a scoped follow-up.
 
+---
+
+### 82. Easy Grid Broker AI's ground war still overwhelmed a new player — the base never expanded, but its first push arrived at full strength before the player's first War Factory — FIXED
+
+**Player report:** "I cant even beat easy grid mode ai. When Iam about to build the weapons factory they seem to be opening their second base already... I think it should be easier." Confirmed against the lobby: the personality really was Easy Grid Broker AI, not the full-strength Grid Broker or Normal AI.
+
+**Not a bug in `McvExpansionManagerBotModule@easygridbroker` — it never expands, as designed.** Issue #69 set `MinimumConstructionYardCount: 1` / `AdditionalConstructionYardCount: 0` specifically so this personality "deploys its opening MCV and then stays on one base." That part of the config was already doing its job; there was no second Construction Yard to find.
+
+**The real gap: nothing in the base builder or squad manager slowed this bot's *first* push relative to a player still finishing their opening build order.** Two contributing settings, both reasoned rather than measured (same caveat every prior tuning pass on this personality carries):
+
+- `BaseBuilderBotModule@easygridbroker.BuildingDelays` had no entry for `weap` — every other production-relevant delay in the file (`pbox`, `gun`, `arct`, `sgtur`, `dome`, `fix`) exists precisely to stagger *when* a bot reaches a building, but the War Factory itself was undelayed, so this bot reached first-War-Factory parity with a human on the same clock a Normal AI would. A bot doesn't pause to scroll the map or second-guess a placement, so "the same clock" in practice means *first*.
+- `SquadManagerBotModule@easygridbroker.SquadSize: 25` against a ~43-unit total army cap (`UnitBuilderBotModule@easygridbroker.UnitLimits` summed) meant a single attack wave was well over half this bot's entire standing force — the first push a new player saw was close to everything the bot owned, not a probing fraction of a larger reserve, which reads as "overwhelming" rather than "learnable."
+
+**Fix, all in `mods/sungrid/rules/ai.yaml`:**
+
+- `BaseBuilderBotModule@easygridbroker.BuildingDelays`: added `weap: 3000`, in the same range as this bot's other delays.
+- `SquadManagerBotModule@easygridbroker`: `SquadSize` 25 → 16, `MinimumAttackForceDelay` 1500 → 2500 (bigger rebuilding gap between smaller pushes).
+- `UnitBuilderBotModule@easygridbroker.UnitLimits`: tightened in step with the smaller squad size (`e1` 12→8, `e3` 5→3, `1tnk`/`2tnk` 6→4 each, `3tnk` 4→2, `arty` 2→1; `harv`/`jeep`/`apc` unchanged), dropping the total army cap from ~43 to ~30.
+
+Deliberately untouched: `HarvesterBotModule@easygridbroker.InitialHarvesters` (already halved by issue #69, and issue #69's own definition of done warned against over-nerfing this personality into "never threatens... not a teaching opponent either"), `AdditionalMinimumRefineryCount`, and every `GridReserveBotModule@easygridbroker` economy field — issue #75 already retuned the banking-speed side of this same personality, and this pass is scoped to the ground-war side only.
+
+**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md` (Easy Grid Broker AI opponents bullet), `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Labels:** `type:balance`, `area:ai`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** The reasoning above is internally consistent with the existing config (checked by reading `mods/sungrid/rules/ai.yaml` and `docs/BACKLOG.md` issue #69, not by a build — no engine is fetched in this environment). Not verified in a live client or a real skirmish, same caveat as every prior tuning pass on this bot: a follow-up playtest should confirm the eased first push is actually beatable by a new player without swinging the other way into feeling passive, and that a single ~16-unit push with a 2500-tick rebuilding gap still gives the Easy Grid Broker's Reserve economy (issue #75) enough breathing room to reach Lockdown eventually — it is still meant to be a real, if late, economic threat.
+
 **Labels:** `type:docs`, `type:design-question`, `area:rules`, `needs:playtest`
 
 **Phase:** 5 follow-up.

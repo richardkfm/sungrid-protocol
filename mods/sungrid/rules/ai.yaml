@@ -364,6 +364,9 @@ Player:
 			sgrel: 2
 			sgtur: 2
 			sgsns: 1
+		# weap delay added for issue #82: undelayed, this bot reached its first War Factory at the same
+		# pace as the Normal AI, which is what a new player was actually losing the early game to (not
+		# base expansion - McvExpansionManagerBotModule@easygridbroker below never expands).
 		BuildingDelays:
 			dome: 9000
 			fix: 6000
@@ -372,6 +375,7 @@ Player:
 			arct: 4000
 			sgtur: 5000
 			sgsns: 9000
+			weap: 3000
 	BaseBuilderBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		MinimumExcessPower: 20
@@ -647,15 +651,18 @@ Player:
 		ProtectUnitScanRadius: 15
 		ProtectionScanRadius: 12
 	# Easy Grid Broker attacks. SquadSizeRandomBonus is zeroed rather than left at the stock 30, so the
-	# attack force is a flat, predictable 25 instead of the Grid Broker's 18-48 - a defender can learn
-	# what a push looks like. With one war factory feeding it, gathering 25 takes long enough that
+	# attack force is a flat, predictable size instead of the Grid Broker's 18-48 - a defender can learn
+	# what a push looks like. With one war factory feeding it, gathering a squad takes long enough that
 	# attacks arrive as occasional pushes rather than constant pressure, and MinimumAttackForceDelay
 	# guarantees a rebuilding gap after each one.
+	# SquadSize 25->16 and MinimumAttackForceDelay 1500->2500 for issue #82: at 25 (against a ~43-unit
+	# army cap) almost every unit this bot owned left with each push, which overwhelmed a player still
+	# finishing their own first production queue rather than reading as a learnable, survivable attack.
 	SquadManagerBotModule@easygridbroker:
 		RequiresCondition: enable-easygridbroker-ai
-		SquadSize: 25
+		SquadSize: 16
 		SquadSizeRandomBonus: 0
-		MinimumAttackForceDelay: 1500
+		MinimumAttackForceDelay: 2500
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		ConstructionYardTypes: fact
@@ -709,6 +716,9 @@ Player:
 	# only 4 unit types, so its army grows until its economy stops it, which for a Vault-banking bot is
 	# never. Capping every line keeps the total force small and, just as importantly, keeps it simple -
 	# no air, no naval, no Tesla/mammoth tech to answer while still learning the mode.
+	# UnitLimits tightened for issue #82, in step with SquadManagerBotModule@easygridbroker's smaller
+	# SquadSize above: total cap ~43 -> ~30, so a full attack wave is most of the standing army rather
+	# than a fraction of a much larger one sitting in reserve.
 	UnitBuilderBotModule@easygridbroker:
 		RequiresCondition: enable-easygridbroker-ai
 		UnitsToBuild:
@@ -722,15 +732,15 @@ Player:
 			3tnk: 25
 			arty: 10
 		UnitLimits:
-			e1: 12
-			e3: 5
+			e1: 8
+			e3: 3
 			harv: 4
 			jeep: 2
 			apc: 2
-			1tnk: 6
-			2tnk: 6
-			3tnk: 4
-			arty: 2
+			1tnk: 4
+			2tnk: 4
+			3tnk: 2
+			arty: 1
 		UnitDelays:
 			arty: 9000
 	SquadManagerBotModule@turtle:
