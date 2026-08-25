@@ -2333,3 +2333,23 @@ Deliberately untouched: `HarvesterBotModule@easygridbroker.InitialHarvesters` (a
 
 **Definition of done:** A Consortium-side Easy Grid Broker can now build `AGUN` on the same terms every other personality already could. Not verified in a live client or a real skirmish — no engine is fetched in this environment, same caveat as issue #82. A follow-up playtest should confirm a Consortium-side Easy Grid Broker actually builds and uses the anti-air it can now queue, and that this alone doesn't make the Assembly/Consortium matchups feel asymmetric in the other direction.
 
+---
+
+### 84. Swapped which side builds `AGUN` vs `SAM` — the heavier gun now fits Assembly, the guided missile now fits Consortium — DONE
+
+**Player feedback, right after issue #83:** "tbh i feel that AGUN fits more into assembly(soviet) and SAM more into consortium (west), could we switch it without much hassle?" Reversing stock RA's original Allied-AAGun/Soviet-SAM pairing, which this mod had inherited unexamined until issue #83 traced through it.
+
+**Why it's a clean swap.** Neither `AGUN` nor `SAM` carries any other faction-specific coupling — no faction-flavored fluent text (`SAM` has no custom fluent entry at all; `AGUN`'s is generic, "AA Gun" / "Anti-Air base defense"), no dedicated Sungrid art (both are still stock sprites, unlike `ARCT`/`SGTUR` which got a real reskin), and `ai.yaml` already lists both `agun` and `sam` in every personality's `DefenseTypes`/`BuildingFractions` (a bot only ever builds the one its own faction's prerequisites allow, so listing the "wrong" one for a given faction was always a no-op). The only thing tying each actor to a faction is its own `Prerequisites` line.
+
+**Fix:** in `mods/sungrid/rules/structures.yaml`, swapped `AGUN`'s `~structures.allies` → `~structures.soviet` and `SAM`'s `~structures.soviet` → `~structures.allies`. Nothing else on either actor changed — cost, HP, armor, weapon (`ZSU-23`/`Nike`), and `BuildPaletteOrder` all stay attached to the same actor id they always were.
+
+**Docs updated to match:** `docs/BUILDINGS.md`'s roster table (`Faction` column swapped for both rows), `docs/ENERGY_BALANCE.md`'s Consortium/Assembly power-drain comparison (was citing `SAM` as "Assembly's closest analog" to `GAP`; now correctly cites `AGUN`, which also happens to match `GAP`'s 800-cost tier exactly where the old `SAM` comparison was 700 vs 800), and `CLAUDE.md`. Issue #83's own text is left as a historical record of the bug at the time it was found (the pairing it describes was accurate when written) rather than retroactively rewritten.
+
+**Scope:** `mods/sungrid/rules/structures.yaml`, `docs/BUILDINGS.md`, `docs/ENERGY_BALANCE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`. No AI (`ai.yaml`), art, or fluent-text changes needed.
+
+**Labels:** `type:balance`, `area:rules`, `needs:playtest`
+
+**Phase:** 6 follow-up (faction identity).
+
+**Definition of done:** `AGUN` requires the Assembly (Soviet-derived) tech tree and `SAM` requires the Consortium (Allied-derived) tech tree; every doc that named either building's faction agrees. Not verified in a live client — no engine is fetched in this environment, same caveat as every other AI/rules tuning entry here. A follow-up playtest should confirm the swap doesn't read as arbitrary in an actual match (the art is still stock and faction-agnostic, so nothing should look wrong), and that `docs/ENERGY_BALANCE.md`'s updated comparison still holds up as a description of the live power ledger.
+

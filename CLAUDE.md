@@ -118,10 +118,18 @@ separate from issue #75's banking-speed retune of the same personality.
 engage a drone or aircraft regardless of tuning. Every `SquadManagerBotModule` already treats `sgdro`/
 `sgdrs` as air units (`AirUnitsTypes`, `AircraftTargetType: AirborneActor`), so bots do actively hunt
 drones — but only if they have an anti-air answer standing. Issue #83 found Easy Grid Broker's
-`DefenseTypes` had `sam` (Assembly-only) but not `agun` (its Consortium equivalent), leaving a
-Consortium-side Easy Grid Broker with zero anti-air structures — fixed by adding `agun` alongside `sam`,
-same pattern every other personality already used. Easy Grid Broker still doesn't build the Drone Bay or
-either drone itself (deliberate, per issue #78 — it stays ground-only to teach the mode).
+`DefenseTypes` had `sam` but not `agun` (at the time, `sam` was Assembly-only and `agun` Consortium-only),
+leaving one faction's Easy Grid Broker with zero anti-air structures — fixed by adding `agun` alongside
+`sam`, same pattern every other personality already used. Easy Grid Broker still doesn't build the Drone
+Bay or either drone itself (deliberate, per issue #78 — it stays ground-only to teach the mode).
+
+**`AGUN` is Assembly's, `SAM` is Consortium's** — reversed from stock RA's original Allied-AAGun/
+Soviet-SAM pairing (issue #84): the heavier industrial flak cannon (`ZSU-23`) reads as Assembly, the
+guided missile (`Nike`) reads as Consortium. Only the `Prerequisites` faction flag on each actor changed
+(`~structures.soviet`/`~structures.allies` in `mods/sungrid/rules/structures.yaml`) — everything else
+(cost, HP, weapon, art) stays attached to the same actor id. `ai.yaml` needed no changes: every
+personality's `DefenseTypes`/`BuildingFractions` already lists both `agun` and `sam`, since a bot only
+ever builds the one its own faction's prerequisites allow.
 
 **The roster the bots play on (issue #78).** Until this pass `ai.yaml` contained zero occurrences of any
 Sungrid-original building, so #67 taught the AI the *mode* but not the *content*: every bot match
