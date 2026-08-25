@@ -111,7 +111,10 @@ seeing its pace, not a second Construction Yard: issue #82 found its War Factory
 reached production parity with a human on the bot's usual no-hesitation clock) and its 25-unit attack
 force was most of its ~43-unit army cap in one wave. Both eased (War Factory now delayed like its other
 buildings; attack force 25→16 with a longer rebuilding gap; army cap ~43→~30) — ground-war tuning only,
-separate from issue #75's banking-speed retune of the same personality.
+separate from issue #75's banking-speed retune of the same personality. Both delays pushed out further
+still by issue #85 (weap `BuildingDelays` 3000→5000; `GridReserveBotModule@easygridbroker`'s
+`StartDelayTicks` 15000→18000) after feedback that the War Factory and first Battery Bank still arrived
+too soon.
 
 **Only `AGUN`/`SAM` can hit an airborne target — `ARCT`/`SGTUR` never can.** Both anti-air structures are
 `^AutoTargetAir`; the other two defenses every personality builds are `^AutoTargetGround` and will not

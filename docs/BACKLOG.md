@@ -2353,3 +2353,24 @@ Deliberately untouched: `HarvesterBotModule@easygridbroker.InitialHarvesters` (a
 
 **Definition of done:** `AGUN` requires the Assembly (Soviet-derived) tech tree and `SAM` requires the Consortium (Allied-derived) tech tree; every doc that named either building's faction agrees. Not verified in a live client — no engine is fetched in this environment, same caveat as every other AI/rules tuning entry here. A follow-up playtest should confirm the swap doesn't read as arbitrary in an actual match (the art is still stock and faction-agnostic, so nothing should look wrong), and that `docs/ENERGY_BALANCE.md`'s updated comparison still holds up as a description of the live power ledger.
 
+---
+
+### 85. Easy Grid Broker AI's War Factory and first Battery Bank still arrived too soon after issue #82 - FIXED
+
+**Player feedback, after issue #82's ground-war ease:** the War Factory delay and attack-force cuts helped, but the bot should be eased further still — specifically calling out the War Factory and Battery Bank timing.
+
+**Fix, both in `mods/sungrid/rules/ai.yaml`:**
+
+- `BaseBuilderBotModule@easygridbroker.BuildingDelays.weap`: 3000 → 5000 ticks, pushing the War Factory further behind the pace issue #82 already delayed it to.
+- `GridReserveBotModule@easygridbroker.StartDelayTicks`: 15000 → 18000, pushing back when this personality's Battery Banks start banking Credits at all (already the latest of any personality - Grid Broker AI's own `StartDelayTicks` is 9000 - and now later still).
+
+Deliberately untouched: every other `BuildingDelays` entry, `CoveragePercent`/`ContestedCoveragePercent`/`BuildIntervalTicks` on `GridReserveBotModule@easygridbroker`, and the `SquadManagerBotModule@easygridbroker`/`UnitBuilderBotModule@easygridbroker` changes from issue #82 - this pass only pushes back *when* the War Factory and Battery Banks start, not the army-size or banking-rate tuning already done.
+
+**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md`, `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Labels:** `type:balance`, `area:ai`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Reasoning checked against the existing config and issue #82/#75's prior tuning by reading `mods/sungrid/rules/ai.yaml`, not by a build - no engine is fetched in this environment, same caveat as every other AI-tuning entry here. A follow-up playtest should confirm the further-delayed War Factory and Battery Bank actually land where a new player wants them, without leaving this personality's Reserve economy (issue #75) too little time to reach Lockdown at all.
+

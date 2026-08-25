@@ -370,7 +370,9 @@ Player:
 			sgsns: 1
 		# weap delay added for issue #82: undelayed, this bot reached its first War Factory at the same
 		# pace as the Normal AI, which is what a new player was actually losing the early game to (not
-		# base expansion - McvExpansionManagerBotModule@easygridbroker below never expands).
+		# base expansion - McvExpansionManagerBotModule@easygridbroker below never expands). Pushed out
+		# further still (3000->5000) for issue #85, alongside GridReserveBotModule@easygridbroker's
+		# StartDelayTicks below, after feedback that the War Factory was still arriving too soon.
 		BuildingDelays:
 			dome: 9000
 			fix: 6000
@@ -379,7 +381,7 @@ Player:
 			arct: 4000
 			sgtur: 5000
 			sgsns: 9000
-			weap: 3000
+			weap: 5000
 	BaseBuilderBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		MinimumExcessPower: 20
@@ -881,7 +883,9 @@ Player:
 		VaultTypes: silo
 		CoveragePercent: 110
 		ContestedCoveragePercent: 110
-		StartDelayTicks: 15000
+		# StartDelayTicks pushed out further still (15000->18000) for issue #85: see the comment on
+		# BaseBuilderBotModule@easygridbroker's weap BuildingDelays above.
+		StartDelayTicks: 18000
 		ExpandAtFillPercent: 95
 		BuildIntervalTicks: 400
 		AbandonBankingOnEnemyLockdown: true
