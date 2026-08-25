@@ -613,7 +613,10 @@ AGUN:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 90
-		Prerequisites: dome, ~structures.allies, ~techlevel.medium
+		# structures.soviet, not .allies: issue #84 swapped which side builds AGUN vs SAM so the
+		# heavier industrial flak cannon (ZSU-23) fits Assembly and the guided missile (Nike) fits
+		# Consortium - reversed from stock RA's original Allied-AAGun/Soviet-SAM pairing.
+		Prerequisites: dome, ~structures.soviet, ~techlevel.medium
 		Description: actor-agun.description
 	Valued:
 		Cost: 800
@@ -941,7 +944,9 @@ SAM:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 100
-		Prerequisites: dome, ~structures.soviet, ~techlevel.medium
+		# structures.allies, not .soviet: issue #84 swapped which side builds AGUN vs SAM. See the
+		# comment on AGUN's own Prerequisites above.
+		Prerequisites: dome, ~structures.allies, ~techlevel.medium
 		Description: actor-sam.description
 	Valued:
 		Cost: 700

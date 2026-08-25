@@ -2083,35 +2083,6 @@ records which. Two coherent resolutions:
 (entry #8), `docs/BACKLOG.md`. **No rules changed**, deliberately: which way this goes is a design call,
 and the repo's standing convention is survey first, fixes in a scoped follow-up.
 
----
-
-### 82. Easy Grid Broker AI's ground war still overwhelmed a new player — the base never expanded, but its first push arrived at full strength before the player's first War Factory — FIXED
-
-**Player report:** "I cant even beat easy grid mode ai. When Iam about to build the weapons factory they seem to be opening their second base already... I think it should be easier." Confirmed against the lobby: the personality really was Easy Grid Broker AI, not the full-strength Grid Broker or Normal AI.
-
-**Not a bug in `McvExpansionManagerBotModule@easygridbroker` — it never expands, as designed.** Issue #69 set `MinimumConstructionYardCount: 1` / `AdditionalConstructionYardCount: 0` specifically so this personality "deploys its opening MCV and then stays on one base." That part of the config was already doing its job; there was no second Construction Yard to find.
-
-**The real gap: nothing in the base builder or squad manager slowed this bot's *first* push relative to a player still finishing their opening build order.** Two contributing settings, both reasoned rather than measured (same caveat every prior tuning pass on this personality carries):
-
-- `BaseBuilderBotModule@easygridbroker.BuildingDelays` had no entry for `weap` — every other production-relevant delay in the file (`pbox`, `gun`, `arct`, `sgtur`, `dome`, `fix`) exists precisely to stagger *when* a bot reaches a building, but the War Factory itself was undelayed, so this bot reached first-War-Factory parity with a human on the same clock a Normal AI would. A bot doesn't pause to scroll the map or second-guess a placement, so "the same clock" in practice means *first*.
-- `SquadManagerBotModule@easygridbroker.SquadSize: 25` against a ~43-unit total army cap (`UnitBuilderBotModule@easygridbroker.UnitLimits` summed) meant a single attack wave was well over half this bot's entire standing force — the first push a new player saw was close to everything the bot owned, not a probing fraction of a larger reserve, which reads as "overwhelming" rather than "learnable."
-
-**Fix, all in `mods/sungrid/rules/ai.yaml`:**
-
-- `BaseBuilderBotModule@easygridbroker.BuildingDelays`: added `weap: 3000`, in the same range as this bot's other delays.
-- `SquadManagerBotModule@easygridbroker`: `SquadSize` 25 → 16, `MinimumAttackForceDelay` 1500 → 2500 (bigger rebuilding gap between smaller pushes).
-- `UnitBuilderBotModule@easygridbroker.UnitLimits`: tightened in step with the smaller squad size (`e1` 12→8, `e3` 5→3, `1tnk`/`2tnk` 6→4 each, `3tnk` 4→2, `arty` 2→1; `harv`/`jeep`/`apc` unchanged), dropping the total army cap from ~43 to ~30.
-
-Deliberately untouched: `HarvesterBotModule@easygridbroker.InitialHarvesters` (already halved by issue #69, and issue #69's own definition of done warned against over-nerfing this personality into "never threatens... not a teaching opponent either"), `AdditionalMinimumRefineryCount`, and every `GridReserveBotModule@easygridbroker` economy field — issue #75 already retuned the banking-speed side of this same personality, and this pass is scoped to the ground-war side only.
-
-**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md` (Easy Grid Broker AI opponents bullet), `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
-
-**Labels:** `type:balance`, `area:ai`, `needs:playtest`
-
-**Phase:** 4 follow-up.
-
-**Definition of done:** The reasoning above is internally consistent with the existing config (checked by reading `mods/sungrid/rules/ai.yaml` and `docs/BACKLOG.md` issue #69, not by a build — no engine is fetched in this environment). Not verified in a live client or a real skirmish, same caveat as every prior tuning pass on this bot: a follow-up playtest should confirm the eased first push is actually beatable by a new player without swinging the other way into feeling passive, and that a single ~16-unit push with a 2500-tick rebuilding gap still gives the Easy Grid Broker's Reserve economy (issue #75) enough breathing room to reach Lockdown eventually — it is still meant to be a real, if late, economic threat.
-
 **Labels:** `type:docs`, `type:design-question`, `area:rules`, `needs:playtest`
 
 **Phase:** 5 follow-up.
@@ -2308,3 +2279,77 @@ shadow argument above is read off the traits and the engine source rather than o
 turning rotors inside the ground shadow; the sheet's frame count is proven against the sequence math by
 the engine's own reservation check; and the shadow's presence is established from the resolved actor
 rather than assumed.
+
+---
+
+### 82. Easy Grid Broker AI's ground war still overwhelmed a new player — the base never expanded, but its first push arrived at full strength before the player's first War Factory — FIXED
+
+**Player report:** "I cant even beat easy grid mode ai. When Iam about to build the weapons factory they seem to be opening their second base already... I think it should be easier." Confirmed against the lobby: the personality really was Easy Grid Broker AI, not the full-strength Grid Broker or Normal AI.
+
+**Not a bug in `McvExpansionManagerBotModule@easygridbroker` — it never expands, as designed.** Issue #69 set `MinimumConstructionYardCount: 1` / `AdditionalConstructionYardCount: 0` specifically so this personality "deploys its opening MCV and then stays on one base." That part of the config was already doing its job; there was no second Construction Yard to find.
+
+**The real gap: nothing in the base builder or squad manager slowed this bot's *first* push relative to a player still finishing their opening build order.** Two contributing settings, both reasoned rather than measured (same caveat every prior tuning pass on this personality carries):
+
+- `BaseBuilderBotModule@easygridbroker.BuildingDelays` had no entry for `weap` — every other production-relevant delay in the file (`pbox`, `gun`, `arct`, `sgtur`, `dome`, `fix`) exists precisely to stagger *when* a bot reaches a building, but the War Factory itself was undelayed, so this bot reached first-War-Factory parity with a human on the same clock a Normal AI would. A bot doesn't pause to scroll the map or second-guess a placement, so "the same clock" in practice means *first*.
+- `SquadManagerBotModule@easygridbroker.SquadSize: 25` against a ~43-unit total army cap (`UnitBuilderBotModule@easygridbroker.UnitLimits` summed) meant a single attack wave was well over half this bot's entire standing force — the first push a new player saw was close to everything the bot owned, not a probing fraction of a larger reserve, which reads as "overwhelming" rather than "learnable."
+
+**Fix, all in `mods/sungrid/rules/ai.yaml`:**
+
+- `BaseBuilderBotModule@easygridbroker.BuildingDelays`: added `weap: 3000`, in the same range as this bot's other delays.
+- `SquadManagerBotModule@easygridbroker`: `SquadSize` 25 → 16, `MinimumAttackForceDelay` 1500 → 2500 (bigger rebuilding gap between smaller pushes).
+- `UnitBuilderBotModule@easygridbroker.UnitLimits`: tightened in step with the smaller squad size (`e1` 12→8, `e3` 5→3, `1tnk`/`2tnk` 6→4 each, `3tnk` 4→2, `arty` 2→1; `harv`/`jeep`/`apc` unchanged), dropping the total army cap from ~43 to ~30.
+
+Deliberately untouched: `HarvesterBotModule@easygridbroker.InitialHarvesters` (already halved by issue #69, and issue #69's own definition of done warned against over-nerfing this personality into "never threatens... not a teaching opponent either"), `AdditionalMinimumRefineryCount`, and every `GridReserveBotModule@easygridbroker` economy field — issue #75 already retuned the banking-speed side of this same personality, and this pass is scoped to the ground-war side only.
+
+**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md` (Easy Grid Broker AI opponents bullet), `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Labels:** `type:balance`, `area:ai`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** The reasoning above is internally consistent with the existing config (checked by reading `mods/sungrid/rules/ai.yaml` and `docs/BACKLOG.md` issue #69, not by a build — no engine is fetched in this environment). Not verified in a live client or a real skirmish, same caveat as every prior tuning pass on this bot: a follow-up playtest should confirm the eased first push is actually beatable by a new player without swinging the other way into feeling passive, and that a single ~16-unit push with a 2500-tick rebuilding gap still gives the Easy Grid Broker's Reserve economy (issue #75) enough breathing room to reach Lockdown eventually — it is still meant to be a real, if late, economic threat.
+
+---
+
+### 83. Easy Grid Broker AI had no anti-air structure at all on the Consortium side — `DefenseTypes` listed `sam` but not `agun` — FIXED
+
+**Follow-up question from the player, after issue #82:** whether the AI knows about the Sungrid drones (`SGDRO`/`SGDRS`) and can defend against them. Traced through `mods/sungrid/rules/ai.yaml` and the actors' own traits rather than a live match (same environment limitation as every other AI-tuning entry here).
+
+**Findings, not a bug:**
+
+- Every `SquadManagerBotModule` (all six personalities) lists `sgdro, sgdrs` in `AirUnitsTypes` and sets `AircraftTargetType: AirborneActor`, so a bot's squads actively hunt airborne targets, drones included. `SGDRO`/`SGDRS` only become `Targetable` as `AirborneActor` while flying (`^Helicopter` → `^Plane` → `^NeutralPlane`'s `Targetable@AIRBORNE`), same as any other aircraft.
+- Only two structures can actually hit an airborne target: `AGUN` (Consortium, `ZSU-23`) and `SAM` (Assembly, `Nike`), both `Inherits@AUTOTARGET: ^AutoTargetAir`. The two other defenses every personality builds, `ARCT` and `SGTUR`, are `^AutoTargetGround` and can never engage a drone regardless of personality or tuning.
+- **Easy Grid Broker AI does not build the Drone Bay or either drone at all** — deliberately, per issue #78's roster pass and CLAUDE.md's "Easy Grid Broker deliberately gets only the low-tech subset" note. This is by design, not an oversight: it stays on a simple ground-only roster to teach the mode.
+
+**Bug found in the process:** `BaseBuilderBotModule@easygridbroker.DefenseTypes` was `pbox,gun,sam,arct,sgtur` — `sam` but no `agun`. `SAM` requires `~structures.soviet` (Assembly), so a **Consortium-side** Easy Grid Broker had zero anti-air *structure* options — its only counter to an enemy drone or aircraft was whatever `e3` Rocket Soldiers it happened to have standing (its `RedEye` weapon inherits from the same `Nike`/`^AntiAirMissile` lineage as `SAM`, so it is a real, if thin, mobile answer). Every other personality's `DefenseTypes` list includes both `agun` and `sam` — a bot only ever builds the one its own faction's prerequisites allow, so listing both costs nothing and this asymmetry looks like a simple omission from issue #69's original Easy Grid Broker config rather than a deliberate one.
+
+**Fix, in `mods/sungrid/rules/ai.yaml`:** added `agun` to `BaseBuilderBotModule@easygridbroker.DefenseTypes` and `agun: 1` to its `BuildingFractions`, mirroring `sam: 1`. No `BuildingLimits` entry needed — no personality caps `agun`/`sam` by count, only by fraction. `AGUN`'s own prerequisite (`dome`) was already in this bot's `TechTypes`, so no further changes were needed for it to become buildable.
+
+**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/BACKLOG.md`, `CHANGELOG.md`.
+
+**Labels:** `type:bug`, `type:balance`, `area:ai`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** A Consortium-side Easy Grid Broker can now build `AGUN` on the same terms every other personality already could. Not verified in a live client or a real skirmish — no engine is fetched in this environment, same caveat as issue #82. A follow-up playtest should confirm a Consortium-side Easy Grid Broker actually builds and uses the anti-air it can now queue, and that this alone doesn't make the Assembly/Consortium matchups feel asymmetric in the other direction.
+
+---
+
+### 84. Swapped which side builds `AGUN` vs `SAM` — the heavier gun now fits Assembly, the guided missile now fits Consortium — DONE
+
+**Player feedback, right after issue #83:** "tbh i feel that AGUN fits more into assembly(soviet) and SAM more into consortium (west), could we switch it without much hassle?" Reversing stock RA's original Allied-AAGun/Soviet-SAM pairing, which this mod had inherited unexamined until issue #83 traced through it.
+
+**Why it's a clean swap.** Neither `AGUN` nor `SAM` carries any other faction-specific coupling — no faction-flavored fluent text (`SAM` has no custom fluent entry at all; `AGUN`'s is generic, "AA Gun" / "Anti-Air base defense"), no dedicated Sungrid art (both are still stock sprites, unlike `ARCT`/`SGTUR` which got a real reskin), and `ai.yaml` already lists both `agun` and `sam` in every personality's `DefenseTypes`/`BuildingFractions` (a bot only ever builds the one its own faction's prerequisites allow, so listing the "wrong" one for a given faction was always a no-op). The only thing tying each actor to a faction is its own `Prerequisites` line.
+
+**Fix:** in `mods/sungrid/rules/structures.yaml`, swapped `AGUN`'s `~structures.allies` → `~structures.soviet` and `SAM`'s `~structures.soviet` → `~structures.allies`. Nothing else on either actor changed — cost, HP, armor, weapon (`ZSU-23`/`Nike`), and `BuildPaletteOrder` all stay attached to the same actor id they always were.
+
+**Docs updated to match:** `docs/BUILDINGS.md`'s roster table (`Faction` column swapped for both rows), `docs/ENERGY_BALANCE.md`'s Consortium/Assembly power-drain comparison (was citing `SAM` as "Assembly's closest analog" to `GAP`; now correctly cites `AGUN`, which also happens to match `GAP`'s 800-cost tier exactly where the old `SAM` comparison was 700 vs 800), and `CLAUDE.md`. Issue #83's own text is left as a historical record of the bug at the time it was found (the pairing it describes was accurate when written) rather than retroactively rewritten.
+
+**Scope:** `mods/sungrid/rules/structures.yaml`, `docs/BUILDINGS.md`, `docs/ENERGY_BALANCE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`. No AI (`ai.yaml`), art, or fluent-text changes needed.
+
+**Labels:** `type:balance`, `area:rules`, `needs:playtest`
+
+**Phase:** 6 follow-up (faction identity).
+
+**Definition of done:** `AGUN` requires the Assembly (Soviet-derived) tech tree and `SAM` requires the Consortium (Allied-derived) tech tree; every doc that named either building's faction agrees. Not verified in a live client — no engine is fetched in this environment, same caveat as every other AI/rules tuning entry here. A follow-up playtest should confirm the swap doesn't read as arbitrary in an actual match (the art is still stock and faction-agnostic, so nothing should look wrong), and that `docs/ENERGY_BALANCE.md`'s updated comparison still holds up as a description of the live power ledger.
+

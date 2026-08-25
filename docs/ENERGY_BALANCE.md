@@ -56,7 +56,7 @@ This isn't just flavor — it's backed by the existing power ledger's own asymme
 footprint already carries heavier power drains than Assembly's direct counterparts at matching cost tiers:
 
 - `ATEK` (Consortium Tech Center) drains -200 vs `STEK` (Assembly Tech Center) -100, at the same 1500 cost.
-- `GAP` (Consortium Gap Generator) drains -60/800 vs Assembly's closest analog, `SAM` (-40/700).
+- `GAP` (Consortium Gap Generator) drains -60/800 vs Assembly's closest analog, `AGUN` (-50/800) — updated from `SAM` when issue #84 swapped which side builds `AGUN`/`SAM`.
 
 Giving Consortium the large, late Hydrogen Plant helps offset that existing heavier late-tech-tree drain
 burden with a correspondingly large supply option. Assembly's cheaper, earlier Wind Turbine Array suits its
