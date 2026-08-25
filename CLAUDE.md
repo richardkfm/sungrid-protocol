@@ -113,6 +113,16 @@ force was most of its ~43-unit army cap in one wave. Both eased (War Factory now
 buildings; attack force 25→16 with a longer rebuilding gap; army cap ~43→~30) — ground-war tuning only,
 separate from issue #75's banking-speed retune of the same personality.
 
+**Only `AGUN`/`SAM` can hit an airborne target — `ARCT`/`SGTUR` never can.** Both anti-air structures are
+`^AutoTargetAir`; the other two defenses every personality builds are `^AutoTargetGround` and will not
+engage a drone or aircraft regardless of tuning. Every `SquadManagerBotModule` already treats `sgdro`/
+`sgdrs` as air units (`AirUnitsTypes`, `AircraftTargetType: AirborneActor`), so bots do actively hunt
+drones — but only if they have an anti-air answer standing. Issue #83 found Easy Grid Broker's
+`DefenseTypes` had `sam` (Assembly-only) but not `agun` (its Consortium equivalent), leaving a
+Consortium-side Easy Grid Broker with zero anti-air structures — fixed by adding `agun` alongside `sam`,
+same pattern every other personality already used. Easy Grid Broker still doesn't build the Drone Bay or
+either drone itself (deliberate, per issue #78 — it stays ground-only to teach the mode).
+
 **The roster the bots play on (issue #78).** Until this pass `ai.yaml` contained zero occurrences of any
 Sungrid-original building, so #67 taught the AI the *mode* but not the *content*: every bot match
 silently exercised the stock RA tech tree, and — because issue #22 gave all three superweapons an `sgdai`

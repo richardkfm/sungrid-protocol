@@ -336,7 +336,10 @@ Player:
 		ProductionTypes: barr,tent,weap
 		NewProductionCashThreshold: 8000
 		SiloTypes: silo
-		DefenseTypes: pbox,gun,sam,arct,sgtur
+		# agun added for issue #83: sam was the only anti-air entry, and it needs the Soviet-derived
+		# (Assembly) tech tree - a Consortium-side Easy Grid Broker had no anti-air structure at all,
+		# leaving a handful of e3 Rocket Soldiers as its only counter to enemy aircraft and drones.
+		DefenseTypes: pbox,gun,sam,agun,arct,sgtur
 		BuildingLimits:
 			barr: 1
 			tent: 1
@@ -357,6 +360,7 @@ Player:
 			pbox: 2
 			gun: 2
 			sam: 1
+			agun: 1
 			arct: 2
 			fix: 1
 			rcyd: 2
