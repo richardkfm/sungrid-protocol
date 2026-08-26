@@ -393,7 +393,15 @@ SGHAU:
 		Type: UnloadScrap
 		Resources: Scrap
 		BaleUnloadDelay: 1
-		SearchFromProcRadius: 15
+		# 15 (copied from HARV's Ore tuning) is a search radius from the Depot's dock
+		# position, not from SGHAU itself -- fine for Ore, which is deliberately placed
+		# near a Refinery, but wrong for Scrap, which SpawnsResourceOnDeath drops
+		# wherever a unit dies. A death at the front line is routinely much farther than
+		# 15 cells from the Depot, so FindAndDeliverResources's ClosestHarvestablePos
+		# never even looked there and the drop just sat uncollected (issue #89). Raised
+		# to cover a typical map's base-to-frontline distance; reasoned from common
+		# competitive OpenRA map dimensions, not measured against this mod's own maps.
+		SearchFromProcRadius: 50
 		SearchFromHarvesterRadius: 8
 		HarvestFacings: 8
 		EmptyCondition: no-scrap

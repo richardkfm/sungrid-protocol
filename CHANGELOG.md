@@ -189,6 +189,22 @@ Direct player feedback on the Hauler Drone, three separate fixes:
   overwrote the nicer photographic cameo with the flatter placeholder icon the art generator falls
   back to — the photo cameo pass just needed to be re-run afterward. Back to the version players
   already knew, confirmed byte-identical to what shipped before this whole follow-up started.
+- **Fixed dropped Scrap not getting collected (issue #89).** The Hauler Drone's automatic resource
+  search was inherited from the Ore Truck's tuning, which searches close to the Recycling Depot —
+  reasonable for Ore, which sits near a Refinery on purpose, but wrong for Scrap, which drops
+  wherever a unit dies in combat, usually well away from base. Its search radius is now wide enough
+  to reach a typical battlefield instead of just the Depot's doorstep. A second report from the same
+  feedback — units continuing to fire on Scrap piles — is still being investigated; the resource
+  itself and the wreck sitting on it were both checked and neither should be attackable, so this
+  needs more detail from a live match before it can be fixed.
+- **Found and fixed the drones-still-firing-on-wrecks bug (issue #90) — engine-level, not a rules
+  change.** Turned out to be specifically the drones (Hover-type attackers): once they kill something,
+  they kept closing in on and hovering over the empty spot where it died instead of disengaging,
+  because the fallback position they fall back to when a target dies is always treated as "still
+  there" by the engine's own target-validity check. That let them linger right on top of a fresh kill
+  and keep finding other things to shoot at nearby, which is what looked like continued fire on the
+  wreck itself. Fixed in the pinned engine build (`ENGINE_VERSION` bumped) — this is the mod's first
+  engine-level patch since the original build-compatibility fix from issue #20.
 
 ## Open / recorded but not implemented
 
