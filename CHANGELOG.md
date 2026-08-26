@@ -185,6 +185,10 @@ Direct player feedback on the Hauler Drone, three separate fixes:
   terrain type that was never actually defined in any tileset — a gap that existed since Scrap was
   first added (issue #5) and stayed invisible only because no map ever had Scrap painted on it until
   now. All four tilesets now define it, matching how Ore and Gems have always worked.
+- **Restored the Hauler Drone's build-menu cameo (issue #88).** The art regen above accidentally
+  overwrote the nicer photographic cameo with the flatter placeholder icon the art generator falls
+  back to — the photo cameo pass just needed to be re-run afterward. Back to the version players
+  already knew, confirmed byte-identical to what shipped before this whole follow-up started.
 
 ## Open / recorded but not implemented
 

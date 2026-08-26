@@ -3761,6 +3761,10 @@ def main():
     for fullness, filename in (("full", "sghau.png"), ("half", "sghauhalf.png"), ("empty", "sghauempty.png")):
         frames = sghau_frames(fullness)
         save_pngsheet(sheet_of(frames, SGHAU_W, SGHAU_H), filename, SGHAU_W, SGHAU_H, len(frames), indexed=True)
+    # This procedural icon is a fallback only -- "sghau" is in gen_photo_cameos.py's
+    # CROPS, whose photographic cameo is what actually ships. Re-run that script
+    # after this one any time sghau_draw() changes, or the shipped cameo reverts
+    # to this flatter placeholder (happened once already -- issue #86 follow-up).
     save_pngsheet(
         make_icon(sghau_draw, SGHAU_W, SGHAU_H, "full", "idle", label=ICON_LABELS["sghau"]),
         "sghauicon.png", ICON_W, ICON_H, 1,
