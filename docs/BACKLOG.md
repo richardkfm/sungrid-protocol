@@ -2498,3 +2498,23 @@ The drones use a different trait, `AttackAircraft` (`AttackType: Hover`, `mods/s
 
 **Definition of done:** Not yet met — pending a real local build confirming a Hover-type drone disengages immediately on a kill instead of lingering and firing for several more seconds.
 
+---
+
+### 91. Scrap has always visually rendered as Ore — placeholder sequence aliasing, never noticed until Scrap started actually appearing in matches
+
+**Problem:** Player feedback while chasing issue #89: "it looks like a destroyed enemy tank now turns into ore." Correct observation — `mods/sungrid/sequences/misc.yaml`'s `scrap01`..`scrap04` sequence entries (referenced by `world.yaml`'s `ResourceRenderer.ResourceTypes.Scrap.Sequences`) were literally aliased to `gold01.tem`..`gold04.tem`, i.e. Ore's own stock sprite files, `TilesetFilenames` and all. A Scrap pile has never had its own art — it has rendered as ordinary gold nuggets since the day Scrap was first defined (issue #5).
+
+**Root cause, and why nobody caught it sooner:** same story as issue #87's tileset gap — per issue #5/#87, **no map has ever had Scrap painted on it**, so this placeholder had zero live exposure until issue #86's `SpawnsResourceOnDeath` became the first thing to ever place Scrap on a real map. The moment it started actually appearing, it was immediately, correctly recognized as "that's just ore." This does **not** affect which unit can actually collect it — `Harvester.CanHarvestCell` matches on the resource's internal type string ("Scrap"), not its sprite, and `HARV`'s `Harvester.Resources: Ore, Gems` still doesn't list Scrap — but the visual identity gap made that mechanical distinction impossible to see and reasonably led to "why do we even need a separate Hauler Drone if this is just Ore."
+
+**Fix:** New `scrap_pile_draw()` in `mods/sungrid/bits/gen_concept_art.py` — four escalating density tiers (matching Ore/Gems' own low-to-high sequence progression) of a flat, top-down heap of salvaged plate metal, a pipe, and a gear, native 24×24 to match the classic RA resource-tile footprint. Indexed on the stock player palette per this repo's in-world-sprite convention, deliberately avoiding gold/amber tones so nothing lands on the team-color remap ramp by mistake (a resource pile has no owner). Wrote real `scrap01.png`..`scrap04.png` PngSheets and repointed `misc.yaml`'s `scrap01`..`scrap04` entries at them instead of `gold01`..`04.tem`, dropping the now-unneeded `TilesetFilenames` overrides (one generated image works across every tileset, unlike the classic per-tileset stock assets it replaced).
+
+**Verification:** Re-ran the full `gen_concept_art.py`; the only unexpected diff was the pre-existing `make_icon` cameo-encoding non-determinism already documented in issue #86 (confirmed again here: every changed `*icon.png` belongs to an actor in `gen_photo_cameos.py`'s `CROPS` table, so none of them are what actually ships — reverted those and re-ran `gen_photo_cameos.py`, which reproduced the committed photographic cameos byte-for-byte). Final diff scoped to `gen_concept_art.py`, `misc.yaml`, and the four new `scrap0N.png` files. Rendered and visually compared all four density tiers at 10x scale — reads as a distinct metal-scrap silhouette (gear, plates, pipe) at every tier, nothing resembling Ore's nuggets or Gems' crystals. No engine build available to confirm in a live client (`--check-yaml`/`--png-sheet-export` would normally verify a resource sequence resolves correctly, per the "What can and can't be verified" section of `CLAUDE.md`).
+
+**Scope:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/scrap01.png` (new), `mods/sungrid/bits/scrap02.png` (new), `mods/sungrid/bits/scrap03.png` (new), `mods/sungrid/bits/scrap04.png` (new), `mods/sungrid/sequences/misc.yaml`, `docs/BACKLOG.md`.
+
+**Labels:** `type:art`, `area:units`, `needs:build-verification`
+
+**Phase:** Not tied to a specific roadmap phase — direct follow-up to issue #89's player feedback.
+
+**Definition of done:** Art and sequence rewiring done and scoped as described — **not yet fully met**, pending `--check-yaml`/`--png-sheet-export` or a live client confirming the new sequences actually load and render (same standing limitation as every other asset pass in this repo's history).
+

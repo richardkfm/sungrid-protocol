@@ -934,22 +934,19 @@ resources:
 		Filename: gem04.tem
 		TilesetFilenames:
 			SNOW: gem04.sno
+	# Real Scrap art (docs/BACKLOG.md issue #91) -- these four used to be
+	# aliased straight to gold01..04.tem (Ore's own sprite), so every Scrap
+	# pile in the game rendered as ordinary Ore nuggets. Generated PngSheets
+	# (mods/sungrid/bits/gen_concept_art.py), not classic per-tileset assets,
+	# so no TilesetFilenames override is needed -- one image works everywhere.
 	scrap01:
-		Filename: gold01.tem
-		TilesetFilenames:
-			SNOW: gold01.sno
+		Filename: scrap01.png
 	scrap02:
-		Filename: gold02.tem
-		TilesetFilenames:
-			SNOW: gold02.sno
+		Filename: scrap02.png
 	scrap03:
-		Filename: gold03.tem
-		TilesetFilenames:
-			SNOW: gold03.sno
+		Filename: scrap03.png
 	scrap04:
-		Filename: gold04.tem
-		TilesetFilenames:
-			SNOW: gold04.sno
+		Filename: scrap04.png
 
 shroud:
 	shroud:
