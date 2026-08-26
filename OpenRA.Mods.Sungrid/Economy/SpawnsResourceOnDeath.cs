@@ -35,6 +35,11 @@ namespace OpenRA.Mods.Sungrid.Economy
 			"Wrong terrain, a full cell, or a cell already holding a different resource are all skipped.")]
 		public readonly int MaxRange = 8;
 
+		[Desc("Ticks before this drop decays back out if it hasn't been collected by then, so a battlefield",
+			"doesn't turn into a permanent resource patch. Assumes 25 ticks/second (Normal game speed) like the",
+			"rest of this mod's tick-based tuning. Set to 0 to never decay.")]
+		public readonly int DecayDelay = 3750;
+
 		public override object Create(ActorInitializer init) { return new SpawnsResourceOnDeath(this); }
 	}
 
@@ -58,8 +63,13 @@ namespace OpenRA.Mods.Sungrid.Economy
 				.Cast<CPos?>()
 				.FirstOrDefault();
 
-			if (cell != null)
-				resourceLayer.AddResource(Info.ResourceType, cell.Value, Info.Amount);
+			if (cell == null)
+				return;
+
+			resourceLayer.AddResource(Info.ResourceType, cell.Value, Info.Amount);
+
+			var decayManager = self.World.WorldActor.TraitOrDefault<ResourceDecayManager>();
+			decayManager?.ScheduleDecay(self.World, cell.Value, Info.ResourceType, Info.Amount, Info.DecayDelay);
 		}
 	}
 }

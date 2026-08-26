@@ -26,6 +26,12 @@ Terrain:
 		AcceptsSmudgeType: Crater, Scorch
 		Color: 948060
 		RestrictPlayerColor: true
+	TerrainType@Scrap:
+		Type: Scrap
+		TargetTypes: Ground
+		AcceptsSmudgeType: Crater, Scorch
+		Color: 705A4A
+		RestrictPlayerColor: true
 	TerrainType@Tree:
 		Type: Tree
 		TargetTypes: Ground
