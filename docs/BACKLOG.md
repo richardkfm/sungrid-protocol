@@ -2450,3 +2450,25 @@ Exception of type `System.IO.InvalidDataException`: Tileset 'TEMPERAT' lacks ter
 
 **Definition of done:** Met — the shipped cameo is confirmed byte-identical to the version the player said was nicer, and the regen-order footgun is now commented at the call site that caused it.
 
+---
+
+### 89. Hauler Drone still not collecting wreck-triggered Scrap — root cause found, fixed; a second reported symptom (units firing on Scrap) still open
+
+**Problem:** Direct player feedback after issues #86/#87 shipped: dropped Scrap still isn't being collected by the Hauler Drone, and the player also reports their own units "won't stop attacking" Scrap piles.
+
+**(1) Collection — root cause found and fixed.** `SGHAU`'s `Harvester.SearchFromProcRadius` was `15`, copy-pasted from `HARV`'s own Ore tuning in `mods/sungrid/rules/vehicles.yaml`. Read `FindAndDeliverResources.ClosestHarvestablePos` and `Harvester.cs` directly from the pinned `ENGINE_VERSION` source to confirm what this field actually means: whenever a Hauler has no `lastHarvestedCell` yet (fresh off a delivery, or has never harvested), its search is centered on **the Depot's dock position**, not on the Hauler itself, within `SearchFromProcRadius` cells. That's the right assumption for Ore, which is deliberately placed near a Refinery — but `SpawnsResourceOnDeath` (issue #86) drops Scrap wherever a unit dies, which on any real match is routinely far outside 15 cells of the Recycling Depot. `ClosestHarvestablePos` simply never looked there: `LastSearchFailed` came back true and the Hauler sat idle, exactly matching the report. Fixed by raising `SGHAU.Harvester.SearchFromProcRadius` 15 → **50**, reasoned from typical competitive OpenRA map base-to-frontline distances (not measured against this mod's own 75 maps). `SearchFromHarvesterRadius` (8, the smaller radius used once a Hauler already has a `lastHarvestedCell`) is unchanged — that governs mopping up a local cluster once it's already out collecting, which isn't what was broken.
+
+**(2) "My units won't stop attacking them" — investigated, no code-level cause found yet.** Checked the mechanisms that could make this literally true: resource-layer cells (`Scrap`, `Ore`, `Gems` alike) are terrain, not actors, and have no `Targetable`/`Health` — the game engine has no path for a weapon to "attack" one directly. The obvious other suspect, the dead unit's own husk sitting where it dropped Scrap, is explicitly `^Husk`/`^HelicopterHusk`/`^PlaneHusk: Targetable: TargetTypes: ..., NoAutoTarget` plus (for ground husks) `RequiresForceFire: true` in `mods/sungrid/rules/defaults.yaml` — `AutoTarget` is supposed to skip these entirely; nothing in issue #86/#87's changes touched husk `Targetable`/`Health`. `HarvestResource.cs` (the Hauler's actual pickup activity) is fully generic over resource type, so nothing Scrap-specific there either. Without a live client to reproduce what's actually being clicked/targeted, this remains unconfirmed — asked the player for specifics (what exactly gets attacked: the wreck, a nearby enemy unit, or the bare ground) rather than guess at a fix blind.
+
+**Unverified, same standing caveat as issues #86/#87:** no `dotnet`/engine build in this sandbox. The `SearchFromProcRadius` change is a single YAML value with a well-understood, documented effect (cross-checked against the real `HarvesterInfo`/`FindAndDeliverResources` source), so it's lower-risk than the C# in #86/#87, but still not run.
+
+**Scope:** `mods/sungrid/rules/vehicles.yaml` (`SGHAU.Harvester.SearchFromProcRadius`), `docs/BACKLOG.md`.
+
+**Verification:** Root cause for (1) confirmed by reading `Harvester.cs` and `FindAndDeliverResources.cs` at the pinned `ENGINE_VERSION` commit rather than assumed — `SearchFromProcRadius`'s doc comment ("Initial search radius (in cells) from the refinery that created us") and `ClosestHarvestablePos`'s actual search-origin logic (`dockPos` when `lastHarvestedCell` is null) both directly support the diagnosis. (2) investigated against the real `Targetable`/husk rules in this repo and ruled out the mechanisms checked; not yet confirmed against a live report of what's actually happening.
+
+**Labels:** `type:bug`, `type:balance`, `area:units`, `needs:build-verification`, `needs:info`
+
+**Phase:** Not tied to a specific roadmap phase — hotfix/follow-up to issue #86.
+
+**Definition of done:** (1) Met for the radius fix, pending a real build/match to confirm distant Scrap now actually gets collected. (2) Not met — needs the player's account of what's being attacked before a fix can be targeted.
+
