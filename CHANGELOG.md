@@ -173,13 +173,18 @@ Direct player feedback on the Hauler Drone, three separate fixes:
   from the Recycling Depot's original design (issue #5), revisited now that it's a direct request —
   it needed genuinely new engine-level code, which is why it didn't ship the first time. Any ground
   unit (both factions, not just Sungrid-original ones) now drops a small amount of Scrap where it
-  dies, which an idle Hauler Drone collects the same way it collects map-painted Scrap. **Not yet
-  verified in a real build** — this environment can't compile or run the engine, so treat this as
-  unverified until a local build confirms it in a real match.
+  dies, which an idle Hauler Drone collects the same way it collects map-painted Scrap. A dropped
+  pile decays after 150 seconds if nobody collects it, so a contested chokepoint can't slowly turn
+  into a permanent farmable resource node — battlefield debris is a temporary bonus, not new economy.
 - **Faster, so it survives harassment better.** Speed 72 → 100 — it was matched to the Ore Truck's
   speed despite having under half its HP and lighter armor. Still slower than dedicated raiders, so
   it's still a legitimate harassment target, just no longer an automatic loss the moment anything
   catches it.
+- **Fixed a real crash (issue #87):** the very first time a unit died in an actual match, the game
+  crashed with `Tileset 'TEMPERAT' lacks terrain type 'Scrap'`. The Scrap resource had referenced a
+  terrain type that was never actually defined in any tileset — a gap that existed since Scrap was
+  first added (issue #5) and stayed invisible only because no map ever had Scrap painted on it until
+  now. All four tilesets now define it, matching how Ore and Gems have always worked.
 
 ## Open / recorded but not implemented
 

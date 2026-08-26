@@ -2398,3 +2398,35 @@ Deliberately untouched: every other `BuildingDelays` entry, `CoveragePercent`/`C
 
 **Definition of done:** Art and speed changes are done and match this description. The C# trait compiles, the mod loads with `--check-yaml`/`--check-missing-sprites` passing, and a real skirmish confirms Scrap actually appears and gets collected after a unit dies — **not yet met**, pending a real local build per `docs/PLAYTESTING.md`.
 
+---
+
+### 87. Issue #86's unverified caveat came true: `SpawnsResourceOnDeath` crashed a real alpha30 match — FIXED, plus a decay timer on the drop
+
+**Problem:** Reported from an actual Windows alpha30 playtest on Climax (by Wippie), with a full crash log:
+
+```
+Exception of type `System.IO.InvalidDataException`: Tileset 'TEMPERAT' lacks terrain type 'Scrap'
+   at OpenRA.Mods.Common.Terrain.DefaultTerrain.GetTerrainIndex(String type)
+   at OpenRA.Mods.Common.Traits.ResourceLayer.CreateResourceCell(String resourceType, CPos cell, Int32 density)
+   at OpenRA.Mods.Common.Traits.ResourceLayer.AddResource(String resourceType, CPos cell, Byte amount)
+   at OpenRA.Mods.Sungrid.Economy.SpawnsResourceOnDeath.OpenRA.Mods.Common.Traits.INotifyKilled.Killed(Actor self, AttackInfo e)
+```
+
+**Root cause — pre-existing, latent, and older than issue #86.** `mods/sungrid/rules/world.yaml`'s `ResourceLayer.ResourceTypes.Scrap` (and `EditorResourceLayer`'s matching copy) has always declared `TerrainType: Scrap`, but **no tileset ever defined a `TerrainType@Scrap` block** — `temperat.yaml`/`desert.yaml`/`snow.yaml`/`interior.yaml` only ever had `TerrainType@Ore`/`TerrainType@Gems`. `ResourceLayer.CreateResourceCell` calls `Map.Rules.TerrainInfo.GetTerrainIndex(resourceInfo.TerrainType)`, which throws if the name isn't registered for the map's tileset. This path is only exercised when a Scrap resource cell is actually *created* — at world-load (for a map with Scrap already painted) or via `IResourceLayer.AddResource`. Per issue #5, **no shipped map has ever had Scrap painted**, so this path had literally never run in this mod's history until issue #86's `SpawnsResourceOnDeath` became the first thing to ever call `AddResource("Scrap", ...)` in a live game. `CanAddResource` (which the trait checks first) doesn't call `GetTerrainIndex` at all — it only reads the cell's *existing* terrain — so it happily returned true and let the doomed `AddResource` call through. Not a bug in the new trait's logic; the trait was the first code path exercising a gap that had existed since issue #5.
+
+**Fix:** Added `TerrainType@Scrap` to all four tilesets (`mods/sungrid/tilesets/{temperat,desert,snow,interior}.yaml`), mirroring the existing `TerrainType@Ore`/`TerrainType@Gems` blocks exactly (`TargetTypes: Ground`, `AcceptsSmudgeType: Crater, Scorch`, `RestrictPlayerColor: true`), with a new minimap `Color: 705A4A` — a rust-tinted gray distinct from Ore's tan (`948060`) and Gems' purple (`8470FF`), matching the `LEGACY_GRAY`/`RUST` tones the Scrap sprite art already uses (`mods/sungrid/bits/gen_concept_art.py`). This also unblocks issue #5's still-open "hand-paint Scrap in the map editor" follow-up, which depended on the exact same terrain type and would have hit the identical crash from the Editor.
+
+**Also requested in the same report: dropped Scrap needs a lifetime.** `SpawnsResourceOnDeath` as shipped in issue #86 had no decay at all — a drop sat forever exactly like map-painted Scrap, which on reflection is a real balance problem the crash report caught in passing: repeated fighting at one chokepoint would otherwise slowly build a permanent, ever-growing resource patch out of battle debris, which was never the intent (a *temporary* battlefield bonus, not a new farmable node). Added `OpenRA.Mods.Sungrid/Economy/ResourceDecayManager.cs`, a small `ITick` trait on the `World` actor (registered in `mods/sungrid/rules/world.yaml` alongside `GridReserveController`) that tracks pending decays and calls `IResourceLayer.RemoveResource` once each one's timer elapses; `SpawnsResourceOnDeath` now calls `ResourceDecayManager.ScheduleDecay` right after adding its resource. Decay removes only that specific drop's own `Amount` — `RemoveResource` clamps at zero, so if a Hauler already collected some (or all) of it, the scheduled decay just no-ops down to whatever is left rather than double-subtracting. New `SpawnsResourceOnDeathInfo.DecayDelay` field, default **3750 ticks (150 seconds at Normal speed)** — reasoned from a 750-tick/30-second "just long enough for a nearby idle Hauler to notice and path over" baseline, times 5 per the player's explicit request, rather than a measured number. Set to 0 to disable decay entirely.
+
+**Unverified, same standing caveat as issue #86:** no `dotnet`/engine build available in this sandbox. The tileset fix is a direct, mechanical copy of the already-working `Ore`/`Gems` pattern (low risk), but the new `ResourceDecayManager` trait is fresh C# in the same boat as `SpawnsResourceOnDeath` itself — written against the real pinned-engine `World.WorldTick`/`IResourceLayer` API, not compiled or run. Needs a real build and a real match (ideally one with actual combat deaths, not just a fresh boot) before this is trusted.
+
+**Scope:** `mods/sungrid/tilesets/temperat.yaml`, `mods/sungrid/tilesets/desert.yaml`, `mods/sungrid/tilesets/snow.yaml`, `mods/sungrid/tilesets/interior.yaml`, `OpenRA.Mods.Sungrid/Economy/ResourceDecayManager.cs` (new), `OpenRA.Mods.Sungrid/Economy/SpawnsResourceOnDeath.cs`, `mods/sungrid/rules/world.yaml`, `docs/BACKLOG.md`.
+
+**Verification:** Root cause confirmed directly from the reported stack trace and by reading `ResourceLayer.CreateResourceCell`/`DefaultTerrain.GetTerrainIndex` at the pinned `ENGINE_VERSION` commit — not guessed. Tileset fix cross-checked byte-for-byte against the existing `Ore`/`Gems` blocks in the same files. `ResourceDecayManager` cross-checked against `World.cs`'s real `WorldTick` property and the `ITick`/`TraitLocation`/`SystemActors` usage already proven to compile in this same project's own `GridReserveController`. No `--check-yaml`, no build, no live match — same limitation as issue #86.
+
+**Labels:** `type:bug`, `type:balance`, `area:units`, `needs:build-verification`
+
+**Phase:** Not tied to a specific roadmap phase — hotfix for a live-reported crash, follow-up to issue #86.
+
+**Definition of done:** The crash no longer reproduces, and dropped Scrap disappears after `DecayDelay` if uncollected — **not yet met**, pending a real local build and a match with actual unit deaths, same as issue #86.
+
