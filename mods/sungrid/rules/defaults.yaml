@@ -304,6 +304,9 @@
 	FireWarheadsOnDeath:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	SpawnsResourceOnDeath:
+		ResourceType: Scrap
+		Amount: 2
 	WithFacingSpriteBody:
 	WithParachute:
 		ShadowImage: parach-shadow
@@ -368,6 +371,9 @@
 			FireDeath: 5
 			ElectricityDeath: 6
 		CrushedSequence: die-crushed
+	SpawnsResourceOnDeath:
+		ResourceType: Scrap
+		Amount: 1
 	AttackMove:
 	Passenger:
 		CargoType: Infantry

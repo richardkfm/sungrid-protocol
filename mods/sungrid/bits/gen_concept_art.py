@@ -2515,10 +2515,11 @@ def _sghau_wheel(sd, cx, cy, side):
     x0, x1 = cx + side * 4.0, cx + side * 8.0
     sd.rect([min(x0, x1), cy - 2.0, max(x0, x1), cy + 2.0], fill=POLE_DARK)
     sd.line([(cx + side * 7.8, cy - 1.7), (cx + side * 7.8, cy + 1.7)],
-            fill=lit(LEGACY_GRAY_DARK, 0.3), width=0.6)
+            fill=lit(LEGACY_GRAY_DARK, 0.5), width=0.7)
+    sd.px(cx + side * 6.0, cy, lit(LEGACY_GRAY, 0.2))
     for ty in (-1.0, 1.0):
         sd.line([(cx + side * 4.6, cy + ty), (cx + side * 7.4, cy + ty)],
-                fill=lit(LEGACY_GRAY_DARK, 0.12), width=0.5)
+                fill=lit(LEGACY_GRAY_DARK, 0.22), width=0.5)
 
 
 def _sghau_scrap_col(x, y):
@@ -2577,8 +2578,8 @@ def sghau_draw(sd, w, h, fullness="full", pose="idle", light_on=True):
     hull = [(cx, cy - 11.0), (cx + 2.6, cy - 8.6), (cx + 4.2, cy - 6.2), (cx + 4.2, cy + 9.2),
             (cx - 4.2, cy + 9.2), (cx - 4.2, cy - 6.2), (cx - 2.6, cy - 8.6)]
     sd.poly(hull, fill=_HAU_HULL, outline=dim(_HAU_HULL, 0.45))
-    sd.line([(cx - 3.8, cy - 6.0), (cx - 3.8, cy + 8.8)], fill=lit(_HAU_HULL, 0.3), width=0.6)
-    sd.line([(cx - 3.0, cy - 8.0), (cx - 0.4, cy - 10.2)], fill=lit(_HAU_HULL, 0.22), width=0.5)
+    sd.line([(cx - 3.8, cy - 6.0), (cx - 3.8, cy + 8.8)], fill=lit(_HAU_HULL, 0.45), width=0.7)
+    sd.line([(cx - 3.0, cy - 8.0), (cx - 0.4, cy - 10.2)], fill=lit(_HAU_HULL, 0.38), width=0.6)
     sd.line([(cx + 3.7, cy - 5.6), (cx + 3.7, cy + 8.8)], fill=dim(_HAU_HULL, 0.35), width=0.6)
     # Prow plough: the blunt blade the rover shoves debris with, and the front
     # of the silhouette that says which way it is pointing.
@@ -2599,12 +2600,12 @@ def sghau_draw(sd, w, h, fullness="full", pose="idle", light_on=True):
     for ry in (1.2, 3.6, 6.0):
         sd.line([(bx0 + 0.5, by0 + ry), (bx1 - 0.5, by0 + ry)], fill=dim(_HAU_HULL, 0.5), width=0.4)
     _sghau_load(sd, cx, cy, frac)
-    # Bed rim caps on the player-remap ramp: the team-coloured element. Short
-    # segments at the corners rather than full-length rails -- a bright bar
-    # down each side outlines the sprite and flattens it back into a crate.
+    # Bed rim rails on the player-remap ramp: the team-coloured element. Full
+    # flank-length strips rather than corner nubs (issue #86), so ownership
+    # still reads at a glance under a full, overtopping load that could
+    # otherwise swallow corner-only caps.
     for rx in (bx0 - 0.9, bx1 + 0.1):
-        for ry in (by0 - 0.6, by1 - 1.8):
-            sd.rect([rx, ry, rx + 0.8, ry + 2.4], fill=SUN_GOLD)
+        sd.rect([rx, by0 - 0.6, rx + 0.8, by1 - 0.4], fill=SUN_GOLD)
     # Working gear: the grapple arm swings out over the prow on the harvest and
     # dock poses. Opaque marks only -- a translucent field glow is deleted
     # outright by the 1-bit indexed alpha (issue #72).

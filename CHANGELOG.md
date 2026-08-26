@@ -161,6 +161,26 @@ Not verified in a live client, per the standing blocker below. Two things specif
 whether medium-tier drones are priced right against the 1500-credit helicopters they now share a tier
 with, and whether the new bot build fractions produce a sensible opening.
 
+## Hauler Drone follow-up: art, wreck salvage, speed (issue #86)
+
+Direct player feedback on the Hauler Drone, three separate fixes:
+
+- **Sharper art.** The bed-rim team-color trim was two short corner nubs that a full load of scrap
+  could visually swallow — now full-length rails down each flank, so ownership reads at a glance
+  regardless of load state. Wheels and hull highlights got a touch more contrast against the busy
+  scrap texture.
+- **Destroyed units now leave collectible Scrap.** This is the "death-triggered wreck salvage" idea
+  from the Recycling Depot's original design (issue #5), revisited now that it's a direct request —
+  it needed genuinely new engine-level code, which is why it didn't ship the first time. Any ground
+  unit (both factions, not just Sungrid-original ones) now drops a small amount of Scrap where it
+  dies, which an idle Hauler Drone collects the same way it collects map-painted Scrap. **Not yet
+  verified in a real build** — this environment can't compile or run the engine, so treat this as
+  unverified until a local build confirms it in a real match.
+- **Faster, so it survives harassment better.** Speed 72 → 100 — it was matched to the Ore Truck's
+  speed despite having under half its HP and lighter armor. Still slower than dedicated raiders, so
+  it's still a legitimate harassment target, just no longer an automatic loss the moment anything
+  catches it.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.
