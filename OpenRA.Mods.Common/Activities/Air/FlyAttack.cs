@@ -101,6 +101,16 @@ namespace OpenRA.Mods.Common.Activities
 			attackAircraft.SetRequestedTarget(target, forceAttack);
 			hasTicked = true;
 
+			// The target has actually died (as opposed to merely being hidden by fog, which
+			// lastVisibleTarget below exists to handle) -- there is nothing left to approach or
+			// hover over at its last position, so stop immediately. Without this, useLastVisibleTarget
+			// falls through to the movement logic further down using a Terrain-type lastVisibleTarget,
+			// which Target.IsValidFor always reports as valid regardless of what (if anything) is
+			// actually there, so a Hover-type aircraft would keep closing on and orbiting the empty
+			// cell where the target used to be instead of disengaging.
+			if (target.Type == TargetType.Invalid && !targetIsHiddenActor)
+				return true;
+
 			if (!targetIsHiddenActor && target.Type == TargetType.Actor)
 			{
 				lastVisibleTarget = Target.FromTargetPositions(target);
