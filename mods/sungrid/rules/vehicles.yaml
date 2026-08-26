@@ -406,7 +406,11 @@ SGHAU:
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 72
+		# Faster than HARV (72) on purpose: SGHAU has less than half HARV's HP on
+		# Light rather than Heavy armor, so matching HARV's speed left it unable to
+		# outrun anything that could outrun HARV. Still slower than dedicated
+		# raiders (JEEP 164, APC 128) so it stays catchable, not immune to harassment.
+		Speed: 100
 	RevealsShroud:
 		Range: 4c0
 	WithHarvestAnimation:
