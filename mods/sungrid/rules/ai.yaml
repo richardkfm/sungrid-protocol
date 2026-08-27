@@ -588,14 +588,22 @@ Player:
 		MinimumConstructionYardCount: 2
 	# Required, not optional: this module is what deploys the starting MCV, so a bot without an instance
 	# of it never builds anything at all. MinimumConstructionYardCount 1 is the nerf - it deploys its
-	# opening MCV and then stays on one base, where the other personalities maintain two.
+	# opening MCV and then, unlike the other personalities' floor of two, only ever adds a second base
+	# opportunistically (AdditionalConstructionYardCount) rather than as a maintained minimum.
+	# AdditionalConstructionYardCount was 0 (no second base at all) until issue #94: raised to 1 so this
+	# personality can eventually expand, but BuildAdditionalMCVCashAmount is set well above every other
+	# personality's NewProductionCashThreshold (7000-8000) so it only spends on a second base once it is
+	# sitting on real spare cash - combined with its already-delayed, capped economy (issues #69, #82,
+	# #85), that keeps the second base arriving much later than any other personality's, not on this
+	# module's own clock.
 	McvExpansionManagerBotModule@easygridbroker:
 		RequiresCondition: enable-easygridbroker-ai
 		McvTypes: mcv
 		ConstructionYardTypes: fact
 		McvFactoryTypes: weap
 		MinimumConstructionYardCount: 1
-		AdditionalConstructionYardCount: 0
+		AdditionalConstructionYardCount: 1
+		BuildAdditionalMCVCashAmount: 12000
 	UnitBuilderBotModule@rush:
 		RequiresCondition: enable-rush-ai
 		UnitsToBuild:

@@ -78,7 +78,8 @@ Vault), `rules/ai.yaml` (bot module) and `chrome/ingame-player.yaml` (HUD + brie
 **`docs/GAME_MODES.md` is the spec and documents every constant with its reasoning — read it first.**
 
 Shipped tuning: `Capacity` 8000/Vault, `DepositRate` 3 Credits/tick (~75/sec),
-`MinimumOperatingBalance` 3000, `MaximumTargetPercent` 100, `BaseTargetPerPlayer` 15000,
+`MinimumOperatingBalance` 3000, `MaximumTargetPercent` 100, `BaseTargetPerPlayer` 20000 (raised from
+15000 by issue #93 - AI opponents were reaching Lockdown too soon),
 `LockdownDurationTicks` 2250 (90s). On by default.
 
 Four bugs worth remembering, because each one came from the same blind spot — the mode's pieces read
@@ -95,6 +96,10 @@ each other's state and it is easy to leave one of them out:
 - **#75/#76** — banking was fast enough that the raid window Core Rule 4 depends on wasn't real
   (hence `DepositRate` 3), and the Lockdown countdown was broadcast once and then invisible for the
   whole 90-second hold (hence `GridReserveController.LockdownTicksRemaining`).
+- **#92** — `#76` wired `LockdownTicksRemaining` into `GridReserveHudLogic` (the local player's own HUD)
+  but never into `GridReserveStandingsLogic` (the observer scoreboard), so an observer - including a
+  player who dropped to spectating via `EarlyGameOver` - had no way to see the countdown at all during
+  the exact "final timer" hold that matters most. Same fix, second widget.
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Six lobby personalities: the four
@@ -105,16 +110,21 @@ preferentially raid enemy Vaults and Turtle AI doesn't drop turtling against an 
 Gotcha for any future personality: `McvExpansionManagerBotModule` is what deploys the starting MCV, so
 a personality with no instance of it never builds anything at all.
 
-**Easy Grid Broker AI never opens a second base** — `MinimumConstructionYardCount: 1` /
-`AdditionalConstructionYardCount: 0` is deliberate (issue #69). A player who reports it "expanding" is
-seeing its pace, not a second Construction Yard: issue #82 found its War Factory was undelayed (so it
-reached production parity with a human on the bot's usual no-hesitation clock) and its 25-unit attack
-force was most of its ~43-unit army cap in one wave. Both eased (War Factory now delayed like its other
-buildings; attack force 25→16 with a longer rebuilding gap; army cap ~43→~30) — ground-war tuning only,
-separate from issue #75's banking-speed retune of the same personality. Both delays pushed out further
-still by issue #85 (weap `BuildingDelays` 3000→5000; `GridReserveBotModule@easygridbroker`'s
-`StartDelayTicks` 15000→18000) after feedback that the War Factory and first Battery Bank still arrived
-too soon.
+**Easy Grid Broker AI now permits (not requires) a second base, and only late** —
+`MinimumConstructionYardCount: 1` / `AdditionalConstructionYardCount: 0` was deliberate (issue #69): a
+player who reported it "expanding" was seeing its pace, not a second Construction Yard. Issue #82 found
+its War Factory was undelayed (so it reached production parity with a human on the bot's usual
+no-hesitation clock) and its 25-unit attack force was most of its ~43-unit army cap in one wave. Both
+eased (War Factory now delayed like its other buildings; attack force 25→16 with a longer rebuilding
+gap; army cap ~43→~30) — ground-war tuning only, separate from issue #75's banking-speed retune of the
+same personality. Both delays pushed out further still by issue #85 (weap `BuildingDelays` 3000→5000;
+`GridReserveBotModule@easygridbroker`'s `StartDelayTicks` 15000→18000) after feedback that the War
+Factory and first Battery Bank still arrived too soon. Issue #94 then raised
+`AdditionalConstructionYardCount` 0→1 and added `BuildAdditionalMCVCashAmount: 12000` (every other
+personality uses the engine default 5000, well below even the 7000-8000 `NewProductionCashThreshold`
+other personalities use elsewhere) so a second base is now possible but only once this personality is
+sitting on real spare cash - which its already-delayed, capped economy pushes well past when any other
+personality would expand.
 
 **Only `AGUN`/`SAM` can hit an airborne target — `ARCT`/`SGTUR` never can.** Both anti-air structures are
 `^AutoTargetAir`; the other two defenses every personality builds are `^AutoTargetGround` and will not
