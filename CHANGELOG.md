@@ -205,6 +205,11 @@ Direct player feedback on the Hauler Drone, three separate fixes:
   and keep finding other things to shoot at nearby, which is what looked like continued fire on the
   wreck itself. Fixed in the pinned engine build (`ENGINE_VERSION` bumped) — this is the mod's first
   engine-level patch since the original build-compatibility fix from issue #20.
+- **Gave Scrap its own art (issue #91).** Player feedback: "a destroyed enemy tank turns into ore" —
+  and it genuinely did, visually. Scrap's four resource-pile stages had been aliased straight to Ore's
+  own sprite files since Scrap was first added, which had zero effect until Scrap started actually
+  appearing on the battlefield. Scrap now renders as its own thing: a heap of salvaged plate metal,
+  a pipe, and a gear, distinct from Ore's gold nuggets and Gems' purple crystals.
 
 ## Open / recorded but not implemented
 

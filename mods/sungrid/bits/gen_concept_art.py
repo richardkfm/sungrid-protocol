@@ -3617,6 +3617,73 @@ ICON_DRAWS = {"arct": arct_icon_draw}
 ACCENT_FRAMES = {"sgrel": sgrel_frame}
 
 
+# ---------------------------------------------------------------------------
+# Scrap resource pile (issue #91): the terrain resource tile the Recycling
+# Depot/Hauler Drone economy actually collects. Its four density tiers
+# (scrap01..scrap04, matching gold01..gold04's low-to-high progression) never
+# had real art -- mods/sungrid/sequences/misc.yaml literally pointed
+# scrap01..04 at gold01..04.tem, so every Scrap pile rendered as ordinary Ore
+# nuggets. This went unnoticed because no map ever had Scrap painted on it
+# until issue #86's SpawnsResourceOnDeath became the first thing to ever
+# place Scrap on a live map -- at which point a player reported "a destroyed
+# enemy tank turns into ore", which is exactly what was happening. Native
+# 24x24 to match the classic RA resource-tile footprint: a flat, top-down
+# heap of salvaged plate metal, a pipe, and a gear, escalating in size/density
+# across the four tiers. Deliberately no gold/amber tones (RUST reads clearly
+# distinct from SUN_GOLD in to_indexed()'s remap-ramp distance check -- see
+# CLAUDE.md's art-pipeline rule about in-world sprites being indexed on the
+# player palette), so a Scrap pile never accidentally colour-matches Ore's
+# own remapped highlight.
+SCRAP_W, SCRAP_H = 24, 24
+
+
+def _scrap_plate(sd, x, y, pw, ph, tone):
+    """A single bent sheet-metal fragment: flat top-down rectangle with a lit
+    top edge and a dim underside crease -- no rotation, since a rectangle
+    already reads as a plate lying flat from directly above."""
+    sd.rect([x, y, x + pw, y + ph], fill=tone)
+    sd.line([(x, y), (x + pw, y)], fill=lit(tone, 0.3), width=0.6)
+    sd.line([(x, y + ph), (x + pw, y + ph)], fill=dim(tone, 0.35), width=0.5)
+
+
+def scrap_pile_draw(sd, w, h, stage):
+    cx, cy = w / 2, h / 2
+
+    # Stage 1 (sparsest): a single plate and a bolt -- just enough to read as
+    # "something metal", not yet a pile.
+    _scrap_plate(sd, cx - 3, cy - 1.5, 5, 3, LEGACY_GRAY)
+    sd.ellipse([cx + 2.5, cy + 0.5, cx + 4, cy + 2], fill=LEGACY_GRAY_DARK)
+
+    if stage >= 2:
+        # A second plate at an offset (still flat/top-down) and a pipe stub.
+        _scrap_plate(sd, cx - 6, cy + 1, 4.5, 2.5, mix(LEGACY_GRAY, RUST, 0.35))
+        sd.rect([cx + 1, cy - 4, cx + 6, cy - 2.3], fill=LEGACY_GRAY_DARK)
+        sd.line([(cx + 1, cy - 4), (cx + 6, cy - 4)], fill=lit(LEGACY_GRAY_DARK, 0.35), width=0.5)
+
+    if stage >= 3:
+        # A gear (a distinct silhouette element, not just more plates) and a
+        # rust-streaked plate.
+        gx, gy, gr = cx - 1, cy + 4, 3
+        sd.ellipse([gx - gr, gy - gr, gx + gr, gy + gr], fill=LEGACY_GRAY_DARK)
+        sd.ellipse([gx - gr * 0.45, gy - gr * 0.45, gx + gr * 0.45, gy + gr * 0.45], fill=PANEL_BLUEBLACK)
+        for a in range(0, 360, 60):
+            rad = math.radians(a)
+            tx, ty = gx + math.cos(rad) * gr * 1.15, gy + math.sin(rad) * gr * 1.15
+            sd.rect([tx - 0.6, ty - 0.6, tx + 0.6, ty + 0.6], fill=LEGACY_GRAY_DARK)
+        _scrap_plate(sd, cx + 3, cy - 6, 5, 2.5, mix(LEGACY_GRAY, RUST, 0.5))
+        sd.px(cx + 5, cy - 5, lit(RUST, 0.3))
+
+    if stage >= 4:
+        # The pile crests: a bright rust plate on top (most recently added
+        # piece) plus a coil of wire for texture and a busier silhouette.
+        _scrap_plate(sd, cx - 2, cy - 3, 6, 3.5, lit(RUST, 0.15))
+        sd.line([(cx - 2, cy - 3), (cx + 4, cy - 3)], fill=lit(RUST, 0.45), width=0.6)
+        for i in range(3):
+            r = 2.2 - i * 0.6
+            sd.ellipse([cx - 7 - r, cy - 6 - r, cx - 7 + r, cy - 6 + r],
+                       outline=dim(LEGACY_GRAY, 0.2), width=0.5)
+
+
 def main():
     flat_buildings = [
         ("sgpwr", sgpwr_draw, FAM23_W, FAM23_H),
@@ -3795,6 +3862,12 @@ def main():
     motif = motif.resize((motif.width * SS, motif.height * SS), Image.NEAREST)
     save_pngsheet(make_icon_from_motif(motif, label=ICON_LABELS["disr"]),
                   "disricon.png", ICON_W, ICON_H, 1)
+
+    # Scrap resource pile (issue #91): four density tiers, one frame each,
+    # replacing the gold01..04.tem placeholder scrap01..04 previously aliased.
+    for stage, filename in ((1, "scrap01.png"), (2, "scrap02.png"), (3, "scrap03.png"), (4, "scrap04.png")):
+        save_pngsheet(render(scrap_pile_draw, SCRAP_W, SCRAP_H, stage), filename,
+                      SCRAP_W, SCRAP_H, 1, indexed=True)
 
     print("done")
 
