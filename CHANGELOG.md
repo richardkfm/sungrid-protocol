@@ -53,6 +53,9 @@ phase plan and `CLAUDE.md` for detailed current status.
 - **Swapped which side builds `AA Gun` vs `SAM Site`** (issue #84): `AA Gun` (`AGUN`) now requires the Assembly tech tree and `SAM Site` (`SAM`) now requires Consortium's, reversed from stock RA's original pairing — the heavier flak cannon reads as Assembly, the guided missile as Consortium. Cost, HP, and weapon are unchanged on both; only which faction can build which moved.
 - **Easy Grid Broker AI eased further still** (issue #85): its War Factory delay grew (3000→5000 ticks) and its first Battery Bank now starts banking Credits even later (`StartDelayTicks` 15000→18000), on top of issue #82's earlier ground-war ease.
 - **Fixed:** Grid Reserve bots banked themselves into paralysis — pinned at zero cash, they built no defenses and no army for the whole match (issue #68). Bots now build a base and an army before banking at all, and add the next Vault only when the standing ones are ~80% full.
+- **Fixed:** the Grid Lockdown countdown never showed on the observer scoreboard, only on the local player's own HUD bar (issue #92) — an observer, or a player who dropped to spectating, had no on-screen way to see the one timer that decides the match. Both widgets now show the same "GRID LOCKDOWN — Ns" countdown.
+- **Grid Reserve targets raised — AI opponents were reaching Lockdown too soon** (issue #93): `BaseTargetPerPlayer` raised from 15000 to 20000 (+33%), the single constant every player's and bot's Reserve target is computed from.
+- **Easy Grid Broker AI can now expand, just later than everyone else** (issue #94): it was permanently single-base since issue #69; it can now build one additional Construction Yard, but only once it is sitting on real spare cash (`BuildAdditionalMCVCashAmount` 12000, well above the engine default every other personality uses), so the second base still lands well after its already-delayed opening build.
 
 ## Phase 4 — Balance, CI, and release packaging
 

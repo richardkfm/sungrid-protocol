@@ -2518,3 +2518,62 @@ The drones use a different trait, `AttackAircraft` (`AttackType: Hover`, `mods/s
 
 **Definition of done:** Art and sequence rewiring done and scoped as described — **not yet fully met**, pending `--check-yaml`/`--png-sheet-export` or a live client confirming the new sequences actually load and render (same standing limitation as every other asset pass in this repo's history).
 
+---
+
+### 92. Grid Lockdown countdown missing from the observer standings HUD - FIXED
+
+**Player feedback:** "grid mode timer does not show up in hud (final timer)."
+
+**Root cause.** Issue #76 added `GridReserveController.LockdownTicksRemaining(player)` and wired it into `GridReserveHudLogic` so the *local player's own* Reserve bar swaps to a "GRID LOCKDOWN — Ns" countdown once that player is holding Lockdown. It was never wired into the other consumer of the same controller, `GridReserveStandingsLogic` (`Container@GRID_RESERVE_STANDINGS` in `ingame-observer.yaml`) — the per-row `AMOUNT` label there kept formatting `TotalReserve / Target` unconditionally, even for a player actively holding the countdown. An observer, or a player who dropped to spectating via `MissionObjectives.EarlyGameOver`, had no on-screen way to see the one timer that actually decides the match - exactly the scenario `GridReserveStandingsLogic`'s own `[Desc]` calls out as its purpose ("end-of-match Reserve scoreboard regardless of which victory condition ended the game").
+
+**Fix, in `OpenRA.Mods.Sungrid/GridReserve/GridReserveStandingsLogic.cs`:** added the same `[FluentReference("seconds")] const string LockdownText = "label-grid-reserve-hud-lockdown.text"` and a local `SecondsRemaining` helper `GridReserveHudLogic` already uses, and changed each row's `AMOUNT` label to check `controller.LockdownTicksRemaining(player)` first, falling back to the current/target format only when that player isn't holding Lockdown. Also colors the row `LimeGreen` while `manager.LockdownEligible`, matching the player HUD's own label color. No fluent strings or chrome YAML changed - both widgets now share the exact same countdown text.
+
+**Deliberately untouched:** `GridReserveHudLogic` itself (already correct since issue #76), the `NAME`/`BAR` columns in the standings rows, and the Lockdown state machine in `GridReserveController` - this is a display-only fix consuming an already-correct value.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveStandingsLogic.cs`, `docs/GAME_MODES.md`, `CLAUDE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`.
+
+**Labels:** `type:bug`, `area:ui`, `needs:build-verification`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Fix mirrors `GridReserveHudLogic`'s already-shipped, structurally identical pattern line-for-line, so the risk profile is low, but this repo cannot run a live client (see `CLAUDE.md`'s "What can and can't be verified" section) - a real match confirming the standings row actually swaps to the countdown text when a player reaches Lockdown is still outstanding.
+
+---
+
+### 93. AI opponents were reaching Grid Lockdown too soon - `BaseTargetPerPlayer` raised 15000 → 20000
+
+**Player feedback:** "ai advances to grid victory too soon, increase grid mode limit."
+
+**Fix, in `OpenRA.Mods.Sungrid/GridReserve/GridReserveManager.cs`:** `GridReserveManagerInfo.BaseTargetPerPlayer` raised from 15000 to 20000 (+33%). This is the one constant every player and bot's Reserve target is computed from (`Target = BaseTargetPerPlayer * activePlayers * (1000 - discount) / 1000`, see `docs/GAME_MODES.md`), and every stock/Grid Broker/Easy Grid Broker personality already sizes its Vault count off `GridReserveManager.Target` (issue #67) - so raising it is a global "the race takes longer" lever, not an AI-specific one. A 2-player Target moves from 30000 to 40000; the multi-Vault requirement noted in `docs/GAME_MODES.md` ("a single Vault can never reach even the cheapest Target") still holds at the new baseline.
+
+**Deliberately untouched:** `TargetDiscountPerMillePerExtraPlayer`, `MinimapRevealPercent`, every `GridReserveVaultInfo`/`GridReserveControllerInfo` constant, and all AI `CoveragePercent`/`StartDelayTicks` tuning from issues #67-#85 - this pass only moves the target every one of those numbers is measured against, not any of the numbers themselves.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveManager.cs`, `docs/GAME_MODES.md`, `CLAUDE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`.
+
+**Labels:** `type:balance`, `area:economy`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Reasoning checked against `docs/GAME_MODES.md`'s own documented target formula and the "current shipped defaults" table (both updated to match) - not verified by a build, no engine is fetched in this environment, same caveat as every other Grid Reserve constant in this backlog. A follow-up playtest should confirm the new baseline actually slows an AI-vs-human race to a comfortable pace without making Grid Reserve feel unreachable in shorter matches.
+
+---
+
+### 94. Easy Grid Broker AI still never opened a second base - allowed one, kept it late
+
+**Player feedback:** "let him additional bases later" - a follow-up to issue #85's further easing, asking that Easy Grid Broker AI be allowed to expand rather than staying permanently single-base, provided it still happens well after a new player would have finished their own opening.
+
+**Fix, in `mods/sungrid/rules/ai.yaml`'s `McvExpansionManagerBotModule@easygridbroker`:**
+
+- `AdditionalConstructionYardCount`: 0 → 1, so the personality can opportunistically build a second Construction Yard instead of never expanding at all (issue #69's original restriction). `MinimumConstructionYardCount` stays at 1 - a second base is now optional/opportunistic, not a maintained floor the way the other four personalities' `MinimumConstructionYardCount: 2` is.
+- `BuildAdditionalMCVCashAmount`: added at 12000 (the engine default is 5000, which every other personality already uses unmodified, and is itself below the 7000-8000 `NewProductionCashThreshold` other personalities gate their own next-building decisions on - see issue #68). Setting this well above every other personality's comparable cash threshold means the expansion MCV only gets built once this bot is sitting on real spare cash, which its already-delayed War Factory (issue #82/#85) and late-starting, capped Reserve economy (issue #75/#85) push out well past when any other personality would expand.
+
+**Deliberately untouched:** every `BuildingDelays`/`StartDelayTicks`/army-size constant from issues #69, #75, #82, #83, #85 - this pass only changes whether and how expensively a second base can happen, not this personality's existing pacing on everything else.
+
+**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md`, `CLAUDE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`.
+
+**Labels:** `type:balance`, `area:ai`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Reasoning checked against `McvExpansionManagerBotModule`'s real engine fields (`AdditionalConstructionYardCount`, `BuildAdditionalMCVCashAmount`) read from the pinned `ENGINE_VERSION` commit's own source, and against this personality's existing tuning in `mods/sungrid/rules/ai.yaml` - not by a build, no engine is fetched in this environment, same caveat as every other AI-tuning entry here. A follow-up playtest should confirm the second base actually lands late enough to keep this personality easy, and that `BuildAdditionalMCVCashAmount: 12000` doesn't simply never trigger given this personality's already-capped economy.
+

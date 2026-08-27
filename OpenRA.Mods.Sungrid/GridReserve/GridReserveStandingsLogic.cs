@@ -13,6 +13,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using OpenRA.Mods.Common.Widgets;
+using OpenRA.Primitives;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.Sungrid.GridReserve
@@ -25,6 +26,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		"Hides itself when the Grid Reserve lobby option is off.")]
 	public class GridReserveStandingsLogic : ChromeLogic
 	{
+		[FluentReference("seconds")]
+		const string LockdownText = "label-grid-reserve-hud-lockdown.text";
+
 		const int MaxRows = 8;
 
 		[ObjectCreator.UseCtor]
@@ -61,12 +65,26 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				name.GetColor = () => player.Color;
 
 				var amount = row.Get<LabelWidget>("AMOUNT");
-				amount.GetText = () => string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}",
-					manager.TotalReserve, manager.Target);
+
+				// Mirrors GridReserveHudLogic: once this player is holding Grid Lockdown the current/target
+				// numbers stop changing (Reserve is held at target), so swap to the countdown instead - an
+				// observer watching the standings otherwise has no way to see how much longer the hold lasts.
+				amount.GetText = () =>
+				{
+					var remaining = controller.LockdownTicksRemaining(player);
+					if (remaining >= 0)
+						return FluentProvider.GetMessage(LockdownText, "seconds", SecondsRemaining(remaining, world).ToString(CultureInfo.CurrentCulture));
+
+					return string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}", manager.TotalReserve, manager.Target);
+				};
+				amount.GetColor = () => manager.LockdownEligible ? Color.LimeGreen : player.Color;
 
 				var bar = row.Get<ProgressBarWidget>("BAR");
 				bar.GetPercentage = () => manager.Target > 0 ? Math.Min(100, manager.TotalReserve * 100 / manager.Target) : 0;
 			}
 		}
+
+		// Rounded up so the last partial tick still reads as "1s" rather than "0s" before Lockdown completes.
+		static int SecondsRemaining(int ticksRemaining, World world) => (ticksRemaining * world.Timestep + 999) / 1000;
 	}
 }

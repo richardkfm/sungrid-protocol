@@ -23,7 +23,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 	public class GridReserveManagerInfo : TraitInfo
 	{
 		[Desc("Baseline Reserve target contributed per active player.")]
-		public readonly int BaseTargetPerPlayer = 15000;
+		public readonly int BaseTargetPerPlayer = 20000;
 
 		[Desc("Per-mille (of 1000) discount applied to the target for each active player beyond the second.",
 			"E.g. 75 = 7.5% cheaper per additional player past two, capped at a 100% discount.",
