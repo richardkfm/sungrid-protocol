@@ -100,6 +100,11 @@ each other's state and it is easy to leave one of them out:
   but never into `GridReserveStandingsLogic` (the observer scoreboard), so an observer - including a
   player who dropped to spectating via `EarlyGameOver` - had no way to see the countdown at all during
   the exact "final timer" hold that matters most. Same fix, second widget.
+- **#95** — `#76`/`#92` only ever showed a player their *own* Lockdown countdown (or an observer's).
+  A player actively fighting rather than spectating had zero on-screen sign that an *opponent* was
+  holding Lockdown - only the one-time broadcast, easy to miss mid-fight. `GridReserveHudLogic` now
+  also warns ("ENEMY LOCKDOWN — Ns", naming the opponent) when someone else is in the hold and the
+  local player isn't. Same underlying gap as #92, third widget-facing symptom.
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Six lobby personalities: the four
@@ -124,7 +129,9 @@ Factory and first Battery Bank still arrived too soon. Issue #94 then raised
 personality uses the engine default 5000, well below even the 7000-8000 `NewProductionCashThreshold`
 other personalities use elsewhere) so a second base is now possible but only once this personality is
 sitting on real spare cash - which its already-delayed, capped economy pushes well past when any other
-personality would expand.
+personality would expand. Issue #94's 12000 still wasn't enough - issue #96 raised it again to 25000 and
+pushed `weap` `BuildingDelays` 5000→7000 in the same pass, after feedback that both the second base and
+its tanks were still arriving too fast.
 
 **Only `AGUN`/`SAM` can hit an airborne target — `ARCT`/`SGTUR` never can.** Both anti-air structures are
 `^AutoTargetAir`; the other two defenses every personality builds are `^AutoTargetGround` and will not
