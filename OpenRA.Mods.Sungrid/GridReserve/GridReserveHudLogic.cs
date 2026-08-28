@@ -94,7 +94,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 				var enemy = EnemyInLockdown();
 				if (enemy != null)
-					return FluentProvider.GetMessage(EnemyLockdownText, "seconds", SecondsRemaining(controller.LockdownTicksRemaining(enemy), world).ToString(CultureInfo.CurrentCulture));
+				{
+					var enemySeconds = SecondsRemaining(controller.LockdownTicksRemaining(enemy), world);
+					return FluentProvider.GetMessage(EnemyLockdownText, "seconds", enemySeconds.ToString(CultureInfo.CurrentCulture));
+				}
 
 				return string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}", manager.TotalReserve, manager.Target);
 			};
