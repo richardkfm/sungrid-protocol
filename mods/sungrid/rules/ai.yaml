@@ -372,7 +372,8 @@ Player:
 		# pace as the Normal AI, which is what a new player was actually losing the early game to (not
 		# base expansion - McvExpansionManagerBotModule@easygridbroker below never expands). Pushed out
 		# further still (3000->5000) for issue #85, alongside GridReserveBotModule@easygridbroker's
-		# StartDelayTicks below, after feedback that the War Factory was still arriving too soon.
+		# StartDelayTicks below, after feedback that the War Factory was still arriving too soon. Pushed
+		# out again (5000->7000) for issue #96 after feedback that tanks were still arriving too fast.
 		BuildingDelays:
 			dome: 9000
 			fix: 6000
@@ -381,7 +382,7 @@ Player:
 			arct: 4000
 			sgtur: 5000
 			sgsns: 9000
-			weap: 5000
+			weap: 7000
 	BaseBuilderBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		MinimumExcessPower: 20
@@ -591,11 +592,11 @@ Player:
 	# opening MCV and then, unlike the other personalities' floor of two, only ever adds a second base
 	# opportunistically (AdditionalConstructionYardCount) rather than as a maintained minimum.
 	# AdditionalConstructionYardCount was 0 (no second base at all) until issue #94: raised to 1 so this
-	# personality can eventually expand, but BuildAdditionalMCVCashAmount is set well above every other
-	# personality's NewProductionCashThreshold (7000-8000) so it only spends on a second base once it is
-	# sitting on real spare cash - combined with its already-delayed, capped economy (issues #69, #82,
-	# #85), that keeps the second base arriving much later than any other personality's, not on this
-	# module's own clock.
+	# personality can eventually expand, gated behind BuildAdditionalMCVCashAmount so it only spends on a
+	# second base once it is sitting on real spare cash. Issue #94's original 12000 (already well above
+	# every other personality's NewProductionCashThreshold of 7000-8000) still let this personality expand
+	# too quickly - raised again to 25000 for issue #96, alongside weap's BuildingDelays push-out above,
+	# after feedback that both a second base and tanks were still arriving too fast.
 	McvExpansionManagerBotModule@easygridbroker:
 		RequiresCondition: enable-easygridbroker-ai
 		McvTypes: mcv
@@ -603,7 +604,7 @@ Player:
 		McvFactoryTypes: weap
 		MinimumConstructionYardCount: 1
 		AdditionalConstructionYardCount: 1
-		BuildAdditionalMCVCashAmount: 12000
+		BuildAdditionalMCVCashAmount: 25000
 	UnitBuilderBotModule@rush:
 		RequiresCondition: enable-rush-ai
 		UnitsToBuild:

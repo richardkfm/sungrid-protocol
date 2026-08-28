@@ -56,6 +56,8 @@ phase plan and `CLAUDE.md` for detailed current status.
 - **Fixed:** the Grid Lockdown countdown never showed on the observer scoreboard, only on the local player's own HUD bar (issue #92) — an observer, or a player who dropped to spectating, had no on-screen way to see the one timer that decides the match. Both widgets now show the same "GRID LOCKDOWN — Ns" countdown.
 - **Grid Reserve targets raised — AI opponents were reaching Lockdown too soon** (issue #93): `BaseTargetPerPlayer` raised from 15000 to 20000 (+33%), the single constant every player's and bot's Reserve target is computed from.
 - **Easy Grid Broker AI can now expand, just later than everyone else** (issue #94): it was permanently single-base since issue #69; it can now build one additional Construction Yard, but only once it is sitting on real spare cash (`BuildAdditionalMCVCashAmount` 12000, well above the engine default every other personality uses), so the second base still lands well after its already-delayed opening build.
+- **Fixed:** an actively-playing local player had no on-screen sign that an *opponent* was holding Grid Lockdown, only their own countdown or the observer scoreboard (issue #95) — the one-time start broadcast was the only signal, easy to miss mid-fight. The HUD now warns "ENEMY LOCKDOWN — Ns" when someone else is in the hold.
+- **Easy Grid Broker AI eased again — its second base and War Factory were still too fast** (issue #96): War Factory delay raised 5000→7000 ticks, and the second-base cash threshold from issue #94 raised 12000→25000.
 
 ## Phase 4 — Balance, CI, and release packaging
 

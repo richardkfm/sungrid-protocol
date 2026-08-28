@@ -2577,3 +2577,46 @@ The drones use a different trait, `AttackAircraft` (`AttackType: Hover`, `mods/s
 
 **Definition of done:** Reasoning checked against `McvExpansionManagerBotModule`'s real engine fields (`AdditionalConstructionYardCount`, `BuildAdditionalMCVCashAmount`) read from the pinned `ENGINE_VERSION` commit's own source, and against this personality's existing tuning in `mods/sungrid/rules/ai.yaml` - not by a build, no engine is fetched in this environment, same caveat as every other AI-tuning entry here. A follow-up playtest should confirm the second base actually lands late enough to keep this personality easy, and that `BuildAdditionalMCVCashAmount: 12000` doesn't simply never trigger given this personality's already-capped economy.
 
+---
+
+### 95. Grid Lockdown countdown still invisible to an actively-playing local player - FIXED (third widget, same underlying gap as #92)
+
+**Player feedback, after issue #92 merged:** "still no grid counter visible" - repeated verbatim after the observer-standings fix shipped, meaning the fix that landed didn't address what this player was actually looking at.
+
+**Root cause.** Issue #92 fixed `GridReserveStandingsLogic` (the *observer* scoreboard). But `GridReserveHudLogic` (the *local player's own* HUD bar, wired correctly since issue #76) only ever reads `world.LocalPlayer`'s own `GridReserveManager`/`LockdownTicksRemaining` - never any opponent's. A player who is actively fighting (not spectating, and not tabbing to the observer standings screen mid-match) gets the local Lockdown countdown only when *they themselves* reach target. If it's the AI opponent racing to Lockdown instead - exactly the scenario in this player's other, related report ("ai advances to grid victory too soon") - the human player's own HUD keeps showing their own ordinary current/target numbers, with no on-screen sign at all that an opponent's countdown is running. The only signal was the one-time start/cancel broadcast (system text line + `Speech` cue), which issue #76's own reasoning already flagged as "easy to miss mid-match" - and here, it's the *only* signal, not just an easy-to-miss supplement to an on-screen countdown, because there is no on-screen countdown for anyone else's Lockdown on the HUD a fighting player is actually looking at.
+
+**Fix, in `OpenRA.Mods.Sungrid/GridReserve/GridReserveHudLogic.cs`:** added an `EnemyInLockdown()` helper that scans every non-local, playable, non-NonCombatant player and returns whichever one is soonest to complete Lockdown (lowest `LockdownTicksRemaining`), or null. When the local player isn't themselves Lockdown-eligible, the HUD label now swaps to an "ENEMY LOCKDOWN — Ns" warning in `Color.OrangeRed` instead of the plain current/target readout, with a tooltip naming the opponent. Local-player-eligible still takes priority and displays exactly as before (issue #76) - this only fills the gap where nobody's countdown was shown at all. Two new fluent strings (`label-grid-reserve-hud-enemy-lockdown.text`/`.tooltip`) added alongside the existing ones in `mods/sungrid/fluent/chrome.ftl`.
+
+**Why this leaks nothing new:** the initial Lockdown start/cancel broadcast is already unconditionally sent to every player regardless of visibility or distance (see `docs/GAME_MODES.md`'s Core Rule 4 and the "unconditionally visible/audible to every player, not just the affected one" note on `GridReserveController.Broadcast`) - this fix just makes that same already-shared information checkable at a glance on the HUD instead of a one-time line a player mid-fight can easily miss, exactly like issues #76 and #92 already did for the affected player's own bar and the observer scoreboard respectively.
+
+**Deliberately untouched:** `GridReserveStandingsLogic` (already correct since #92), the Lockdown state machine itself, and the priority given to the local player's own countdown when they are the one eligible.
+
+**Scope:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveHudLogic.cs`, `mods/sungrid/fluent/chrome.ftl`, `docs/GAME_MODES.md`, `CLAUDE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`.
+
+**Labels:** `type:bug`, `area:ui`, `needs:build-verification`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Fix follows the exact same shape as the already-shipped #76/#92 countdown swaps, just scanning every opponent instead of one fixed player - not verified by a live client, same standing limitation as every UI change in this backlog. A follow-up playtest should confirm the warning actually appears when an AI opponent reaches Lockdown while the human is still playing (not spectating), and that it clears correctly once that opponent's Lockdown cancels or completes.
+
+---
+
+### 96. Easy Grid Broker AI's second base and War Factory still arrived too fast after issues #85/#94
+
+**Player feedback, after issue #94 merged:** "easy grid mode AI builds additional bases way too fast still, delay weapons factory (for tanks) even more."
+
+**Fix, both in `mods/sungrid/rules/ai.yaml`'s `easygridbroker` personality:**
+
+- `BaseBuilderBotModule@easygridbroker.BuildingDelays.weap`: 5000 → 7000 (issue #85's value wasn't enough on its own, per this report).
+- `McvExpansionManagerBotModule@easygridbroker.BuildAdditionalMCVCashAmount`: 12000 → 25000 (issue #94's value let the second base arrive too quickly once this personality's capped economy started piling up spare cash).
+
+**Deliberately untouched:** `AdditionalConstructionYardCount` stays at 1 (issue #94 already established that a second base should be *possible*, just late - this pass only pushes the timing further, not the permission itself), and every other `BuildingDelays`/`StartDelayTicks`/army-size constant from issues #69, #75, #82, #83, #85.
+
+**Scope:** `mods/sungrid/rules/ai.yaml`, `docs/GAME_MODES.md`, `CLAUDE.md`, `docs/BACKLOG.md`, `CHANGELOG.md`.
+
+**Labels:** `type:balance`, `area:ai`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Reasoning checked against this personality's existing tuning history (issues #69, #82, #85, #94) for consistent magnitude - not by a build, no engine is fetched in this environment, same caveat as every other AI-tuning entry here. Given this is the second round of "still too fast" feedback on the same two knobs, a follow-up playtest confirming the actual real-time arrival of the War Factory and second base matters more here than for most entries in this backlog - if it's still too fast, the next fix should probably measure real games rather than reason from these constants again.
+
