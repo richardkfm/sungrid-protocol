@@ -2620,3 +2620,123 @@ The drones use a different trait, `AttackAircraft` (`AttackType: Hover`, `mods/s
 
 **Definition of done:** Reasoning checked against this personality's existing tuning history (issues #69, #82, #85, #94) for consistent magnitude - not by a build, no engine is fetched in this environment, same caveat as every other AI-tuning entry here. Given this is the second round of "still too fast" feedback on the same two knobs, a follow-up playtest confirming the actual real-time arrival of the War Factory and second base matters more here than for most entries in this backlog - if it's still too fast, the next fix should probably measure real games rather than reason from these constants again.
 
+### 97. Hauler Drone still walks into live combat and dies - speed re-tune, a delayed Scrap spawn, and self-repair
+
+**Player feedback:** "Make hauler drone even faster - I can see it working but its always coming directly into
+combat and gets destroyed too quickly. Maybe there is a chance we delay it going after scraps too?"
+
+Second round of the same report issue #86 already answered with `Speed` 72 -> 100, so speed alone was clearly
+not the whole problem. The "walks into combat" half is structural rather than a tuning slip, and worth stating
+plainly because the two previous fixes each made it worse without anyone noticing:
+
+- `SpawnsResourceOnDeath` (issue #86) drops Scrap **at the cell where something died** - which is, by
+  definition, wherever the fighting is.
+- Issue #89 then raised `SearchFromProcRadius` 15 -> 50 because drops were sitting uncollected. That was the
+  right fix for collection, but it simultaneously handed an idle Hauler a 50-cell leash running straight to
+  the front line.
+
+So the mode was, in effect, paying the player to send an unarmed 22000-HP Light-armor unit into every
+engagement the moment it ended - or, more often, before it ended.
+
+**Fix, three parts:**
+
+- **`mods/sungrid/rules/vehicles.yaml`, `SGHAU.Mobile.Speed`: 100 -> 128.** APC/`STNK` parity - nothing with a
+  turret and treads catches it now. Left below `JEEP` (164) on purpose, for the same reason issue #86 did:
+  building #3's "Likely counters" line in `docs/BUILDINGS.md` makes harassing this unit while it's out
+  collecting an intended part of the mode's map pressure (Pillar 4, `docs/VISION.md`). `^Vehicle`'s
+  `SpeedMultiplier@DRONEBAY` takes it to 147 near a Drone Bay - in its own territory only, and still short of
+  a JEEP.
+- **`ChangesHealth` added to `SGHAU`**, copied verbatim from `HARV` (`Step: 100`, `Delay: 25`,
+  `StartIfBelow: 50`, `DamageCooldown: 500`). `SGHAU` had no self-repair at all, which reads as an asymmetry
+  rather than a decision - the frailer of the two collectors was the one that couldn't heal. The
+  `StartIfBelow`/`DamageCooldown` gates mean this recovers a unit *between* trips and does nothing whatsoever
+  for one currently being shot at, so it doesn't touch the harassment counter either.
+- **New `SpawnsResourceOnDeath.SpawnDelay`, default 750 ticks (30s).** The drop does not exist during this
+  window, so the stock `Harvester` search cannot see it and cannot path to it. Same 750-tick "long enough for
+  a nearby idle Hauler to notice and path over" unit issue #87 reasoned its decay timer from.
+
+**Why the delay is mod-side and not an engine patch:** the alternative - teaching the Hauler to skip drops
+near known enemies - lives in `Harvester`/`FindAndDeliverResources` target selection, which is engine code.
+Per `CLAUDE.md`, an `engine-patch/*` branch is the expensive last resort, and withholding the resource gets
+the same outcome from the mod side.
+
+**Implementation:** reuses `ResourceDecayManager` rather than adding a trait. It was already a
+`[TraitLocation(SystemActors.World)]` `ITick` carrying a pending-list-with-expiry-tick pattern and was already
+registered in `rules/world.yaml`, so it grew a second list (`PendingSpawn` / `ScheduleSpawn`) beside the decay
+one. Three details that are easy to get wrong:
+
+- **The cell is chosen when the timer fires, not at death.** A cell that could take the drop 30 seconds ago
+  may since be full or holding a different resource. The `Util.RandomWalk` selection was extracted into
+  `SpawnsResourceOnDeath.ChooseCell` so the immediate and delayed paths cannot drift apart.
+- **The decay clock starts at spawn, not at death**, so the hold-back isn't taken out of the 150s collection
+  window. Total lifetime is now 30s + 150s.
+- **`Killed()` falls through to the old immediate path if the world actor has no `ResourceDecayManager`**, so
+  an unregistered trait degrades to pre-#97 behaviour instead of silently swallowing every drop. Decays are
+  also walked before spawns in `Tick`, so a drop appearing this tick doesn't get its own freshly scheduled
+  decay re-examined in the same pass.
+
+**Deliberately not done:** `SearchFromProcRadius` stays at 50. Lowering it would resurrect issue #89 (drops
+never collected at all). The 50-cell leash is the right answer for *collection*; the spawn delay is the right
+answer for *timing*, and they're separate problems.
+
+**Known limitation, recorded so the next report isn't a surprise:** a 30s delay decouples the Hauler from
+short skirmishes. It does **not** help during a sustained multi-minute push at a fixed front - there, the
+Scrap lands while the fight is still going and the Hauler will still drive into it. If that's the remaining
+complaint after a playtest, the next lever really is engine-side target selection ("don't path within N cells
+of a known enemy"), and it should be scoped as such rather than tuned for a third time.
+
+**Scope:** `mods/sungrid/rules/vehicles.yaml`, `mods/sungrid/rules/defaults.yaml`,
+`OpenRA.Mods.Sungrid/Economy/SpawnsResourceOnDeath.cs`, `OpenRA.Mods.Sungrid/Economy/ResourceDecayManager.cs`,
+`docs/BUILDINGS.md`, `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Labels:** `type:balance`, `area:units`, `area:economy`, `needs:playtest`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Not met. Same standing caveat as issues #86/#87/#89 - no engine is fetched and there is
+no `dotnet` in this environment, so neither C# file has ever been compiled, let alone played. The 128 and the
+750 are reasoned from the engine's own constants and this mod's existing tuning, not measured. A playtest needs
+to watch two specific things: (a) whether 30 seconds of invisible Scrap reads as "the feature stopped working"
+rather than as deliberate cooling-off, and (b) whether the Hauler still arrives mid-fight during a sustained
+push, which is the limitation above rather than a bug in this change.
+
+### 98. Datacenter for AI: tooltip and two design docs describe behaviour it doesn't have
+
+Found while answering a player's plain question - "AI data center: what is it actually capable of?" - which
+turned out to be hard to answer from the docs because three separate places describe a building that no longer
+exists. Text only; no rules change, no gameplay change.
+
+- **`mods/sungrid/fluent/rules.ftl`, `actor-sgdai.description`:** claimed its income "stops outright under
+  critical power". The rules disagree - `GrantConditionOnPowerState@STRAINED` has
+  `ValidPowerStates: Low, Critical`, so it keeps paying 8/tick at Critical and never stops. Reworded to
+  describe the real 20 -> 8 degradation. Note this is the *inverse* of the `SGCRY` fix the energy pass made
+  deliberately: there, the silent Critical cliff to zero was the bug. Here the rules are right and the text was
+  wrong, so the text moved.
+- **`docs/BUILDINGS.md` entry #5:** the energy-rebalance sentence still asserted "its `DetectCloaked` cuts out
+  entirely below Normal power", and the "Implementation complexity" bullet still listed `DetectCloaked` among
+  the traits it composes. Detection moved to `SGSNS` in issue #77 - which the *later* sentence in the same
+  paragraph already recorded, so the entry was contradicting itself. Both corrected, with a pointer to #77 so
+  the history stays legible.
+- **`docs/ENERGY_BALANCE.md`, the `SGDAI` table row:** same stale `DetectCloaked` claim, with no correction
+  anywhere below it. Corrected the same way.
+
+**Left alone deliberately:** the `DetectCloaked` mentions in `docs/BUILDINGS.md`'s audit-findings section
+(T7 and the gap analysis around it) are a historical record of what was true *at the time of the audit*, and
+reads correctly in that context.
+
+**Also noted, not fixed here:** `SGDAI`'s `Targetable` list includes `SpyInfiltrate`, but the actor carries no
+`InfiltrateFor*` trait, so a spy that reaches it accomplishes nothing. `SGCRY` has the same dead entry. That's
+either a missing feature or two stale target types, and it wants a decision rather than a silent edit - left
+open. Also still open from the earlier list: the `grid-normal`/`grid-strained` tiers have no visual cue, so a
+player cannot tell the Datacenter has degraded.
+
+**Scope:** `mods/sungrid/fluent/rules.ftl`, `docs/BUILDINGS.md`, `docs/ENERGY_BALANCE.md`, `docs/BACKLOG.md`,
+`CHANGELOG.md`.
+
+**Labels:** `type:docs`, `type:bug`, `area:ui`
+
+**Phase:** 6 follow-up.
+
+**Definition of done:** Met for the text itself - each claim was checked against the actual trait definition in
+`mods/sungrid/rules/structures.yaml` rather than against the other docs. `./utility.sh --check-yaml` should
+still pass (the fluent change touches no `FluentReference` key, only a description body).

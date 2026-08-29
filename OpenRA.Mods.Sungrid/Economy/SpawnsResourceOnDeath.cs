@@ -35,9 +35,17 @@ namespace OpenRA.Mods.Sungrid.Economy
 			"Wrong terrain, a full cell, or a cell already holding a different resource are all skipped.")]
 		public readonly int MaxRange = 8;
 
+		[Desc("Ticks before the drop appears at all. The resource does not exist during this window, so a",
+			"Harvester-type unit cannot see it and cannot path to it -- which is the point: the drop is created",
+			"at the cell where something just died, i.e. wherever the fighting is, and an idle Hauler Drone would",
+			"otherwise set off into a live engagement to fetch it. See docs/BACKLOG.md issue #97. Assumes 25",
+			"ticks/second (Normal game speed). Set to 0 to spawn immediately, as before that issue.")]
+		public readonly int SpawnDelay = 750;
+
 		[Desc("Ticks before this drop decays back out if it hasn't been collected by then, so a battlefield",
-			"doesn't turn into a permanent resource patch. Assumes 25 ticks/second (Normal game speed) like the",
-			"rest of this mod's tick-based tuning. Set to 0 to never decay.")]
+			"doesn't turn into a permanent resource patch. Counted from when the drop appears, not from the",
+			"death, so SpawnDelay is not taken out of the collection window. Assumes 25 ticks/second (Normal",
+			"game speed) like the rest of this mod's tick-based tuning. Set to 0 to never decay.")]
 		public readonly int DecayDelay = 3750;
 
 		public override object Create(ActorInitializer init) { return new SpawnsResourceOnDeath(this); }
@@ -48,28 +56,51 @@ namespace OpenRA.Mods.Sungrid.Economy
 		public SpawnsResourceOnDeath(SpawnsResourceOnDeathInfo info)
 			: base(info) { }
 
+		// Walks outward from origin looking for a cell that can hold the resource, returning null if none of
+		// the first maxRange steps can. Shared by the immediate path here and the delayed path in
+		// ResourceDecayManager, so both pick their cell the same way.
+		public static CPos? ChooseCell(World world, IResourceLayer resourceLayer, string resourceType,
+			CPos origin, int maxRange)
+		{
+			return Util.RandomWalk(origin, world.SharedRandom)
+				.Take(maxRange)
+				.SkipWhile(p => !resourceLayer.CanAddResource(resourceType, p))
+				.Cast<CPos?>()
+				.FirstOrDefault();
+		}
+
 		void INotifyKilled.Killed(Actor self, AttackInfo e)
 		{
 			if (IsTraitDisabled)
 				return;
 
-			var resourceLayer = self.World.WorldActor.TraitOrDefault<IResourceLayer>();
+			var world = self.World;
+			var resourceLayer = world.WorldActor.TraitOrDefault<IResourceLayer>();
 			if (resourceLayer == null)
 				return;
 
-			var cell = Util.RandomWalk(self.Location, self.World.SharedRandom)
-				.Take(Info.MaxRange)
-				.SkipWhile(p => !resourceLayer.CanAddResource(Info.ResourceType, p))
-				.Cast<CPos?>()
-				.FirstOrDefault();
+			var decayManager = world.WorldActor.TraitOrDefault<ResourceDecayManager>();
 
+			// The cell is deliberately not chosen here: it is picked when the timer fires, so a cell that
+			// happened to be free at the moment of death can't be handed a drop half a minute later when it
+			// may be full or holding something else. Falls through to the immediate path if the world actor
+			// has no manager, so an unregistered trait degrades to the pre-#97 behaviour rather than
+			// silently swallowing every drop.
+			if (Info.SpawnDelay > 0 && decayManager != null)
+			{
+				decayManager.ScheduleSpawn(
+					world, self.Location, Info.ResourceType, Info.Amount,
+					Info.MaxRange, Info.DecayDelay, Info.SpawnDelay);
+
+				return;
+			}
+
+			var cell = ChooseCell(world, resourceLayer, Info.ResourceType, self.Location, Info.MaxRange);
 			if (cell == null)
 				return;
 
 			resourceLayer.AddResource(Info.ResourceType, cell.Value, Info.Amount);
-
-			var decayManager = self.World.WorldActor.TraitOrDefault<ResourceDecayManager>();
-			decayManager?.ScheduleDecay(self.World, cell.Value, Info.ResourceType, Info.Amount, Info.DecayDelay);
+			decayManager?.ScheduleDecay(world, cell.Value, Info.ResourceType, Info.Amount, Info.DecayDelay);
 		}
 	}
 }

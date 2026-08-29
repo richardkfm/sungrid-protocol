@@ -1184,10 +1184,10 @@ actor-sgdai =
     .name = Datacenter for AI
     .description =
     Racks of compute serving grid logistics and battlefield
-    analytics. Enormous, constant power draw. Its income falls
-    away once the grid is strained, and stops outright under
-    critical power. Its coordination is required to build
-    superweapons.
+    analytics. Enormous, constant power draw. Its income drops
+    sharply once the grid is strained, and stays down for as
+    long as power is short. Its coordination is required to
+    build superweapons.
 
 actor-sgdrn =
     .name = Drone Bay

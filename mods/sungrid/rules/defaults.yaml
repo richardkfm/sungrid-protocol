@@ -304,6 +304,10 @@
 	FireWarheadsOnDeath:
 		Weapon: UnitExplodeSmall
 		EmptyWeapon: UnitExplodeSmall
+	# SpawnDelay/DecayDelay are left at the trait's own defaults (750 / 3750 ticks, i.e. the
+	# drop appears 30s after the kill and lasts 150s from there). The delay exists so an idle
+	# Hauler Drone can't be pulled straight into the engagement that produced the wreck -- see
+	# docs/BACKLOG.md issue #97.
 	SpawnsResourceOnDeath:
 		ResourceType: Scrap
 		Amount: 2
@@ -371,6 +375,7 @@
 			FireDeath: 5
 			ElectricityDeath: 6
 		CrushedSequence: die-crushed
+	# Same 30s hold-back as ^Vehicle above, for the same reason -- see docs/BACKLOG.md issue #97.
 	SpawnsResourceOnDeath:
 		ResourceType: Scrap
 		Amount: 1

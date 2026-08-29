@@ -216,6 +216,59 @@ Direct player feedback on the Hauler Drone, three separate fixes:
   appearing on the battlefield. Scrap now renders as its own thing: a heap of salvaged plate metal,
   a pipe, and a gear, distinct from Ore's gold nuggets and Gems' purple crystals.
 
+## Hauler Drone, round two: fast enough to leave, late enough not to arrive mid-fight (issue #97)
+
+Follow-up to the feedback above — "make hauler drone even faster, I can see it working but it's always
+coming directly into combat and gets destroyed too quickly. Maybe there is a chance we delay it going
+after scraps too?"
+
+The speed half was straightforward. The "walks into combat" half turned out to be structural, and
+worth explaining, because the two earlier fixes each quietly made it worse: dropped Scrap appears at
+the cell where something died — which is *by definition* wherever the fighting is — and issue #89 then
+widened the Hauler's search radius so it could actually reach those drops. Correct on its own terms,
+but between them they added up to the game paying you to drive an unarmed, lightly armored drone into
+every engagement the moment it started.
+
+- **Faster again: speed 100 → 128.** Issue #86's bump wasn't enough. It now matches an APC or a Stealth
+  Tank, which means nothing with a turret and treads catches it any more. A Ranger (164) is still
+  faster on purpose — harassing the Hauler while it's out collecting is meant to be a real counter, not
+  a fixed cost. Near one of your own Drone Bays the existing speed aura takes it to 147, still short of
+  a Ranger.
+- **It now repairs itself between trips**, the same way an Ore Truck always has. The Hauler simply never
+  had this, which looks like an oversight rather than a decision — the frailer of the two collectors was
+  the one that couldn't heal. It only kicks in below half health and only after 20 seconds without
+  taking a hit, so it patches up a drone that got away and does nothing at all for one under fire.
+- **Scrap now takes 30 seconds to appear after a kill.** The wreckage is there; the salvage isn't
+  collectible yet. Because the resource genuinely doesn't exist during that window, the Hauler cannot
+  see it and won't set off toward it, so short skirmishes have usually resolved before anything draws it
+  out. The 150-second decay timer starts when the Scrap appears rather than when the unit died, so this
+  costs you no collection time — a pile is now live for the same 150 seconds it always was.
+
+Straight talk about what this doesn't fix: 30 seconds is enough to sit out a skirmish, not a sustained
+push. During a long fight over one position, the Scrap will still land while the shooting is going on
+and the Hauler will still drive into it. Fixing *that* means teaching the drone to avoid cells near
+known enemies, which is engine-side work — worth doing if this is still the complaint after a playtest,
+but deliberately not attempted as a third round of number-tuning.
+
+## Datacenter for AI: documentation and tooltip corrected (issue #98)
+
+Prompted by a player asking a plain question — what is this building actually capable of? — which was
+harder to answer than it should have been, because three places described a building that no longer
+exists. No gameplay change; the rules were right and the text was wrong.
+
+- Its tooltip claimed income "stops outright under critical power". It doesn't — it drops from 20 to 8
+  per tick when the grid is strained and stays there, at Low *and* Critical power. Reworded to say what
+  it does.
+- Two design docs still credited it with detecting cloaked units. That moved to the Sensor Array a while
+  back (issue #77), and `docs/BUILDINGS.md` was actually contradicting itself inside a single paragraph.
+  Both corrected.
+
+For the record, since it wasn't written down clearly anywhere: the Datacenter does exactly four things —
+a small passive income (about a fifth of a Cryptominer's, for nearly the same power draw), wide static
+vision, a −140 power draw, and gating the three superweapons (Missile Silo, Iron Curtain, Chronosphere).
+That last one is a hard requirement, so losing the Datacenter re-locks all three. If you aren't going for
+a superweapon, it is a poor purchase.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.
