@@ -14,7 +14,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 **Mod/content territory — where Sungrid Protocol work actually happens:**
 - `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites, build-ups, rubble, husks, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
 - `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy.
-- `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (issue #87 — a World-actor `ITick` trait that expires an uncollected drop after a delay, so battlefield wreckage stays temporary); both unverified, no engine build available in this environment to compile against.
+- `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling).
 
 **Design docs:**
@@ -165,6 +165,38 @@ which stays self-consistent because it never builds `atek`/`stek` and the tech b
 
 Not verified: that the tuning constants are *right*. They're reasoned from the engine's own cash gates
 and config, not measured against observed income.
+
+### Wreck salvage and the Hauler Drone
+
+Dropped Scrap appears **at the cell where a unit died**, i.e. wherever the fighting is. That single fact
+is behind every bug in this corner of the mod, and two fixes made it worse before anyone noticed:
+
+- **#86** dropped Scrap on death and raised `SGHAU.Speed` 72 → 100 because the Hauler was dying while
+  out collecting.
+- **#89** raised `SearchFromProcRadius` 15 → 50 because drops sat uncollected. Correct — `Harvester`'s
+  `ClosestHarvestablePos` centres on the **Depot's dock**, not on the unit, whenever there's no
+  `lastHarvestedCell` (so `SearchFromHarvesterRadius` is irrelevant for a fresh drop) — but it also gave
+  an idle Hauler a 50-cell leash straight to the front line.
+- **#97** is the two of those colliding. `SpawnsResourceOnDeath.SpawnDelay` (750 ticks / 30s) means the
+  resource does not exist for 30s, so the stock search can't see it and can't path to it; `Speed` went
+  100 → 128 (APC parity, still under JEEP 164 so harassment stays a real counter — that's Pillar 4 and
+  building #3's "Likely counters" line); and `ChangesHealth` was copied from HARV, which SGHAU had
+  inexplicably never had.
+
+Three rules that are easy to get wrong here:
+
+1. **Don't lower `SearchFromProcRadius` to keep the Hauler home** — that's #89 again. Collection radius
+   and arrival *timing* are separate problems with separate fixes.
+2. **A delayed drop picks its cell when the timer fires, not at death.** A cell that could take it 30s
+   ago may be full or holding another resource by then. Both paths go through
+   `SpawnsResourceOnDeath.ChooseCell` so they can't drift.
+3. **The decay clock starts at spawn, not at death**, so the hold-back isn't taken out of the collection
+   window — and `Killed()` falls back to the immediate path if the world actor has no
+   `ResourceDecayManager`, so an unregistered trait degrades instead of silently eating every drop.
+
+Known limitation, not a bug: 30s decouples the Hauler from a skirmish, not from a sustained push at a
+fixed front. Fixing that needs engine-side target selection ("don't path within N cells of a known
+enemy"), so scope it as such rather than tuning these numbers a third time.
 
 ### Art pipeline — rules that cost real debugging to learn
 

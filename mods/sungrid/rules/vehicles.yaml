@@ -416,9 +416,24 @@ SGHAU:
 	Mobile:
 		# Faster than HARV (72) on purpose: SGHAU has less than half HARV's HP on
 		# Light rather than Heavy armor, so matching HARV's speed left it unable to
-		# outrun anything that could outrun HARV. Still slower than dedicated
-		# raiders (JEEP 164, APC 128) so it stays catchable, not immune to harassment.
-		Speed: 100
+		# outrun anything that could outrun HARV. Issue #86's 72 -> 100 wasn't enough
+		# (second round of the same "dies too easily" report), so this is APC/STNK
+		# parity: nothing with a turret and treads catches it any more. JEEP (164) is
+		# still faster, deliberately -- building #3's "Likely counters" line in
+		# docs/BUILDINGS.md makes harassing this unit while it's out collecting part of
+		# the mode's map pressure, so a dedicated raider has to stay able to run it down.
+		# ^Vehicle's SpeedMultiplier@DRONEBAY takes it to 147 near a Drone Bay, i.e. only
+		# in its own territory, and still short of a JEEP.
+		Speed: 128
+	# Copied from HARV (above). SGHAU had no self-repair at all, which was an asymmetry
+	# rather than a decision: the frailer of the two collectors was the one that couldn't
+	# heal. StartIfBelow/DamageCooldown mean this recovers a unit between trips and does
+	# nothing at all for one that is currently being shot at.
+	ChangesHealth:
+		Step: 100
+		Delay: 25
+		StartIfBelow: 50
+		DamageCooldown: 500
 	RevealsShroud:
 		Range: 4c0
 	WithHarvestAnimation:
