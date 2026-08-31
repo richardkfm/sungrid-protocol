@@ -269,6 +269,27 @@ vision, a −140 power draw, and gating the three superweapons (Missile Silo, Ir
 That last one is a hard requirement, so losing the Datacenter re-locks all three. If you aren't going for
 a superweapon, it is a poor purchase.
 
+## Release packaging: alpha34's missing Windows installer (issue #99)
+
+The alpha34 release went out with only the Linux AppImage and the macOS DMG. **The gameplay changes in that
+release did not cause this** — they touched no packaging, build or workflow file at all. What failed was the
+Windows job's download of the pinned engine, which returned something that wasn't a zip while the Linux and
+macOS jobs, fetching the same URL at the same moment, both succeeded. In other words: a transient network blip.
+
+A blip should cost a retry, not a release. The reason it cost a release is that `fetch-engine.sh` had no error
+handling after the download: `curl` was invoked without the flag that makes HTTP errors count as failures, so
+an error page was saved as `engine.zip` and the script carried on — unpacking nothing, deleting the evidence,
+and finally reporting **success**. That last part is why the build system's own "unable to continue without
+engine files" safety net never fired; the failure surfaced a step later as an unrelated-looking error about a
+missing make target, which is why the log gave no hint that a download was at fault.
+
+The script now fails on HTTP errors, retries up to four times with a backoff, verifies the archive really is a
+zip before trusting it, checks every unpacking step, and stops claiming success when it hasn't succeeded. A
+failed fetch now says so in plain terms and names the URL it couldn't get.
+
+This protects releases from alpha35 onward. Getting alpha34's Windows installer published needs its packaging
+job re-run.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

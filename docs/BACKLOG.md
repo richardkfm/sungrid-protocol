@@ -2740,3 +2740,83 @@ player cannot tell the Datacenter has degraded.
 **Definition of done:** Met for the text itself - each claim was checked against the actual trait definition in
 `mods/sungrid/rules/structures.yaml` rather than against the other docs. `./utility.sh --check-yaml` should
 still pass (the fluent change touches no `FluentReference` key, only a description body).
+
+### 99. alpha34 shipped without a Windows installer - `fetch-engine.sh` reported success on a failed download
+
+**Reported as:** "last feature seemed to have broken the win workflow" (the alpha34 release page carries only
+`SungridProtocol-alpha34-x86_64.AppImage` and `SungridProtocol-alpha34.dmg`; the Windows installer is absent).
+
+**Not what happened.** Issue #97/#98's merge (`d241ca0`) touched ten files - two `Economy/` C# traits, two rules
+YAML files, `fluent/rules.ftl`, and five docs - and **none** of `fetch-engine.sh`, `mod.config`, `Makefile`,
+`packaging/`, or `.github/workflows/`. `ENGINE_VERSION` is unchanged. The gameplay change is not implicated, and
+reverting it would not have fixed the release. Recorded explicitly because the coincidence is a convincing one:
+the release immediately following a feature merge is missing an artifact, and the obvious inference is wrong.
+
+**What actually happened.** Run 33250850873's `Windows Installers` job failed in `make engine`:
+
+```
+Downloading engine...
+[engine.zip]
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.
+rmdir: failed to remove './engine_temp': No such file or directory
+rm: cannot remove './engine/OpenRA.Mods.Common/Lint/CheckFluentReferences.cs': No such file or directory
+Compiling engine...
+make[1]: *** No rule to make target 'version'.  Stop.
+```
+
+The engine archive download returned something that was not a zip. The Linux and macOS jobs, which fetch the
+same URL at the same moment, both succeeded - so the download itself was a transient failure (three parallel
+GitHub archive-by-SHA fetches of the same ~50MB zip; a rate-limit or error page is the likely body).
+
+**The real defect is that `fetch-engine.sh` had no error handling at all downstream of the download**, which
+turned a retryable blip into a failed release and a misleading log:
+
+- `curl -s -L -o ... -O "${SOURCE}" || exit 3` - **no `-f`**. Without it curl writes the HTTP *error body* into
+  `engine.zip` and exits **0**, so `|| exit 3` never fires. (The `-O` alongside `-o` is also contradictory and
+  was inherited from the upstream Mod SDK.)
+- `unzip -qql`, `unzip -qq`, `mv`, `rmdir` and the `rm` of the lint hack were all unchecked, so each failed in
+  turn and execution continued.
+- The script ended in an unconditional `exit 0`, so **`Makefile`'s own
+  `@./fetch-engine.sh || (printf "Unable to continue without engine files\n"; exit 1)` guard was dead code.**
+  The failure only surfaced one line later, as the engine's own make failing to find a `version` target.
+- `rm "${ARCHIVE}"` deleted the evidence, so the CI log never showed what had been downloaded.
+- The `wget` fallback used `-cq`; `-c` *resumes* a partial file, so a corrupt `engine.zip` left by an earlier
+  failed run would be appended to rather than replaced, and could never recover on its own.
+
+Reproduced locally by pointing `AUTOMATIC_ENGINE_SOURCE` at a 404: the pre-fix script emits the identical error
+sequence, line for line, and **exits 0**.
+
+**Fix, all in `fetch-engine.sh`:**
+
+- `curl -sSfL` (drop the stray `-O`): `-f` makes HTTP errors real failures, `-S` keeps the error visible while
+  `-s` still suppresses the progress meter. `wget` loses `-c`, and the archive is deleted before each attempt.
+- Up to 4 attempts with a 5s/10s/15s backoff, since the failure this is written for is transient by nature.
+  A genuinely wrong `ENGINE_VERSION` costs 30s before it reports - deliberate, and the message says to check it.
+- `unzip -qqt` verifies the archive before anything trusts it: a 2xx response is not proof of a usable zip.
+- Every extraction step (`REFNAME` non-empty, `mkdir`, `unzip`, `mv`) is checked and fails with a message naming
+  what went wrong, cleaning up after itself so no half-made `engine/` is left behind.
+- `make version` propagates its exit code instead of the unconditional `exit 0`; on failure `VERSION` is never
+  written, and claiming success would leave the caller building against an engine due to be re-downloaded.
+- The lint-hack `rm` becomes `rm -f`, since its absence was always tolerated and now needs saying out loud.
+
+**Deliberately not done:** the three packaging jobs still fetch the archive concurrently. Staggering them, or
+caching the engine between jobs, would reduce the chance of the transient recurring - but that is a workflow
+change with its own failure modes, and the retry addresses the observed problem. Worth revisiting only if this
+recurs after the retry is in place.
+
+**Scope:** `fetch-engine.sh`, `docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Labels:** `type:bug`, `area:packaging`, `area:ci`
+
+**Phase:** 4 follow-up.
+
+**Definition of done:** Met, and unusually for this backlog it was verified by execution rather than reasoning.
+Failure path: `make engine` against an unreachable archive now prints the 404, retries 4 times, and trips the
+Makefile's `Unable to continue without engine files` guard (exit 2) instead of `No rule to make target 'version'`.
+Happy path: a clean `make` fetches the real pinned engine and builds with 0 warnings / 0 errors; `make test`
+(including CI's `TREAT_WARNINGS_AS_ERRORS=true`), `./utility.sh --check-yaml`, `make check-sdk-scripts` and
+`make check-packaging-scripts` all pass. Both the `curl` and `wget` branches were exercised on both paths, as was
+the poisoned-leftover-archive case. **Still unverified: that the alpha34 Windows job succeeds on a re-run** - that
+needs the job actually re-run, and a re-run uses the `alpha34` tag, i.e. the *old* script; it should succeed
+because the download failure was transient, but this fix only protects releases from `alpha35` onward.

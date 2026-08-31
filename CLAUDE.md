@@ -343,4 +343,14 @@ widely, including `.lua`, when removing an actor).
 
 **To ship a *new* engine-level fix in the future:** branch from the currently-pinned `ENGINE_VERSION` commit, add the fix, and push it as a new `engine-patch/<description>` branch — never opened as a PR against `main`. Then open a normal mod-content PR that only updates `mod.config`'s `ENGINE_VERSION`/`AUTOMATIC_ENGINE_SOURCE` to the new SHA; that `mod.config` change is the only part of this process that goes through normal review and merges into `main`.
 
+**`fetch-engine.sh` fails loudly now, and that is deliberate (issue #99).** It used to run `curl -s` without
+`-f`, so an HTTP error body was written into `engine.zip` and the script still `exit 0`-ed — which made the
+`Makefile`'s own `|| (printf "Unable to continue without engine files\n"; exit 1)` guard dead code and surfaced
+a failed download ~20 lines later as `No rule to make target 'version'`. It cost alpha34 its Windows installer.
+The download now retries with backoff, the archive is verified with `unzip -qqt` before use, every extraction
+step is checked, and `make version` propagates its exit code. If you are ever tempted to "simplify" this back
+to a bare `curl`, don't. Note also that `AUTOMATIC_ENGINE_SOURCE` interpolates `${ENGINE_VERSION}` **at
+mod.config source time**, so overriding only `ENGINE_VERSION` in `user.config` changes the version label but
+not the URL it fetches — override both, or you will silently stamp the wrong SHA onto a correct engine.
+
 **First fix shipped this way since issue #20 itself:** `engine-patch/461c7c7-flyattack-dead-target-pursuit` (issue #90) — `OpenRA.Mods.Common/Activities/Air/FlyAttack.cs`'s Hover-attack-type path didn't stop a drone from chasing/hovering over a killed target's last position, which read as the drone still firing on the wreck. Built on top of the `bf4102a-cryptoutil-fix` commit (so it carries that fix too), pinned via `ENGINE_VERSION`.
