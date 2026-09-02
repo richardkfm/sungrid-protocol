@@ -722,8 +722,9 @@ actor-sgwnd =
     .name = Wind Turbine Array
     .description =
     Assembly power infrastructure. Cheap, early and
-    individually fragile turbines - scale power by spreading
-    them out rather than turtling a single plant.
+    individually fragile turbines, each on a single cell -
+    they fit gaps a Solar Array cannot. Scale power by
+    spreading them out rather than turtling a single plant.
 
 actor-sghyd =
     .name = Hydrogen Plant

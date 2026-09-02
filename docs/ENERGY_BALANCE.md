@@ -38,7 +38,11 @@ keeping power a constant spend-vs-save decision (`docs/VISION.md` #3) rather tha
 ### Wind Turbine Array (`SGWND`) — Assembly
 
 Cheap (250 — retuned from the original 400 after the `docs/BUILDINGS.md` roster survey found it strictly dominated by Solar Array at that price), early (`~techlevel.low`, a tier before Advanced Solar Array), individually fragile (30000 HP —
-the lowest of any power building). Rewards spreading turbines out across a base rather than turtling one big
+the lowest of any power building), and **one cell** (issue #100 — it was 2×2 until then, i.e. it cost a Solar
+Array's worth of base space for less power, which is exactly the "too close to Solar Array" complaint the
+price cut alone never fixed). Space, not price, is what now makes a turbine a different building rather than
+a cheaper one: 70 power per cell against Solar Array's 25, paid for in HP, armour and blackout exposure.
+Rewards spreading turbines out across a base rather than turtling one big
 plant, keeping raiding and map pressure relevant on the power layer (`docs/VISION.md` #4 "pressure never
 disappears"). Fits the Assembly's already-declared "decentralized/scarcity-adapted/improvisational"
 infrastructure identity (`docs/ART_DIRECTION.md`), which was previously only expressed through the Drone Bay.
@@ -90,19 +94,25 @@ This building was missing from this document entirely until issue #79, which is 
 its numbers look bad and the reason to build one is invisible. At 400 Credits for `+60 Power` it is
 **by far the worst credits-per-power in the game** — more than double a Solar Array:
 
-| | Cost | Power | cr/power | HP | Cells | HP/cell | Power scales with damage | Disabled by outage |
-|---|---|---|---|---|---|---|---|---|
-| `POWR` Solar Array | 300 | +100 | **3.00** | 40000 | 4 | 10000 | yes | yes |
-| `SGWND` Wind Turbine Array | 250 | +70 | 3.57 | 30000 | 4 | 7500 | yes | yes |
-| `SGHYD` Hydrogen Plant | 1200 | +350 | 3.43 | 90000 | 6 | 15000 | yes | yes |
-| `APWR` Advanced Solar Array | 1000 | +200 | 5.00 | 70000 | 6 | 11667 | yes | yes |
-| `SGREL` Smart Grid Relay | 400 | +60 | **6.67** | 50000 | **1** | **50000** | **no** | **no** |
+| | Cost | Power | cr/power | HP | Cells | power/cell | HP/cell | Power scales with damage | Disabled by outage |
+|---|---|---|---|---|---|---|---|---|---|
+| `POWR` Solar Array | 300 | +100 | **3.00** | 40000 | 4 | 25 | 10000 | yes | yes |
+| `SGWND` Wind Turbine Array | 250 | +70 | 3.57 | 30000 | **1** | **70** | 30000 | yes | yes |
+| `SGHYD` Hydrogen Plant | 1200 | +350 | 3.43 | 90000 | 6 | 58 | 15000 | yes | yes |
+| `APWR` Advanced Solar Array | 1000 | +200 | 5.00 | 70000 | 6 | 33 | 11667 | yes | yes |
+| `SGREL` Smart Grid Relay | 400 | +60 | **6.67** | 50000 | **1** | 60 | **50000** | **no** | **no** |
+
+(The Wind Turbine's `Cells` and `power/cell` are issue #100's; it occupied 4 cells at 17.5 power/cell
+until then, which is what made it read as a slightly worse Solar Array.)
 
 The premium buys four properties no other power building has, none of which is stated anywhere the
 player can see them:
 
 1. **A 1×1 footprint**, against 4 or 6 occupied cells. It fits gaps, packs behind walls, and can't be
-   splashed in bulk.
+   splashed in bulk. Since issue #100 the Wind Turbine is 1×1 as well, so this is no longer unique —
+   but the two are opposite ends of the same cell: the Turbine is the cheap, fragile, health-scaled,
+   blackout-able one and the Relay is the expensive, hardened, always-on one. See "Is the Relay
+   redundant now?" below.
 2. **50000 HP in that single cell** — 3.3× the HP density of the next-toughest power building
    (`SGHYD` at 15000/cell) and 5× a Solar Array's. It is not the densest building in the mod
    (`FIX` is 80000/cell; `MSLO`, `IRON` and `GAP` also reach 50000), but among power sources it is
@@ -127,6 +137,40 @@ source"; it says nothing about outage immunity or health-independence, and neith
 before now. The two missing `Inherits` lines are equally consistent with a deliberate survivability
 niche and with an oversight from when the building was scoped down. **Treat the properties as real
 but the intent as unrecorded** — see `docs/BACKLOG.md` issue #79 for the open decision.
+
+### Is the Relay redundant now? (issue #100 follow-up)
+
+Fair question once the Wind Turbine is also 1×1, and the honest answer is *for one faction, nearly*.
+
+The Relay is **not** redundant for the Consortium. `SGWND` is `~structures.soviet`; the Consortium
+cannot build a turbine at all, so the Relay stays its only compact power source and its only power
+that a Spy blackout can't switch off. Nothing about issue #100 touches that side of the roster.
+
+For the Assembly it is a much narrower building than it was. At the same one cell, a turbine is
+150 Credits cheaper, supplies 10 more power, and arrives a tech tier earlier (`~techlevel.low`
+against `~techlevel.medium`). What the extra 150 Credits still buy, and they are not nothing:
+
+- **50000 HP behind Heavy armour** against 30000 behind Wood. The nominal gap is 1.67×; the real one
+  is larger, since Heavy soaks the small-arms and light-cannon fire most raids arrive with.
+- **Full output at any health.** A turbine at 25% health is supplying roughly +18 of its +70; a Relay
+  at 5% health is still supplying +60. Under sustained harassment the Relay's *effective* power/cell
+  is the one that holds.
+- **Immunity to the infiltration blackout** that switches every turbine, Solar Array, Advanced Solar
+  Array and Hydrogen Plant dark at once.
+
+So the two 1×1 power buildings now read as the cheap fragile one and the expensive durable one — a
+real choice on the same footprint, and arguably a *better* pairing than "the small one is the only
+small one". The risk worth watching in playtest is that an Assembly player simply never has a reason
+to reach for the Relay, because turbines are cheap enough to replace faster than they die.
+
+**Two options if that is what playtest shows, neither taken here.** Gate the Relay to
+`~structures.allies`, mirroring the turbine's Assembly gate, so each faction owns exactly one 1×1
+power building expressing its own identity (decentralised-and-fragile against hardened-and-central) —
+this is the tidier design and costs the Assembly an option it may not be using. Or leave both open
+and let the Relay be the Assembly's answer to *being raided*, which is what it already is. Deleting
+the Relay is the one option not worth taking: it is the Consortium's only compact power and the mod's
+only power source that a blackout cannot reach, and both of those roles would have to be rebuilt
+somewhere else.
 
 ## Ant / Zombie replacement
 

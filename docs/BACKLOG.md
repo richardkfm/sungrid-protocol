@@ -2820,3 +2820,67 @@ Happy path: a clean `make` fetches the real pinned engine and builds with 0 warn
 the poisoned-leftover-archive case. **Still unverified: that the alpha34 Windows job succeeds on a re-run** - that
 needs the job actually re-run, and a re-run uses the `alpha34` tag, i.e. the *old* script; it should succeed
 because the download failure was transient, but this fix only protects releases from `alpha35` onward.
+
+### 100. Wind Turbine Array occupied as much base space as a Solar Array - footprint 2x2 → 1x1, sprite redrawn
+
+**Reported as:** "make wind turbines smaller in space usage (otherwise they are too close to what solar panels
+deliver already)."
+
+**Confirmed, and the space was the only axis nobody had touched.** `SGWND` and `POWR` had the *same*
+`Building` block - `Footprint: xx xx ==`, `Dimensions: 2,3` (a 2x2 building plus a bib row) - so a turbine cost
+exactly as much base real estate as a Solar Array while supplying less power:
+
+| | Cost | Power | Cells | power/cell | cr/power | HP | Armour |
+|---|---|---|---|---|---|---|---|
+| `POWR` Solar Array | 300 | +100 | 4 | 25 | 3.00 | 40000 | Wood |
+| `SGWND` before | 250 | +70 | 4 | 17.5 | 3.57 | 30000 | Wood |
+| `SGWND` after | 250 | +70 | **1** | **70** | 3.57 | 30000 | Wood |
+
+The building's whole stated purpose (`docs/ENERGY_BALANCE.md`, `docs/BUILDINGS.md` #11) is "spread power out
+instead of turtling one plant" - and every previous attempt to make that real moved *price* (400 → 250 in the
+roster survey) or HP, i.e. axes where a Solar Array simply beats it. On the only axis that expresses
+decentralisation in an RTS - how much of your base a thing eats - the two buildings were identical. Hence
+"too close to what solar panels deliver already": correct, and price was never going to fix it.
+
+**Fix, three coupled parts.** Cost and output are deliberately unchanged, so this is a straight buff; what pays
+for the density is what already paid for it - 30000 HP (the lowest of any power building), Wood armour,
+`ScalePowerWithHealth`, and `^DisabledByPowerOutage`.
+
+1. `mods/sungrid/rules/structures.yaml`: `Building` → `Footprint: x` / `Dimensions: 1,1` (the
+   `LocalCenterOffset: 0,-512,0` that compensated for the bib row goes with it), `Inherits@shape` →
+   `^1x1Shape`, `Selectable.Bounds` 2048x2048 → 1024x1024 with `DecorationBounds: 1024, 2048, 0, -512` (the
+   tower is much taller than its cell, so health bars clear the rotor - same split `SGREL` uses), and
+   `WithBuildingBib` → `HasMinibib: True`.
+2. `mods/sungrid/sequences/structures.yaml`: the `bib` sequence moves off `bib3.tem` (a 2-cell-wide apron)
+   onto the `mbSILO` minibib tiles, which is what the mod's other 1x1 buildings (`SGVLT`, `SGSNS`,
+   `RCYD`) already use.
+3. `mods/sungrid/bits/gen_concept_art.py`: `sgwnd_draw` moves from the 2x3 art family (`FAM23`, 66x54) to the
+   1x1 family (`SG1x1`, 40x36) and draws **one** turbine instead of two. Per CLAUDE.md's rule 10, this is a
+   redraw and not a rescale - but because the frame lost half its *content* along with its size, every mark
+   (cylindrical mast ramp, nacelle pod, foreshortened swept disc, per-blade streaks) stays at the pixel scale
+   it was already drawn for. The mast is proportionally longer, since a lone tower needs it to read as a
+   turbine rather than a radio mast, and the ground strip is kept inside one 24px cell rather than running the
+   full 40px frame.
+
+**No other file needed changing.** `mods/sungrid/rules/ai.yaml` references `sgwnd` in five `PowerTypes`, five
+`BuildingFractions` and the `EnemyBaseBuildingTypes`/`ProtectionTypes` lists, all of which are actor-id lists
+that say nothing about size; `BaseBuilderQueueManager` places by the actor's own footprint. No shipped map
+places an `SGWND`, so nothing needed re-laying-out.
+
+**Verification.** Re-running `gen_concept_art.py` then `gen_photo_cameos.py` leaves every other sprite in
+`mods/sungrid/bits/` byte-identical (the standing regression check) - only `sgwnd.png` and `sgwndmake.png`
+change. `sgwnd.png` is 2 frames of 40x36 and `sgwndmake.png` 9, matching `sgrel.png`'s layout exactly, and the
+build-up derives from the new idle frame as `make_frames()` always did. Review render:
+`docs/concept-art/issue100-wind-turbine-1x1.png` (before/after over a 24px cell grid, Solar Array for scale,
+idle/damaged beside the Relay, both build-ups). **Not verified in a live client** - no engine build is
+available in this environment, so `./utility.sh --check-yaml` / `--check-missing-sprites` could not be run
+here; CI runs them.
+
+**Raised in the same conversation, deliberately not acted on: is `SGREL` redundant now that it is not the only
+1x1 power building?** Answered in `docs/ENERGY_BALANCE.md` ("Is the Relay redundant now?"). Short version: not
+for the Consortium, which cannot build turbines at all and for which the Relay remains its only compact power
+and its only blackout-proof power; genuinely narrower for the Assembly, which can now get more power per cell,
+cheaper and a tech tier earlier, and buys durability rather than density with the extra 150 Credits. The two
+open options if playtest shows the Assembly never reaching for one are to gate the Relay `~structures.allies`
+(mirroring the turbine's Assembly gate, one 1x1 power building per faction) or to leave both. Deleting it is
+the option not worth taking.

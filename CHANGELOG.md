@@ -290,6 +290,26 @@ failed fetch now says so in plain terms and names the URL it couldn't get.
 This protects releases from alpha35 onward. Getting alpha34's Windows installer published needs its packaging
 job re-run.
 
+## Wind Turbines take a quarter of the space (issue #100)
+
+A Wind Turbine Array used to occupy the same 2x2 block of your base as a Solar Array, while supplying less
+power - so the "cheap, spread-out, decentralised" building it is meant to be cost exactly as much room as the
+big plant it was supposed to be an alternative to. Earlier passes had cut its price and left it there, which
+never addressed the actual complaint.
+
+**A turbine now stands on a single cell.** Same 250 Credits, same +70 power, same fragility - but four
+turbines now fit where one Solar Array stood, and they slot into gaps, base corners and space behind walls
+that a 2x2 building simply cannot use. Per cell that is 70 power against a Solar Array's 25. What you pay for
+the density is what you already paid: the lowest hit points of any power building, output that drops as the
+turbine takes damage, and vulnerability to an infiltration blackout.
+
+The sprite is redrawn to match - it used to be two turbines sharing one plinth, drawn to fill the four cells
+it held. It is now a single mast, and the "Array" is the several you plant around your base.
+
+Also answered, in `docs/ENERGY_BALANCE.md`: no, this does not make the Smart Grid Relay pointless. The
+Consortium cannot build turbines at all, so the Relay stays its only compact and only blackout-proof power;
+for the Assembly the Relay is now the durable option on the same footprint rather than the only small one.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.
