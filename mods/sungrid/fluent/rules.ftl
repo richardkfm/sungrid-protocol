@@ -1233,8 +1233,9 @@ actor-sgtur =
 actor-sgrel =
     .name = Smart Grid Relay
     .description =
-    A grid-balancing relay station providing a modest
-    secondary supply of power. Tough for its footprint,
+    Consortium power infrastructure. A grid-balancing relay
+    station providing a modest secondary supply of power
+    on a single cell. Tough for its footprint,
     its output holds steady as it takes damage, and it
     can't be knocked dark by an infiltration blackout
     the way other power plants can. Counts as a power

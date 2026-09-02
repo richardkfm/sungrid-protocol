@@ -109,10 +109,10 @@ The premium buys four properties no other power building has, none of which is s
 player can see them:
 
 1. **A 1×1 footprint**, against 4 or 6 occupied cells. It fits gaps, packs behind walls, and can't be
-   splashed in bulk. Since issue #100 the Wind Turbine is 1×1 as well, so this is no longer unique —
-   but the two are opposite ends of the same cell: the Turbine is the cheap, fragile, health-scaled,
-   blackout-able one and the Relay is the expensive, hardened, always-on one. See "Is the Relay
-   redundant now?" below.
+   splashed in bulk. Since issue #100 the Wind Turbine is 1×1 as well, so the footprint alone is no
+   longer unique — but the two are opposite ends of the same cell (the Turbine is the cheap, fragile,
+   health-scaled, blackout-able one) and since issue #101 they are on opposite sides of the roster:
+   `SGREL` is Consortium-only, `SGWND` Assembly-only. See "Is the Relay redundant now?" below.
 2. **50000 HP in that single cell** — 3.3× the HP density of the next-toughest power building
    (`SGHYD` at 15000/cell) and 5× a Solar Array's. It is not the densest building in the mod
    (`FIX` is 80000/cell; `MSLO`, `IRON` and `GAP` also reach 50000), but among power sources it is
@@ -138,15 +138,15 @@ before now. The two missing `Inherits` lines are equally consistent with a delib
 niche and with an oversight from when the building was scoped down. **Treat the properties as real
 but the intent as unrecorded** — see `docs/BACKLOG.md` issue #79 for the open decision.
 
-### Is the Relay redundant now? (issue #100 follow-up)
+### Is the Relay redundant now? (issue #100 follow-up, resolved by issue #101)
 
-Fair question once the Wind Turbine is also 1×1, and the honest answer is *for one faction, nearly*.
+Fair question once the Wind Turbine is also 1×1, and the honest answer was *for one faction, nearly*.
 
-The Relay is **not** redundant for the Consortium. `SGWND` is `~structures.soviet`; the Consortium
-cannot build a turbine at all, so the Relay stays its only compact power source and its only power
-that a Spy blackout can't switch off. Nothing about issue #100 touches that side of the roster.
+The Relay was never redundant for the Consortium. `SGWND` is `~structures.soviet`; the Consortium
+cannot build a turbine at all, so the Relay is its only compact power source and its only power that
+a Spy blackout can't switch off. Nothing about issue #100 touched that side of the roster.
 
-For the Assembly it is a much narrower building than it was. At the same one cell, a turbine is
+For the Assembly it became a much narrower building. At the same one cell, a turbine is
 150 Credits cheaper, supplies 10 more power, and arrives a tech tier earlier (`~techlevel.low`
 against `~techlevel.medium`). What the extra 150 Credits still buy, and they are not nothing:
 
@@ -158,19 +158,34 @@ against `~techlevel.medium`). What the extra 150 Credits still buy, and they are
 - **Immunity to the infiltration blackout** that switches every turbine, Solar Array, Advanced Solar
   Array and Hydrogen Plant dark at once.
 
-So the two 1×1 power buildings now read as the cheap fragile one and the expensive durable one — a
-real choice on the same footprint, and arguably a *better* pairing than "the small one is the only
-small one". The risk worth watching in playtest is that an Assembly player simply never has a reason
-to reach for the Relay, because turbines are cheap enough to replace faster than they die.
+**Resolved by gating the Relay to the Consortium (issue #101).** `SGREL` now requires
+`~structures.allies`, mirroring `SGWND`'s `~structures.soviet`, so **each faction owns exactly one
+1×1 power building** and each one expresses that faction's declared power identity:
 
-**Two options if that is what playtest shows, neither taken here.** Gate the Relay to
-`~structures.allies`, mirroring the turbine's Assembly gate, so each faction owns exactly one 1×1
-power building expressing its own identity (decentralised-and-fragile against hardened-and-central) —
-this is the tidier design and costs the Assembly an option it may not be using. Or leave both open
-and let the Relay be the Assembly's answer to *being raided*, which is what it already is. Deleting
-the Relay is the one option not worth taking: it is the Consortium's only compact power and the mod's
-only power source that a blackout cannot reach, and both of those roles would have to be rebuilt
-somewhere else.
+| | 1×1 power building | Cost | Power | Tier | HP / armour | Output under damage | Spy blackout |
+|---|---|---|---|---|---|---|---|
+| Assembly | `SGWND` Wind Turbine Array | 250 | +70 | `low` | 30000 / Wood | scales down | vulnerable |
+| Consortium | `SGREL` Smart Grid Relay | 400 | +60 | `medium` | 50000 / Heavy | holds at full | immune |
+
+This is the same shape as the pairing already at the large end of the roster (`SGWND`/`SGHYD`,
+decentralised-and-fragile against hardened-and-central), and it removes an asymmetry that existed by
+accident rather than by design: the Relay shipped in Phase 5 as a both-sides building, before the
+faction power lines existed, so after issue #100 the Assembly had *two* 1×1 power options and the
+Consortium had one — and the Assembly's second one was strictly cheaper, earlier and higher-output.
+
+**What it costs the Assembly**, stated plainly because it is a real nerf and not just tidying: they
+lose the only power source in the mod that a Spy infiltration cannot black out and that keeps full
+output while burning. Their answer to power denial is now quantity and rebuild speed — turbines are
+250 Credits and `~techlevel.low` — rather than a hardened supply they can hide behind walls. Whether
+that trade is right depends on how often blackouts and sustained power raids actually land, which is
+a playtest question; the reversal is one token on one line if it plays badly.
+
+**Deleting the Relay was never the option.** It is the Consortium's only compact power and the mod's
+only blackout-proof power; both roles would have to be rebuilt somewhere else.
+
+**No AI changes were needed.** Every `BaseBuilderBotModule` personality's `PowerTypes` already lists
+`sgwnd` and `sgrel` together, and a bot only builds what its own faction's prerequisites allow — the
+same reasoning that made issue #84's `AGUN`/`SAM` faction swap a rules-only change.
 
 ## Ant / Zombie replacement
 

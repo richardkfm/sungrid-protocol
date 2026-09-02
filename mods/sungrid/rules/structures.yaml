@@ -2696,10 +2696,16 @@ SGREL:
 		Type: Rectangle
 			TopLeft: -512,-512
 			BottomRight: 512,512
+	# Consortium-only since issue #101, mirroring SGWND's ~structures.soviet
+	# gate. Both are 1x1 power buildings; leaving this one open to both sides
+	# gave the Assembly the cheaper, earlier, higher-output turbine *and* this,
+	# while the Consortium had only this. One compact power building per
+	# faction, each expressing that faction's power identity: the Assembly's is
+	# cheap and fragile, the Consortium's is expensive and hardened.
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 205
-		Prerequisites: anypower, ~techlevel.medium
+		Prerequisites: anypower, ~structures.allies, ~techlevel.medium
 		Description: actor-sgrel.description
 	Valued:
 		Cost: 400

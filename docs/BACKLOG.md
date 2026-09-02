@@ -2884,3 +2884,49 @@ cheaper and a tech tier earlier, and buys durability rather than density with th
 open options if playtest shows the Assembly never reaching for one are to gate the Relay `~structures.allies`
 (mirroring the turbine's Assembly gate, one 1x1 power building per faction) or to leave both. Deleting it is
 the option not worth taking.
+
+### 101. Smart Grid Relay gated to the Consortium - one 1x1 power building per faction
+
+**Raised as:** "so both sides now got an exclusive 1x1 energy building (wind vs smart grid relay) is that
+correct?" - a question about issue #100's result, and the answer was **no**.
+
+**What was actually true.** `SGWND` is `anypower, ~structures.soviet, ~techlevel.low`; `SGREL` was
+`anypower, ~techlevel.medium`, with **no faction gate at all**. So after issue #100 shrank the turbine to one
+cell, the Assembly had *two* 1x1 power buildings and the Consortium had *one* - and the Assembly's second one
+was cheaper (250 vs 400), higher-output (+70 vs +60) and a tech tier earlier. The Relay's remaining case for
+an Assembly player was durability alone: 50000 HP behind Heavy armour against 30000 behind Wood, full output
+at any health where a damaged turbine bleeds it, and immunity to the infiltration blackout.
+
+This overlap was an accident of ordering, not a design. `SGREL` shipped in Phase 5 as a both-sides building;
+the faction power lines (`SGWND` Assembly / `SGHYD` Consortium) arrived later in the energy rebalance pass,
+and nobody revisited the Relay's prerequisites when they did.
+
+**Fix.** `SGREL` gains `~structures.allies`, mirroring `SGWND`'s `~structures.soviet`. Each faction now owns
+exactly one 1x1 power building, and each expresses that faction's declared power identity:
+
+| | 1x1 power building | Cost | Power | Tier | HP / armour | Output under damage | Spy blackout |
+|---|---|---|---|---|---|---|---|
+| Assembly | `SGWND` Wind Turbine Array | 250 | +70 | low | 30000 / Wood | scales down | vulnerable |
+| Consortium | `SGREL` Smart Grid Relay | 400 | +60 | medium | 50000 / Heavy | holds at full | immune |
+
+Same shape as the pairing already at the large end of the roster (`SGWND` decentralised-and-fragile against
+`SGHYD` hardened-and-central), which is the argument for doing it this way rather than, say, equalising the
+two buildings' stats.
+
+**What this costs the Assembly, stated plainly.** It is a nerf, not just tidying. They lose the only power
+source in the mod that a Spy infiltration cannot black out and that keeps full output while burning; their
+answer to power denial is now quantity and rebuild speed (250 Credits at `~techlevel.low`) rather than a
+hardened supply. Whether that trade is right is a playtest question - how often blackouts and sustained power
+raids actually land. **The reversal is one token on one line** if it plays badly.
+
+**Fluent.** `actor-sgrel`'s description gains the "Consortium power infrastructure." opener that `SGWND` and
+`SGHYD` already use, and names the single-cell footprint, since a faction gate the player can't see is the
+same legibility failure issue #79 recorded against this building's other hidden properties.
+
+**No AI changes needed**, for the same reason issue #84's `AGUN`/`SAM` faction swap needed none: every
+`BaseBuilderBotModule` personality's `PowerTypes` already lists `sgwnd` and `sgrel` together, and a bot only
+builds what its own faction's prerequisites allow. Checked the same way for maps - no shipped map places an
+`SGREL`.
+
+**Not verified in a live client** (no engine build in this environment); CI runs `--check-yaml`. Shipped in
+the same PR as issue #100, since it is the same design decision seen from the other side.
