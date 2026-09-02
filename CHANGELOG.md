@@ -290,6 +290,42 @@ failed fetch now says so in plain terms and names the URL it couldn't get.
 This protects releases from alpha35 onward. Getting alpha34's Windows installer published needs its packaging
 job re-run.
 
+## Wind Turbines take a quarter of the space (issue #100)
+
+A Wind Turbine Array used to occupy the same 2x2 block of your base as a Solar Array, while supplying less
+power - so the "cheap, spread-out, decentralised" building it is meant to be cost exactly as much room as the
+big plant it was supposed to be an alternative to. Earlier passes had cut its price and left it there, which
+never addressed the actual complaint.
+
+**A turbine now stands on a single cell.** Same 250 Credits, same +70 power, same fragility - but four
+turbines now fit where one Solar Array stood, and they slot into gaps, base corners and space behind walls
+that a 2x2 building simply cannot use. Per cell that is 70 power against a Solar Array's 25. What you pay for
+the density is what you already paid: the lowest hit points of any power building, output that drops as the
+turbine takes damage, and vulnerability to an infiltration blackout.
+
+The sprite is redrawn to match - it used to be two turbines sharing one plinth, drawn to fill the four cells
+it held. It is now a single mast, and the "Array" is the several you plant around your base.
+
+Also answered, in `docs/ENERGY_BALANCE.md`: no, this does not make the Smart Grid Relay pointless. The
+Consortium cannot build turbines at all, so the Relay stays its only compact and only blackout-proof power;
+for the Assembly the Relay is now the durable option on the same footprint rather than the only small one.
+
+## The Smart Grid Relay is now Consortium-only (issue #101)
+
+A direct consequence of the turbine change above. The Relay has been buildable by both sides since Phase 5,
+from back before each faction had its own power line - so once turbines shrank to one cell, the Assembly had
+two single-cell power buildings and the Consortium had one, and the Assembly's second one was cheaper,
+earlier and higher-output.
+
+Each side now has exactly one single-cell power building, and they are opposites: the Assembly's Wind Turbine
+is cheap, early and fragile; the Consortium's Smart Grid Relay is expensive, hardened, keeps full output
+while burning, and cannot be switched off by an infiltration blackout. That mirrors the pairing the two sides
+already have at the large end - Wind Turbines against the Hydrogen Plant.
+
+**This is a real loss for the Assembly**, not just tidying: they no longer have any power source that
+survives a Spy blackout at full output. Their answer to power denial is now building more turbines, faster,
+which is what the faction is supposed to be about - but if it plays badly, it is a one-line reversal.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

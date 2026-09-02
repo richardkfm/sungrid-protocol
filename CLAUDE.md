@@ -251,6 +251,10 @@ is the regression check.
     a direction-changing spike at 2px, which is why the shrunk drones use `_small_rotor()`'s opaque
     ring instead (issue #80). Same rule the other way for fine structure: the Aerial Fab's truss web is
     *filled triangles*, because 0.9px diagonals come back from the 4× downscale as a chain of loops.
+    Corollary from issue #100 (Wind Turbine 2×2 → 1×1): when a *footprint* shrinks, the fix is usually to
+    draw **less**, not smaller. The old sheet held two turbines because it filled four cells; the 1×1 sheet
+    holds one, so every mark stays at the scale it was drawn for and only the proportions are re-chosen. A
+    sprite's ground pad also belongs inside the cells the building owns, not spread across the whole frame.
 11. **An actor with bespoke art shouldn't also wear a generic overlay for a part its own sprite draws.**
     Both drones baked four rotors *and* mounted stock RA helicopter rotor discs on top (issue #80);
     scale changes made it obvious, but it was wrong at any size. Check `WithIdleOverlay` against what

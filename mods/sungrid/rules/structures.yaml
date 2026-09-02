@@ -1811,11 +1811,16 @@ APWR:
 SGWND:
 	Inherits: ^Building
 	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
-	Inherits@shape: ^2x2Shape
+	Inherits@shape: ^1x1Shape
 	RenderSprites:
 		Image: sgwnd
+	# A single mast on a single cell (docs/BACKLOG.md issue #100). The tower is
+	# far taller than the cell it stands on, so decorations (health bar, build
+	# progress) clear the rotor instead of hanging over the nacelle -- the same
+	# split SGREL uses for its bushings.
 	Selectable:
-		Bounds: 2048, 2048
+		Bounds: 1024, 1024
+		DecorationBounds: 1024, 2048, 0, -512
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 111
@@ -1827,10 +1832,13 @@ SGWND:
 		Name: actor-sgwnd.name
 	ProvidesPrerequisite:
 		Prerequisite: anypower
+	# One cell, against Solar Array's four. A turbine is a mast, not a plant:
+	# what makes it worth building is that it slots into gaps a 2x2 power
+	# building can't use, so the Assembly's decentralised power identity is
+	# something the base layout can actually express (docs/BACKLOG.md #100).
 	Building:
-		Footprint: xx xx ==
-		Dimensions: 2,3
-		LocalCenterOffset: 0,-512,0
+		Footprint: x
+		Dimensions: 1,1
 	Health:
 		HP: 30000
 	Armor:
@@ -1838,6 +1846,7 @@ SGWND:
 	RevealsShroud:
 		Range: 4c0
 	WithBuildingBib:
+		HasMinibib: True
 	Power:
 		Amount: 70
 	Targetable:
@@ -2687,10 +2696,16 @@ SGREL:
 		Type: Rectangle
 			TopLeft: -512,-512
 			BottomRight: 512,512
+	# Consortium-only since issue #101, mirroring SGWND's ~structures.soviet
+	# gate. Both are 1x1 power buildings; leaving this one open to both sides
+	# gave the Assembly the cheaper, earlier, higher-output turbine *and* this,
+	# while the Consortium had only this. One compact power building per
+	# faction, each expressing that faction's power identity: the Assembly's is
+	# cheap and fragile, the Consortium's is expensive and hardened.
 	Buildable:
 		Queue: Building
 		BuildPaletteOrder: 205
-		Prerequisites: anypower, ~techlevel.medium
+		Prerequisites: anypower, ~structures.allies, ~techlevel.medium
 		Description: actor-sgrel.description
 	Valued:
 		Cost: 400

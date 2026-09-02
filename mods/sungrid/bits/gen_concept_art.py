@@ -2016,89 +2016,99 @@ def arct_icon_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
     arct_mesh(damaged).draw(sd, w // 2, h - ARCT_PEDESTAL_DY, ARCT_AZIMUTH)
 
 
-def sgwnd_draw(sd, w=FAM23_W, h=FAM23_H, damaged=False):
-    """Wind Turbine Array: two slim turbine poles/rotors -- deliberately
-    sparser than Solar Array's dense panel frames, matching Wind Turbine's
-    "cheap, mass-producible" fantasy.
+def sgwnd_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
+    """Wind Turbine Array: one slim turbine mast on a single-cell footing.
 
-    Volumetric second pass (issue #48's technique, batch 2): the flat
-    tapered-polygon towers become cylindrical masts (horizontal lighting
-    ramp on a tapering silhouette, same key light as vcyl) planted on a
-    concrete footing with real depth (capped_box); the nacelle becomes a
-    shaded pod with a sphere-read hub; and the rotor gains a foreshortened
-    translucent swept disc behind tapered volume blades, so it reads as a
-    spinning mass at the game's front-above angle instead of three stick
-    lines."""
-    ground_y0, ground_y1 = h - 12, h
-    gold_y0, gold_y1 = ground_y0 - 8, ground_y0
-    draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=8)
-    draw_gold_band(sd, 6, w - 6, gold_y0, gold_y1)
-    for k, cx in enumerate((w // 3, 2 * w // 3)):
-        hub_y = gold_y0 - 26
-        stopped = damaged and k == 0
-        contact_shadow(sd, cx + 1, gold_y0 + 0.7, 5, 1.5, base=SUN_GOLD)
-        # Concrete footing block with volume.
-        capped_box(sd, cx - 3, gold_y0 - 3, cx + 3, gold_y0 - 0.5, CONCRETE, depth=1.4, edge=0.3)
-        # Tapered cylindrical mast: brightness peaks left of center, darkest
-        # at both silhouette edges (vcyl's ramp on a tapering outline).
-        base_hw, top_hw = 2.0, 0.9
-        bands = 5
-        for i in range(bands):
-            t0, t1 = i / bands, (i + 1) / bands
-            c = (t0 + t1) / 2
-            b = 1.0 - abs(c - 0.35) * 2.0
-            col = (lit(LEGACY_GRAY, 0.32 * max(0.0, b)) if b > 0
-                   else dim(LEGACY_GRAY, 0.3 * min(1.0, -b + 0.3)))
-            sd.poly([
-                (cx - base_hw + 2 * base_hw * t0, gold_y0 - 2),
-                (cx - base_hw + 2 * base_hw * t1, gold_y0 - 2),
-                (cx - top_hw + 2 * top_hw * t1, hub_y),
-                (cx - top_hw + 2 * top_hw * t0, hub_y),
-            ], fill=col)
-        # Service door at the mast base.
-        sd.rect([cx - 0.8, gold_y0 - 6.5, cx + 0.8, gold_y0 - 2.5], fill=dim(LEGACY_GRAY, 0.45))
-        # Nacelle pod: shaded body behind a sphere-read hub cone.
-        sd.ellipse([cx - 2.6, hub_y - 2.2, cx + 2.6, hub_y + 2.2], fill=dim(LEGACY_GRAY, 0.2))
-        sd.ellipse([cx - 2.6, hub_y - 2.2, cx + 1.6, hub_y + 1.4], fill=LEGACY_GRAY)
-        sd.arc([cx - 2.6, hub_y - 2.2, cx + 2.6, hub_y + 2.2], 150, 300,
-               fill=lit(LEGACY_GRAY, 0.4), width=0.5)
-        hub_c = SUN_GOLD if not stopped else dim(SUN_GOLD, 0.5)
-        # Rotor sweep: foreshortened (rx > ry) spinning-volume read. NB the
-        # indexed pipeline's 1-bit alpha (to_indexed) drops sub-threshold
-        # translucency over transparent background, so the sweep can't be a
-        # soft disc -- it's full-opacity trailing streak arcs behind each
-        # blade tip (plus a faint disc that only survives where it overlaps
-        # opaque geometry). Skipped when stopped.
-        rx, ry = 13, 10.5
+    Redrawn for the 1x1 footprint (docs/BACKLOG.md issue #100). What this
+    replaces was a 2x3-family sprite drawing *two* turbines side by side on a
+    shared plinth, sized to the four cells the building used to occupy -- which
+    is exactly what made a turbine cost a Solar Array's worth of base space.
+    The "Array" is now the several turbines a player plants around the base,
+    not two poles welded to one pad, so the sprite is a single machine.
+
+    Scale note (the rule in CLAUDE.md: a size change means re-choosing the
+    marks, not scaling the coordinates). The frame shrank 66x54 -> 40x36, but
+    the frame now carries one turbine instead of two, so every mark here is
+    drawn at essentially the *same* pixel scale as before -- the tapered
+    cylindrical mast with its horizontal lighting ramp, the shaded nacelle pod,
+    the foreshortened swept disc with per-blade trailing streaks. Only the
+    proportion changed: the mast is longer relative to the rotor than the old
+    pair could afford, which is what keeps a lone tower reading as a turbine
+    rather than as a radio mast.
+    """
+    cx = w // 2
+    # The pad is a single machine's footing, not a plant's apron: it is kept
+    # inside one 24px cell (the sprite frame is 40px, so a full-width strip
+    # like the old pair's would advertise ground the building no longer owns).
+    ground_y0, ground_y1 = h - 5, h
+    gold_y0, gold_y1 = ground_y0 - 5, ground_y0
+    draw_ground_strip(sd, cx - 12, cx + 12, ground_y0, ground_y1, seed=8)
+    draw_gold_band(sd, cx - 9, cx + 9, gold_y0, gold_y1)
+
+    hub_y = 8
+    stopped = damaged
+    contact_shadow(sd, cx + 1, gold_y0 + 0.7, 5, 1.5, base=SUN_GOLD)
+    # Concrete footing block with volume.
+    capped_box(sd, cx - 3, gold_y0 - 3, cx + 3, gold_y0 - 0.5, CONCRETE, depth=1.4, edge=0.3)
+    # Tapered cylindrical mast: brightness peaks left of center, darkest
+    # at both silhouette edges (vcyl's ramp on a tapering outline).
+    base_hw, top_hw = 2.0, 0.9
+    bands = 5
+    for i in range(bands):
+        t0, t1 = i / bands, (i + 1) / bands
+        c = (t0 + t1) / 2
+        b = 1.0 - abs(c - 0.35) * 2.0
+        col = (lit(LEGACY_GRAY, 0.32 * max(0.0, b)) if b > 0
+               else dim(LEGACY_GRAY, 0.3 * min(1.0, -b + 0.3)))
+        sd.poly([
+            (cx - base_hw + 2 * base_hw * t0, gold_y0 - 2),
+            (cx - base_hw + 2 * base_hw * t1, gold_y0 - 2),
+            (cx - top_hw + 2 * top_hw * t1, hub_y),
+            (cx - top_hw + 2 * top_hw * t0, hub_y),
+        ], fill=col)
+    # Service door at the mast base.
+    sd.rect([cx - 0.8, gold_y0 - 6.5, cx + 0.8, gold_y0 - 2.5], fill=dim(LEGACY_GRAY, 0.45))
+    # Nacelle pod: shaded body behind a sphere-read hub cone.
+    sd.ellipse([cx - 2.6, hub_y - 2.2, cx + 2.6, hub_y + 2.2], fill=dim(LEGACY_GRAY, 0.2))
+    sd.ellipse([cx - 2.6, hub_y - 2.2, cx + 1.6, hub_y + 1.4], fill=LEGACY_GRAY)
+    sd.arc([cx - 2.6, hub_y - 2.2, cx + 2.6, hub_y + 2.2], 150, 300,
+           fill=lit(LEGACY_GRAY, 0.4), width=0.5)
+    hub_c = SUN_GOLD if not stopped else dim(SUN_GOLD, 0.5)
+    # Rotor sweep: foreshortened (rx > ry) spinning-volume read. NB the
+    # indexed pipeline's 1-bit alpha (to_indexed) drops sub-threshold
+    # translucency over transparent background, so the sweep can't be a
+    # soft disc -- it's full-opacity trailing streak arcs behind each
+    # blade tip (plus a faint disc that only survives where it overlaps
+    # opaque geometry). Skipped when stopped.
+    rx, ry = 11, 8
+    if not stopped:
+        sd.ellipse([cx - rx, hub_y - ry, cx + rx, hub_y + ry], fill=GREEN_ACCENT + (13,))
+    # Three tapered volume blades on the foreshortened path.
+    phase = 15
+    for b in range(3):
+        ang = phase + b * 120
+        rad = math.radians(ang)
+        blade = dim(GREEN_ACCENT, 0.45) if stopped else GREEN_ACCENT
+        blen = 1.0 if not (stopped and b == 1) else 0.55  # snapped blade
+        ex = cx + rx * blen * math.cos(rad)
+        ey = hub_y - ry * blen * math.sin(rad)
+        prad = rad + math.pi / 2
+        r0x, r0y = cx + 1.4 * math.cos(prad), hub_y - 1.4 * math.sin(prad)
+        r1x, r1y = cx - 1.4 * math.cos(prad), hub_y + 1.4 * math.sin(prad)
+        sd.poly([(r0x, r0y), (r1x, r1y), (ex, ey)], fill=blade)
+        sd.line([(r0x, r0y), (ex, ey)], fill=lit(blade, 0.4), width=0.6)
         if not stopped:
-            sd.ellipse([cx - rx, hub_y - ry, cx + rx, hub_y + ry], fill=GREEN_ACCENT + (13,))
-        # Three tapered volume blades on the foreshortened path, phase-offset
-        # per turbine so the pair doesn't read as a copy-paste.
-        phase = 15 + k * 40
-        for b in range(3):
-            ang = phase + b * 120
-            rad = math.radians(ang)
-            blade = dim(GREEN_ACCENT, 0.45) if stopped else GREEN_ACCENT
-            blen = 1.0 if not (stopped and b == 1) else 0.55  # snapped blade
-            ex = cx + rx * blen * math.cos(rad)
-            ey = hub_y - ry * blen * math.sin(rad)
-            prad = rad + math.pi / 2
-            r0x, r0y = cx + 1.4 * math.cos(prad), hub_y - 1.4 * math.sin(prad)
-            r1x, r1y = cx - 1.4 * math.cos(prad), hub_y + 1.4 * math.sin(prad)
-            sd.poly([(r0x, r0y), (r1x, r1y), (ex, ey)], fill=blade)
-            sd.line([(r0x, r0y), (ex, ey)], fill=lit(blade, 0.4), width=0.6)
-            if not stopped:
-                # Trailing motion streak on the foreshortened tip path
-                # (PIL arc angles run clockwise with y down: math angle a
-                # maps to -a).
-                sd.arc([cx - rx, hub_y - ry, cx + rx, hub_y + ry],
-                       -ang - 52, -ang - 14, fill=dim(GREEN_ACCENT, 0.25), width=1.1)
-        # Hub sphere over the blade roots: dark rim, body, offset highlight.
-        sd.ellipse([cx - 1.9, hub_y - 1.9, cx + 1.9, hub_y + 1.9], fill=dim(hub_c, 0.35))
-        sd.ellipse([cx - 1.7, hub_y - 1.7, cx + 1.5, hub_y + 1.5], fill=hub_c)
-        sd.ellipse([cx - 1.2, hub_y - 1.2, cx - 0.1, hub_y - 0.1], fill=lit(hub_c, 0.45))
+            # Trailing motion streak on the foreshortened tip path
+            # (PIL arc angles run clockwise with y down: math angle a
+            # maps to -a).
+            sd.arc([cx - rx, hub_y - ry, cx + rx, hub_y + ry],
+                   -ang - 52, -ang - 14, fill=dim(GREEN_ACCENT, 0.25), width=1.1)
+    # Hub sphere over the blade roots: dark rim, body, offset highlight.
+    sd.ellipse([cx - 1.9, hub_y - 1.9, cx + 1.9, hub_y + 1.9], fill=dim(hub_c, 0.35))
+    sd.ellipse([cx - 1.7, hub_y - 1.7, cx + 1.5, hub_y + 1.5], fill=hub_c)
+    sd.ellipse([cx - 1.2, hub_y - 1.2, cx - 0.1, hub_y - 0.1], fill=lit(hub_c, 0.45))
     if damaged:
-        scorch(sd, [(w // 3, gold_y0 - 10, 2.5), (2 * w // 3 + 4, gold_y0 + 2, 2)])
+        scorch(sd, [(cx - 4, gold_y0 - 9, 2.5), (cx + 5, gold_y0 + 2, 2)])
 
 
 def sghyd_draw(sd, w=FAM33_W, h=FAM33_H, damaged=False):
@@ -3695,7 +3705,7 @@ def main():
         ("sgshl", sgshl_draw, SGSHL_W, SGSHL_H),
         ("sgsns", sgsns_draw, SG1x1_W, SG1x1_H),
         ("sgrel", sgrel_draw, SG1x1_W, SG1x1_H),
-        ("sgwnd", sgwnd_draw, FAM23_W, FAM23_H),
+        ("sgwnd", sgwnd_draw, SG1x1_W, SG1x1_H),
         ("sghyd", sghyd_draw, FAM33_W, FAM33_H),
         ("arct", arct_draw, SG1x1_W, SG1x1_H),
     ]

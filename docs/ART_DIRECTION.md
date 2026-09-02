@@ -129,6 +129,10 @@ On shadows, since the same request asked for them: every aircraft in the mod, dr
 
 ![Drone rotor spin and ground shadow: the four spin frames of a facing for each drone, the shipped static frames for comparison, and each drone composited over the ground shadow the engine draws 33px below it.](concept-art/issue81-drone-rotor-shadow.png)
 
+**Follow-up: a footprint change is a redraw, not a rescale (`docs/BACKLOG.md` issue #100).** The Wind Turbine Array went from four cells to one, and the sprite could not simply shrink: the 66×54 sheet drew *two* turbines on a shared plinth, sized to the 2×2 block it stood on, so scaling it down would have produced two illegibly small turbines advertising a footprint the building no longer has. It was redrawn as **one mast on a 40×36 frame** — the 1×1 family `SGREL`, `SGSNS` and `ARCT` already use — which keeps every mark at the pixel scale it was drawn for, since the frame lost half its content along with its size. The only proportion that changed is the mast-to-rotor ratio: a lone tower needs a longer mast than a pair did to read as a turbine rather than a radio mast. The pad is also deliberately kept inside one 24px cell, narrower than the 40px frame, because a ground strip running the full frame width advertises ground the building does not own.
+
+![Wind Turbine Array before and after over a 24px cell grid, with the Solar Array for scale, the idle/damaged frames beside the Smart Grid Relay, and both 9-frame build-ups.](concept-art/issue100-wind-turbine-1x1.png)
+
 Still open after this pass, and it is the *animated* half: no Sungrid **building** has a `WithIdleOverlay` or an animated body, against 27 animated `idle:`/`active:` nodes among the ported stock buildings. The Wind Turbine Array's blades do not turn, the Sensor Array's dish does not sweep, the Arc Turret fires with no muzzle flash, and the `grid-normal`/`grid-strained` and `drone-uplink` power states change behaviour with no visual cue whatsoever.
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

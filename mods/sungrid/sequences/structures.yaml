@@ -474,12 +474,16 @@ sgwnd:
 	make:
 		Filename: sgwndmake.png
 		Length: *
+	# Minibib: the turbine occupies one cell (docs/BACKLOG.md issue #100), so
+	# the 2-cell-wide bib3 apron it used to stand on would have spilled onto
+	# ground the building no longer owns. mbSILO is the minibib the mod's other
+	# 1x1 buildings use (sgvlt, sgsns, rcyd).
 	bib:
-		Filename: bib3.tem
 		TilesetFilenames:
-			SNOW: bib3.sno
-			DESERT: bib3.des
-		Length: *
+			SNOW: mbSILO.sno
+			INTERIOR: mbSILO.int
+			TEMPERAT: mbSILO.tem
+			DESERT: mbSILO.des
 	icon:
 		Filename: sgwndicon.png
 
