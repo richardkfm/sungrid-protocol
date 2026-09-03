@@ -15,13 +15,14 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.Common.Traits.BotModules.Squads;
 using OpenRA.Primitives;
+using OpenRA.Support;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Traits
 {
 	[TraitLocation(SystemActors.Player)]
 	[Desc("Manages AI squads.")]
-	public class SquadManagerBotModuleInfo : ConditionalTraitInfo
+	public class SquadManagerBotModuleInfo : ConditionalTraitInfo, IObservesVariablesInfo
 	{
 		[ActorReference]
 		[Desc("Actor types that are valid for naval squads.")]
@@ -93,9 +94,26 @@ namespace OpenRA.Mods.Common.Traits
 		[Desc("Enemy target types to never target.")]
 		public readonly BitSet<TargetableType> IgnoredEnemyTargetTypes = default;
 
+		[ActorReference]
+		[Desc("Enemy actor types to attack ahead of a closer target, when one is in range.",
+			"Empty (the default) leaves target selection purely distance-based.")]
+		public readonly FrozenSet<string> PreferredTargetTypes = FrozenSet<string>.Empty;
+
+		[Desc("Radius in cells to look for PreferredTargetTypes around the squad before falling back",
+			"to the closest enemy of any type. Zero means no distance limit.")]
+		public readonly int PreferredTargetScanRadius = 0;
+
+		[ConsumedConditionReference]
+		[Desc("Boolean expression defining the condition under which PreferredTargetTypes applies.",
+			"Unset (the default) means it always applies.")]
+		public readonly BooleanExpression PreferredTargetCondition = null;
+
 		public override void RulesetLoaded(Ruleset rules, ActorInfo ai)
 		{
 			base.RulesetLoaded(rules, ai);
+
+			if (PreferredTargetScanRadius < 0)
+				throw new YamlException("PreferredTargetScanRadius must not be negative.");
 
 			if (DangerScanRadius <= 0)
 				throw new YamlException("DangerScanRadius must be greater than zero.");
@@ -105,7 +123,8 @@ namespace OpenRA.Mods.Common.Traits
 	}
 
 	public class SquadManagerBotModule : ConditionalTrait<SquadManagerBotModuleInfo>,
-		IBotEnabled, IBotTick, IBotRespondToAttack, IBotPositionsUpdated, IGameSaveTraitData, INotifyActorDisposing
+		IBotEnabled, IBotTick, IBotRespondToAttack, IBotPositionsUpdated, IGameSaveTraitData, INotifyActorDisposing,
+		IObservesVariables
 	{
 		public CPos GetRandomBaseCenter()
 		{
@@ -302,7 +321,40 @@ namespace OpenRA.Mods.Common.Traits
 
 		(Actor Actor, WVec Offset) FindClosestEnemy(IEnumerable<Actor> actors, Actor sourceActor)
 		{
-			return WorldUtils.ClosestToIgnoringPath(FindEnemies(actors, sourceActor), x => x.Actor, sourceActor);
+			// PERF: FindEnemies runs pathfinding probes per candidate, so enumerate it once.
+			var enemies = FindEnemies(actors, sourceActor).ToList();
+
+			// Divert to a preferred target (e.g. an economic win-condition structure) when one is in
+			// range, so squads don't stop at whichever enemy building happens to be nearest.
+			if (Info.PreferredTargetTypes.Count > 0 && preferredTargetConditionEnabled)
+			{
+				var preferred = enemies.Where(x => Info.PreferredTargetTypes.Contains(x.Actor.Info.Name));
+				if (Info.PreferredTargetScanRadius > 0)
+				{
+					var maxRange = WDist.FromCells(Info.PreferredTargetScanRadius);
+					preferred = preferred.Where(x =>
+						(x.Actor.CenterPosition - sourceActor.CenterPosition).HorizontalLengthSquared <= maxRange.LengthSquared);
+				}
+
+				var closestPreferred = WorldUtils.ClosestToIgnoringPath(preferred, x => x.Actor, sourceActor);
+				if (closestPreferred.Actor != null)
+					return closestPreferred;
+			}
+
+			return WorldUtils.ClosestToIgnoringPath(enemies, x => x.Actor, sourceActor);
+		}
+
+		bool preferredTargetConditionEnabled = true;
+
+		IEnumerable<VariableObserver> IObservesVariables.GetVariableObservers()
+		{
+			if (Info.PreferredTargetCondition != null)
+				yield return new VariableObserver(PreferredTargetConditionChanged, Info.PreferredTargetCondition.Variables);
+		}
+
+		void PreferredTargetConditionChanged(Actor self, IReadOnlyDictionary<string, int> conditions)
+		{
+			preferredTargetConditionEnabled = Info.PreferredTargetCondition.Evaluate(conditions);
 		}
 
 		void CleanSquads()
