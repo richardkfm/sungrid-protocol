@@ -2496,6 +2496,10 @@ SGDAI:
 SGDRN:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
+	# Every other production building has this (SPEN, SYRD, WEAP, HPAD, AFLD,
+	# BARR, KENN, TENT); both Drone Bays shipped without it, so a player with two
+	# of them had no way to choose which one produced.
+	Inherits@PRIMARY: ^PrimaryBuilding
 	RenderSprites:
 		Image: sgdrn
 	Selectable:
@@ -2557,6 +2561,8 @@ SGDRN:
 SGDRA:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
+	# See SGDRN above.
+	Inherits@PRIMARY: ^PrimaryBuilding
 	RenderSprites:
 		Image: sgdra
 	Selectable:

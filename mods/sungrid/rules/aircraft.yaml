@@ -272,6 +272,13 @@ TRAN:
 
 SGDRO:
 	Inherits: ^Helicopter
+	# Every other armed aircraft in this file carries an AUTOTARGET inherit (MIG,
+	# YAK, HELI, HIND, MH60); both drones were armed in issue #24 without one, so
+	# they never returned fire, ignored attack-move/guard and had no stance
+	# buttons. Ground variant because DroneRocket/DroneRocket.Strike are both
+	# ^AntiGroundMissile -- an air-capable inherit would promise targets the
+	# armament cannot engage.
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	RenderSprites:
 		Image: sgdro
 	Buildable:
@@ -322,6 +329,14 @@ SGDRO:
 	# swept rings are per-facing correct and shrink with the body.
 	SpawnActorOnDeath:
 		Actor: SGDRO.Husk
+	# Uncrewed. ^NeutralPlane grants EjectOnDeath (PilotActor: E1, SuccessRate: 50)
+	# and Voiced (GenericVoice, i.e. stock human crew chatter), which is right for
+	# the crewed helicopters that also inherit it and wrong for an autonomous
+	# airframe: a shot-down drone parachuted a rifleman out, and selecting one
+	# answered "Yes sir!". BADR and U2 drop both the same way. No drone voiceset
+	# ships yet, so these stay silent until Phase 7's audio pass adds one.
+	-EjectOnDeath:
+	-Voiced:
 	Selectable:
 		DecorationBounds: 939, 939
 
@@ -606,6 +621,9 @@ MH60:
 
 SGDRS:
 	Inherits: ^Helicopter
+	# See SGDRO above -- same missing-autotarget oversight from issue #24, same
+	# ground-only armament.
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	RenderSprites:
 		Image: sgdrs
 	Buildable:
@@ -650,5 +668,8 @@ SGDRS:
 	# on a 19px airframe.
 	SpawnActorOnDeath:
 		Actor: SGDRS.Husk
+	# Uncrewed -- see SGDRO above for why both of these go.
+	-EjectOnDeath:
+	-Voiced:
 	Selectable:
 		DecorationBounds: 1024, 1024
