@@ -553,6 +553,15 @@ Player:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-easygridbroker-ai
 	SquadManagerBotModule@rush:
 		RequiresCondition: enable-rush-ai
+		# Raid enemy Vaults ahead of whatever building happens to be nearest, but only while an
+		# opponent is actually banking toward the Reserve target (enemy-banking, granted by
+		# GridReserveBotModule below). Without this a squad walks to the closest structure and
+		# stops there, so nothing ever threatened an economic win -- the raid Core Rule 4 depends
+		# on was human-only. 30 cells covers an enemy base and its approaches; a reasoned first
+		# value, not a measured one. Needs the engine-side PreferredTarget* fields, see mod.config.
+		PreferredTargetTypes: silo
+		PreferredTargetScanRadius: 30
+		PreferredTargetCondition: enemy-banking
 		SquadSize: 20
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
@@ -638,6 +647,10 @@ Player:
 			sgdrs: 6
 	SquadManagerBotModule@normal:
 		RequiresCondition: enable-normal-ai
+		# Vault raiding -- see SquadManagerBotModule@rush above.
+		PreferredTargetTypes: silo
+		PreferredTargetScanRadius: 30
+		PreferredTargetCondition: enemy-banking
 		SquadSize: 40
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
@@ -654,6 +667,10 @@ Player:
 	# out-banks it - the raid is what buys the time its own Reserve needs.
 	SquadManagerBotModule@gridbroker:
 		RequiresCondition: enable-gridbroker-ai
+		# Vault raiding -- see SquadManagerBotModule@rush above.
+		PreferredTargetTypes: silo
+		PreferredTargetScanRadius: 30
+		PreferredTargetCondition: enemy-banking
 		SquadSize: 18
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
@@ -760,6 +777,10 @@ Player:
 			arty: 9000
 	SquadManagerBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
+		# Vault raiding -- see SquadManagerBotModule@rush above.
+		PreferredTargetTypes: silo
+		PreferredTargetScanRadius: 30
+		PreferredTargetCondition: enemy-banking
 		SquadSize: 10
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
 		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, mnly
@@ -824,6 +845,10 @@ Player:
 		AwayFromEnemyTargetTypes: Structure, Defense
 	SquadManagerBotModule@naval:
 		RequiresCondition: enable-naval-ai
+		# Vault raiding -- see SquadManagerBotModule@rush above.
+		PreferredTargetTypes: silo
+		PreferredTargetScanRadius: 30
+		PreferredTargetCondition: enemy-banking
 		SquadSize: 1
 		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
 		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
@@ -870,6 +895,10 @@ Player:
 	GridReserveBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
 		VaultTypes: silo
+		# Consumed by each SquadManagerBotModule's PreferredTargetCondition above. This hook has
+		# existed unused since issue #67 built it for exactly this; the engine side that could read
+		# it did not exist until now.
+		EnemyBankingCondition: enemy-banking
 	# Coverage is spare *capacity* only, now that GridReserveVaultInfo.MaximumTargetPercent caps what is
 	# actually banked at the Reserve target - before that ceiling existed these percentages were banked
 	# in full, which bought a Lockdown no single raid could break (see docs/BACKLOG.md issue #69).
@@ -878,6 +907,7 @@ Player:
 	GridReserveBotModule@gridbroker:
 		RequiresCondition: enable-gridbroker-ai
 		VaultTypes: silo
+		EnemyBankingCondition: enemy-banking
 		CoveragePercent: 125
 		ContestedCoveragePercent: 150
 		StartDelayTicks: 9000

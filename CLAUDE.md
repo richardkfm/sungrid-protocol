@@ -115,10 +115,23 @@ each other's state and it is easy to leave one of them out:
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Six lobby personalities: the four
-stock ones plus **Grid Broker AI** and **Easy Grid Broker AI**. Deliberately deferred: bots don't
-preferentially raid enemy Vaults and Turtle AI doesn't drop turtling against an imminent economic win
-— both need engine-level squad target-selection changes, so the module grants
-`EnemyBankingCondition`/`EnemyLockdownCondition` as the mod-side hook for trying that later.
+stock ones plus **Grid Broker AI** and **Easy Grid Broker AI**.
+
+**Bots now raid Vaults (issue #105).** This was the deferral above, and it did need the engine-level
+squad target-selection change #67 predicted. Squad targeting is *purely distance-based* — every state
+routes through `FindClosestEnemy` → `ClosestToIgnoringPath`, and the only configurable steering is
+`IgnoredEnemyTargetTypes`, an exclusion list. So a squad walked to whichever enemy structure was
+nearest and stopped; a Vault was treated exactly like a power plant that happened to sit closer, and
+the Core Rule 4 raid was human-only. The engine patch adds three opt-in
+`SquadManagerBotModuleInfo` fields — `PreferredTargetTypes`, `PreferredTargetScanRadius`,
+`PreferredTargetCondition` — and `ai.yaml` sets `silo` / 30 cells / `enemy-banking` on all five squad
+managers **except Easy Grid Broker's**, which stays a beatable clock by design. `enemy-banking` is
+`GridReserveBotModule`'s pre-existing `EnemyBankingCondition`, finally consumed by something, so the
+preference switches on only while an opponent is actually banking and no-ops in destruction matches.
+The 30-cell radius is reasoned (an enemy base plus approaches), not measured — playtest it.
+Still deferred: Turtle AI doesn't drop turtling against an imminent economic win; `EnemyLockdownCondition`
+remains the unused hook for that one.
+
 Gotcha for any future personality: `McvExpansionManagerBotModule` is what deploys the starting MCV, so
 a personality with no instance of it never builds anything at all.
 
@@ -312,6 +325,51 @@ is the regression check.
 
 ### What can and can't be verified in this environment
 
+**A build environment is obtainable in a fresh session — set one up rather than assuming you can't
+(issue #105).** Many past sessions recorded "no engine build / no `dotnet` in this environment" and
+shipped unverified as a result. That is no longer accurate, and the recipe is three commands:
+
+```
+apt-get update && apt-get install -y dotnet-sdk-8.0    # the index is stale on a fresh container;
+                                                       # without the update, every .deb 404s
+./fetch-engine.sh                                      # downloads + compiles the pinned engine
+make                                                   # builds the mod against it
+```
+
+Budget a few minutes. After that `./utility.sh --check-yaml` runs the full 75-map validation locally,
+and **engine patches can be compiled before being pinned** instead of pushed blind.
+
+Two things to know before trusting the results:
+
+- **`make check` fails locally, it is not your change — and that failure MASKS the checks after it.**
+  Ubuntu's `dotnet-sdk-8.0` (8.0.130 as of issue #105) reports 1840 `IDE0055` plus 2 `IDE0301` errors
+  across 14 *engine* files. Verified identical on the previous engine pin with no local changes at all,
+  so it is an SDK-patch-version artifact — the same sensitivity issue #20 hit with `CS0121`. But the
+  Debug `-warnaserror` compile runs *before* the interface checks in the `check` target, so the target
+  bails and never reaches them. Issue #105 shipped a real interface violation this way and CI caught
+  what the local run had hidden. **Never read a red `make check` as "the known SDK thing" and stop.**
+  Run the pieces directly instead:
+
+  ```
+  ./utility.sh --check-explicit-interfaces
+  ./utility.sh --check-conditional-trait-interface-overrides
+  ./utility.sh --check-yaml
+  make check-scripts                      # needs lua5.1 for luac
+  dotnet build -c Debug -warnaserror      # then grep the log for YOUR filenames, not the exit code
+  ```
+
+- **Writing a `ConditionalTrait` that observes an extra condition?** Override `GetVariableObservers` and
+  chain to `base` — never implement `IObservesVariables` explicitly. The base class drives
+  `RequiresCondition` through that same method, so an explicit implementation shadows it and silently
+  breaks `RequiresCondition` on every instance of the trait.
+  `--check-conditional-trait-interface-overrides` exists solely to catch this.
+- **Run a negative control before believing a silent pass** (the same rule as sprite sheets). For a new
+  trait field, point it at a bogus actor or an ungranted condition and confirm `--check-yaml` actually
+  errors. It does: `[ActorReference]` fields report `Missing actor`, and condition wiring reports both
+  `consumes conditions that are not granted` and `grants conditions that are not consumed` — which is
+  how a `PreferredTargetCondition` / `EnemyBankingCondition` pair gets proven connected rather than
+  merely accepted.
+
 Verifiable with a real engine build (`make`, then `./utility.sh`): `--check-yaml` (exits 0 across all
 maps), `--check-missing-sprites`, `--png-sheet-export` (proves the engine's own PNG reader parses a
 sheet at its intended frame layout), `--resolved-rules`, `--resolved-sequences`. Use these — they have
@@ -393,3 +451,5 @@ mod.config source time**, so overriding only `ENGINE_VERSION` in `user.config` c
 not the URL it fetches — override both, or you will silently stamp the wrong SHA onto a correct engine.
 
 **First fix shipped this way since issue #20 itself:** `engine-patch/461c7c7-flyattack-dead-target-pursuit` (issue #90) — `OpenRA.Mods.Common/Activities/Air/FlyAttack.cs`'s Hover-attack-type path didn't stop a drone from chasing/hovering over a killed target's last position, which read as the drone still firing on the wreck. Built on top of the `bf4102a-cryptoutil-fix` commit (so it carries that fix too), pinned via `ENGINE_VERSION`.
+
+**Second fix, and the first one compiled before it was pinned:** `engine-patch/a15f080-squad-preferred-targets` (issue #105) — `SquadManagerBotModule` gains optional `PreferredTargetTypes` / `PreferredTargetScanRadius` / `PreferredTargetCondition` fields, because squad targeting was purely distance-based and no mod could express "raid the win-condition building first". Built on `461c7c7`'s commit, so it carries all three fixes. **Do this from now on:** set up the build environment first (see "What can and can't be verified" above), compile the patch with `dotnet build OpenRA.Mods.Common`, then re-pin, delete `engine/`, re-run `fetch-engine.sh` and confirm `make` + `--check-yaml` against the genuinely fetched archive. This patch failed its first compile on a missing `using OpenRA.Support` — a one-line error that under the old push-it-blind workflow would have broken CI and every platform installer, exactly as the `fetch-engine.sh` regression did to alpha34.
