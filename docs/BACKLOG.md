@@ -3190,11 +3190,37 @@ Ubuntu's SDK (8.0.130), **verified identical on the old pin with no local change
 version artifact of the same family as issue #20's `CS0121` and not a regression; and a negative control
 should be run before believing any silent pass.
 
+**A second real bug, caught by CI after the first push - worth recording because the local signal was
+misleading.** The first version of the patch implemented `IObservesVariables.GetVariableObservers()`
+explicitly. `SquadManagerBotModule` is a `ConditionalTrait`, whose base class **already** implements that
+interface to drive `RequiresCondition` through the same method - so an explicit implementation *shadows* the
+base instead of extending it, and would have silently stopped `RequiresCondition` working on every squad
+manager in every mod. No bot personality's squad manager would have enabled or disabled correctly. The engine
+has a dedicated check for this exact mistake (`--check-conditional-trait-interface-overrides`), and
+`ConditionalTrait`'s own source carries the warning in a comment on the virtual method. Fixed by overriding
+`GetVariableObservers` and chaining to `base`.
+
+**Why local verification missed it, and the lesson:** `make check` compiles Debug with `-warnaserror` *before*
+running the interface checks, and that compile fails locally with the 1840 `IDE0055` SDK artifact described
+above - so the target bailed at Makefile:187 and never reached the check at Makefile:193. **The pre-existing
+noise masked a real failure.** Run the individual utility commands directly rather than relying on `make
+check`'s exit code, and judge the Debug build by whether *your own files* appear in its error list:
+
+```
+./utility.sh --check-explicit-interfaces
+./utility.sh --check-conditional-trait-interface-overrides
+./utility.sh --check-yaml
+make check-scripts                      # needs lua5.1 for luac
+dotnet build -c Debug -warnaserror      # then grep the log for your own filenames
+```
+
 **Verification - the first engine patch in this project's history that was compiled before being pinned:**
 
 1. Patch compiles standalone: `dotnet build OpenRA.Mods.Common` - **0 warnings, 0 errors**. (It did not on the
    first attempt: `BooleanExpression` needed `using OpenRA.Support`. That is precisely the error class that
    would have shipped invisibly under the old workflow and taken CI and all three platform installers with it.)
+   Second commit on the branch fixes the `ConditionalTrait` override described above; both interface checks
+   now pass locally, and the Debug `-warnaserror` build reports **zero** errors in the patched file.
 2. `mod.config` re-pinned, `engine/` deleted, `./fetch-engine.sh` re-run from scratch: downloads the new SHA,
    compiles, and the freshly downloaded source contains the new fields. The full pin -> fetch -> build chain is
    proven, not assumed.

@@ -341,11 +341,28 @@ and **engine patches can be compiled before being pinned** instead of pushed bli
 
 Two things to know before trusting the results:
 
-- **`make check` fails locally and it is not your change.** Ubuntu's `dotnet-sdk-8.0` (8.0.130 as of
-  issue #105) reports 1840 `IDE0055` formatting errors plus 2 `IDE0301` across 14 *engine* files.
-  Verified identical on the previous engine pin with no local changes at all, so it is an SDK-patch-
-  version artifact — the same sensitivity issue #20 hit with `CS0121`. CI uses an SDK where it passes.
-  Judge your own change by whether *your* files appear in the error list, then let CI be the authority.
+- **`make check` fails locally, it is not your change — and that failure MASKS the checks after it.**
+  Ubuntu's `dotnet-sdk-8.0` (8.0.130 as of issue #105) reports 1840 `IDE0055` plus 2 `IDE0301` errors
+  across 14 *engine* files. Verified identical on the previous engine pin with no local changes at all,
+  so it is an SDK-patch-version artifact — the same sensitivity issue #20 hit with `CS0121`. But the
+  Debug `-warnaserror` compile runs *before* the interface checks in the `check` target, so the target
+  bails and never reaches them. Issue #105 shipped a real interface violation this way and CI caught
+  what the local run had hidden. **Never read a red `make check` as "the known SDK thing" and stop.**
+  Run the pieces directly instead:
+
+  ```
+  ./utility.sh --check-explicit-interfaces
+  ./utility.sh --check-conditional-trait-interface-overrides
+  ./utility.sh --check-yaml
+  make check-scripts                      # needs lua5.1 for luac
+  dotnet build -c Debug -warnaserror      # then grep the log for YOUR filenames, not the exit code
+  ```
+
+- **Writing a `ConditionalTrait` that observes an extra condition?** Override `GetVariableObservers` and
+  chain to `base` — never implement `IObservesVariables` explicitly. The base class drives
+  `RequiresCondition` through that same method, so an explicit implementation shadows it and silently
+  breaks `RequiresCondition` on every instance of the trait.
+  `--check-conditional-trait-interface-overrides` exists solely to catch this.
 - **Run a negative control before believing a silent pass** (the same rule as sprite sheets). For a new
   trait field, point it at a bogus actor or an ungranted condition and confirm `--check-yaml` actually
   errors. It does: `[ActorReference]` fields report `Missing actor`, and condition wiring reports both
