@@ -22,7 +22,7 @@ namespace OpenRA.Mods.Common.Traits
 {
 	[TraitLocation(SystemActors.Player)]
 	[Desc("Manages AI squads.")]
-	public class SquadManagerBotModuleInfo : ConditionalTraitInfo, IObservesVariablesInfo
+	public class SquadManagerBotModuleInfo : ConditionalTraitInfo
 	{
 		[ActorReference]
 		[Desc("Actor types that are valid for naval squads.")]
@@ -123,8 +123,7 @@ namespace OpenRA.Mods.Common.Traits
 	}
 
 	public class SquadManagerBotModule : ConditionalTrait<SquadManagerBotModuleInfo>,
-		IBotEnabled, IBotTick, IBotRespondToAttack, IBotPositionsUpdated, IGameSaveTraitData, INotifyActorDisposing,
-		IObservesVariables
+		IBotEnabled, IBotTick, IBotRespondToAttack, IBotPositionsUpdated, IGameSaveTraitData, INotifyActorDisposing
 	{
 		public CPos GetRandomBaseCenter()
 		{
@@ -346,8 +345,14 @@ namespace OpenRA.Mods.Common.Traits
 
 		bool preferredTargetConditionEnabled = true;
 
-		IEnumerable<VariableObserver> IObservesVariables.GetVariableObservers()
+		// ConditionalTrait already implements IObservesVariables to drive RequiresCondition, so this
+		// must override it and chain to base rather than implement the interface directly -- see
+		// CheckConditionalTraitInterfaceOverrides, which fails the build otherwise.
+		public override IEnumerable<VariableObserver> GetVariableObservers()
 		{
+			foreach (var observer in base.GetVariableObservers())
+				yield return observer;
+
 			if (Info.PreferredTargetCondition != null)
 				yield return new VariableObserver(PreferredTargetConditionChanged, Info.PreferredTargetCondition.Variables);
 		}
