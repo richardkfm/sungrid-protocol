@@ -2930,3 +2930,197 @@ builds what its own faction's prerequisites allow. Checked the same way for maps
 
 **Not verified in a live client** (no engine build in this environment); CI runs `--check-yaml`. Shipped in
 the same PR as issue #100, since it is the same design decision seen from the other side.
+
+### 102. Shot-down drones released a pilot - and three more inherited-from-stock mismatches on the same actors
+
+**Raised as:** "shot down drones release a pilot ground soldier. please make sure that drones release no
+soldier, they are supposed to operate without a pilot sitting in there" - direct alpha35 playtest feedback,
+in the same report that confirmed the mode plays end-to-end and that a win against Easy Grid Broker AI is
+achievable.
+
+**Root cause.** `SGDRO` (`rules/aircraft.yaml`) and `SGDRS` both `Inherits: ^Helicopter`, which chains
+`^Helicopter` -> `^Plane` -> `^NeutralPlane`. `^NeutralPlane` (`rules/defaults.yaml:637`) carries:
+
+```
+EjectOnDeath:
+    PilotActor: E1
+    SuccessRate: 50
+    EjectOnGround: false
+    EjectInAir: true
+    ChuteSound: chute1.aud
+```
+
+Neither drone removed it, so half of all airborne drone deaths parachuted a free `E1` rifleman onto the map.
+That is a fiction break first - every fluent string for `SGDRO`, `SGDRS`, `SGDRN` and `SGDRA` describes
+*autonomous* aircraft, and unmanned logistics is the Drone Bay's entire premise - and a small free-unit
+economy leak second (a 350-Credit drone paying out infantry on a coin flip).
+
+The fix is `-EjectOnDeath:`, not `SuccessRate: 0`. The precedent is eleven lines into the same file: `BADR`
+already drops the trait exactly this way, and every other descendant that *keeps* it (`TRAN`, `HELI`,
+`HIND`, `MH60`, `U2`, `MIG`, `YAK`) is crewed, which is why the trait stays on those and is untouched here.
+
+**The husks were already clean** and needed no change: `SGDRO.Husk`/`SGDRS.Husk` inherit `^HelicopterHusk`
+-> `^BasicHusk`, which carries no `EjectOnDeath`. There was never a second pilot from the crash. Both drones
+also keep their `SpawnActorOnDeath` - a downed drone should still visibly fall and explode.
+
+**Auditing the rest of that inheritance chain found three more of the same class.** The general bug is *a
+Sungrid-original actor sitting on a stock RA `^` template that was written for Red Alert's units, not this
+mod's* - either inheriting something that contradicts the actor, or silently missing something every stock
+analogue has. Both directions were present:
+
+1. **Both drones inherit `Voiced: VoiceSet: GenericVoice`** from `^NeutralPlane:653`. `GenericVoice`
+   (`mods/sungrid/audio/voices.yaml`) is stock human crew - `await1, ready, report1, yessir1` on select,
+   `ackno, affirm1, roger, ugotit` on order. Selecting an uncrewed drone answered "Yes sir!" in a soldier's
+   voice. Same tell as the ejection: `BADR` and `U2` both already carry `-Voiced:`.
+2. **`SGHAU` inherits `Voiced: VoiceSet: VehicleVoice`** from `^Vehicle:298` - a human driver reporting in,
+   from something the fiction calls a Hauler Drone.
+3. **Neither drone had *any* `AutoTarget` inherit.** Every other armed aircraft in the file does (`MIG`,
+   `YAK`, `HELI`, `HIND`, `MH60`). Consequence: armed drones never returned fire, ignored attack-move and
+   guard, and had no stance buttons - they only ever shot on an explicit order. Issue #24 armed both drones
+   and its writeup never mentions `AutoTarget`, so this is an oversight, not a design decision.
+4. **Neither Drone Bay had `^PrimaryBuilding`.** All eight other production buildings have it (`SPEN`,
+   `SYRD`, `WEAP`, `HPAD`, `AFLD`, `BARR`, `KENN`, `TENT`), so a player with two Drone Bays had no way to
+   choose which one produced.
+
+**Fix.** `-EjectOnDeath:` and `-Voiced:` plus `Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove` on both
+drones; `-Voiced:` on `SGHAU`; `Inherits@PRIMARY: ^PrimaryBuilding` on `SGDRN` and `SGDRA`. The ground
+autotarget variant is deliberate - `DroneRocket` and `DroneRocket.Strike` both inherit `^AntiGroundMissile`,
+so an air-capable inherit would promise targets the armament cannot engage.
+
+**Accepted cost of the voice removal, stated plainly.** The drones and the Hauler now make no sound at all
+on select or order. There is no drone voiceset in the mod to switch them to; authoring one is Phase 7 audio
+work and is named as an explicit non-blocker in the new Beta gate (issue #104). Muting now was the owner's
+call over waiting: a wrong voice is worse than no voice.
+
+**One finding was rejected rather than fixed.** The same audit flagged `SGREL` as missing
+`^DisabledByPowerOutage` and `ScalePowerWithHealth`, which every other power building in the mod carries.
+That gap is **deliberate and already documented** - issue #79 raised it and issue #101 locked it into
+`docs/ENERGY_BALANCE.md`'s comparison table ("Output under damage: holds at full", "Spy blackout: immune")
+as the Consortium's declared power identity against the Assembly's cheap-and-fragile `SGWND`. Adding either
+trait would have silently reversed a balance decision already made. Recorded here so the next sweep doesn't
+re-raise it: **not every asymmetry with a stock analogue is a defect.**
+
+**Flagged for playtest, not asserted:** the `AutoTarget` addition is the only change here with real balance
+weight - drones become materially more active and will now engage on their own. If it plays badly, the
+dial-back is one token: `^AutoTargetGroundAssaultMove` -> `^AutoTargetGround` drops assault-move engagement
+while keeping return fire.
+
+**Scope:** `mods/sungrid/rules/aircraft.yaml`, `mods/sungrid/rules/vehicles.yaml`,
+`mods/sungrid/rules/structures.yaml`, plus docs.
+
+**Labels:** `type:bug`, `type:content`, `area:units`
+
+**Phase:** Not tied to a phase - correctness follow-up to issue #24.
+
+**Definition of done:** Met for the rules. Verified locally by grep accounting (`EjectOnDeath` now appears
+exactly four times across `rules/`: the `^NeutralPlane` definition and three removals) and by re-reading each
+inheritance chain in `defaults.yaml` rather than trusting the audit that surfaced them - which is how the
+`SGREL` false positive above was caught. **Not verified in a live client**: no engine build and no `dotnet`
+in this environment, so `--check-yaml` could not run locally; CI's `make test` is the real check. The
+player-side confirmation still wanted: shoot down several drones (no chute, no `E1`, husk still falls), shoot
+down a `HELI`/`HIND` (a pilot *still* ejects, proving the removal didn't leak into the shared template),
+select a drone and the Hauler (silence), leave a drone near an enemy (it returns fire), build two Drone Bays
+(the primary toggle appears).
+
+### 103. A Spy could infiltrate three Sungrid buildings for no effect whatsoever
+
+**Raised as:** a follow-on finding from issue #102's inheritance audit, and the resolution of a call issue
+#98 deliberately left open ("that's either a missing feature or two stale target types, and it wants a
+decision rather than a silent edit - left open").
+
+**Problem.** `SGCRY` (Cryptominer), `SGDAI` (Datacenter for AI) and `SGSHL` (Resilience Shelter) each listed
+`SpyInfiltrate` in `Targetable.TargetTypes` while carrying **no `InfiltrateFor*` trait anywhere in the
+block**, and inheriting none from `^Building`/`^ScienceBuilding`. A Spy that reached one was consumed and
+accomplished nothing - the unit is spent, the player gets no effect and no feedback explaining why. Every
+one of the fourteen stock buildings advertising `SpyInfiltrate` has a real effect behind it (`MSLO`, `SPEN`,
+`SYRD`, `IRON`, `PDOX`, `DOME`, `ATEK`, `WEAP`, `PROC`, `HPAD`, `AFLD`, `BARR`, `TENT`, plus the power
+buildings via `^DisabledByPowerOutage`). These three were the only exceptions in the mod.
+
+This is the same bug class as issue #102 wearing different clothes: a capability advertised in the rules
+with nothing behind it.
+
+**Fix, decided per building rather than uniformly.**
+
+- **`SGCRY`** gets `InfiltrateForCash` on `PROC`'s exact numbers (`Percentage: 50`, `PlayerExperience: 5`,
+  `PlayerExperiencePercentage: 1`, `CreditsStolen` notification), `Types: SpyInfiltrate` only. It mines
+  Credits; robbing it needs no explaining to a player. This also gives issue #77's complaint about the
+  Cryptominer - a permanent, in-base, un-raidable income stream - an infiltration answer alongside the
+  demolition one.
+- **`SGDAI`** gets `InfiltrateForExploration` on `DOME`'s numbers instead. It is *also* a `CashTrickler`, so
+  the same cash steal would have worked mechanically, but two identical effects waste the only real choice
+  here; and stealing what a datacenter *knows* is the more obvious read. It also matches how the building
+  was already thought of - issue #98 found both design docs wrongly claiming it had `DetectCloaked`, i.e.
+  everyone had been treating it as an intel building. Note this is a small real buff to Spy play: the mod
+  now has a second map-reveal target besides the Radar Dome.
+- **`SGSHL` loses the target type entirely.** Unlike the other two it trickles no cash and holds no support
+  power; its only asset is the `resilience-shelter` proximity aura, and no stock trait expresses "suppress
+  an aura for N seconds". A bespoke `InfiltrateForCondition` trait in `OpenRA.Mods.Sungrid` would do it and
+  was **considered and rejected** against `docs/ARCHITECTURE.md`'s data-driven-first rule - one building
+  does not justify new C#, particularly C# that cannot be compiled in this environment. A Spy now correctly
+  declines the target rather than walking in and dying for nothing. If the Shelter later warrants a real
+  infiltration effect, that trait is the way to add it.
+
+**Also found, deliberately not changed:** `RCYD` is the one storage building a Thief cannot rob. `PROC` and
+`SILO` both carry `ThiefInfiltrate` in their `TargetTypes` alongside an `InfiltrateForCash`; `RCYD` carries
+neither, despite `StoresPlayerResources: Capacity: 1000`. Kept as-is on the owner's call and written into
+`docs/BUILDINGS.md` as a design property rather than left as an open finding: theft immunity offsets the fact
+that Scrap income already depends on map control and on a fragile, unarmed Hauler in a way Ore income does
+not. Reversing it is two lines against `SILO`'s template if a playtest disagrees.
+
+**Scope:** `mods/sungrid/rules/structures.yaml`, `docs/BUILDINGS.md`.
+
+**Labels:** `type:bug`, `type:balance`, `area:buildings`
+
+**Phase:** 5 follow-up; resolves the open call in issue #98.
+
+**Definition of done:** Met. Verified locally with a script that parses every top-level actor block in
+`structures.yaml` and reports any `TargetTypes` containing `SpyInfiltrate` with no `InfiltrateFor*` in the
+same block - it now reports none. **Not verified in a live client** (no engine build or `dotnet` here); CI's
+`make test` is the check. Player-side confirmation wanted: a Spy into a Cryptominer steals credits, a Spy
+into a Datacenter reveals the map, and a Spy no longer targets the Resilience Shelter.
+
+### 104. "Beta ready" was never defined anywhere in the repo
+
+**Raised as:** "this session aims to make sungrid protocol beta status ready" - which turned out to be
+unanswerable as stated. Nothing in the repo said what beta *is*. `docs/ROADMAP.md` thinks in phases,
+releases are numbered `alpha1`...`alpha35` with no stated finish line, and `CLAUDE.md`'s status table
+describes progress without ever naming a bar. "Is it beta yet?" could only be answered by opinion, which
+means it could never be answered the same way twice.
+
+**Fix.** A new **Beta gate** section in `docs/ROADMAP.md`, sitting deliberately *outside* the phase plan,
+cross-referenced from `CLAUDE.md`'s phase-status table.
+
+**The key decision: beta is not "Phase 7 is done".** Phase 7 (unit sprites, voices, announcer, in-game
+music) is by the roadmap's own admission the highest-volume item in the plan with no natural stopping point.
+Gating a wider public test on it would mean never running one - and the whole point of beta is to get the
+thing in front of people. So the bar is *feature-complete for the scope this project has actually declared,
+stable, and validated by people who are not the author*, with phase-completeness explicitly not required.
+
+Seven criteria, B1-B7, drawn from the repo's own recorded status rather than invented: no open crash or
+match-breaking backlog entry; feature-complete roster and both victory paths; no actor whose rules
+contradict its fiction (which issues #102/#103 just established); `make test` green across all 75 maps on
+both CI platforms; all three platform packages building together; the first-run content install verified
+from a clean machine; and one full multiplayer match with 3+ external testers and no desyncs.
+
+**Five are met. B6 and B7 are open, and B7 is the actual gate** - this project has never been played by
+anyone but its author, and no amount of further solo auditing substitutes for that. Both are realistically
+one session's work (recruit testers, hand them a package, watch a match), not a research project, and the
+section says so to keep them from being treated as open-ended.
+
+**The section also lists explicit non-blockers**, which is half its value - a bar with no stated ceiling
+drifts upward every time someone looks at it. Named as *not* blocking beta: all of Phase 7 (including the
+drone voiceset issue #102 deliberately left silent), terrain scenery, issue #60's faction consolidation,
+issue #31's drone-cost skew, a human-designer art pass, and the headless black-battlefield blocker from
+issue #49. That last one carries a caveat rather than a clean pass: it is an automation-environment problem
+*as far as anyone knows*, nobody has confirmed it doesn't reproduce in a normal client, and **determining
+that** is a beta item - if it turns out to affect real play it becomes a B1 blocker immediately.
+
+**Scope:** `docs/ROADMAP.md`, `CLAUDE.md`. Documentation only, no rules change.
+
+**Labels:** `type:docs`, `type:process`
+
+**Phase:** Cross-cutting.
+
+**Definition of done:** Met. The criteria are checkable rather than aspirational, and each one's current
+status is stated. The gate's own honesty test is B7: it cannot be satisfied from inside this repo by any
+amount of engineering, which is the point.

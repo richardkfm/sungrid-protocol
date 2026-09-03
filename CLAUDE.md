@@ -66,6 +66,13 @@ what is true now, and the hard-won rules that are expensive to rediscover.
 | 7 Unit & audio identity | Barely started — three unit renames only (issue #27). Core inherited unit sprites, voices, announcer, and in-game music are all still stock |
 | 8+ Diplomacy / shared resources | Deferred by design |
 
+**"Beta ready" is now defined** — see the **Beta gate** section in `docs/ROADMAP.md` (issue #104), which sits
+deliberately outside the phase plan: beta is *not* "Phase 7 is done". Seven criteria B1-B7; five are met,
+and the two open ones (B6 first-run install verified on a clean machine, B7 one external multiplayer match
+with 3+ testers) are the same session's work. **B7 is the real gate** — nothing has ever been played by
+anyone but the author, and no further solo auditing substitutes for that. The section also lists what is
+explicitly *not* a beta blocker (all of Phase 7, terrain scenery, issues #60 and #31), so the bar can't drift.
+
 Releases: `alpha1` … `alpha25`. `alpha17` was the first run in the repo's history where all three
 platform jobs (Linux AppImage, Windows installer, macOS DMG) succeeded together — Windows was fixed
 twice (issues #21, #23) and macOS twice (issues #29, #30).
@@ -197,6 +204,34 @@ Three rules that are easy to get wrong here:
 Known limitation, not a bug: 30s decouples the Hauler from a skirmish, not from a sustained push at a
 fixed front. Fixing that needs engine-side target selection ("don't path within N cells of a known
 enemy"), so scope it as such rather than tuning these numbers a third time.
+
+### Audit a Sungrid-original actor against its own fiction, not just its stats
+
+Issues #102/#103. A Sungrid-original actor sits at the bottom of a stock RA `^` inheritance chain, and that
+chain was written for Red Alert's units, not this mod's. Two failure directions, and both shipped for
+months without anyone noticing:
+
+- **Wrongly inherited** — the chain grants something that contradicts what the actor *is*. `SGDRO`/`SGDRS`
+  inherit `EjectOnDeath` (`PilotActor: E1`) and `Voiced` (`GenericVoice`) from `^NeutralPlane`, so an
+  uncrewed drone parachuted a rifleman out on death and answered "Yes sir!" when selected; `SGHAU` got
+  `VehicleVoice` from `^Vehicle` for the same reason. Correct for the crewed helicopters sharing those
+  templates, wrong here.
+- **Silently missing** — the actor *lacks* something every stock analogue has. Neither drone had any
+  `AutoTarget` inherit (so armed drones never returned fire), and neither Drone Bay had `^PrimaryBuilding`
+  (so two of them couldn't be told apart). Nothing errors; the trait just isn't there.
+
+**The tell for both is asymmetry**, and it's mechanical enough to grep: a `-Trait:` removal that stock
+actors carry and the Sungrid analogue doesn't, or an `Inherits@X:` that every sibling has and this one
+lacks. `BADR`/`U2` already carried `-EjectOnDeath:`/`-Voiced:`; five other aircraft already carried
+`Inherits@AUTOTARGET:`. Run that comparison whenever adding an actor on a stock template.
+
+**Two cautions.** First, an advertised capability with nothing behind it is the same bug wearing different
+clothes — `SGCRY`/`SGDAI`/`SGSHL` listed `SpyInfiltrate` in `TargetTypes` with no `InfiltrateFor*` trait,
+so a Spy was consumed for nothing (issue #103). Grep for `TargetTypes` entries with no matching trait in
+the same block. Second, **check the docs before "fixing" an asymmetry**: the same audit flagged `SGREL` for
+missing `^DisabledByPowerOutage` and `ScalePowerWithHealth`, which every other power building has — but
+that gap is *deliberate*, is the Consortium's declared power identity, and is written down in
+`docs/ENERGY_BALANCE.md`'s comparison table by issues #79/#101. Not every asymmetry is a defect.
 
 ### Art pipeline — rules that cost real debugging to learn
 

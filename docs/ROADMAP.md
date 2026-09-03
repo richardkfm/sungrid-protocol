@@ -108,6 +108,48 @@ current state.
 - **Biggest risk:** Unit art is the highest-volume, highest-cost item in the roadmap with no natural stopping point (there's always one more unit or animation state) — cap scope to the core skirmish roster before declaring the phase done, the same discipline Phase 5 applied to the building roster.
 - **Do NOT attempt yet:** Second-faction unit art, campaign-specific units/sprites, full audio localization.
 
+## Beta gate — what has to be true to stop shipping `alphaN`
+
+Added in issue #104. Until now nothing in this repo defined "beta": the roadmap thinks in phases, and
+releases are numbered `alpha1`…`alpha35` with no stated finish line, so "is it beta yet?" could only be
+answered by opinion. This section is that finish line, and it is deliberately **orthogonal to the phase
+plan** — beta is not "Phase 7 is done", because Phase 7 is the highest-volume item in the roadmap and
+gating a wider public test on a full unit-art and audio pass would mean never running one.
+
+Beta means: **feature-complete for the scope this project has actually declared, stable, and validated by
+people who are not the author.** Phase-completeness is not the bar; nothing being visibly broken is.
+
+| # | Criterion | Status |
+|---|---|---|
+| B1 | No open crash or match-breaking entry in `docs/BACKLOG.md` | Believed met — no open entry describes a crash or an unwinnable/unplayable match |
+| B2 | Feature-complete for declared scope: the full `docs/BUILDINGS.md` roster, Grid Reserve including AI support, both victory paths live | **Met** (Phases 3/4/5) |
+| B3 | No shipped actor's rules contradict its own fiction | **Met** as of issues #102/#103, which audited every Sungrid-original actor's inheritance chain |
+| B4 | `make test` green — `--check-yaml` and `--check-missing-sprites` across all 75 maps, on both CI platforms | **Met**, and CI-enforced on every PR |
+| B5 | All three platform packages build together (Linux AppImage, Windows installer, macOS DMG) | **Met** since alpha17; regressed once at alpha34 and fixed by issue #99 |
+| B6 | The first-run content-install flow works from a clean machine, verified by someone who has never run the mod | **Open** — `mods/sungrid-content` exists and is believed correct, but has never been verified from a genuinely clean install |
+| B7 | One full multiplayer match, 3+ external testers, no desyncs and no "obviously broken" balance complaints | **Open** — this is Phase 4's one unmet exit criterion, and the real gate |
+
+**B7 is the gate.** Everything else is either already met or cheap to meet; the project has never been
+played by anyone but its author, and no amount of further single-player auditing substitutes for that.
+Treat B6 and B7 as one session's work (recruit testers, hand them a package, watch a match), not as a
+research project.
+
+### Explicitly *not* beta blockers
+
+Recorded so the bar cannot quietly drift upward. None of these keep the project in alpha:
+
+- **Phase 7 in full** — unit and vehicle sprites, voice sets, the announcer, in-game music. This includes
+  the drone/Hauler voiceset that issues #102 left deliberately silent.
+- **Terrain scenery** — the Phase 6 remainder (solar-farm fixtures, salvage piles, reclaiming greenery).
+  Palette reskins for all three tilesets are done, which is what B-level visual identity needs.
+- **Issue #60** — consolidating the European sub-factions into an EU faction. A design question, not a defect.
+- **Issue #31** — drone cost skew and Cryptominer payback. Balance tuning flagged for playtest; B7 is where
+  it gets answered, not a precondition for B7.
+- **A human-designer pass over the programmatic art**, and a composer pass over the menu sting.
+- **The headless black-battlefield blocker** (issue #49) — an automation-environment problem, not a player-
+  facing one. *Caveat:* nobody has confirmed it doesn't reproduce in a normal client, so **determining
+  that** is a B-item; if it turns out to affect real play it becomes a B1 blocker immediately.
+
 ## Phase 8+ — Diplomacy and shared-resource systems (conditional)
 
 - **Why:** Only pursued if Grid Reserve playtests show that the spend/save tension is solid and players are asking for deeper multiplayer social dynamics (alliances, betrayal, resource sharing) on top of it.

@@ -385,6 +385,11 @@ SGHAU:
 		GenericName: actor-sghau.generic-name
 	Selectable:
 		DecorationBounds: 1792, 1792
+	# Uncrewed, same as the two flying drones. ^Vehicle grants Voiced with
+	# VehicleVoice -- a human driver reporting in ("Vehicle reporting", "Yes
+	# sir!") from something the fiction calls a Hauler Drone. Silent until Phase
+	# 7's audio pass ships a drone voiceset.
+	-Voiced:
 	Harvester:
 		# Matches RCYD's DockHost.Type. Harvester.Type defaults to "Unload", which is
 		# what PROC and HARV use -- so this keeps Scrap going to the Depot and Ore

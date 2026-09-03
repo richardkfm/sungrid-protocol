@@ -326,6 +326,65 @@ already have at the large end - Wind Turbines against the Hydrogen Plant.
 survives a Spy blackout at full output. Their answer to power denial is now building more turbines, faster,
 which is what the faction is supposed to be about - but if it plays badly, it is a one-line reversal.
 
+## Drones fly themselves now — no pilot, no voice, and they finally shoot back (issue #102)
+
+Reported straight from an alpha35 playtest: **a shot-down drone dropped a parachuting rifleman.** It did,
+about half the time. Drones inherit their behaviour from Red Alert's helicopters, and RA helicopters have a
+pilot who bails out — so every Sunfire and Strike Drone had been carrying an invisible crewman it was never
+supposed to have. That's fixed. Crewed helicopters still eject their pilots, exactly as before.
+
+Checking the rest of what the drones were quietly inheriting turned up three more of the same kind:
+
+- **Drones and the Hauler Drone no longer answer in a human voice.** Clicking one used to get "Yes sir!" in a
+  soldier's voice, because they inherited stock RA's crew chatter. All three are silent for now — a proper
+  drone voiceset (beeps, servos, radio noise) is Phase 7 audio work.
+- **Drones now return fire.** This is the big one. Neither drone had any auto-targeting at all, so they would
+  sit and be shot at unless you personally ordered every shot, and they ignored attack-move and guard orders.
+  Every other armed aircraft in the game already had this; the drones were simply missed when they were armed.
+  Expect them to feel noticeably more active — if that turns out to be too much, it's a one-line dial-back.
+- **Two Drone Bays can now be told apart.** You can set one as primary, like every other production building.
+
+Downed drones still fall out of the sky and explode; that part was never the problem.
+
+## Spies can finally do something at the Cryptominer and the Datacenter (issue #103)
+
+Three buildings — the Cryptominer, the Datacenter for AI and the Resilience Shelter — looked like valid Spy
+targets and were not. A Spy would walk in, be consumed, and *nothing would happen*: no cash, no intel, no
+message explaining why. Every stock Red Alert building a Spy can enter does something; these three were the
+only exceptions in the mod.
+
+- **Cryptominer:** a Spy now steals half your banked credits, same as infiltrating a Refinery. It mines money;
+  robbing it is the obvious move, and it gives that permanently-safe in-base income a real vulnerability.
+- **Datacenter for AI:** a Spy now reveals the whole map, same as infiltrating a Radar Dome. Both buildings
+  make money, so giving them both the cash steal would have wasted the choice — and stealing what a data
+  centre *knows* is the better read. This is a genuine (small) buff to Spy play: there are now two map-reveal
+  targets instead of one.
+- **Resilience Shelter:** Spies no longer target it. There was nothing sensible to give it — it holds no money
+  and no superweapon, and its only asset is an aura that no existing mechanic can switch off. Better that a
+  Spy visibly declines the target than dies for nothing.
+
+Also settled, with no rules change: the Recycling Depot is deliberately the one storage building a Thief can't
+rob. That's now written down as a property of the Scrap economy rather than sitting as an open question.
+
+## What "beta" actually means (issue #104)
+
+Until now nothing in the project said what beta *is*. Releases are numbered `alpha1` through `alpha35`, the
+roadmap thinks in phases, and "is it beta yet?" could only be answered by opinion. `docs/ROADMAP.md` now has a
+**Beta gate** with seven checkable criteria and a stated status for each.
+
+The important decision: **beta does not require Phase 7 to be finished.** Unit art, voices and music are the
+largest job in the whole roadmap, and gating a public test on them would mean never running one. Beta means
+feature-complete for what the project has actually promised, stable, and — the part that matters — *played by
+someone other than its author*.
+
+Five of the seven criteria are already met. The two open ones are verifying the first-run install on a clean
+machine, and running one real multiplayer match with three or more outside testers. **That second one is the
+gate.** Nothing else on the list is hard; this game has simply never been played by anyone but the person
+making it, and no amount of further solo bug-hunting is a substitute.
+
+The section also spells out what does *not* block beta — all of Phase 7, terrain scenery, the EU-faction
+question, drone cost tuning — so the bar can't quietly creep upward.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

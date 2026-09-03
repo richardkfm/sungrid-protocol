@@ -2431,6 +2431,17 @@ SGCRY:
 		InitialDelay: 25
 		Amount: 15
 		ShowTicks: True
+	# Same dead SpyInfiltrate target type as SGDAI (docs/BACKLOG.md issue #98).
+	# This one mines credits, so PROC's cash steal transfers directly -- the
+	# numbers below are PROC's, unchanged. Types is SpyInfiltrate only: a Thief
+	# has no business in a mining rig, and RCYD/PROC/SILO already cover theft.
+	InfiltrateForCash:
+		Percentage: 50
+		PlayerExperience: 5
+		PlayerExperiencePercentage: 1
+		Types: SpyInfiltrate
+		InfiltratedNotification: CreditsStolen
+		InfiltratedTextNotification: notification-credits-stolen
 	Power:
 		Amount: -150
 	ProvidesPrerequisite@buildingname:
@@ -2489,6 +2500,15 @@ SGDAI:
 		InitialDelay: 50
 		Amount: 8
 		ShowTicks: True
+	# This actor has advertised SpyInfiltrate since it shipped without ever
+	# carrying an InfiltrateFor* trait, so a Spy that reached it was consumed for
+	# nothing (docs/BACKLOG.md issue #98 left the call open). It is a datacenter,
+	# so the thing worth stealing is what it knows: the same InfiltrateForExploration
+	# DOME uses. Cash theft went to SGCRY instead -- both buildings trickle credits,
+	# and two identical effects would waste the one real choice here.
+	InfiltrateForExploration:
+		Types: SpyInfiltrate
+		PlayerExperience: 10
 	Power:
 		Amount: -140
 	ProvidesPrerequisite@buildingname:
@@ -2496,6 +2516,10 @@ SGDAI:
 SGDRN:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
+	# Every other production building has this (SPEN, SYRD, WEAP, HPAD, AFLD,
+	# BARR, KENN, TENT); both Drone Bays shipped without it, so a player with two
+	# of them had no way to choose which one produced.
+	Inherits@PRIMARY: ^PrimaryBuilding
 	RenderSprites:
 		Image: sgdrn
 	Selectable:
@@ -2557,6 +2581,8 @@ SGDRN:
 SGDRA:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
+	# See SGDRN above.
+	Inherits@PRIMARY: ^PrimaryBuilding
 	RenderSprites:
 		Image: sgdra
 	Selectable:
@@ -2758,8 +2784,15 @@ SGSHL:
 	Building:
 		Footprint: ++ xx
 		Dimensions: 2,2
+	# SpyInfiltrate removed rather than given an effect (docs/BACKLOG.md issue
+	# #98, resolved alongside SGCRY and SGDAI). Unlike those two this building
+	# trickles no cash and holds no support power -- its only asset is the
+	# resilience-shelter aura, and no stock trait expresses "suppress an aura for
+	# N seconds". A bespoke InfiltrateForCondition trait was considered and
+	# rejected against docs/ARCHITECTURE.md's data-driven-first rule. Better that
+	# a Spy visibly declines the target than walks in and dies for nothing.
 	Targetable:
-		TargetTypes: GroundActor, C4, DetonateAttack, Structure, SpyInfiltrate
+		TargetTypes: GroundActor, C4, DetonateAttack, Structure
 	Health:
 		HP: 90000
 	Armor:
