@@ -3124,3 +3124,96 @@ that** is a beta item - if it turns out to affect real play it becomes a B1 bloc
 **Definition of done:** Met. The criteria are checkable rather than aspirational, and each one's current
 status is stated. The gate's own honesty test is B7: it cannot be satisfied from inside this repo by any
 amount of engineering, which is the point.
+
+### 105. Bots never raided Vaults, so nothing ever threatened an economic win - engine patch, and a build environment that actually works
+
+**Raised as:** "Sie sollte auf jeden Fall vaults im speziellen angreifen bei grid mode" - following on from a
+question about why an army stood idle beside an enemy building. Two separate things came out of that.
+
+**First, the idling is not a bug.** `^AutoTargetGround`'s `AutoTargetPriority@DEFAULT` lists
+`Infantry, Vehicle, Ship, Underwater, Defense, Mine` - **`Structure` is absent**, and appears only in the
+`@ATTACKANYTHING` variant gated on `stance-attackanything` or `assault-move`. So units never open fire on an
+ordinary building of their own accord; only `Defense`-typed buildings (`GUN`, `TSLA`, `SAM`, `AGUN`, `PBOX`,
+`HBOX`, `ARCT`, `SGTUR`, all via `^Defense`) get engaged automatically. That is stock Red Alert behaviour and
+exists so armies don't stop to shoot walls. Left intact. Audited alongside it: after issue #102 there is now
+**no armed actor in the mod without an `AutoTarget` inherit** - checked across `vehicles`, `infantry`,
+`aircraft`, `ships` and `structures`; the drones were the only gap. The six actors on the non-assault-move
+templates are all static defences, which cannot assault-move anyway.
+
+**Second, the real gap: bots built Vaults but never attacked one on purpose.** Squad target selection is
+purely distance-based. Every squad state (`GroundUnitsIdleState`, `AttackMoveState`, `AttackState`) routes
+through `SquadManagerBotModule.FindClosestEnemy`, which is `WorldUtils.ClosestToIgnoringPath` over
+`FindEnemies`. There is no weighting, no priority, no preference. The only configurable steering is
+`IgnoredEnemyTargetTypes`, an **exclusion** list - and exclusion semantics cannot express "prefer X", because
+the Vault carries `Structure`/`GroundActor` exactly like every other building. `EnemyBaseBuildingTypes` looks
+relevant and is not: it belongs to `ResourceMapBotModule` and only scores resource-field safety.
+
+So a bot squad walked to whichever enemy structure was nearest and stopped there. The raid window Core Rule 4
+is built on was effectively human-only, and a bot could break an opponent's Lockdown only by coincidence.
+Issue #67 predicted this needed an engine-level change; that was correct.
+
+**Fix - engine patch `engine-patch/a15f080-squad-preferred-targets`**, built on the previously pinned
+`a15f0804` so it carries the CryptoUtil and FlyAttack fixes too. Three opt-in fields on
+`SquadManagerBotModuleInfo`:
+
+| Field | Purpose |
+|---|---|
+| `PreferredTargetTypes` | Actor types to attack ahead of a closer target. Empty by default. |
+| `PreferredTargetScanRadius` | Cells to look for one before falling back to closest-of-any-type. `0` = no limit. |
+| `PreferredTargetCondition` | `BooleanExpression` gating the preference, via `IObservesVariables`. |
+
+`FindClosestEnemy` now materialises `FindEnemies` once - it runs pathfinding probes per candidate and must not
+be enumerated twice - picks the closest preferred candidate in range, and falls back to the old behaviour when
+there is none. **Entirely opt-in:** an empty `PreferredTargetTypes` leaves targeting byte-for-byte as before,
+so no other mod is affected.
+
+**Wiring (`ai.yaml`).** `PreferredTargetTypes: silo`, `PreferredTargetScanRadius: 30`,
+`PreferredTargetCondition: enemy-banking` on the Rush, Normal, Turtle, Naval and Grid Broker squad managers,
+with `EnemyBankingCondition: enemy-banking` added to both applicable `GridReserveBotModule` instances. That
+hook has existed unused since issue #67 built it for exactly this purpose; the engine side able to read it did
+not exist until now. **Easy Grid Broker deliberately excluded** - per `docs/GAME_MODES.md` it is the
+learn-the-mode opponent and its Reserve win should stay a clock a new player can beat.
+
+Three decisions were the owner's, not defaults: raid **only while an opponent is actually banking** (not
+always, which would send squads past a Construction Yard to kill an ore silo in destruction matches); **limit
+by radius** rather than let a squad cross the map; and **exclude Easy Grid Broker**.
+
+**The 30-cell radius is reasoned, not measured** - an enemy base plus its approaches, against `MaxBaseRadius`
+20 and `AttackScanRadius` 12. It is the first number to tune if raids feel too eager or too rare.
+
+**Also fixed, and bigger than this issue: this environment can build and verify.** Every session since Phase 6
+recorded "no engine build / no `dotnet` here" and shipped unverified on that basis. The actual problem was a
+stale apt index - `apt-get update` first, then `dotnet-sdk-8.0` installs fine, `fetch-engine.sh` compiles the
+engine and `make` builds the mod. `CLAUDE.md`'s "What can and can't be verified" section now carries the
+recipe and two caveats: `make check` reports 1840 `IDE0055` + 2 `IDE0301` errors in 14 *engine* files under
+Ubuntu's SDK (8.0.130), **verified identical on the old pin with no local changes**, so it is an SDK-patch-
+version artifact of the same family as issue #20's `CS0121` and not a regression; and a negative control
+should be run before believing any silent pass.
+
+**Verification - the first engine patch in this project's history that was compiled before being pinned:**
+
+1. Patch compiles standalone: `dotnet build OpenRA.Mods.Common` - **0 warnings, 0 errors**. (It did not on the
+   first attempt: `BooleanExpression` needed `using OpenRA.Support`. That is precisely the error class that
+   would have shipped invisibly under the old workflow and taken CI and all three platform installers with it.)
+2. `mod.config` re-pinned, `engine/` deleted, `./fetch-engine.sh` re-run from scratch: downloads the new SHA,
+   compiles, and the freshly downloaded source contains the new fields. The full pin -> fetch -> build chain is
+   proven, not assumed.
+3. `make` against the genuinely fetched engine: **0 errors**.
+4. `./utility.sh --check-yaml`: **0 errors, 0 warnings, 75/75 maps**.
+5. **Negative control 1:** `PreferredTargetTypes: notanactor` -> `Error: player.SquadManagerBotModuleInfo.PreferredTargetTypes: Missing actor 'notanactor'`. The actor reference is really validated.
+6. **Negative control 2:** `PreferredTargetCondition: nobody-grants-this` -> `Error: Actor type 'player' consumes conditions that are not granted` **and** `Warning: Actor type 'player' grants conditions that are not consumed: enemy-banking`. This proves the grant/consume pair is genuinely connected in the passing configuration, rather than merely syntactically accepted.
+
+**Not verified in a live client.** Nothing here proves a bot *actually diverts* mid-match - that needs a real
+game, and the issue #49 black-battlefield blocker still stands. What is proven is that the code compiles, the
+pin resolves, the fields parse, and the condition is wired. Behaviour is for a playtest.
+
+**Scope:** `engine-patch/a15f080-squad-preferred-targets` (engine, one file), `mod.config`,
+`mods/sungrid/rules/ai.yaml`, `CLAUDE.md`, `docs/GAME_MODES.md`, `CHANGELOG.md`.
+
+**Labels:** `type:feature`, `type:engine`, `area:ai`
+
+**Phase:** 4 follow-up; closes the raiding half of issue #67's deferral.
+
+**Definition of done:** Met for the mechanism. Open for the tuning - whether 30 cells and "only while banking"
+produce raids that feel right is a playtest question, and `EnemyLockdownCondition` is still unused, so Turtle
+AI dropping its turtling against an imminent economic win remains deferred.

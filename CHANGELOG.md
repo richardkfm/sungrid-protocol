@@ -385,6 +385,38 @@ making it, and no amount of further solo bug-hunting is a substitute.
 The section also spells out what does *not* block beta — all of Phase 7, terrain scenery, the EU-faction
 question, drone cost tuning — so the bar can't quietly creep upward.
 
+## Bots now raid your Vaults (issue #105)
+
+Until now, bots built Vaults but never deliberately attacked yours. The reason turned out to be in the engine:
+bot squads pick their target purely by distance, with no way for a mod to say "hit this kind of building
+first". A squad walked to whichever enemy structure happened to be nearest and stopped there — so a Vault was
+treated exactly like a power plant that happened to sit closer, and the raiding pressure the Grid Reserve mode
+is built around only ever existed when a *human* applied it. A bot could break your Lockdown by accident, but
+never on purpose.
+
+Bots on the Rush, Normal, Turtle, Naval and Grid Broker personalities now go for Vaults specifically — but
+only while an opponent is actually banking toward the Reserve target, and only within about 30 cells, so they
+won't abandon a fight to march across the map. In a destruction-only match nothing changes at all.
+
+**The Easy Grid Broker deliberately does not do this.** It is the learn-the-mode opponent; its Reserve win is
+supposed to be a clock you can beat by pressuring its base, not an opponent that also cracks your Vaults.
+
+Expect this to need tuning — the 30-cell range is a reasoned first guess, not a measured one. If raids feel
+too eager or too rare, that is the number to change.
+
+Two things this does *not* change. Units still never open fire on a building on their own initiative; that is
+stock Red Alert behaviour (only defensive structures like turrets and pillboxes get shot at automatically),
+and it applies to your army and the bot's alike. And Turtle AI still won't abandon turtling to stop an
+imminent economic win — that half of the problem is still open.
+
+### Side effect: this project can now verify its own work
+
+Sessions working on this repo have logged "no engine build available in this environment" since Phase 6, and
+shipped changes unverified because of it. That turned out to be a stale package index and nothing more. The
+engine now builds here, the full 75-map validation runs locally, and — for the first time in this project's
+history — **an engine patch was compiled before being pinned rather than after**. That immediately caught a
+missing `using` that would otherwise have broken CI and all three platform installers.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.
