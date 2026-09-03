@@ -34,8 +34,9 @@ Phase 6's visual identity work is essentially complete: original UI chrome, curs
 
 EA has not endorsed and does not support this product. See [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) for the full non-affiliation and licensing notes.
 
-Gameplay (alpha23)
-<img width="2183" height="1434" alt="gridmodea23" src="https://github.com/user-attachments/assets/5761372a-1e5a-45be-90c7-8b2440e97077" />
+Gameplay (alpha35)
+<img width="2294" height="1433" alt="alpha35_2" src="https://github.com/user-attachments/assets/458ababe-e604-49ef-9c67-dda4f352e624" />
+
 
 
 ### Download
