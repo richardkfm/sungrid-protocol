@@ -1194,10 +1194,10 @@ actor-sgdrn =
     .name = Drone Bay
     .description =
     Assembly infrastructure. Builds Recon Drones - the only
-    structure that can. Its autonomous delivery drones also
-    speed up nearby friendly vehicles, easing logistics across
-    a spread-out base. Drones lose their weapons fleet-wide
-    once the grid drops to critical power.
+    structure that can. Its drone-assisted logistics network
+    also speeds up nearby friendly vehicles, easing movement
+    across a spread-out base. Drones lose their weapons
+    fleet-wide once the grid drops to critical power.
 
 actor-sgdro =
     .name = Recon Drone
@@ -1220,8 +1220,9 @@ actor-sgdra =
     .description =
     Consortium infrastructure. The Consortium's dedicated
     counterpart to the Assembly's Drone Bay: builds Strike
-    Drones - the only structure that can - and its autonomous
-    delivery drones speed up nearby friendly vehicles.
+    Drones - the only structure that can - and its
+    drone-assisted logistics network speeds up nearby
+    friendly vehicles.
 
 actor-sgtur =
     .name = Grid Defense Turret
