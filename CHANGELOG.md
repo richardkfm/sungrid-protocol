@@ -6,7 +6,9 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha26**.
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha36** (issues #105's
+bot Vault-raiding plus the engine re-pin it required, the drone-briefing wording fix, and the Drone Bay / Aerial Fab
+tooltip rewording; #105 also includes the engine patch that lets the project build and verify itself, recorded below).
 
 ## Where the project stands
 
@@ -16,6 +18,30 @@ badges, reskinned terrain palettes, and original in-world art for every Sungrid-
 and unit. Still stock: the core inherited RA unit/vehicle sprites, all voice and sound effects, and
 in-game music beyond the menu sting — that's Phase 7, not started. See `docs/ROADMAP.md` for the
 phase plan and `CLAUDE.md` for detailed current status.
+
+## Release history (recent)
+
+The detailed entries below track through issue #105 (all of alpha36). Releases have kept moving
+ahead of the write-up cadence; the short summary here keeps the changelog honest until each release
+gets its own prose pass.
+
+- **alpha36** (latest, all three platforms — Windows installer, macOS DMG, Linux AppImage): shipped
+  issues #102–#105 — the drone crew-removal and auto-fire fix, the Spy fixes at the
+  Cryptominer/Datacenter, the "beta ready" definition (roadmap Beta gate), bot Vault raiding plus
+  the engine patch it required, the Drone Reserve briefing text rewording, and the Drone Bay /
+  Aerial Fab tooltip rewording. This was also the first release where the engine patch was compiled
+  *before* being pinned.
+- **alpha35**: shipped issues #100 (Wind Turbine 1x1 footprint) and #101 (Smart Grid Relay
+  Consortium-only), plus the `fetch-engine.sh` download-failure guard (issue #99) so the alpha34
+  regression class can't recur.
+- **alpha34**: shipped issues #97 (Hauler Drone round two) and #98 (Datacenter for AI docs/tooltip
+  fix). Shipped **without** a Windows installer because its packaging job hit a transient engine
+  download blip that the old `fetch-engine.sh` masked as success — issue #99's guard addresses the
+  root cause; the installer gap itself needed its job re-run.
+
+For every release's package list and notes, see the
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page — that's the authoritative
+per-version record.
 
 ## Phase 1 — Baseline playable shell
 
