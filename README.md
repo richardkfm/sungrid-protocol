@@ -20,7 +20,7 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 * [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/phase5-pixel-mockups.html">via githack</a> 
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 * [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) — license inheritance and EA non-affiliation.
-* [`docs/BACKLOG.md`](docs/BACKLOG.md) — the engineering issue log (76 issues and counting), held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
+* [`docs/BACKLOG.md`](docs/BACKLOG.md) — the engineering issue log (105 issues and counting), held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
 * [`CHANGELOG.md`](CHANGELOG.md) — what has actually shipped, in plain language, grouped by phase.
 * [`CLAUDE.md`](CLAUDE.md) — navigation map for AI-assisted development sessions in this repo.
 
