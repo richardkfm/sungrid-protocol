@@ -481,6 +481,18 @@ missing `using` that would otherwise have broken CI and all three platform insta
 - Nothing else changed: same frame sizes, same build-ups, same cameos, same rubble; team colour on the
   conduit band is unaffected.
 
+## The buildings move now (issue #109)
+
+- The Wind Turbine's rotor turns (slower, with a blade missing, when damaged) and the Sensor Array's dish
+  sweeps. The static turbine was the owner's complaint: it read as broken.
+- Small signs of life everywhere else: the Datacenter, Shelter, Drone Bay and Construction Yard beacons
+  blink, the Cryptominer's status pips flicker, the Drone Bay's pad ring runs chase lights, the Smart Grid
+  Relay's arc flickers between its terminals, and the Recycling Depot's shredder stack puffs.
+- Grid strain is finally visible. While your power is short, the Datacenter's data line and beacon turn
+  amber, the Cryptominer's pips go dark with a red fault blink, and the Grid Defense Turret's pad shows a
+  blinking amber fault lamp - the same moment those three buildings lose output.
+- Nothing about placement, footprints, build-ups or team colour changed.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

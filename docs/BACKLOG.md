@@ -3406,3 +3406,68 @@ stays on concrete.
 
 **Definition of done:** Met.
 
+### 109. No Sungrid building moved - idle animations: the turbine turns, the dish sweeps, lights blink, and grid-strained is finally visible
+
+**Raised as:** "well i think some buildings, esp wind turbines dont work without animations."
+
+**Problem.** Issue #74's audit recorded it as "batch 5" and every pass since deferred it: no Sungrid-original
+building had an idle animation. A static turbine reads as broken, a static radar reads as decorative, and the
+`grid-strained` power tier on `SGCRY`/`SGDAI`/`SGTUR` changed their output with no on-screen sign at all.
+
+**Scope (owner's choices):** the turbine's rotor and the Sensor Array's dish (real motion); a set of small signs
+of life (beacons, pips, pad lights, the Relay's arc, the Depot's stack); the power-state cue - all in one pass;
+a stately turbine (~3 s per blade cycle); damaged buildings keep moving, degraded.
+
+**Two mechanisms, and when each applies.**
+
+- *Body frames* (`WithSpriteBody` playing a multi-frame `idle:`): the whole building re-rendered per frame from
+  its `*_mesh()` with a new keyword (`spin`, `sweep`, `beacon`, `chase`, `flicker`, `arc`), listed per building
+  in `ANIM` in `gen_concept_art.py`. Exact occlusion (the dish passes behind its own mast, the rotor turns in
+  front of the nacelle), no offset to get wrong, and the damaged state is just another frame list. Used for the
+  Wind Turbine (24 idle + 24 damaged frames), Sensor Array (16 + 1), Datacenter, Shelter, Drone Bay and
+  Cryptominer (8 + 1 each), Relay (6 + 1), and the Construction Yard - idle 8, then the 25 build frames, damaged
+  idle, 25 damaged build frames, 59 in all, so its node no longer mirrors stock `fact:`'s starts.
+- *`WithIdleOverlay`* with its own sheet at the body's frame size, so no offset is needed: for where the body
+  cannot animate - the Depot's is `WithResourceLevelSpriteBody`'s fill-level strip, so its stack puffs are
+  `rcydsmoke.png` - and for animation that exists only under a condition: the grid-strained lamps
+  (`sgdaistrained.png`, `sgcrystrained.png`, `sgturstrained.png`) are overlays gated on
+  `RequiresCondition: grid-strained && !build-incomplete`, drawn over the body's own lights (the overlay sorts
+  above the body). `RenderSprites.NormalizeSequence` applies the `damaged-` prefix to overlays too and falls
+  back to the plain sequence when the prefixed one is missing, so `damaged-strained` exists only where the
+  damaged body differs (the Datacenter's broken mast has no beacon; the Cryptominer's toppled rack has no pip).
+
+**Speeds.** Turbine: three blades, so 120 degrees is one visual cycle - 24 frames x 5 degrees at Tick 100 =
+2.4 s per cycle, 7.2 s per revolution; the two-blade damaged rotor needs a full turn per cycle, 24 x 15
+degrees at Tick 400, a quarter slower. Dish: 16 x 22.5 degrees at Tick 250, a 4 s sweep; the fallen dish is
+still. Beacons on 5 of 8 frames at Tick 200; pad chase lights and pips at Tick 150; the arc at Tick 120;
+smoke and strained lamps at Tick 200 / 250. `^Building`'s `WithSpriteBody: PauseOnCondition: disabled`
+still applies, so a powered-down building freezes, which is the right cue.
+
+**Three things learned.** The mesh renderer culls by winding, so a dish that sweeps away from the camera
+vanished for half a turn until `tilted_disc()` grew a back face. The Depot overlay could not carry
+`PauseOnCondition: disabled`: `--check-yaml` counts a `PauseOnCondition` as a consumed condition, and `rcyd`
+grants no `disabled` (`^Building`'s `WithSpriteBody` is removed on it). And a *dark amber* is a team colour:
+`dim(AMBER, 0.6)` for an unlit lamp lies inside `_index_for`'s gold radius and closer to the gold ramp than
+to any body tone, so the first render of the strained overlays put 57 remap-ramp pixels into a sheet that must
+have none - an off lamp would have lit up in the owner's colour. Unlit is now a plain dark grey and the steady
+strained line is the palette's own darker amber (entry 214); the overlay sheets carry zero remap pixels.
+
+**Verified:** `--check-yaml` exit 0 (75 maps). `--check-missing-sprites` reports nothing for any Sungrid
+sheet; negative control: `damaged-idle` Length 24 -> 25 on `sgwnd` fails with `sgwnd.png does not contain
+frames: 48`, so the frame math is checked, not assumed. Regeneration: only the seven animated body sheets, the
+Yard, the two make sheets whose idle frame 0 changed (Drone Bay: chase frame 0; Cryptominer: flicker frame 0)
+and the four new overlay sheets differ; every other sheet, cameo and rubble sprite is byte-identical, the make
+sheets of the turbine, dish, Datacenter, Shelter, Relay and Yard included, because their idle frame 0 *is* the
+old idle. Per-frame remap-ramp counts on every animated body sheet match the old idle frame; the fixed-yellow
+audit is unchanged (the Cryptominer's amber pips are fixed-palette by design). Reviewed as GIFs at the real
+per-frame timing (`docs/concept-art/issue109-sgwnd.gif`, `issue109-sgsns.gif`) and a contact sheet of every
+animated state (`docs/concept-art/issue109-idle-animations.png`). Not verified in a live client.
+
+**Recorded for later, not done:** the arrays, Hydrogen Plant, Fab Bay, Battery Bank and the greenery are
+still static (deliberately - panels and tanks do not move, and swaying grass on a 1-bit-alpha sprite is
+noise); the Arc Turret still fires with no muzzle flash; the drones have no landed slow-rotor state.
+
+**Phase:** 6/7 follow-up (art identity).
+
+**Definition of done:** Met.
+
