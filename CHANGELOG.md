@@ -449,7 +449,8 @@ missing `using` that would otherwise have broken CI and all three platform insta
   diamond footprint, visible roof, lit left wall, shaded right wall — instead of front elevations standing on a
   flat pad. This is the "still looks 2D" fix: the Hydrogen Plant and Drone Bay were the reported cases, but the
   whole roster is done so nothing sits at odds with its neighbour. Buildings now fit their cell footprint the way
-  stock ones do; the team-coloured conduit band wraps the plinth. Solar panels are larger.
+  stock ones do; the team-coloured conduit band wraps the plinth. Solar panels are larger, and the Advanced
+  Solar Array is now a full field of nine collectors instead of three panels beside a concentrator dish.
 - **New Construction Yard art.** The base is now a Sungrid-original building — a vaulted space-frame
   fabrication hall with a solar roof, a team-coloured door frame and a gantry crane over an open assembly yard —
   replacing the stock Red Alert yard, with the same crane animation when a building is placed. The fake
@@ -459,6 +460,13 @@ missing `using` that would otherwise have broken CI and all three platform insta
 - Verified with the engine's full map validation and sprite checks; not yet seen in a live client. The other
   ported stock buildings (War Factory, Refinery, Barracks, etc.) keep their stock art for now — see
   `docs/BACKLOG.md` issue #106 for what a pass over those would involve.
+
+## Build-menu cameos after the building rework (issue #107)
+
+- The photographic sidebar cameos stay exactly as they were: they are the concept renders the new buildings
+  were built from, each carries the building's name, and the owner prefers them to a render of the pixel
+  model even where the subject drifted (the Advanced Solar Array's cameo still shows its former dish).
+- The Construction Yard keeps its original Red Alert cameo; only its in-world sprite is Sungrid's.
 
 ## Open / recorded but not implemented
 

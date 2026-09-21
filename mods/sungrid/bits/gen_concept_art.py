@@ -1120,40 +1120,36 @@ def gauge(m, x, y0, z0, n_lit, total=8, pitch=1.0, width=4.0, live=True, side="-
 # --------------------------------------------------------------------- roster
 
 def sgpwr_mesh(damaged=False):
-    """Solar Array: four large collectors in two rows, inverter cabinet at the
-    back corner."""
+    """Solar Array: four large collectors in two rows, filling the plot, with
+    the inverter cabinet at the near-left corner in front of them (a cabinet
+    behind the back row would vanish behind the panels' raised rear edge)."""
     m = Mesh()
     plinth(m, 20, live=not damaged)
-    for row, y in enumerate((-18, -3)):
-        for col, x in enumerate((-19, 1)):
-            pv_panel(m, x, y, 17, 11, 2.2, rise=6.5, damaged=damaged and row == 1 and col == 1)
-    m.box(10, 11, 2.2, 19, 19, 9, STEEL, top=lit(STEEL, 0.2))
-    m.box(10.5, 10.6, 5, 18.5, 11, 6.2, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), top=SUN_GOLD, order=1, shadow=False, accent=True)
+    for row, y in enumerate((-10, 6)):
+        for col, x in enumerate((-16, 3)):
+            pv_panel(m, x, y, 17.5, 14, 2.2, rise=9.5, damaged=damaged and row == 1 and col == 1)
+    m.box(-16, -16.5, 2.2, -9, -11, 8, STEEL, top=lit(STEEL, 0.2))
+    m.box(-16.5, -15.5, 4.5, -15.9, -12, 5.7, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), top=SUN_GOLD, order=1, shadow=False, accent=True)
     return m
 
 
 def sgapwr_mesh(damaged=False):
-    """Advanced Solar Array: a concentrator dish on a pedestal beside a bank of
-    collectors, with a storage cell at the back."""
+    """Advanced Solar Array: a full field of nine large collectors in three
+    rows, with the storage/switchgear cabinet at the near-right corner in
+    front of them. (It shipped first with a concentrator dish taking a third
+    of the plot; the owner's read was that the dish looked like a radar and
+    the building should carry many more panels instead.)"""
     m = Mesh()
     plinth(m, 27, live=not damaged)
-    for k, y in enumerate((-24, -9, 6)):
-        pv_panel(m, -25, y, 16, 11, 2.2, rise=6.5, damaged=damaged and k == 2)
-    # Concentrator dish: pedestal, yoke, tilted bowl.
-    m.prism(9, -8, 2.2, 5.0, 5.0, dim(CONCRETE, 0.1), sides=10, top=lit(CONCRETE, 0.1))
-    m.prism(9, -8, 5.0, 13.0, 1.8, STEEL, sides=8, top=lit(STEEL, 0.2))
-    m.strut((9, -8, 13), (7.5, -9.5, 15.5), 0.9, STEEL)
-    if not damaged:
-        tilted_disc(m, 7.0, -10.0, 17.5, 11.0, (-0.45, -0.55, 0.7), lit(PALE_STEEL, 0.2), inner=lit(PANEL_BLUEBLACK, 0.25))
-        m.strut((7.0, -10.0, 17.5), (3.5, -14.3, 23.0), 0.5, STEEL)
-        m.box(2.8, -15.0, 22.8, 4.2, -13.6, 24.0, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
-    else:
-        tilted_disc(m, 5.0, -12.0, 12.0, 11.0, (-0.2, -0.3, 0.93), dim(PALE_STEEL, 0.35), inner=dim(PANEL_BLUEBLACK, 0.3))
-    # Storage cell at the back corner, with the live band.
-    m.box(12, 10, 2.2, 24, 24, 11, STEEL, top=lit(STEEL, 0.2))
+    for row, y in enumerate((-15, -1, 13)):
+        for col, x in enumerate((-23.5, -6.1, 11.3)):
+            pv_panel(m, x, y, 16, 12.5, 2.2, rise=8.5, damaged=damaged and (row, col) in ((1, 1), (0, 2)))
+    m.box(12, -23.5, 2.2, 26, -17, 10, STEEL, top=lit(STEEL, 0.2))
     for i in range(3):
-        m.box(13 + i * 3.6, 9.6, 4, 15.5 + i * 3.6, 10.1, 9.5, dim(STEEL, 0.4), top=dim(STEEL, 0.4), order=1, shadow=False)
-    m.box(11.6, 11, 8.5, 12.1, 23, 9.5, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), top=SUN_GOLD, order=1, shadow=False, accent=True)
+        m.box(13 + i * 4.2, -24, 4, 16 + i * 4.2, -23.5, 8.5, dim(STEEL, 0.4), top=dim(STEEL, 0.4), order=1, shadow=False)
+    m.box(11.5, -22.5, 7.5, 12.1, -18, 8.7, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), top=SUN_GOLD, order=1, shadow=False, accent=True)
+    if damaged:
+        m.box(12.5, -24.1, 5, 19, -23.6, 9.5, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
     return m
 
 
@@ -1639,13 +1635,13 @@ def sgpwr_dead_draw(sd, w=FAM23_W, h=FAM23_H):
 
 
 def sgapwr_dead_draw(sd, w=FAM33_W, h=FAM33_H):
-    """Advanced Solar Array rubble: a wider spill, the dish face-down in it."""
+    """Advanced Solar Array rubble: a wider spill of collapsed collectors."""
     ox, oy, half = _dead_origin("3x3")
     _rubble_diamond(sd, ox, oy, half, seed=12)
     _slab(sd, ox - 16, oy + 2, 22, 5, mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.35), lean=1.0)
     _slab(sd, ox + 16, oy - 4, 20, 5, dim(PANEL_BLUEBLACK, 0.2), lean=-2.4)
-    sd.ellipse([ox - 4, oy - 12, ox + 14, oy - 4], fill=dim(PALE_STEEL, 0.35))
-    sd.ellipse([ox - 1, oy - 10.5, ox + 11, oy - 5.5], fill=dim(PANEL_BLUEBLACK, 0.3))
+    _slab(sd, ox + 2, oy - 9, 18, 5, dim(PANEL_BLUEBLACK, 0.1), lean=1.8)
+    sd.line([(ox - 6, oy - 7), (ox - 3, oy - 1)], fill=POLE_DARK, width=1.1)
     _conduit_stub(sd, ox - 28, ox - 14, oy + 4)
     _conduit_stub(sd, ox + 10, ox + 24, oy + 6)
     _embers(sd, [(ox - 20, oy + 3), (ox, oy + 6), (ox + 18, oy + 1), (ox - 8, oy - 3), (ox + 26, oy - 2)])
@@ -2677,7 +2673,6 @@ ICON_W, ICON_H = 64, 48
 # names in mods/sungrid/fluent/rules.ftl (kept in sync by hand; the label is
 # cosmetic, not a FluentReference the engine resolves).
 ICON_LABELS = {
-    "sgfact": "Construction Yard",
     "sgpwr": "Solar Array",
     "sgapwr": "Advanced Solar Array",
     "sgcry": "Cryptominer",
@@ -3197,8 +3192,8 @@ def main():
     assert len(fact_frames) == 52
     save_pngsheet(indexed_strip(fact_frames, [silhouette_shadow(f, 2, 2) for f in fact_frames], fw, fh),
                   "sgfact.png", fw, fh, len(fact_frames), indexed=True)
-    save_pngsheet(make_icon(mesh_draw_fn("sgfact"), fw, fh, label=ICON_LABELS["sgfact"]),
-                  "sgfacticon.png", ICON_W, ICON_H, 1)
+    # No cameo of its own: FACT keeps stock facticon.shp (the owner's call,
+    # docs/BACKLOG.md issue #107) -- the sgfact: sequence node points there.
     fact_mk = make_frames(mesh_draw_fn("sgfact"), fw, fh, final=fact_frames[0])
     save_pngsheet(indexed_strip(fact_mk, [None] * (len(fact_mk) - 1) + [silhouette_shadow(fact_frames[0], 2, 2)], fw, fh),
                   "sgfactmake.png", fw, fh, len(fact_mk), indexed=True)
