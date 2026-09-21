@@ -3243,3 +3243,53 @@ pin resolves, the fields parse, and the condition is wired. Behaviour is for a p
 **Definition of done:** Met for the mechanism. Open for the tuning - whether 30 cells and "only while banking"
 produce raids that feel right is a playtest question, and `EnemyLockdownCondition` is still unused, so Turtle
 AI dropping its turtling against an imminent economic win remains deferred.
+
+### 106. The buildings looked 2D - the whole roster rebuilt as solids at the stock camera's 45° yaw, plus a Sungrid Construction Yard
+
+**Raised as:** "Please rework some of the buildings graphics ... I think esp buildings like hydrogen plant and
+drone bay still look too 2d ... Pay attention to the original 3d-feel ... consider redrawing some of the
+original buildings such as the base." Drafts were shown first (`docs/concept-art/drafts/`, PR #126) and the
+answer was to do the whole roster so everything matches, with bigger solar panels.
+
+**Diagnosis.** Decoding `fact.shp` and `weap3.shp` against `temperat.pal` (decoder in
+`docs/concept-art/drafts/shp.py`) shows the stock convention: a building is a solid rotated 45° on the ground -
+a 2:1 diamond footprint, a visible roof plane, two walls meeting at the near corner, the left one lit. Every
+Sungrid building was a front elevation on a flat horizontal pad, the conduit band a horizontal bar in front
+of it. No amount of shading on the elevation changes that read; the projection was the problem.
+
+**Change.** `gen_concept_art.py`: the thirteen flat `*_draw` functions (and the helpers only they used:
+`capped_box`, `Roof`, `tilted_collector`, `vcyl`, `contact_shadow`, `draw_gold_band`, `dome3d`,
+`_rubble_bed`) are gone. In their place each building is a `*_mesh()` built from `Mesh` boxes, prisms, struts
+and quads, drawn at `BUILDING_YAW` on a diamond `plinth()` sized to its cell footprint (`FAM` table), through
+one `mesh_frame()` pipeline. New: `sgfact` - a Sungrid Construction Yard on stock `fact.shp`'s exact 52-frame
+layout, with `build` frames animating the crane trolley; `FACT` and the fake `FACF` render it via
+`RenderSprites.Image` (stock `fact:` node left intact, same split as `silo:`/`sgvlt`). Rubble for the four
+buildings that have it is a diamond too. The Battery Bank and Recycling Depot keep their 9+9 stage sheets,
+now read off a vertical gauge on the cabinet's lit face plus (Depot) a heap that grows in footprint and height.
+
+**Two mechanisms worth recording.** (1) `Mesh` faces take `accent=True`, and `mesh_frame()` re-stamps them at
+native resolution from an occlusion-correct coverage mask pass and an accent-only colour pass, snapped onto
+`_GOLD_REFS`, replacing the per-building `_vlt_accents`/`_sgrel_accents`/`_rcyd_accents` pixel tables; the
+fixed-yellow pixel count is 0 on every sheet (it was ~50% of the band on the drafts). (2) A prism's top cap is a
+full disc, so an `order` override on a band prism paints over what stands above it - the first draft's gold
+tank crowns. Both are in `docs/ART_DIRECTION.md` and `CLAUDE.md`.
+
+**Verified:** engine built locally per issue #105's recipe; `./utility.sh --check-yaml` exit 0 across all 75
+maps; `--check-missing-sprites` names none of the new sheets (its remaining errors are the uninstalled
+tileset `.des`/`.sno` files, identical before the change); negative control - `sgfact` `damaged-build`
+`Length` 25 -> 26 fails with `sgfact.png does not contain frames: 52`. Regeneration regression check: after
+`gen_concept_art.py` + `gen_photo_cameos.py`, `git status` lists only the intended sheets - `arct*`,
+`sgtur*`, `sghau*`, `disr`, the drones, the scrap piles and every photographic cameo are byte-identical.
+Not verified in a live client (the standing issue #35 blocker).
+
+**Not done, deliberately:** the other ported stock buildings (War Factory, Refinery, Barracks, Radar, Tech
+Centers, Helipad, Airfield, Repair Bay, defences) still ship stock `.shp` art. They already sit in the stock
+projection, so they match the new roster geometrically; giving them Sungrid-original *content* is a separate,
+larger pass (several carry door/radar/harvester-dock animations). Also untouched: the turrets (already
+meshes) and terrain scenery.
+
+**Phase:** 6 follow-up (building art), touches 7's "the base" ask via the Construction Yard only.
+
+**Definition of done:** Met for the roster. Open: the owner's read of the shipped sheets in a live client,
+and the stock-building pass above if wanted.
+
