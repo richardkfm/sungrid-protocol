@@ -449,7 +449,8 @@ missing `using` that would otherwise have broken CI and all three platform insta
   diamond footprint, visible roof, lit left wall, shaded right wall — instead of front elevations standing on a
   flat pad. This is the "still looks 2D" fix: the Hydrogen Plant and Drone Bay were the reported cases, but the
   whole roster is done so nothing sits at odds with its neighbour. Buildings now fit their cell footprint the way
-  stock ones do; the team-coloured conduit band wraps the plinth. Solar panels are larger.
+  stock ones do; the team-coloured conduit band wraps the plinth. Solar panels are larger, and the Advanced
+  Solar Array is now a full field of nine collectors instead of three panels beside a concentrator dish.
 - **New Construction Yard art.** The base is now a Sungrid-original building — a vaulted space-frame
   fabrication hall with a solar roof, a team-coloured door frame and a gantry crane over an open assembly yard —
   replacing the stock Red Alert yard, with the same crane animation when a building is placed. The fake
