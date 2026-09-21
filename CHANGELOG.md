@@ -461,6 +461,13 @@ missing `using` that would otherwise have broken CI and all three platform insta
   ported stock buildings (War Factory, Refinery, Barracks, etc.) keep their stock art for now — see
   `docs/BACKLOG.md` issue #106 for what a pass over those would involve.
 
+## Build-menu cameos after the building rework (issue #107)
+
+- The photographic sidebar cameos stay exactly as they were: they are the concept renders the new buildings
+  were built from, each carries the building's name, and the owner prefers them to a render of the pixel
+  model even where the subject drifted (the Advanced Solar Array's cameo still shows its former dish).
+- The Construction Yard keeps its original Red Alert cameo; only its in-world sprite is Sungrid's.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

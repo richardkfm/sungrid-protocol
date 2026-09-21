@@ -174,7 +174,9 @@ sgfact:
 			DESERT: bib2.des
 		Length: *
 	icon:
-		Filename: sgfacticon.png
+		# Stock cameo, deliberately (docs/BACKLOG.md issue #107): the owner wants
+		# the original Construction Yard cameo kept; only the in-world art is Sungrid's.
+		Filename: facticon.shp
 	fake-icon:
 		Filename: facficon.shp
 

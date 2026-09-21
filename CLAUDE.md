@@ -258,7 +258,10 @@ is the regression check.
    palette, so pixels on the remap ramp (indices 80-95) take the owner's team color; truecolor sprites
    ignore ownership entirely (issue #43). **Build-menu cameos are the deliberate exception** — they
    stay truecolor 64×48, because nothing about a cameo needs team color and the photographic ones
-   (issue #45) would not survive palettization.
+   (issue #45) would not survive palettization. The photographic set is the owner's preference even where a
+   cameo's subject drifted from the rebuilt sprite (issue #107 assessed all thirteen and kept them; do not
+   replace one with a mesh render without asking). `FACT` keeps stock `facticon.shp`; there is no
+   `sgfacticon.png`.
 2. **Indexed alpha is 1-bit — translucency is silently deleted.** This has bitten repeatedly: swept
    rotor discs vanished leaving a body ringed by holes, discharge arcs and motion streaks disappeared,
    an alpha death-fade did nothing. Draw it opaque, or dither it.

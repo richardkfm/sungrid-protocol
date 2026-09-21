@@ -2673,7 +2673,6 @@ ICON_W, ICON_H = 64, 48
 # names in mods/sungrid/fluent/rules.ftl (kept in sync by hand; the label is
 # cosmetic, not a FluentReference the engine resolves).
 ICON_LABELS = {
-    "sgfact": "Construction Yard",
     "sgpwr": "Solar Array",
     "sgapwr": "Advanced Solar Array",
     "sgcry": "Cryptominer",
@@ -3193,8 +3192,8 @@ def main():
     assert len(fact_frames) == 52
     save_pngsheet(indexed_strip(fact_frames, [silhouette_shadow(f, 2, 2) for f in fact_frames], fw, fh),
                   "sgfact.png", fw, fh, len(fact_frames), indexed=True)
-    save_pngsheet(make_icon(mesh_draw_fn("sgfact"), fw, fh, label=ICON_LABELS["sgfact"]),
-                  "sgfacticon.png", ICON_W, ICON_H, 1)
+    # No cameo of its own: FACT keeps stock facticon.shp (the owner's call,
+    # docs/BACKLOG.md issue #107) -- the sgfact: sequence node points there.
     fact_mk = make_frames(mesh_draw_fn("sgfact"), fw, fh, final=fact_frames[0])
     save_pngsheet(indexed_strip(fact_mk, [None] * (len(fact_mk) - 1) + [silhouette_shadow(fact_frames[0], 2, 2)], fw, fh),
                   "sgfactmake.png", fw, fh, len(fact_mk), indexed=True)

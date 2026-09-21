@@ -143,6 +143,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Every volumetric building from the shipped sheets, 3×: idle and damaged frames, build-up samples, the Battery Bank and Recycling Depot fill stages, the Construction Yard's placed-building frames, and the four diamond rubble sprites.](concept-art/issue106-volumetric-roster.png)
 
+**Follow-up: the cameos were checked against the rebuilt sprites and kept (`docs/BACKLOG.md` issue #107).** Rebuilding the roster left the photographic cameos (issue #45) where they were. Laid beside the sprites they buy, most still match on subject, because they were cropped from the concept renders the meshes were built from; five drifted (a bunker door for the Shelter's dome, module stacks for the Datacenter's hall, cylindrical cells for the Battery Bank's containers, a wall of racks for the Cryptominer, the dish the Advanced Solar Array no longer has), and every one carries the building's name. The owner's call is that the concept renders stay, drift included — they are the richest thing in the UI. The Construction Yard keeps stock `facticon.shp`; only its in-world art is Sungrid's. The check itself is worth keeping: **lay the cameo beside the sprite whenever a sprite changes subject**, and record what drifted, so the decision to keep is a decision and not an oversight.
+
+![Every photographic cameo beside the volumetric sprite it buys.](concept-art/issue107-cameos.png)
+
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.
 
 ## Beyond building art: full visual identity (Phase 6/7)

@@ -3305,3 +3305,37 @@ the building no longer has.
 **Definition of done:** Met for the roster. Open: the owner's read of the shipped sheets in a live client,
 the build-menu cameo question, and the stock-building pass above if wanted.
 
+### 107. Build-menu cameos after the volumetric pass: assessed, kept; the Construction Yard keeps its stock cameo
+
+**Raised as:** "what do you think should we do with the menu sprites? can they stay as they are? will people
+recognize the buildings?" - and, after the assessment, "keep the original cameo of the main building" and
+"keep cameos all like they were before please (3d renderings)".
+
+**Assessment.** Every cameo laid beside the building it now buys (`docs/concept-art/issue107-cameos.png`).
+The photographic cameos (issue #45) are crops of the same concept renders the meshes were built from, so
+most match on subject, and every one carries the building's name - stock RA's own safety net, and enough
+for a player who has bought a building once to find it again. Weaker matches after issue #106: the
+Resilience Shelter (a bunker-door close-up for a dome), the Datacenter (module stacks for a chiller-topped
+hall), the Battery Bank (cylindrical cells for two containers), the Cryptominer (a wall of dark racks), and
+the Advanced Solar Array, whose crop still shows the concentrator dish the #106 follow-up removed.
+
+**Decision (owner):** the photographic set stays exactly as it is - those cameos are the concept renders,
+and the owner prefers them to a render of the pixel model even where the subject drifted. A first
+implementation that replaced the five with mesh-rendered cameos was pushed and then withdrawn on that
+answer (branch history reset; nothing of it remains). The one change kept, asked for explicitly: the
+**Construction Yard keeps stock `facticon.shp`** - `sgfact:`'s `icon` points there, `sgfacticon.png` is
+deleted and no longer generated, `ICON_LABELS` loses its entry. Only the in-world art is Sungrid's.
+
+**Verified:** after the change, regenerating with both scripts leaves every sheet and every cameo
+byte-identical (only `sgfacticon.png` is gone). `--check-yaml` exit 0. `facticon.shp` is stock content
+from the RA `.mix` files, resolved the same way every ported stock cameo is and the same way the
+untouched `fact:` node always resolved it; `--check-missing-sprites` cannot see `.mix` content in this
+environment, so it lists it alongside `ss.shp` and the rest - not a mod error.
+
+**Recorded for later, not done:** if the Advanced Solar Array's dish-showing cameo ever bothers a
+playtester, the fix is a re-crop in `gen_photo_cameos.py`'s `CROPS`, not a mesh render.
+
+**Phase:** 6 follow-up (UI/art identity).
+
+**Definition of done:** Met.
+
