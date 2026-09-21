@@ -468,6 +468,19 @@ missing `using` that would otherwise have broken CI and all three platform insta
   model even where the subject drifted (the Advanced Solar Array's cameo still shows its former dish).
 - The Construction Yard keeps its original Red Alert cameo; only its in-world sprite is Sungrid's.
 
+## Greenery on every building (issue #108)
+
+- No Sungrid building sits on bare concrete any more. The solar arrays and the Wind Turbine stand in a
+  planted bed inside their concrete rim, with groundcover under the panels and shrubs and grasses along the
+  front. The halls get a sedum green roof where the roof is flat, ivy on the sunlit wall, shrubs and grasses
+  on the front strip, and one small tree at the near corner of the plot. The Shelter's earth berm is planted;
+  the open Fab Bay gets an ivy-clad column and a bed along its open side.
+- The planting is grey-green, drought-tolerant stock — olive-type trees, lavender/rosemary mounds, feather
+  grass, sedum — chosen to be plausible on desert, temperate and snow maps alike, and drawn on the same
+  palette entries on every tileset so it never shifts colour with the terrain.
+- Nothing else changed: same frame sizes, same build-ups, same cameos, same rubble; team colour on the
+  conduit band is unaffected.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

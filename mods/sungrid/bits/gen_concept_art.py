@@ -1019,11 +1019,13 @@ FAM = {
 }
 
 
-def plinth(m, half, z=2.2, band=True, live=True, grass=True):
+def plinth(m, half, z=2.2, band=True, live=True):
     """Concrete plinth (a diamond on screen) with the team-colour conduit band
     wrapped along its two near edges -- the same 'grid connection' tell the
     flat sprites carried as a horizontal bar, now on a solid. Accent faces get
-    re-stamped natively (mesh_frame) so they stay on the remap ramp."""
+    re-stamped natively (mesh_frame) so they stay on the remap ramp. Planting
+    is per building (below), not a plinth feature: the two green corner
+    blocks this used to add sat behind the building mass and read as noise."""
     m.box(-half, -half, 0, half, half, z, dim(SLAB, 0.15), top=SLAB, shadow=False)
     if band:
         col = SUN_GOLD if live else dim(SUN_GOLD, 0.4)
@@ -1031,10 +1033,107 @@ def plinth(m, half, z=2.2, band=True, live=True, grass=True):
               order=1, shadow=False, accent=True)
         m.box(-half + 1, -half + 1, z, -half + 3.2, half - 1, z + 1.0, col, top=lit(col, 0.25),
               order=1, shadow=False, accent=True)
-    if grass:
-        # Greenery reclaiming the far corners of the pad.
-        for (x, y) in ((half - 3.5, half - 3.5), (-half + 3.5, half - 3.5)):
-            m.box(x - 2.2, y - 2.2, z, x + 2.2, y + 2.2, z + 1.3, dim(GRASS, 0.2), top=GREEN_ACCENT, shadow=False)
+
+
+# Greenery (issue #108). Palette-exact foliage on temperat.pal's own tree ramp
+# (indices 145-152): grey-green, drought-tolerant plants -- olive/acacia-type
+# trees, lavender and rosemary mounds, feather-grass tufts, sedum roofs -- so
+# one sprite is plausible on sand, grass and snow alike. The `player` palette
+# is the same file on every tileset, so these tones never shift with terrain.
+# Every planting position comes from _scatter(), a pure integer hash, because
+# regeneration has to be byte-identical.
+LEAF_PALE = (176, 208, 124)
+LEAF_SAGE = (136, 172, 108)
+LEAF_MID = (104, 136, 92)
+LEAF_DARK = (76, 100, 60)
+LEAF_DEEP = (60, 84, 48)
+SOIL = (100, 80, 56)                # palette 32
+BARK = (72, 56, 40)
+
+
+def _scatter(x, y, salt=0):
+    """Deterministic 0..1 hash of a planting position."""
+    n = int(x * 73856093) ^ int(y * 19349663) ^ int(salt * 83492791)
+    n = (n * 2654435761) & 0xFFFFFFFF
+    return ((n >> 8) & 0xFFFF) / 65536.0
+
+
+def _clump(m, x, y, z, r, col, top, h, sides=7):
+    m.prism(x, y, z, z + h, r, col, sides=sides, top=top, shadow=False)
+
+
+def tuft(m, x, y, z, cap=3.0):
+    """Feather grass: a dark base and a pale, narrower plume."""
+    m.prism(x, y, z, z + min(cap, 1.2), 1.4, LEAF_DEEP, sides=6, top=LEAF_DARK, shadow=False)
+    if cap > 1.4:
+        m.prism(x, y, z + 1.2, z + min(cap, 3.2), 0.95, LEAF_SAGE, sides=6, top=LEAF_PALE, shadow=False)
+
+
+def shrub(m, x, y, z, r=2.8):
+    """A rounded drought-tolerant mound (lavender, rosemary, sage)."""
+    m.prism(x, y, z, z + r * 0.55, r, LEAF_DEEP, sides=8, top=LEAF_DARK)
+    m.prism(x, y, z + r * 0.55, z + r * 1.05, r * 0.66, LEAF_MID, sides=8, top=LEAF_SAGE, shadow=False)
+
+
+def tree(m, x, y, z, h=8.0, r=5.0):
+    """A small olive/acacia-type tree: short trunk, wide flat-topped canopy in
+    three stacked tiers. Halls get one at the near-right corner of the plot;
+    the solar arrays get none, because a tree next to a panel shades it."""
+    m.strut((x, y, z), (x, y, z + h * 0.62), 0.7, BARK, cap=BARK)
+    base = z + h * 0.5
+    m.prism(x, y, base, base + h * 0.26, r, LEAF_DEEP, sides=9, top=LEAF_DARK)
+    m.prism(x + 0.4, y - 0.4, base + h * 0.26, base + h * 0.46, r * 0.74, dim(LEAF_MID, 0.1), sides=9, top=LEAF_MID, shadow=False)
+    m.prism(x - 0.3, y + 0.3, base + h * 0.46, base + h * 0.6, r * 0.42, LEAF_MID, sides=7, top=LEAF_SAGE, shadow=False)
+
+
+def bed(m, x0, y0, x1, y1, z, h=0.6, step=4.0, lowcap=1.0, salt=0, keep=None):
+    """A planted bed: a soil-sided box with a green mat on top and scattered
+    groundcover clumps, bare patches and the odd grass tuft. `keep(x, y)` is
+    False where nothing may grow (equipment footings); `lowcap` caps the
+    clump height (under panels). The marks are deliberately few and large:
+    at 4x supersampling, clumps under ~1.5 units dissolve into speckle."""
+    m.box(x0, y0, z - 0.2, x1, y1, z + h, SOIL, top=LEAF_MID, shadow=False)
+    zt = z + h
+    y, row = y0 + 1.6, 0
+    while y < y1 - 1.2:
+        x = x0 + 1.6 + (step / 2 if row % 2 else 0)
+        while x < x1 - 1.2:
+            a, b, c = _scatter(x, y, salt), _scatter(x, y, salt + 1), _scatter(x, y, salt + 2)
+            px, py = x + (a - 0.5) * 1.6, y + (b - 0.5) * 1.6
+            if keep is None or keep(px, py):
+                if c < 0.14:
+                    _clump(m, px, py, zt, 1.4 + a * 0.8, SOIL, lit(SOIL, 0.12), 0.15)
+                elif c < 0.50:
+                    _clump(m, px, py, zt, 1.6 + a * 1.2, LEAF_DEEP, LEAF_DARK, min(lowcap, 0.6 + b * 0.6))
+                elif c < 0.84:
+                    _clump(m, px, py, zt, 1.5 + a * 1.1, LEAF_DARK, LEAF_SAGE, min(lowcap, 0.7 + b * 0.6))
+                else:
+                    tuft(m, px, py, zt, cap=lowcap)
+            x += step
+        y += step * 0.85
+        row += 1
+
+
+def vines(m, x, y0, y1, z0, z1, salt=0, dark=False):
+    """Climbing greenery on a -x (lit, screen-left) wall: leaf panels of
+    uneven height pressed on the face, with clumps standing proud of their
+    tops. `dark=True` on pale walls, so the leaves keep their contrast."""
+    n = max(2, int((y1 - y0) / 4.5))
+    lo, hi = (LEAF_DEEP, LEAF_DARK) if dark else (LEAF_DARK, LEAF_MID)
+    for i in range(n):
+        a, b = _scatter(i, salt, 3), _scatter(i, salt, 4)
+        ya = y0 + (y1 - y0) * i / n + 0.4
+        yb = ya + (y1 - y0) / n * (0.6 + 0.35 * a)
+        zt = z0 + (z1 - z0) * (0.5 + 0.5 * b)
+        m.quad((x - 0.3, ya, z0), (x - 0.3, yb, z0), (x - 0.3, yb, zt), (x - 0.3, ya, zt), lo if a < 0.5 else hi, order=1)
+        m.box(x - 1.3, ya + 0.3, zt - 1.8, x - 0.2, yb - 0.3, zt + 0.3, hi, top=LEAF_SAGE if not dark else LEAF_MID, order=2, shadow=False)
+
+
+def green_roof(m, x0, y0, x1, y1, z, keep=None, salt=5, path=True):
+    """Sedum mat on a flat roof, with a gravel service strip on the near edge."""
+    bed(m, x0, y0, x1, y1, z, h=0.5, step=2.8, lowcap=0.6, salt=salt, keep=keep)
+    if path:
+        m.box(x0, y0, z + 0.5, x1, y0 + 1.6, z + 0.6, PAD_TOP, top=PAD_TOP, order=1, shadow=False)
 
 
 def dome(m, cx, cy, z, r, col, steps=5, height=None):
@@ -1125,11 +1224,20 @@ def sgpwr_mesh(damaged=False):
     behind the back row would vanish behind the panels' raised rear edge)."""
     m = Mesh()
     plinth(m, 20, live=not damaged)
+    # Planted bed inside the concrete rim, the collectors standing in it
+    # (issue #108): groundcover under the panels, shrubs and grasses on the
+    # front strip. No tree -- it would shade the panels.
+    bed(m, -16.3, -16.3, 19.5, 19.5, 2.2, lowcap=0.9, salt=1,
+        keep=lambda x, y: not (-17 < x < -8 and -17.5 < y < -10))
     for row, y in enumerate((-10, 6)):
         for col, x in enumerate((-16, 3)):
-            pv_panel(m, x, y, 17.5, 14, 2.2, rise=9.5, damaged=damaged and row == 1 and col == 1)
+            pv_panel(m, x, y, 17.5, 14, 2.8, rise=9.5, damaged=damaged and row == 1 and col == 1)
     m.box(-16, -16.5, 2.2, -9, -11, 8, STEEL, top=lit(STEEL, 0.2))
     m.box(-16.5, -15.5, 4.5, -15.9, -12, 5.7, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), top=SUN_GOLD, order=1, shadow=False, accent=True)
+    for x in (-4, 5, 14):
+        shrub(m, x, -14.3, 2.8, r=2.3 + 0.7 * _scatter(x, 1))
+    for x in (0.5, 9.5, 18):
+        tuft(m, x, -14.8, 2.8)
     return m
 
 
@@ -1141,13 +1249,19 @@ def sgapwr_mesh(damaged=False):
     the building should carry many more panels instead.)"""
     m = Mesh()
     plinth(m, 27, live=not damaged)
+    bed(m, -23.5, -23.3, 26.5, 26.5, 2.2, lowcap=0.9, salt=2,
+        keep=lambda x, y: not (11 < x < 27 and -25 < y < -16))
     for row, y in enumerate((-15, -1, 13)):
         for col, x in enumerate((-23.5, -6.1, 11.3)):
-            pv_panel(m, x, y, 16, 12.5, 2.2, rise=8.5, damaged=damaged and (row, col) in ((1, 1), (0, 2)))
+            pv_panel(m, x, y, 16, 12.5, 2.8, rise=8.5, damaged=damaged and (row, col) in ((1, 1), (0, 2)))
     m.box(12, -23.5, 2.2, 26, -17, 10, STEEL, top=lit(STEEL, 0.2))
     for i in range(3):
         m.box(13 + i * 4.2, -24, 4, 16 + i * 4.2, -23.5, 8.5, dim(STEEL, 0.4), top=dim(STEEL, 0.4), order=1, shadow=False)
     m.box(11.5, -22.5, 7.5, 12.1, -18, 8.7, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), top=SUN_GOLD, order=1, shadow=False, accent=True)
+    for x in (-12, -3, 6):
+        shrub(m, x, -20.0, 2.8, r=2.4 + 0.9 * _scatter(x, 2))
+    for x in (-8, 1.5, 9.5):
+        tuft(m, x, -21.2, 2.8)
     if damaged:
         m.box(12.5, -24.1, 5, 19, -23.6, 9.5, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
     return m
@@ -1178,6 +1292,14 @@ def sgcry_mesh(damaged=False):
     m.quad((-20, -14, 16.7), (13, -14, 14.7), (13, -13.6, 14.85), (-20, -13.6, 16.85), dim(PANEL_BLUEBLACK, 0.5), order=5)
     # Cable tray slung between the racks.
     m.strut((-8, -5, 12), (6, -1, 13), 0.6, POLE_DARK)
+    # Overgrowth (issue #108): moss on the tallest rack, ivy up its lit face,
+    # weeds in the front strip and a tree at the near-right corner.
+    bed(m, -13.5, 4.5, -1.5, 16.5, 17.2, h=0.4, step=2.8, lowcap=0.5, salt=4)
+    vines(m, -14, 5, 16, 2.2, 7.5, salt=4, dark=True)
+    shrub(m, -12, -15, 2.2, r=2.2)
+    tuft(m, -7, -14.6, 2.2)
+    tuft(m, 17, -9, 2.2)
+    tree(m, 16.5, -16.5, 2.2, h=7.5, r=4.5)
     return m
 
 
@@ -1191,14 +1313,27 @@ def sgdai_mesh(damaged=False):
     # Window band on the lit face, green data line along the front.
     m.box(-18.5, -12, 7, -17.9, 13, 9.5, lit(PANEL_BLUEBLACK, 0.55), top=lit(PANEL_BLUEBLACK, 0.55), order=1, shadow=False)
     m.box(-16, -15.5, 3.2, 16, -14.9, 4.0, GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.5), top=GREEN_ACCENT, order=1, shadow=False)
-    # Rooftop chiller bank: 2 x 3 units with dark fan tops.
+    # Sedum roof around the chiller bank (2 x 3 units with dark fan tops),
+    # ivy on the lit face below the window band, grasses and two shrubs on
+    # the front strip clear of the data line, a tree at the near-right corner
+    # (issue #108).
+    green_roof(m, -17.5, -14.5, 17.5, 15.5, 15, salt=5,
+               keep=lambda x, y: not any(x0 - 0.8 < x < x0 + 7.8 and y0 - 0.8 < y < y0 + 8.8
+                                         for x0 in (-13, -3, 7) for y0 in (-8, 4)))
     for i in range(3):
         for j in range(2):
             if damaged and (i, j) == (2, 0):
                 continue
             x, y = -13 + i * 10, -8 + j * 12
-            m.box(x, y, 15, x + 7, y + 8, 19, PALE_STEEL, top=lit(PALE_STEEL, 0.1), shadow=False)
-            m.prism(x + 3.5, y + 4, 19, 19.6, 2.6, LEGACY_GRAY_DARK, sides=8, top=dim(LEGACY_GRAY, 0.3), shadow=False)
+            m.box(x, y, 15, x + 7, y + 8, 19, PALE_STEEL, top=lit(PALE_STEEL, 0.1), shadow=False, order=1)
+            m.prism(x + 3.5, y + 4, 19, 19.6, 2.6, LEGACY_GRAY_DARK, sides=8, top=dim(LEGACY_GRAY, 0.3), shadow=False, order=1)
+    vines(m, -18.0, -14, -1, 2.2, 6.6, salt=1)
+    vines(m, -18.0, 3, 15, 2.2, 6.6, salt=2)
+    shrub(m, -13, -17.4, 2.2, r=2.0)
+    shrub(m, 9, -17.4, 2.2, r=2.0)
+    for x in (-7, -1.5, 4):
+        tuft(m, x, -17.4, 2.2)
+    tree(m, 15.5, -17.3, 2.2, h=8.5, r=5.0)
     # Beacon mast on the near corner of the roof.
     m.strut((15, -12, 15), (15, -12, 22 if not damaged else 17), 0.6, STEEL, cap=RUST if damaged else None)
     if not damaged:
@@ -1225,6 +1360,7 @@ def sgdrn_mesh(damaged=False):
     m.box(-19, 8, 2.2, -6, 19, 11, STEEL, top=lit(STEEL, 0.2))
     m.box(-18, 9, 11, -7, 18, 11.8, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.35), shadow=False)
     m.box(-17.5, 7.5, 5, -7.5, 8.2, 8.5, PANEL_BLUEBLACK, top=PANEL_BLUEBLACK, order=1, shadow=False)
+    vines(m, -19, 9.5, 18.5, 2.2, 7.5, salt=6)
     m.strut((8, 16, 2.2), (8, 16, 22 if not damaged else 12), 1.0, STEEL, cap=lit(STEEL, 0.3))
     if not damaged:
         m.strut((8, 16, 21), (2, 4, 21), 0.7, STEEL)
@@ -1232,6 +1368,11 @@ def sgdrn_mesh(damaged=False):
         drone_model(m, 1, -3, 4.8)
     else:
         m.box(-3, -6, 4.8, 4, 0, 6.5, dim(LEGACY_GRAY, 0.4), top=DAMAGE_SCORCH)
+    # Planting in the plot corners outside the pad octagon (issue #108).
+    tree(m, 16.5, -16, 2.2, h=7.5, r=4.5)
+    shrub(m, -15.5, -15.3, 2.2, r=2.2)
+    tuft(m, -12, -16.5, 2.2)
+    tuft(m, 18, -11, 2.2)
     return m
 
 
@@ -1267,6 +1408,17 @@ def sgdra_mesh(damaged=False):
             else:
                 m.poly([(-18.6, t0, 10.5), (-18.6, t1, 10.5), (-18.6, (t0 + t1) / 2, 13.5)], tri, order=2)
     drone_model(m, 1, -2, 2.2, col=mix(GREEN_PRIMARY, PANEL_BLUEBLACK, 0.4), r=7.5, damaged=damaged)
+    # An open hangar has no wall for vines and no room for a tree under its
+    # eaves, so the greenery is ivy on the near-left column and shrubs and
+    # grasses along the open sides (issue #108).
+    m.box(-19.1, -17.1, 2.2, -16.9, -14.9, 6.5, LEAF_DARK, top=LEAF_MID, shadow=False)
+    m.box(-19.6, -16.9, 5.0, -17.4, -15.1, 7.2, LEAF_MID, top=LEAF_SAGE, order=1, shadow=False)
+    bed(m, -17.6, -12, -14.4, 13, 2.2, lowcap=1.2, salt=14, step=3.0)
+    shrub(m, -9, -16.6, 2.2, r=2.5)
+    shrub(m, 9, -16.6, 2.2, r=2.5)
+    shrub(m, 15.2, -15.4, 2.2, r=2.0)
+    tuft(m, 0, -17.2, 2.2)
+    tuft(m, -16, 15.5, 2.2)
     return m
 
 
@@ -1274,8 +1426,23 @@ def sgshl_mesh(damaged=False):
     """Resilience Shelter: a hardened dome banked into an earth berm, with a
     sandbagged entry throat facing the front."""
     m = Mesh()
-    plinth(m, 18, live=not damaged, grass=False)
-    m.prism(0, 1, 2.2, 5.5, 16.5, DIRT, sides=12, top=GRASS)
+    plinth(m, 18, live=not damaged)
+    m.prism(0, 1, 2.2, 5.5, 16.5, DIRT, sides=12, top=LEAF_MID)
+    # Planted berm ring between the shell and the berm edge, clear of the
+    # entry throat and its sandbags (issue #108).
+    for i in range(28):
+        a = i * 2 * math.pi / 28 + 0.1
+        rr = 13.6 + 2.0 * _scatter(i, 7, 1)
+        px, py = rr * math.cos(a), 1 + rr * math.sin(a)
+        if -9 < px < 9 and py < -7:
+            continue
+        c = _scatter(i, 7, 2)
+        if c < 0.45:
+            _clump(m, px, py, 5.5, 1.5 + c, LEAF_DEEP, LEAF_DARK, 0.8)
+        elif c < 0.8:
+            _clump(m, px, py, 5.5, 1.4 + c * 0.6, LEAF_DARK, LEAF_SAGE, 0.9)
+        else:
+            tuft(m, px, py, 5.5, cap=2.2)
     shell = mix(PALE_STEEL, GREEN_PRIMARY, 0.25)
     m.prism(0, 1, 5.5, 8.0, 12.5, shell, sides=12, top=shell)
     dome(m, 0, 1, 8.0, 12.5, shell, steps=6, height=9.5)
@@ -1290,6 +1457,8 @@ def sgshl_mesh(damaged=False):
     # Vent stack and the live beacon on the crown.
     m.strut((-8, 6, 12), (-8, 6, 17), 0.9, STEEL, cap=lit(STEEL, 0.3))
     m.box(-1, 0, 17.5, 1, 2, 19, SUN_GOLD if not damaged else RUST, top=SUN_GOLD, order=4, shadow=False, accent=not damaged)
+    tree(m, 14, -14, 2.2, h=7.5, r=4.5)
+    shrub(m, -14, -13.5, 2.2, r=2.2)
     return m
 
 
@@ -1299,6 +1468,11 @@ def sgsns_mesh(damaged=False):
     plinth(m, 13, live=not damaged)
     m.box(-11, 1, 2.2, -2, 10, 8, STEEL, top=lit(STEEL, 0.2))
     m.box(-11.5, 2, 4, -10.9, 9, 5, GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.5), top=GREEN_ACCENT, order=1, shadow=False)
+    # Sedum on the cabinet roof, a shrub and grasses on the front strip (issue #108).
+    green_roof(m, -10.5, 1.5, -2.5, 9.5, 8, salt=8, path=False)
+    shrub(m, 8, -8.5, 2.2, r=2.0)
+    tuft(m, -6, -8.2, 2.2)
+    tuft(m, 10, -3, 2.2)
     m.prism(4, -3, 2.2, 4.0, 3.5, dim(CONCRETE, 0.1), sides=8, top=lit(CONCRETE, 0.1))
     m.prism(4, -3, 4.0, 15.0, 1.4, STEEL, sides=8, top=lit(STEEL, 0.2))
     if not damaged:
@@ -1320,6 +1494,11 @@ def sgrel_mesh(damaged=False):
     m.box(-8, -6, 2.2, 5, 6, 11, tank, top=lit(tank, 0.12))
     for i in range(4):
         m.box(5, -5 + i * 3, 3.5, 8.5, -4 + i * 3, 10, dim(tank, 0.2), top=lit(tank, 0.05), shadow=False)
+    # Ivy on the tank's lit face, a shrub at the near-right corner, grasses on the front strip (issue #108).
+    vines(m, -8, -4, 4, 2.2, 6.0, salt=9)
+    shrub(m, 9, -9, 2.2, r=2.0)
+    tuft(m, -2, -8.5, 2.2)
+    tuft(m, -9, -8, 2.2)
     for k, x in enumerate((-5.5, -1.5, 2.5)):
         snapped = damaged and k == 1
         top = 15.5 if not snapped else 12.5
@@ -1337,7 +1516,13 @@ def sgwnd_mesh(damaged=False):
     """Wind Turbine Array: one slim mast on a single-cell footing."""
     m = Mesh()
     plinth(m, 13, live=not damaged)
-    m.prism(0, 0, 2.2, 3.6, 4.0, dim(CONCRETE, 0.1), sides=8, top=lit(CONCRETE, 0.1))
+    # Planted bed inside the rim, the mast footing standing in it (issue #108).
+    bed(m, -9.5, -9.5, 11.5, 11.5, 2.2, lowcap=1.2, salt=3, step=3.2,
+        keep=lambda x, y: x * x + y * y > 30)
+    shrub(m, 8, -8, 2.8, r=2.2)
+    tuft(m, -7.5, 7.5, 2.8)
+    tuft(m, 3, -9, 2.8)
+    m.prism(0, 0, 2.8, 3.8, 4.0, dim(CONCRETE, 0.1), sides=8, top=lit(CONCRETE, 0.1))
     m.prism(0, 0, 3.6, 17.0, 1.3, PALE_STEEL, sides=8, top=lit(PALE_STEEL, 0.2))
     m.box(-1.6, -3.2, 16.5, 1.6, 1.8, 19.5, PALE_STEEL, top=lit(PALE_STEEL, 0.2), shadow=False)
     hub = (0.0, -3.6, 18.0)
@@ -1383,6 +1568,15 @@ def sghyd_mesh(damaged=False):
     m.strut((12, 12, 2.2), (12, 12, 8), 0.6, PALE_STEEL)
     m.strut((22, 22, 2.2), (22, 22, 8), 0.6, PALE_STEEL)
     m.quad((8, 16, 8), (18, 26, 8), (26, 18, 10.5), (16, 8, 10.5), lit(PANEL_BLUEBLACK, 0.3), order=2)
+    # Planted strip along the near-left of the plot, ivy on the electrolyser
+    # skid, a tree at the near-right corner (issue #108).
+    bed(m, -23.5, -23.5, -11.5, -10.5, 2.2, lowcap=1.3, salt=12)
+    shrub(m, -19, -19, 2.8, r=2.8)
+    tuft(m, -14, -21, 2.8)
+    tuft(m, -21, -13, 2.8)
+    vines(m, -7, -5, 5, 3.4, 8.0, salt=13)
+    tree(m, 22, -22, 2.2, h=8.0, r=4.5)
+    shrub(m, 14, -22, 2.2, r=2.0)
     return m
 
 
@@ -1400,6 +1594,13 @@ def sgvlt_mesh(damaged=False, charge=SGVLT_STAGES - 1):
         m.box(-9 + i * 3, -10.5, 4, -8.4 + i * 3, -9.9, 10.5, dim(skid, 0.3), top=dim(skid, 0.3), order=1, shadow=False)
         m.box(2 + i * 3, 0.5, 4, 2.6 + i * 3, 1.1, 9.5, dim(skid, 0.3), top=dim(skid, 0.3), order=1, shadow=False)
     gauge(m, -11, -8.5, 3.2, charge, total=SGVLT_STAGES - 1, pitch=1.05, width=5.0, live=not damaged)
+    # Sedum on the front cabinet's roof (clear of its cooling unit), a shrub
+    # and grasses in the yard beside it (issue #108).
+    green_roof(m, -10.5, -9.5, 0.5, 1.5, 12.5, salt=10, path=False,
+               keep=lambda x, y: (x + 6) ** 2 + (y + 4) ** 2 > 12)
+    shrub(m, 6.5, -6, 2.2, r=2.3)
+    tuft(m, 10, -2.5, 2.2)
+    tuft(m, 2.5, -8.5, 2.2)
     # Cooling units on the roofs.
     for (x, y) in ((-6, -4), (5.5, 6.5)):
         m.prism(x, y, 12.5 if x < 0 else 11, (12.5 if x < 0 else 11) + 1.2, 2.4, PALE_STEEL, sides=8, top=dim(LEGACY_GRAY, 0.3), shadow=False)
@@ -1448,11 +1649,18 @@ def rcyd_mesh(damaged=False, charge=RCYD_STAGES - 1):
                 break
             m.prism(-4, -3, 2.2 + k * 1.6, 2.2 + (k + 1) * 1.6, r, _scrap_tone(k + charge), sides=7,
                     top=_scrap_tone(k + charge + 2), phase=k * 0.4, shadow=(k == 0))
+    # Sedum on the canopy roof (clear of the stack), weeds outside the posts (issue #108).
     if not damaged:
         m.box(-12, -11, 12.5, 12, 11, 13.8, shell, top=lit(shell, 0.25), shadow=False)
+        green_roof(m, -11.5, -10.5, 11.5, 10.5, 13.8, salt=11,
+                   keep=lambda x, y: (x - 9) ** 2 + (y - 9) ** 2 > 6)
     else:
         m.box(-12, -11, 12.5, 3, 11, 13.8, shell, top=lit(shell, 0.25), shadow=False)
         m.quad((3, -11, 12.5), (12, -11, 5), (12, 11, 5), (3, 11, 12.5), dim(shell, 0.3), order=1)
+        green_roof(m, -11.5, -10.5, 2.5, 10.5, 13.8, salt=11)
+    shrub(m, 11.5, -11.2, 2.2, r=1.8)
+    tuft(m, -11.8, 3, 2.2)
+    tuft(m, 11.8, -4, 2.2)
     return m
 
 
@@ -1482,6 +1690,7 @@ def sgfact_mesh(damaged=False, build=None):
     m.box(9, -1.2, 2, 11, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
     m.box(-11, -1.2, 16, 11, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
     m.box(-24.6, 6, 9, -23.8, 20, 12, PANEL_BLUEBLACK, top=PANEL_BLUEBLACK, order=1, shadow=False)
+    vines(m, -24, 1, 23, 2.0, 8.5, salt=4, dark=True)
     for y in (-6, -18):
         m.strut((-20, y, 2), (-20, y, 17), 1.2, STEEL, cap=lit(STEEL, 0.3))
         m.strut((20, y, 2), (20, y, 17), 1.2, STEEL, cap=lit(STEEL, 0.3))
@@ -1498,8 +1707,14 @@ def sgfact_mesh(damaged=False, build=None):
         drop = 4 + 6 * math.sin(math.pi * build)
         m.strut((tx, -12, 16.2), (tx, -12, 16.2 - drop), 0.3, POLE_DARK, shadow=False)
     m.box(-6, -15, 2, 6, -8, 6, dim(GREEN_PRIMARY, 0.1), top=lit(GREEN_PRIMARY, 0.2))
-    m.box(-24, -24, 2, -14, -20, 3.2, dim(GRASS, 0.2), top=GREEN_ACCENT, shadow=False)
-    m.box(-22, -23, 3.2, -16, -21, 5.0, GREEN_PRIMARY, top=GREEN_ACCENT, shadow=False)
+    # Planted near-left corner of the yard, shrubs and grasses along its front
+    # edge, a tree at the near-right corner (issue #108).
+    bed(m, -22.5, -22.5, -12, -19.0, 2.0, lowcap=1.4, salt=7, step=3.0)
+    shrub(m, -19, -21.0, 2.6, r=2.6)
+    tuft(m, -14.5, -21.5, 2.6)
+    tree(m, 22.0, -21.5, 2.0, h=8.5, r=4.8)
+    shrub(m, 12, -22.0, 2.0, r=2.4)
+    tuft(m, 16.5, -22.5, 2.0)
     m.strut((21, 21, 20), (21, 21, 32 if not damaged else 24), 0.8, STEEL, cap=RUST if damaged else None)
     if not damaged:
         m.box(20.2, 20.2, 32, 21.8, 21.8, 33.4, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
