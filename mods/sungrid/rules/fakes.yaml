@@ -417,7 +417,7 @@ FACF:
 		LocalCenterOffset: 0,-512,0
 	WithBuildingBib:
 	RenderSprites:
-		Image: FACT
+		Image: sgfact
 	Valued:
 		Cost: 200
 	Health:

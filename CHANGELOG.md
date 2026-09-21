@@ -443,6 +443,23 @@ engine now builds here, the full 75-map validation runs locally, and — for the
 history — **an engine patch was compiled before being pinned rather than after**. That immediately caught a
 missing `using` that would otherwise have broken CI and all three platform installers.
 
+## Every building is a solid now, not a cutout (issue #106)
+
+- **All thirteen Sungrid buildings redrawn as 3D solids at the same 45° angle stock Red Alert buildings use** —
+  diamond footprint, visible roof, lit left wall, shaded right wall — instead of front elevations standing on a
+  flat pad. This is the "still looks 2D" fix: the Hydrogen Plant and Drone Bay were the reported cases, but the
+  whole roster is done so nothing sits at odds with its neighbour. Buildings now fit their cell footprint the way
+  stock ones do; the team-coloured conduit band wraps the plinth. Solar panels are larger.
+- **New Construction Yard art.** The base is now a Sungrid-original building — a vaulted space-frame
+  fabrication hall with a solar roof, a team-coloured door frame and a gantry crane over an open assembly yard —
+  replacing the stock Red Alert yard, with the same crane animation when a building is placed. The fake
+  Construction Yard matches it.
+- Battery Bank charge and Recycling Depot fill are read off a vertical gauge on the building, and the Depot's
+  scrap heap visibly grows. Rubble for the buildings that leave any is redrawn to match.
+- Verified with the engine's full map validation and sprite checks; not yet seen in a live client. The other
+  ported stock buildings (War Factory, Refinery, Barracks, etc.) keep their stock art for now — see
+  `docs/BACKLOG.md` issue #106 for what a pass over those would involve.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

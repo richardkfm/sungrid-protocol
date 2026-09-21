@@ -1158,6 +1158,8 @@ WEAP:
 
 FACT:
 	Inherits: ^Building
+	RenderSprites:
+		Image: sgfact
 	Selectable:
 		Bounds: 3072, 3072
 	Building:

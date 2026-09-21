@@ -12,7 +12,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, it usually does **not** need a separate personal fork repo: this repo's own pre-Phase-0 history already contains the full engine tree, so a fix can be pinned via an `engine-patch/*` branch built on the currently-pinned commit — see "Engine version pinning" below before touching `ENGINE_VERSION` or any `engine-patch/*` branch. Only reach for an actual personal fork of `OpenRA/OpenRA` if the needed base commit genuinely isn't already reachable in this repo's own history (see `docs/ARCHITECTURE.md`).
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
-- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites, build-ups, rubble, husks, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
+- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders — build-ups, rubble, husks, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
 - `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy.
 - `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling).
@@ -322,6 +322,18 @@ is the regression check.
     reports the out-of-range frames — the same error that crashed the shellmap in issue #35 — so an
     animated sheet's math is checkable here rather than by inspection. Verify with a negative control
     (bump `Length` by one, see it fail) before trusting a silent pass.
+15. **Buildings are `Mesh` solids at `BUILDING_YAW` (45°), on a diamond plinth that fits the footprint (issue
+    #106).** That is what stock RA's "3D feel" actually is (decode `fact.shp`: diamond footprint, roof plane,
+    lit left wall, shaded right wall); a front elevation on a flat pad reads as a cutout no matter how it is
+    shaded. Every building goes through `*_mesh()` -> `mesh_frame()`; the flat `*_draw` vocabulary is gone.
+    Two rules that cost a draft each: **flag team-coloured faces `accent=True`** — a 1-2px gold strip on a
+    diagonal loses ~half its pixels to fixed yellow under the LANCZOS downscale, and `mesh_frame()`'s native
+    re-stamp (coverage-mask pass + accent-colour pass, snapped onto `_GOLD_REFS`) is what puts them on the remap
+    ramp; check with a count of indices 80-95 vs fixed yellows. And **a prism's top cap is a full disc**, so an
+    `order` override on a band/hoop prism paints that disc over whatever stands above it (the first draft's gold
+    tank crowns) — leave bands at `order=0` and let depth sort them. Regeneration check is unchanged: run
+    `gen_concept_art.py` *then* `gen_photo_cameos.py` (the first overwrites every cameo with its programmatic
+    fallback) and `git status` must list only the sheets you meant to change.
 
 ### What can and can't be verified in this environment
 
