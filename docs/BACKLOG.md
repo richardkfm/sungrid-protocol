@@ -3339,3 +3339,70 @@ playtester, the fix is a re-crop in `gen_photo_cameos.py`'s `CROPS`, not a mesh 
 
 **Definition of done:** Met.
 
+### 108. The buildings sat on bare concrete - greenery on every building, in a palette that works in a desert and a European climate
+
+**Raised as:** "I looked at the buildings again and I came to the conclusion they should be more solar punk,
+add a little greenery. In our vision eg solar plants wouldn't sit on bare concrete. Also add plants that would
+work both in desert and European climate."
+
+**Problem.** Issue #106 rebuilt the roster as solids on a concrete plinth, and the only green on any of them
+was `plinth()`'s pair of corner blocks - at the far corners, behind the building mass, invisible on most.
+`docs/VISION.md` says "lush eco-industrial" and `docs/ART_DIRECTION.md`'s palette line says "foliage
+reclaiming industrial space"; fourteen buildings on bare slabs said the opposite.
+
+**Drafts first.** Four buildings drafted (`docs/concept-art/drafts/greenery-review.png`,
+`gen_greenery_drafts.py`) with two plot treatments for the arrays: **A**, a planted bed inside the concrete
+rim; **B**, the whole plot a meadow behind a low kerb. Owner chose A for the arrays and the Wind Turbine, all
+four hall elements (sedum roof on flat roofs, ivy on the lit wall, one tree per hall, shrubs and grasses on the
+front strip), the sage/olive palette, and the whole roster.
+
+**Change (`mods/sungrid/bits/gen_concept_art.py`).** A planting vocabulary after `plinth()`: `bed()`,
+`shrub()`, `tuft()`, `tree()`, `vines()`, `green_roof()`, on palette-exact foliage tones (`LEAF_PALE` ..
+`LEAF_DEEP` = `temperat.pal` 145-152, `SOIL` = 32, `BARK`), every position from `_scatter()`, a pure integer
+hash. `plinth()` loses its `grass` corner blocks. Every `*_mesh()` plants its own plot:
+
+- Solar Array / Advanced Solar Array: bed inside the rim, the panels raised 0.6 onto it, `lowcap` keeping the
+  groundcover under the panels' low edge, shrubs and tufts on the front strip. No tree: it would shade the panels.
+- Wind Turbine: bed with the mast footing standing in it.
+- Datacenter: sedum roof around the chillers (which take `order=1` so they draw over the mat), ivy below the
+  window band, tree at the near-right corner, shrubs only at the ends of the front strip so the green data line
+  stays readable.
+- Cryptominer: moss on the tallest rack, ivy up its lit face, weeds in the front strip, tree.
+- Drone Bay: ivy on the cabin's lit wall, tree and shrubs in the plot corners outside the pad octagon.
+- Aerial Fab Bay: an open hangar has no wall and no room for a tree under its eaves, so: ivy-clad near-left
+  column, a bed along the open left side, shrubs along the front.
+- Shelter: the berm is a planted ring (28 hashed positions, clear of the entry throat and sandbags), tree, shrub.
+- Sensor Array: sedum on the cabinet roof, shrub, tufts. Relay: ivy on the tank's lit face, shrub, tufts.
+- Hydrogen Plant: bed along the near-left of the plot, ivy on the electrolyser skid, tree at the near-right.
+- Battery Bank: sedum on the front cabinet's roof clear of its cooling unit, shrub and tufts in the yard (same
+  on all nine stages). Recycling Depot: sedum on the canopy roof clear of the stack (only the standing half in
+  the damaged state), weeds outside the posts.
+- Construction Yard: ivy on the hall's lit wall below the PV strip, a bed at the near-left corner replacing the
+  two flat grass boxes, tree at the near-right corner.
+
+Frame sizes and counts unchanged, no sequence YAML touched, build-ups derive as before.
+
+**Two things learned.** Small marks vanish: the first draft scattered ~1-unit clumps at 0.4-0.9 height and the
+bed came back as grey-green speckle; the shipped `bed()` uses 1.5-2.8-unit clumps in three tones at step 4,
+and reads. And the trees had to be bigger than felt right at mesh scale (h 8, r 5) to survive as a tree in a
+66 px frame.
+
+**Verified:** `gen_concept_art.py` then `gen_photo_cameos.py`: `git status` lists exactly the fourteen sheets
+and their fourteen `*make.png`; every cameo and every rubble sheet byte-identical. `--check-yaml` exit 0 (75
+maps). `--check-missing-sprites` reports nothing for any Sungrid sheet (the usual stock `.mix` noise only).
+Fixed-yellow audit (pixels on the palette's true yellows - indices 5, 157-159, 202, 211-214 - outside the
+remap ramp) identical before and after on every sheet: 0 on eleven of them, and the pre-existing 5 / 2 / 20
+on Cryptominer / Wind Turbine / Depot are their amber status pips, not accent leaks. Remap counts drop only
+where a tree or shrub now stands in front of the band (Datacenter 324 -> 284, Drone Bay 565 -> 551, Yard
+20528 -> 20268), which is the coverage mask doing its job. Reviewed on temperate, desert and snow grounds at
+3x and native (`docs/concept-art/issue108-greenery-roster.png`). Not verified in a live client (the standing
+blocker).
+
+**Recorded for later, not done:** the greenery does not move (batch 5, no building has an idle animation).
+Rubble sprites are unchanged - a dead building's bed would read as a green patch under debris, so the rubble
+stays on concrete.
+
+**Phase:** 6 follow-up (world/art identity).
+
+**Definition of done:** Met.
+
