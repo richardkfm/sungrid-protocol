@@ -252,7 +252,7 @@ DISR:
 	Armament@PRIMARY:
 		Weapon: Disruptor
 		LocalOffset: 700,0,500
-		FireDelay: 8
+		FireDelay: 16
 	Armament@GARRISONED:
 		Name: garrisoned
 		Weapon: Disruptor
