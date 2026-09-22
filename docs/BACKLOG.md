@@ -3573,3 +3573,176 @@ They are the one part of this pass that genuinely needs ears; falling back is a 
 
 **Definition of done:** Met, pending an in-game listen.
 
+---
+
+### 111. The two defence pedestals were still flat - the Arc Turret's and the Grid Defense Turret's fixed bases rebuilt as solids, with a grass fringe
+
+**Raised as:** "Also improve the design of the arc turret too. Make it a bit more 3d, add a little greenery around
+it's edges too." Owner's choices on the clarifying questions: keep the current design but refine it with more
+detail (not the roster's diamond plinth); a narrow grass ring rather than planted beds; do the Grid Defense
+Turret in the same pass; keep the stock minibib.
+
+**Problem.** Issue #106 rebuilt every roster building as a `Mesh` solid and #108 planted every one of them,
+but both defence structures were left out on the grounds that their rotating head "carries the 3D read":
+`arct.png` was still a stack of flat ellipses on the old grey ground strip (the "cutout on a shelf" #106
+diagnosed everywhere else), `sgturpad.png` a flat octagon with a 1.6px rim, and neither had any greenery -
+the only two Sungrid buildings standing on bare ground.
+
+**Change (`mods/sungrid/bits/gen_concept_art.py`).**
+
+- **Arc Turret pedestal** (`arct_pedestal_mesh`): a gravel hardstand, the concrete drum with a chamfered
+  upper step, the dark mount race the head turns in, eight anchor bolts on the drum's top edge, the
+  team-coloured feed lug plus cable trench on the camera side, an access hatch on the lit flank and vent
+  slots on the shaded one, and a fringe of grass around the hardstand (`grass_ring`: tufts and low
+  clumps at `_scatter` positions, the front sector kept clear of the trench). The old ground strip is
+  gone - the pedestal stands on the terrain like every other building now. Same round, centred footprint,
+  so the head sits on it at every facing exactly as before; only the elevation gained volume. Damaged:
+  scorch-tinted materials, two sheared bolts, a cracked wedge off the drum's top edge, rust lug, decals.
+- **Arc Turret head** (`arct_mesh`, both sheets): a turntable collar under the hull so the join to the
+  race reads as a bearing, heat-sink fins on both flanks (symmetric - the head turns through every
+  facing), a lit vent cap on the cooling stack, and two pale insulator discs on each discharge rod - the
+  one mark that says "high voltage" at this size. The rods are one unit shorter (20.5 -> 19.5): the
+  pedestal's race top rose ~3px (`ARCT_PEDESTAL_DY` 9 -> 6.5, now derived from `ARCT_GROUND_DY` and
+  `ARCT_RACE_TOP`), and the arc's apex was touching row 0 of the 36px turret frame.
+- **Grid Defense Turret pad** (`sgtur_pad_mesh`): the octagonal slab as a 2.4-unit prism with a raised
+  16-gon turntable seat whose radius matches the ring drawn in the turret sheet, four anchor bolts on
+  the corner flats, the cable trench as an accent box, two expansion-joint grooves, and the same grass
+  ring. `SGTUR_PIVOT_DY` is unchanged and the slab's top-face centre is the pivot, so the station and
+  the `grid-strained` lamp overlay (issue #109, which sits on the slab's near-left rim) line up as before.
+- **Accent re-stamp for both:** `_mesh_frame`'s native re-stamp (coverage mask + accent colour pass,
+  issue #106) is factored into `_mesh_render(mesh, w, h, ox, oy, yaw)`, which the two pedestals call at
+  their own origins and yaw 0 (`arct_body_frame`, `sgtur_pad_frame`); the build-up strips still use the
+  plain draw functions, as the roster does. `draw_ground_strip` (the last of the flat-elevation
+  vocabulary) and the `GRASS` constant it alone used are deleted.
+- **Rules:** `ARCT`'s `Armament.LocalOffset` z 470 -> 547, re-measured from the mesh: the electrode gap is
+  now 12.8px above the turret frame's centre (was 11.3).
+
+**Verified:** `--check-yaml` exits 0 across all maps; `--check-missing-sprites` reports the same set as before
+the change (the report is the uninstalled stock content); frame sizes and counts are unchanged, so no
+sequence YAML moved (`arct.png` 40x36 x2, `arctturret.png` x64, `arctmake.png`, `sgturpad.png` 48x44 x1,
+`sgturmake.png`); running `gen_concept_art.py` then `gen_photo_cameos.py` changes only those five sheets
+(the two cameos are photographic and come back unchanged). Review render:
+`docs/concept-art/issue111-defence-pedestals.png` (before/after with the heads composited at several
+facings, the damaged Arc Turret, and the Grid Defense Turret pad alone and under its station). Not verified
+in a live client.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/arct.png`,
+`mods/sungrid/bits/arctmake.png`, `mods/sungrid/bits/arctturret.png`, `mods/sungrid/bits/sgturpad.png`,
+`mods/sungrid/bits/sgturmake.png`, `mods/sungrid/rules/structures.yaml`,
+`docs/concept-art/issue111-defence-pedestals.png`.
+
+**Phase:** 6/7 follow-up (art identity).
+
+**Definition of done:** Met.
+
+---
+
+### 112. The Grid Defense Turret read as flat and basic - the station rebuilt on the cameo's silhouette as a pale bevelled block
+
+**Raised as:** "The grid defense turret design is the weakest right now. I love the concept but it feels 2d and
+basic still." Owner's choices on the clarifying questions: pale material like the photographic cameo; drop the
+black outline; the cameo's silhouette built plastically rather than the old shapes with fasen.
+
+**Problem.** Three things made the station (`sgturturret.png`, issue #65's rebuild) read as a cutout however
+carefully it was shaded. Its hull was blue-black (`_TUR_HULL`), so the six-step flat shading had no value room
+between a lit and a shaded face; it was the only `Mesh` actor wearing `outline_sprite`'s 1px black contour,
+which turns a solid into a sticker; and its base was a stack of 2D ellipses (`_sgtur_mount`) under a plain
+box with a thin bar for a gun. The photographic cameo it ships with shows something else entirely: a pale
+armoured block, a dark recessed weapon port, and a short, thick gun.
+
+**Change (`mods/sungrid/bits/gen_concept_art.py`).**
+
+- **Station** (`sgtur_mesh`): `PALE_STEEL` hull in two tiers - a wide lower hull, a bevel ring of four
+  sloped quads, a narrower upper hull - so every face lands on a different shade step; the team-coloured
+  conduit band wraps the lower tier; a dark recessed weapon port on the front-right; the gun as a recoil
+  sleeve, a thick square-section barrel and a muzzle ring with a black bore, the team-colour tally under
+  the muzzle; sensor block with its status pip and a thin mast; a roof hatch; two capacitor drums with
+  team-coloured end caps on the lit flank (the grid-fed part of a grid turret). The turntable is a
+  32-gon collar: 32 facings x 11.25 degrees map it onto itself, so it is pixel-identical under every
+  facing - sam2.shp's fixed-mount rule - without having to be an ellipse. Damaged: scorch-tinted hull,
+  shortened barrel with no muzzle ring, snapped mast, dim pip, plus the blown roof panel and a rust
+  streak as fixed-orientation 2D decals (now composited by `_mesh_render`'s new `decals` argument, so
+  the frames also get the native accent re-stamp; the black outline is gone).
+- **Pad** (`sgtur_pad_mesh`): the seat is a dark race ring with a lighter bearing plate inside it, both
+  32-gons; its top is `SGTUR_SEAT_TOP`, and `_sgtur_station_origin` puts the station's collar exactly
+  there. `SGTUR_PIVOT_DY` and the pad footprint are unchanged, so the `grid-strained` lamp overlay still
+  sits on the slab's rim.
+- **Rules:** `SGTUR`'s `Armament.LocalOffset` 0,0,320 -> 384,128,270. The muzzle flash used to spawn at
+  the hull's centre; it now spawns at the drawn barrel tip at facing north (16.6 units forward and 8.8 up
+  at the mesh's 2:1 camera, which the engine's flat camera cannot reproduce at every facing - the values
+  are the compromise that is exact at north and within a few pixels at east and south).
+
+**Verified:** `--check-yaml` exits 0 across all maps; `--check-missing-sprites` reports the same set as before
+the change; `sgturturret.png` keeps its 48x44 x64 layout and `sgturpad.png`/`sgturmake.png` theirs, so no
+sequence YAML moved; regeneration changes only those three sheets. Review render
+`docs/concept-art/issue112-grid-turret.png` (the cameo, eight facings idle, five damaged, before at 2x and
+after at 1x). Not verified in a live client.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/sgturturret.png`,
+`mods/sungrid/bits/sgturpad.png`, `mods/sungrid/bits/sgturmake.png`, `mods/sungrid/rules/structures.yaml`,
+`docs/concept-art/issue112-grid-turret.png`.
+
+**Phase:** 6/7 follow-up (art identity).
+
+**Definition of done:** Met.
+
+---
+
+### 113. Idle animations for both defences: the arc flickers, the Grid Defense Turret scans, both pedestals blink
+
+**Raised as:** "Give all of them idle animations. The grid defense turret could just turn around a bit." Owner's
+choices on the clarifying questions: both heads and both pedestals (the Disruptor Trooper already carries two
+idle loops); the Arc Turret's arc flickers rather than the head sweeping; the Grid Defense Turret scans a
+subtle +-15 degrees in about four seconds.
+
+**Problem.** After #111/#112 both defences were solids, and still the only Sungrid buildings that never moved:
+issue #109 animated the roster but left the turrets out because their body sheets were flat pads and their
+heads single-frame-per-facing sheets.
+
+**Change.**
+
+- **Arc Turret head** (`arctturret.png`, `arct_turret_draw(phase=)`): six arc-flicker phases per facing,
+  facing-major - `ARCT_ARC_FLICKER` moves the zigzag's two knees along and across the tip-to-tip line, drops a
+  white core pixel on some phases and forks a short branch on others, the Smart Grid Relay's jitter grammar.
+  `turret:` is `Facings: 32, Length: 6, Tick: 120` (0.72 s cycle); `damaged-turret:` keeps one frame per
+  facing (no arc) and starts at 192. The sheet is 224 frames; `Armament.LocalOffset` is unchanged since
+  the rods do not move.
+- **Arc Turret pedestal** (`arct.png`): a status lamp above the access hatch, fixed-palette green when lit and
+  plain dark grey when not (a dark green or amber would land on the remap ramp - issue #109's lamp lesson).
+  Eight idle frames, on five / off three, `idle: Length: 8, Tick: 200`; `damaged-idle:` at 8, lamp dead.
+  `main()`'s generic flat-building loop and its three single-entry dicts are gone; the Arc Turret has its own
+  block like the other multi-state sheets, and the build-up still ends on idle frame 0.
+- **Grid Defense Turret station** (`sgturturret.png`, `sgtur_frames(sweep=True)`): sixteen frames per facing
+  in which the station is rendered at the facing +-15 degrees on a sine (`SGTUR_SWEEP_DEG`,
+  `SGTUR_SWEEP_FRAMES`), `turret: Length: 16, Tick: 250` (4 s per scan). A baked sweep would swing the gun
+  past its target while firing, so the rules now carry **two** `WithSpriteTurret`s: `@IDLE` (`turret`,
+  `RequiresCondition: !build-incomplete && !aiming`) and `@AIM` (`Sequence: aim`, static one-frame-per-facing
+  frames at 544, `&& aiming`), flipped by `GrantConditionWhileAiming: Condition: aiming`. Damaged is static
+  (`damaged-turret` at 512, `damaged-aim` at 576) - a damaged drive does not scan. 608 frames in all.
+  `WithTurretAimAnimation` was considered and rejected: it swaps sequence names raw, without the damage
+  prefix, so a damaged turret that aimed once would show undamaged art until its next damage-state change.
+- **Grid Defense Turret pad** (`sgturpad.png`): a green status lamp on the slab's near-right rim, mirroring
+  the grid-strained fault lamp's spot on the near-left (issue #109's overlay, untouched). Eight frames, on
+  five / off three, `idle: Length: 8, Tick: 200`; the build-up ends on frame 0.
+
+**Verified:** `--check-yaml` exits 0 across all maps (which also proves `aiming` is both granted and consumed);
+`--check-missing-sprites` reports the same set as before; negative controls on both turret sheets (`Length: 2` on
+the *last* block of each - `sgtur`'s `damaged-aim:` and `arct`'s `damaged-turret:`) each fail with `does not
+contain frames`. A first attempt bumped the animated `turret:` block's Length instead and passed silently: 32 x 17
+still fits inside a 608-frame sheet, so the control has to overflow the sheet, not the block - and the per-block
+math (32 x 16 = 512 = `damaged-turret`'s Start, 32 x 6 = 192) is checked by construction;
+regeneration changes only `arct.png`, `arctmake.png`, `arctturret.png`, `sgturpad.png`, `sgturmake.png`,
+`sgturturret.png`. Reviewed as GIFs at the real per-frame timing (`docs/concept-art/issue113-arct.gif`,
+`issue113-sgtur.gif`) and a contact sheet (`issue113-idle-animations.png`). Not verified in a live client -
+the idle/aim hand-over in particular is worth watching in a match.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/arct.png`, `mods/sungrid/bits/arctmake.png`,
+`mods/sungrid/bits/arctturret.png`, `mods/sungrid/bits/sgturpad.png`, `mods/sungrid/bits/sgturmake.png`,
+`mods/sungrid/bits/sgturturret.png`, `mods/sungrid/sequences/structures.yaml`, `mods/sungrid/rules/structures.yaml`,
+`docs/concept-art/issue113-idle-animations.png`, `docs/concept-art/issue113-arct.gif`,
+`docs/concept-art/issue113-sgtur.gif`.
+
+**Phase:** 6/7 follow-up (art identity).
+
+**Definition of done:** Met.
+

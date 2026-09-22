@@ -509,6 +509,33 @@ missing `using` that would otherwise have broken CI and all three platform insta
 - Damage numbers are unchanged. The arc always connects on the tick where the old shell could scatter or
   be blocked by a wall, so both hit a little more reliably - flagged for playtest.
 
+## The two defences stand on real pedestals now (issue #111)
+
+- The Arc Turret's base is a proper stepped concrete drum with a mount race, anchor bolts, a cable feed
+  and a hatch, instead of a flat oval on a grey strip; its head gained a turntable collar, cooling fins
+  and insulators on the discharge rods.
+- The Grid Defense Turret's pad is a solid octagonal slab with a raised turntable seat, bolts and a
+  cable trench.
+- Both have a narrow fringe of grass around the base - the only two Sungrid buildings that still stood
+  on bare ground.
+- Footprints, placement, build-ups and team colour are unchanged.
+
+## The Grid Defense Turret finally looks like its cameo (issue #112)
+
+- The station is a pale armoured block now, bevelled between a wide base and a narrower top, with a dark
+  weapon port and a short, thick gun with a muzzle ring - the silhouette its build-menu cameo has shown
+  all along. The old dark box with a thin bar and a black outline read as flat.
+- It turns on a proper turntable ring seated in the pad, and carries capacitor drums on its flank.
+- The muzzle flash now comes out of the barrel instead of the middle of the hull.
+
+## Both defences move now (issue #113)
+
+- The Arc Turret's discharge arc flickers and jumps between its rods, and a status lamp on its pedestal
+  blinks.
+- The Grid Defense Turret scans a little either side of where it is pointing while idle, and settles on
+  its target the moment it starts aiming. Its pad has a blinking status lamp too.
+- Damaged turrets stop moving: no arc, no scan, lamps dark.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.
