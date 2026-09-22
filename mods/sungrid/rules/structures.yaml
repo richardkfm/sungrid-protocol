@@ -916,7 +916,7 @@ ARCT:
 		Recoils: false
 	Armament:
 		Weapon: ArcDischarge
-		LocalOffset: 64,0,470
+		LocalOffset: 64,0,547
 	AttackTurreted:
 		PauseOnCondition: build-incomplete
 	Power:

@@ -371,6 +371,15 @@ is the regression check.
     `FireDelay` ticks after *that*, not after the first - which is why `DISR` carries `FireDelay: 16` and
     its bolt frames run through phase 14. Weapon sounds: `Report` plays per shot, `StartBurstReport` once
     per burst; a `.wav` in `bits/` is referenced by file name *with* extension.
+18. **The defence pedestals are solids too, at their own origins (issue #111).** `arct.png` and
+    `sgturpad.png` go through `_mesh_render(mesh, w, h, ox, oy, yaw)` - the accent re-stamp factored out of
+    `_mesh_frame` - at yaw 0 and the contact row their rotating head expects (`ARCT_GROUND_DY` /
+    `ARCT_RACE_TOP` derive `ARCT_PEDESTAL_DY`; `SGTUR_PIVOT_DY` is the slab's top-face centre), not on the
+    roster's diamond plinth. Two constraints to keep: the footprint stays round/centred so the 32-facing head
+    lands on it at every facing, and the head plus pedestal must fit the 36px turret frame - raising the race
+    top raises the head, which is why the Arc Turret's rods are 19.5 units (check the head's bbox row 0
+    after touching either). Greenery here is `grass_ring()`, a narrow fringe of tufts, not the roster's
+    `bed()`s. The old flat `draw_ground_strip` vocabulary is gone entirely.
 
 ### What can and can't be verified in this environment
 

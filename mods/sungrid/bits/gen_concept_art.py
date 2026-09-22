@@ -82,7 +82,6 @@ LEGACY_GRAY_DARK = (0x30, 0x2C, 0x28)
 RUST = (0x8B, 0x3F, 0x2A)
 CONCRETE = (0x4A, 0x47, 0x42)
 DIRT = (0x6E, 0x58, 0x33)
-GRASS = (0x3B, 0x63, 0x38)
 POLE_DARK = (0x1C, 0x1C, 0x1A)
 DAMAGE_SCORCH = (0x12, 0x10, 0x0E)
 OUTLINE_DARK = (0x0C, 0x0E, 0x0C)
@@ -431,35 +430,6 @@ def scorch(sd, blotches):
         sd.ellipse([x - r * 0.5, y - r * 0.45, x + r * 0.5, y + r * 0.4], fill=(0, 0, 0, 235))
     for (x, y, r) in blotches[:2]:
         sd.rect([x + r * 0.4, y, x + r * 0.4 + 0.8, y + r + 1.5], fill=RUST + (200,))
-
-
-# ---------------------------------------------------------------------------
-# Shared "ground strip" grammar, matching sgpwr.png/sgapwr.png: a concrete
-# base pad with grass fringing the outer corners and dirt speckle, plus a
-# gold conduit band above it signaling grid connection.
-# ---------------------------------------------------------------------------
-
-def draw_ground_strip(sd, x0, x1, y0, y1, seed=0):
-    sd.rect([x0, y0, x1, y1], fill=CONCRETE)
-    sd.line([(x0, y0), (x1, y0)], fill=lit(CONCRETE, 0.22))
-    sd.line([(x0, y1), (x1, y1)], fill=dim(CONCRETE, 0.35))
-    # Expansion seams.
-    for i in range(1, 4):
-        gx = x0 + (x1 - x0) * i // 4
-        sd.line([(gx, y0 + 1), (gx, y1 - 1)], fill=dim(CONCRETE, 0.2))
-    # Deterministic dirt/wear speckle (no RNG needed for a handful of dots).
-    for i in range((x1 - x0) // 4):
-        px = x0 + 2 + (i * 7 + seed * 3) % max(1, (x1 - x0) - 4)
-        py = y0 + 1 + (i * 5 + seed) % max(1, (y1 - y0) - 2)
-        sd.px(px, py, DIRT if i % 3 else dim(CONCRETE, 0.25))
-    # Grass tufts reclaiming the pad's outer corners: irregular clusters, not
-    # solid bars.
-    tuft = max(3, (x1 - x0) // 9)
-    for k, base in ((0, x0), (1, x1 - tuft)):
-        for i in range(tuft * 2):
-            gx = base + (i * 3 + seed + k) % tuft
-            gy = y0 + (i * 2 + seed * 2 + k) % max(1, (y1 - y0))
-            sd.px(gx, gy, GRASS if i % 2 else lit(GRASS, 0.2))
 
 
 # ---------------------------------------------------------------------------
@@ -865,8 +835,11 @@ _RCY_POSTS = (5.0, 15.0, 25.0)                          # canopy post centres
 # for its underside to land back on the pedestal.
 ARCT_AZIMUTH = 208.0                 # three-quarter view, used for the cameo
 ARCT_TUR_LIFT = 112 * 24 / 1024
-ARCT_PEDESTAL_DY = 9                 # pedestal top, below the body frame centre
+ARCT_GROUND_DY = 11.5                # pedestal ground contact, below the body frame centre
+ARCT_RACE_TOP = 5.0                  # mount-race top, world units above that contact
+ARCT_PEDESTAL_DY = ARCT_GROUND_DY - ARCT_RACE_TOP   # pedestal top, below the body frame centre
 ARCT_TUR_OY = SG1x1_H / 2 + ARCT_PEDESTAL_DY + ARCT_TUR_LIFT
+ARCT_RING_R = 13.6                   # grass ring radius around the hardstand
 
 
 def arct_mesh(damaged=False):
@@ -880,11 +853,22 @@ def arct_mesh(damaged=False):
     cap = _TUR_CAP if not damaged else mix(_TUR_CAP, DAMAGE_SCORCH, 0.4)
     accent = SUN_GOLD if not damaged else RUST
     m = Mesh()
+    # Turntable collar the head sits in, so the join to the pedestal's race
+    # reads as a bearing rather than a box resting on a disc (issue #111).
+    m.prism(0, 0, 0.0, 1.5, 8.2, dim(body, 0.3), sides=12, top=lit(body, 0.05), phase=math.pi / 12)
     # Emitter head: main mass, then a shallower brow plate above it.
     m.box(-7.5, -5.5, 1.5, 7.5, 5.5, 10.0, body, top=lit(body, 0.14))
     m.box(-6.2, -4.6, 10.0, 6.2, 4.6, 11.4, cap, top=lit(cap, 0.2))
-    # Cooling stack behind the head.
+    # Heat-sink fins on both flanks (the head turns through every facing, so
+    # the detail has to be symmetric), proud of the hull by one unit.
+    fin = dim(body, 0.2)
+    for sx in (-1, 1):
+        for y0 in (-3.6, -0.8, 2.0):
+            m.box(min(sx * 7.5, sx * 8.6), y0, 4.6, max(sx * 7.5, sx * 8.6), y0 + 1.2, 9.4,
+                  fin, top=lit(fin, 0.2), order=1, shadow=False)
+    # Cooling stack behind the head, with a lit vent cap.
     m.box(-2.2, -7.0, 5.0, 2.2, -5.4, 14.2, dim(body, 0.35), top=dim(body, 0.2))
+    m.box(-2.6, -7.4, 14.2, 2.6, -5.0, 14.9, dim(body, 0.15), top=lit(body, 0.3), order=1, shadow=False)
     # Capacitor band -- the team-coloured element, same grammar as the turret
     # -- and the recessed emitter port above it. Both are proud of the head so
     # they are drawn after it, and both drop their top face: a wrap-around
@@ -900,9 +884,16 @@ def arct_mesh(damaged=False):
         # The rods are excluded from the cast shadow: at this camera a 10px
         # mast throws a shadow longer than the whole footprint, which reads as
         # a smear rather than as contact. Only the head's own mass casts.
-        m.strut((sx * 3.6, -0.5, 10.6), tip, 1.7,
+        foot = (sx * 3.6, -0.5, 10.6)
+        m.strut(foot, tip, 1.7,
                 mix(LEGACY_GRAY_DARK, LEGACY_GRAY, 0.35), cap=lit(LEGACY_GRAY, 0.1),
                 order=2, shadow=False)
+        # Insulator discs along the rod, pale so they read against the dark
+        # shaft: the one mark that says "high voltage" at this size.
+        for t in ((0.42, 0.72) if live else (0.55,)):
+            cx, cy, cz = (foot[i] + (tip[i] - foot[i]) * t for i in range(3))
+            m.prism(cx, cy, cz - 0.45, cz + 0.45, 2.3, PALE_STEEL, sides=8,
+                    top=lit(PALE_STEEL, 0.2), order=2, shadow=False)
         if live:
             m.strut(tip, (tip[0] * 1.05, tip[1] + 0.4, tip[2] + 1.8), 1.8,
                     accent, cap=lit(accent, 0.35), order=2, shadow=False)
@@ -910,36 +901,99 @@ def arct_mesh(damaged=False):
 
 
 def _arct_rod_tip(sx, live=True):
-    return (sx * 5.5, 1.5 if live else 0.5, 20.5 if live else 14.0)
+    return (sx * 5.5, 1.5 if live else 0.5, 19.5 if live else 13.5)
+
+
+def _ring_front(ang, width=0.6):
+    """True for angles within `width` radians of the camera-facing (-y) side."""
+    d = (ang + math.pi / 2) % (2 * math.pi)
+    return min(d, 2 * math.pi - d) < width
+
+
+def grass_ring(m, r, n, salt, skip=_ring_front, z=0.0):
+    """Feather-grass tufts and low groundcover clumps around a circular or
+    polygonal footprint at radius `r` (issue #111): the greenery the two
+    defence pads get instead of the roster buildings' planted beds -- a
+    narrow reclaimed fringe that leaves the pad's own silhouette alone. Every
+    position comes from _scatter(), so regeneration stays byte-identical.
+    `skip(angle)` keeps the front sector clear of the cable trench."""
+    for i in range(n):
+        a, b, c = _scatter(i, salt, 1), _scatter(i, salt, 2), _scatter(i, salt, 3)
+        ang = 2 * math.pi * (i + 0.5 * a) / n
+        if skip is not None and skip(ang):
+            continue
+        rr = r + (b - 0.5) * 1.8
+        x, y = rr * math.cos(ang), rr * math.sin(ang)
+        if c < 0.3:
+            _clump(m, x, y, z, 1.6 + b * 0.8, LEAF_DARK, LEAF_SAGE, 0.8)
+        else:
+            tuft(m, x, y, z, cap=2.0 + b * 1.2)
+
+
+def arct_pedestal_mesh(damaged=False):
+    """The fixed pedestal as a solid (issue #111): a gravel hardstand, the
+    concrete drum with a chamfered upper step, the dark mount race the head
+    turns in, a ring of anchor bolts, the team-coloured feed lug and its
+    cable trench on the camera side, an access hatch on the lit flank, vent
+    slots on the shaded one, and a fringe of grass around the hardstand. The
+    footprint stays round and centred, so the head sits on it at every facing
+    exactly as before; only the elevation gained volume."""
+    con = CONCRETE if not damaged else mix(CONCRETE, DAMAGE_SCORCH, 0.3)
+    base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
+    accent = SUN_GOLD if not damaged else RUST
+    ph = math.pi / 16
+    m = Mesh()
+    m.prism(0, 0, 0.0, 1.0, 12.5, dim(con, 0.28), sides=16, top=dim(con, 0.08), phase=ph)
+    m.prism(0, 0, 1.0, 3.4, 10.2, con, sides=16, top=lit(con, 0.28), phase=ph)
+    m.prism(0, 0, 3.4, 4.1, 8.8, dim(con, 0.08), sides=16, top=lit(con, 0.14), phase=ph)
+    m.prism(0, 0, 4.1, ARCT_RACE_TOP, 7.8, base, sides=16, top=lit(base, 0.22), phase=ph)
+    for i in range(8):
+        if damaged and i in (2, 5):
+            continue                                       # sheared bolts
+        ang = i * math.pi / 4 + math.pi / 8
+        m.prism(9.5 * math.cos(ang), 9.5 * math.sin(ang), 3.4, 4.1, 0.65, lit(base, 0.35),
+                sides=6, top=lit(base, 0.6), shadow=False)
+    # Feed lug and cable trench, on the remap ramp like every conduit.
+    m.box(-1.6, -12.2, 1.0, 1.6, -9.6, 3.0, accent, top=lit(accent, 0.25),
+          order=1, shadow=False, accent=True)
+    m.box(-0.9, -14.2, 1.0, 0.9, -12.2, 1.7, accent, top=lit(accent, 0.2),
+          order=1, shadow=False, accent=True)
+    # Access hatch on the lit (-x) flank, vent slots on the shaded (+x) one.
+    m.box(-10.9, -1.8, 1.6, -10.0, 1.8, 3.4, dim(con, 0.45), order=1, shadow=False, top_face=False)
+    for y0 in (-2.6, 0.4):
+        m.box(10.0, y0, 1.8, 10.9, y0 + 1.7, 3.2, dim(con, 0.5), order=1, shadow=False, top_face=False)
+    if damaged:
+        # A cracked-off wedge of the drum's top edge on the shaded side.
+        m.box(4.5, 3.5, 2.6, 9.5, 8.5, 3.5, dim(con, 0.55), top=DAMAGE_SCORCH, order=1, shadow=False)
+    grass_ring(m, ARCT_RING_R, 11, salt=66)
+    return m
 
 
 def arct_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
-    """Body sheet: the fixed pedestal and mount race only. The emitter head
-    rides above this as a separate 32-facing turret sprite."""
-    ground_y0, ground_y1 = h - 8, h
-    draw_ground_strip(sd, 2, w - 2, ground_y0, ground_y1, seed=10)
-    ox, oy = w // 2, h - ARCT_PEDESTAL_DY
-    base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
-    # Concrete pedestal and the mount race the head sits in -- ellipses, so
-    # the footprint stays a clean oval, and so the race is pixel-identical
-    # under every facing of the head (sam2.shp's fixed-mount rule).
-    sd.ellipse([ox - 11, oy - 1.5, ox + 11, oy + 6.5], fill=dim(CONCRETE, 0.35))
-    sd.ellipse([ox - 11, oy - 4, ox + 11, oy + 4], fill=CONCRETE)
-    sd.ellipse([ox - 11, oy - 4, ox + 11, oy + 4], outline=lit(CONCRETE, 0.25), width=0.6)
-    sd.ellipse([ox - 8, oy - 4.6, ox + 8, oy + 1.4], fill=base)
-    sd.ellipse([ox - 8, oy - 5.4, ox + 8, oy + 0.6], fill=lit(base, 0.18))
-    # Anchor bolts around the race, and a team-coloured feed lug at the front.
-    for i in range(8):
-        a = i * math.pi / 4 + math.pi / 8
-        sd.px(round(ox + 9.4 * math.cos(a)), round(oy - 2 + 4.4 * math.sin(a)), lit(base, 0.4))
-    sd.rect([ox - 2, oy + 1.6, ox + 2, oy + 3.2], fill=(SUN_GOLD if not damaged else RUST))
+    """Body sheet: the fixed pedestal only (plain shaded model, for the
+    build-up strip and the cameo fallback -- the shipped idle frames go
+    through arct_body_frame so the feed lug lands on the remap ramp). The
+    emitter head rides above this as a separate 32-facing turret sprite."""
+    ox, oy = w // 2, h / 2 + ARCT_GROUND_DY
+    arct_pedestal_mesh(damaged).draw(sd, ox, oy, 0.0)
     if damaged:
-        scorch(sd, [(ox + 6, oy - 2, 3), (ox - 7, oy + 2, 2.5)])
+        scorch(sd, [(ox + 6, oy - 6, 2.6), (ox - 6, oy - 3.5, 2.2)])
+
+
+def arct_body_frame(damaged=False):
+    """One shipped pedestal frame: the model with its accent faces re-stamped
+    natively (see _mesh_render), then the scorch decals."""
+    ox, oy = SG1x1_W // 2, SG1x1_H / 2 + ARCT_GROUND_DY
+    frame = _mesh_render(arct_pedestal_mesh(damaged), SG1x1_W, SG1x1_H, ox, oy, 0.0)
+    if damaged:
+        decals = render(lambda sd, w, h: scorch(sd, [(ox + 6, oy - 6, 2.6), (ox - 6, oy - 3.5, 2.2)]),
+                        SG1x1_W, SG1x1_H)
+        frame = Image.alpha_composite(frame, decals)
+    return frame
 
 
 def arct_shadow_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
-    ox, oy = w // 2, h - ARCT_PEDESTAL_DY
-    sd.ellipse([ox - 5, oy - 0.5, ox + 17, oy + 7], fill=(0, 0, 0, 255))
+    arct_pedestal_mesh(damaged).draw_shadow(sd, w // 2, h / 2 + ARCT_GROUND_DY, 0.0)
 
 
 def arct_turret_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0):
@@ -980,7 +1034,7 @@ def arct_icon_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
     """Body and head together, for the programmatic cameo fallback (the
     shipped cameo is issue #45's photographic one)."""
     arct_draw(sd, w, h, damaged)
-    arct_mesh(damaged).draw(sd, w // 2, h - ARCT_PEDESTAL_DY, ARCT_AZIMUTH)
+    arct_mesh(damaged).draw(sd, w // 2, h / 2 + ARCT_PEDESTAL_DY, ARCT_AZIMUTH)
 
 
 # ---------------------------------------------------------------------------
@@ -1882,14 +1936,19 @@ def _mesh_frame(fam, fn, **kw):
     background says what shade each one should be, without ever blending with
     a non-gold neighbour."""
     w, h, half = FAM[fam]
-    ox, oy = w // 2, _oy(h, half)
-    mesh = fn(**kw)
-    body = render(lambda sd, w_, h_: mesh.draw(sd, ox, oy, BUILDING_YAW), w, h)
+    return _mesh_render(fn(**kw), w, h, w // 2, _oy(h, half), BUILDING_YAW)
+
+
+def _mesh_render(mesh, w, h, ox, oy, yaw):
+    """The shaded model at (ox, oy, yaw) with its accent faces re-stamped --
+    the frame path shared by the roster buildings (via _mesh_frame) and the
+    two defence pedestals, which sit at their own origins and yaw 0."""
+    body = render(lambda sd, w_, h_: mesh.draw(sd, ox, oy, yaw), w, h)
     mask_big = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
-    mesh.draw(SD(mask_big), ox, oy, BUILDING_YAW, mode="mask")
+    mesh.draw(SD(mask_big), ox, oy, yaw, mode="mask")
     cov = mask_big.getchannel("R").resize((w, h), Image.LANCZOS).load()
     col_big = Image.new("RGBA", (w * SS, h * SS), SUN_GOLD + (255,))
-    mesh.draw(SD(col_big), ox, oy, BUILDING_YAW, mode="accent")
+    mesh.draw(SD(col_big), ox, oy, yaw, mode="accent")
     col = col_big.resize((w, h), Image.LANCZOS).load()
     px = body.load()
     for y in range(h):
@@ -2201,29 +2260,55 @@ def sgtur_base_draw(sd, w, h, damaged=False):
     sgtur_turret_draw(sd, w, h, damaged=damaged, facing=28.0)
 
 
+SGTUR_PAD_H = 2.4       # hardstand slab height, world units
+SGTUR_PAD_R = 15.0      # octagon circumradius; its top face centre is the station's pivot
+
+
+def sgtur_pad_mesh():
+    """The fixed emplacement pad as a solid (issue #111): an octagonal
+    concrete slab with a raised turntable seat, anchor bolts on the corner
+    flats, the team-coloured cable trench feeding the mount from the camera
+    side, and a fringe of grass around the slab. The top face's centre is the
+    pivot the station's turntable sits on (SGTUR_PIVOT_DY), and the seat's
+    radius matches the turntable ring drawn in the turret sheet."""
+    con = CONCRETE
+    m = Mesh()
+    ph = math.pi / 8
+    m.prism(0, 0, 0.0, SGTUR_PAD_H, SGTUR_PAD_R, con, sides=8, top=lit(con, 0.22), phase=ph)
+    m.prism(0, 0, SGTUR_PAD_H, SGTUR_PAD_H + 0.9, 11.0, dim(con, 0.1), sides=16,
+            top=lit(con, 0.1), phase=math.pi / 16, shadow=False)
+    for i in range(4):
+        ang = ph + i * math.pi / 2 + math.pi / 4
+        m.prism(12.6 * math.cos(ang), 12.6 * math.sin(ang), SGTUR_PAD_H, SGTUR_PAD_H + 0.7, 0.7,
+                lit(LEGACY_GRAY_DARK, 0.35), sides=6, top=lit(LEGACY_GRAY_DARK, 0.6), shadow=False)
+    m.box(-2.4, -15.4, SGTUR_PAD_H, 2.4, -11.2, SGTUR_PAD_H + 0.7, SUN_GOLD, top=lit(SUN_GOLD, 0.2),
+          order=1, shadow=False, accent=True)
+    # Expansion-joint groove across the slab, so the top face is not one flat tone.
+    m.box(-13.0, -0.5, SGTUR_PAD_H, -11.4, 0.5, SGTUR_PAD_H + 0.15, dim(con, 0.35), order=1, shadow=False)
+    m.box(11.4, -0.5, SGTUR_PAD_H, 13.0, 0.5, SGTUR_PAD_H + 0.15, dim(con, 0.35), order=1, shadow=False)
+    grass_ring(m, SGTUR_PAD_R + 2.2, 13, salt=77)
+    return m
+
+
+def _sgtur_pad_origin(w, h):
+    return w // 2, h // 2 + SGTUR_PIVOT_DY + SGTUR_PAD_H
+
+
 def sgtur_pad_draw(sd, w, h, damaged=False):
-    """The fixed emplacement pad the rotating station stands on.
+    """The fixed emplacement pad the rotating station stands on (plain model,
+    for the build-up strip; the shipped frame is sgtur_pad_frame).
 
     Previously stock gunmake.shp (the Turret's own concrete pad), which also
     meant the build-up was a different building's -- see issue #74. Drawn to
     the same contact point the station's turntable sits on (SGTUR_PIVOT_DY),
     so the two line up."""
-    cy = h // 2 + SGTUR_PIVOT_DY
-    cx = w // 2
-    rx, ry = 15.0, 8.0
-    # Octagonal hardstand: lit top face, shaded lower rim, anchor bolts.
-    oct_pts = [(cx + rx * dx, cy + ry * dy) for dx, dy in
-               ((-1, -0.42), (-0.42, -1), (0.42, -1), (1, -0.42),
-                (1, 0.42), (0.42, 1), (-0.42, 1), (-1, 0.42))]
-    sd.poly([(x, y + 1.6) for x, y in oct_pts], fill=dim(CONCRETE, 0.45))
-    sd.poly(oct_pts, fill=CONCRETE)
-    sd.line([oct_pts[7], oct_pts[0], oct_pts[1], oct_pts[2]], fill=lit(CONCRETE, 0.22), width=0.6)
-    sd.line([oct_pts[3], oct_pts[4], oct_pts[5], oct_pts[6]], fill=dim(CONCRETE, 0.3), width=0.6)
-    for dx, dy in ((-0.66, -0.5), (0.66, -0.5), (-0.66, 0.5), (0.66, 0.5)):
-        sd.px(cx + rx * dx, cy + ry * dy, dim(CONCRETE, 0.4))
-    # Cable trench feeding the mount, on the remap ramp like every other
-    # building's conduit.
-    sd.rect([cx - 3, cy + ry * 0.4, cx + 3, cy + ry * 0.4 + 1.6], fill=dim(SUN_GOLD, 0.25))
+    ox, oy = _sgtur_pad_origin(w, h)
+    sgtur_pad_mesh().draw(sd, ox, oy, 0.0)
+
+
+def sgtur_pad_frame():
+    ox, oy = _sgtur_pad_origin(SGTUR_W, SGTUR_H)
+    return _mesh_render(sgtur_pad_mesh(), SGTUR_W, SGTUR_H, ox, oy, 0.0)
 
 
 def sgtur_strained_draw(sd, w, h, phase=0):
@@ -3482,6 +3567,7 @@ def sghau_husk_frames(laden):
 # does. The rest of the roster still has none -- a deliberate follow-up, not
 # an oversight (docs/BACKLOG.md issue #65).
 SHADOW_DRAWS = {"arct": lambda sd, w, h, damaged=False: arct_shadow_draw(sd, w, h, damaged)}
+BODY_FRAMES = {"arct": arct_body_frame}
 
 # Cameos whose motif is not simply the body sheet's draw function (the Arc
 # Turret's body is only its pedestal now that the head rotates separately).
@@ -3559,8 +3645,8 @@ def scrap_pile_draw(sd, w, h, stage):
 
 
 def main():
-    # Arc Turret pedestal: the one building still drawn as a flat elevation,
-    # since its rotating head (arct_turret_frames below) carries the 3D read.
+    # Arc Turret pedestal (a solid since issue #111, at its own origin rather
+    # than the roster's diamond plinth, so it keeps the flat-building path).
     flat_buildings = [
         ("arct", arct_draw, SG1x1_W, SG1x1_H),
     ]
@@ -3570,7 +3656,10 @@ def main():
         if name in SHADOW_DRAWS:
             # Buildings whose sprite carries a baked ground shadow have to go
             # through indexed_strip so SHADOW_IDX survives (see its docstring).
-            bodies = [render(draw_fn, w, h, damaged=d) for d in (False, True)]
+            # The Arc Turret's frames come from arct_body_frame: the same
+            # model, with the feed lug re-stamped onto the remap ramp.
+            bodies = [BODY_FRAMES[name](damaged=d) if name in BODY_FRAMES
+                      else render(draw_fn, w, h, damaged=d) for d in (False, True)]
             shadows = [render_shadow_mask(SHADOW_DRAWS[name], w, h, damaged=d) for d in (False, True)]
             sheet = indexed_strip(bodies, shadows, w, h)
             idle, idle_shadow = bodies[0], shadows[0]
@@ -3694,7 +3783,7 @@ def main():
     # build-up (issue #74). The station itself is gated on !build-incomplete,
     # so the build-up shows the pad alone and the turret pops in on completion
     # -- exactly how SAM/GUN/AGUN behave.
-    pad = render(sgtur_pad_draw, SGTUR_W, SGTUR_H)
+    pad = sgtur_pad_frame()
     pad_shadow = silhouette_shadow(pad, 2, 2)
     save_pngsheet(indexed_strip([pad], [pad_shadow], SGTUR_W, SGTUR_H),
                   "sgturpad.png", SGTUR_W, SGTUR_H, 1, indexed=True)

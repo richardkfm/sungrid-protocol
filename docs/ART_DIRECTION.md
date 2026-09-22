@@ -159,6 +159,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 110 review render: the eight arc frames at 8×, the Arc Turret and the Disruptor Trooper firing with the bolt laid the way the engine lays it, and the trooper's shoot frames before and after.](concept-art/issue110-arc-discharge.png)
 
+**Follow-up: the defence pedestals (`docs/BACKLOG.md` issue #111).** The two turrets were the last flat elevations in the roster: issue #106 left their fixed bases alone because the rotating head "carries the 3D read", and #108 never planted them. Both bases are `Mesh` solids now at their own origin and yaw 0 (round, centred, so the 32-facing head still lands on them at every facing) - a stepped concrete drum with a mount race, bolts, feed lug and hatch for the Arc Turret, an octagonal slab with a raised turntable seat for the Grid Defense Turret - and the Arc Turret's head gained a turntable collar, flank fins and insulator discs on its rods. The owner asked for the existing design refined rather than moved onto the roster's diamond plinth, and for a narrow grass fringe rather than beds: `grass_ring()` scatters tufts and low clumps around the hardstand and keeps the front sector clear of the cable trench. One constraint fell out of it: the head and pedestal share a 36px turret frame, so a taller race top costs rod height.
+
+![Issue 111 review render: the Arc Turret before and after with the head at four facings and damaged, and the Grid Defense Turret pad before and after under its station and alone.](concept-art/issue111-defence-pedestals.png)
+
 The turbine and the dish at their real per-frame timing: [`issue109-sgwnd.gif`](concept-art/issue109-sgwnd.gif), [`issue109-sgsns.gif`](concept-art/issue109-sgsns.gif).
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

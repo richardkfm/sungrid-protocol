@@ -509,6 +509,17 @@ missing `using` that would otherwise have broken CI and all three platform insta
 - Damage numbers are unchanged. The arc always connects on the tick where the old shell could scatter or
   be blocked by a wall, so both hit a little more reliably - flagged for playtest.
 
+## The two defences stand on real pedestals now (issue #111)
+
+- The Arc Turret's base is a proper stepped concrete drum with a mount race, anchor bolts, a cable feed
+  and a hatch, instead of a flat oval on a grey strip; its head gained a turntable collar, cooling fins
+  and insulators on the discharge rods.
+- The Grid Defense Turret's pad is a solid octagonal slab with a raised turntable seat, bolts and a
+  cable trench.
+- Both have a narrow fringe of grass around the base - the only two Sungrid buildings that still stood
+  on bare ground.
+- Footprints, placement, build-ups and team colour are unchanged.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.
