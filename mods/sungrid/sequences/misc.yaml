@@ -489,6 +489,17 @@ litning:
 		Length: 4
 		ZOffset: 1023
 
+arczap: # Sungrid arc discharge (ArcDischarge / Disruptor), same 4+4 segment
+	Defaults: # layout TeslaZapRenderable expects from litning, in pale green/white.
+		Filename: arczap.png
+	bright:
+		Length: 4
+		ZOffset: 1023
+	dim:
+		Start: 4
+		Length: 4
+		ZOffset: 1023
+
 fb1:
 	idle:
 		Filename: fb1.shp

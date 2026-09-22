@@ -2596,7 +2596,8 @@ RIM = 143                                       # (20,20,20) selective rim pixel
 BOOT = 12                                       # pure black boot
 PACK_LIT, PACK, PACK_DRK = 183, 17, 16          # discharge cell blue-blacks
 GOLD, GOLD_LIT, GOLD_DRK = 212, 210, 213        # fixed gold accents
-ARC, ARC_LIT = 192, 15                          # electric blue / white
+ARC, ARC_LIT = 144, 15                          # pale green / white -- the same
+                                                # pair the arczap projectile uses
 
 # Frame 0 is north and frame indices advance counter-clockwise -- verified by
 # decoding heli.shp, whose 32-facing sheet has frames 0/8/16/24 pointing
@@ -2839,16 +2840,25 @@ def disr_upright(facing, pose="rest", phase=None, spark=0, turn=0.0, dy=0,
     return c
 
 
+def _disr_spark_level(p):
+    """Bolt intensity per shoot phase: brief windup, bright arc for most of
+    the burst, short decay, one hold frame. The Disruptor fires a 15-shot
+    burst one tick apart, and WithInfantryBody restarts the shoot sequence on
+    every PreparingAttack, so the animation only really plays from the last
+    shot's call onward -- the weapon's FireDelay is tuned so the arczap
+    projectiles land inside phases 2-14 (docs/BACKLOG.md issue #110)."""
+    if p < 2:
+        return 0
+    if p < 10:
+        return 2
+    if p < 15:
+        return 1
+    return 0
+
+
 def _disr_shoot(facing, p):
     """16-phase discharge: brief windup, bright arc, decay, then hold."""
-    if p < 2:
-        spark = 0
-    elif p < 6:
-        spark = 2
-    elif p < 9:
-        spark = 1
-    else:
-        spark = 0
+    spark = _disr_spark_level(p)
     kick = -1 if 2 <= p < 4 else 0                         # recoil
     return disr_upright(facing, "fire", spark=spark, dy=kick, pulse=p, seed=p)
 
@@ -2894,14 +2904,7 @@ def disr_prone(facing, phase=None, shoot=None):
     c.ray(gx, gy, tx, ty, H_MID)
     c.set(tx, ty, GOLD)
     if shoot is not None:
-        if shoot < 2:
-            level = 0
-        elif shoot < 6:
-            level = 2
-        elif shoot < 9:
-            level = 1
-        else:
-            level = 0
+        level = _disr_spark_level(shoot)
         if level:
             sx, sy = at(6.4, 0.7)
             _disr_arc(c, round(sx), round(sy), level, shoot)
@@ -3028,6 +3031,84 @@ def disr_frames():
     frames += _disr_die_frames(12, -1, zap=True, dissolve_from=0.6)
     frames += _disr_die_frames(18, 1, zap=True, dissolve_from=0.45)
     frames.append(disr_parachute())
+    return frames
+
+
+# ---------------------------------------------------------------------------
+# Arc discharge projectile (issue #110): the sheet behind the `arczap` image
+# both ArcDischarge and Disruptor draw with `Projectile: TeslaZap`.
+#
+# The engine's TeslaZapRenderable walks from muzzle to target in 8px screen
+# steps and stamps one sprite per step, centred on the step's midpoint, picking
+# the frame by the step's direction: 0 = "\\" diagonal, 1 = horizontal,
+# 2 = vertical, 3 = "/" diagonal (see Steps[] in TeslaZapRenderable.cs). Two
+# `dim` paths wander first, one `bright` path is laid over them. So each frame
+# is an 8px segment through the frame centre, and consecutive stamps butt up
+# end to end -- the jaggedness comes from the renderer's wandering, not from
+# the segment art. Stock `litning.shp` is the same four-frame pair in blue;
+# this is the Sungrid one in the trooper's own pale-green/white (ARC/ARC_LIT),
+# so the bolt reads as the same discharge that leaves the electrode in the
+# disr.png shoot frames, and stays distinct from the Tesla Coil's blue.
+#
+# Drawn on the `effect` palette (temperat.pal, ShadowIndex 4): index 4 is the
+# shadow stencil there, so the bright green at index 4 is off limits; every
+# index used here is a plain colour entry.
+# ---------------------------------------------------------------------------
+
+ZAP_W, ZAP_H = 12, 12
+ZAP_CORE_BRIGHT, ZAP_HALO_BRIGHT = ARC_LIT, ARC           # white core, pale green edge
+ZAP_CORE_DIM, ZAP_HALO_DIM = 145, 147                     # green core, deeper green kinks
+# Perpendicular wobble per pixel along the 8px segment, in {-1, 0, 1}. Both
+# ends sit on the centre line so consecutive stamps still join; the two
+# tables differ so the dim paths never line up with the bright one. A
+# straight core with a dotted halo read as a dashed rail in the first draft.
+ZAP_WOBBLE_BRIGHT = (0, -1, -1, 0, 1, 1, 0, 0)
+ZAP_WOBBLE_DIM = (0, 0, 1, 1, 0, -1, -1, 0)
+
+
+def _zap_segment(c, direction, core, halo, wobble, thick):
+    """One 8px segment through the 12x12 frame centre (which sits between
+    pixels 5 and 6 on both axes). Axis-aligned segments zigzag by the wobble
+    table; diagonals cannot shift a pixel sideways and stay 8-connected, so
+    they bulge into a staircase at the same phases instead. `thick` adds a
+    continuous second pixel of `halo` along one side, which is what makes the
+    bright path read as a 2px bolt at 1x rather than a hairline."""
+    if direction == 1:                                     # horizontal, row 5
+        pts = [(2 + i, 5 + wobble[i]) for i in range(8)]
+        side = (0, 1)
+    elif direction == 2:                                   # vertical, column 5
+        pts = [(5 + wobble[i], 2 + i) for i in range(8)]
+        side = (1, 0)
+    elif direction == 0:                                   # "\\": (2,2) -> (9,9)
+        pts = [(2 + i, 2 + i) for i in range(8)]
+        side = (1, 0)
+    else:                                                  # "/": (2,9) -> (9,2)
+        pts = [(2 + i, 9 - i) for i in range(8)]
+        side = (1, 0)
+    if thick:
+        for (x, y) in pts:
+            c.set(x + side[0], y + side[1], halo)
+    for i, (x, y) in enumerate(pts):
+        c.set(x, y, core)
+        if direction in (0, 3) and wobble[i]:
+            # Staircase bulge on a diagonal: a core pixel beside the line.
+            if wobble[i] > 0:
+                c.set(x + 1, y, core)
+            else:
+                c.set(x, y + (1 if direction == 0 else -1), core)
+        elif direction in (1, 2) and not thick and i in (1, 6):
+            # Dim path: a single darker pixel at the kinks, no halo.
+            c.set(x - side[0], y - side[1], halo)
+
+
+def arczap_frames():
+    frames = []
+    for core, halo, wobble, thick in ((ZAP_CORE_BRIGHT, ZAP_HALO_BRIGHT, ZAP_WOBBLE_BRIGHT, True),
+                                      (ZAP_CORE_DIM, ZAP_HALO_DIM, ZAP_WOBBLE_DIM, False)):
+        for direction in range(4):
+            c = PC(ZAP_W, ZAP_H)
+            _zap_segment(c, direction, core, halo, wobble, thick)
+            frames.append(c)
     return frames
 
 
@@ -3683,6 +3764,11 @@ def main():
     # Disruptor Trooper (DISR): one self-contained 437-frame sheet, plus icon.
     # Authored natively in palette indices (see PC/disr_upright), so the sheet
     # is assembled as an indexed strip directly rather than converted from RGBA.
+    # Arc discharge projectile: 4 bright + 4 dim segment frames (issue #110).
+    zap = arczap_frames()
+    save_pngsheet(sheet_of_indexed(zap, ZAP_W, ZAP_H), "arczap.png",
+                  ZAP_W, ZAP_H, len(zap), indexed=True)
+
     disr_all = disr_frames()
     save_pngsheet(sheet_of_indexed(disr_all, DISR_W, DISR_H), "disr.png",
                   DISR_W, DISR_H, len(disr_all), indexed=True)

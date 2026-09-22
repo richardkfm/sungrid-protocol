@@ -12,7 +12,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, it usually does **not** need a separate personal fork repo: this repo's own pre-Phase-0 history already contains the full engine tree, so a fix can be pinned via an `engine-patch/*` branch built on the currently-pinned commit — see "Engine version pinning" below before touching `ENGINE_VERSION` or any `engine-patch/*` branch. Only reach for an actual personal fork of `OpenRA/OpenRA` if the needed base commit genuinely isn't already reachable in this repo's own history (see `docs/ARCHITECTURE.md`).
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
-- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 and animated since issue #109 — build-ups, rubble, husks, idle overlays, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
+- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 and animated since issue #109 — build-ups, rubble, husks, idle overlays, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/gen_arc_sounds.py` (the two arc-weapon reports, issue #110), `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
 - `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy.
 - `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling).
@@ -63,7 +63,7 @@ what is true now, and the hard-won rules that are expensive to rediscover.
 | 0 Bootstrap, 1 Baseline shell, 2 First content layer, 3 Grid Reserve MVP, 5 Expanded roster | Complete, playable |
 | 4 Balance / AI / CI / packaging | Substantially done (AI plays Grid Reserve, CI green, all three platforms package). Not done: structured external multiplayer playtests |
 | 6 World & UI identity | Complete except terrain **scenery** (palette reskins done for all three tilesets; solar-farm fixtures / salvage piles / reclaiming greenery deliberately deferred) |
-| 7 Unit & audio identity | Barely started — three unit renames only (issue #27). Core inherited unit sprites, voices, announcer, and in-game music are all still stock |
+| 7 Unit & audio identity | Barely started — three unit renames (issue #27) and the Arc Turret / Disruptor Trooper's arc projectile plus original discharge sounds (issue #110). Core inherited unit sprites, voices, announcer, and in-game music are all still stock |
 | 8+ Diplomacy / shared resources | Deferred by design |
 
 **"Beta ready" is now defined** — see the **Beta gate** section in `docs/ROADMAP.md` (issue #104), which sits
@@ -360,6 +360,17 @@ is the regression check.
     `AMBER_DIM`), checked by counting indices 80–95 in an overlay sheet, which must be zero. The Yard's
     sheet no longer mirrors stock `fact:`'s starts (its idle is 8 frames; build starts at 8, damaged idle
     at 33, damaged build at 34).
+17. **A `TeslaZap` sheet is four 8px segments, and a burst weapon restarts the infantry shoot animation on
+    every shot (issue #110).** `TeslaZapRenderable` walks muzzle-to-target in 8px screen steps and stamps
+    frame 0/1/2/3 (`\`, horizontal, vertical, `/`) centred on each step, two `dim` paths under one `bright`
+    - so `arczap.png` is a segment through the frame centre per direction, zigzagging *inside* the segment
+    with both ends on the centre line (a straight core with a dotted halo reads as a dashed rail). It is
+    drawn on the `effect` palette, whose `ShadowIndex` is also 4. And `WithInfantryBody` replays the shoot
+    sequence on every `PreparingAttack`, which `Armament.FireBarrel` raises per burst shot: a `Burst: 15` /
+    `BurstDelays: 1` weapon's animation only really plays from its last call, so the shot window is
+    `FireDelay` ticks after *that*, not after the first - which is why `DISR` carries `FireDelay: 16` and
+    its bolt frames run through phase 14. Weapon sounds: `Report` plays per shot, `StartBurstReport` once
+    per burst; a `.wav` in `bits/` is referenced by file name *with* extension.
 
 ### What can and can't be verified in this environment
 
@@ -446,7 +457,8 @@ widely, including `.lua`, when removing an actor).
   sheets (redrawn as the six-wheel scrap rover, cargo shown as the load itself); in issue #81, the
   drones' flight animation — both drone sheets are `Facings: 32` x `Length: 4` and their rotors turn.
   Still open: `drone-uplink`/`drone-uplink-degraded` on both drones change output with no visual cue;
-  `ARCT` has no `WithMuzzleOverlay`, so the Arc Turret fires with no flash; the drones have no separate
+  `ARCT`'s head has no firing-flash state (issue #110 made the discharge itself leave the electrodes and
+  the owner declined a `WithTurretAttackAnimation` pass on top); the drones have no separate
   slow-rotor state while landed (deliberate — a second 128-frame sheet and a pair of conditional sprite
   bodies for a state a 15px drone barely occupies); the arrays, Hydrogen Plant, Fab Bay, Battery Bank
   and the greenery are static by choice.

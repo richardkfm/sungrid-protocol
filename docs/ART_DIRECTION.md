@@ -155,6 +155,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Every animated state, frame by frame at 2×: the turbine's idle and damaged rotor, the dish sweep, the beacon, pad-light, pip and arc cycles, the Yard's idle, the Depot's smoke overlay on its full-stage body, and the three grid-strained overlays on their bodies.](concept-art/issue109-idle-animations.png)
 
+**Follow-up: the discharge itself (`docs/BACKLOG.md` issue #110).** Both arc weapons had kept firing the stock tank shell sprite, with the gun turret's report or none at all, long after the actors got their own art. They now draw the engine's lightning projectile through a Sungrid sheet, `arczap.png`: the same pale-green/white pair the Disruptor Trooper's baked bolt uses (its blue was changed to match), so what leaves the electrode and what crosses the field read as one discharge, and the Tesla Coil keeps blue to itself. The rule that came out of it: a `TeslaZap` sheet is four 8px direction segments that the renderer stamps end to end along a wandering path, so the jaggedness has to live *inside* each segment - a straight core with a dotted halo comes out as a dashed rail. The same pass gives the pair their first original sounds (`gen_arc_sounds.py`, synthesized, not sampled), makes the turret head sweep rather than snap, and retimes the trooper's shoot frames to the ticks its zaps actually land on. No firing-flash state on the head by the owner's choice.
+
+![Issue 110 review render: the eight arc frames at 8×, the Arc Turret and the Disruptor Trooper firing with the bolt laid the way the engine lays it, and the trooper's shoot frames before and after.](concept-art/issue110-arc-discharge.png)
+
 The turbine and the dish at their real per-frame timing: [`issue109-sgwnd.gif`](concept-art/issue109-sgwnd.gif), [`issue109-sgsns.gif`](concept-art/issue109-sgsns.gif).
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

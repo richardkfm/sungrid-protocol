@@ -16,7 +16,8 @@ Playable end-to-end: real Red Alert-derived gameplay, the full solarpunk buildin
 Reserve economic victory mode (on by default), original UI chrome, cursors, menu music, faction
 badges, reskinned terrain palettes, and original in-world art for every Sungrid-specific building
 and unit. Still stock: the core inherited RA unit/vehicle sprites, all voice and sound effects, and
-in-game music beyond the menu sting — that's Phase 7, not started. See `docs/ROADMAP.md` for the
+in-game music beyond the menu sting — that's Phase 7, barely started (its first entries are the Arc
+Turret's and Disruptor Trooper's discharge effects and sounds, issue #110). See `docs/ROADMAP.md` for the
 phase plan and `CLAUDE.md` for detailed current status.
 
 ## Release history (recent)
@@ -492,6 +493,21 @@ missing `using` that would otherwise have broken CI and all three platform insta
   amber, the Cryptominer's pips go dark with a red fault blink, and the Grid Defense Turret's pad shows a
   blinking amber fault lamp - the same moment those three buildings lose output.
 - Nothing about placement, footprints, build-ups or team colour changed.
+
+## The Arc Turret and Disruptor Trooper look and sound electric now (issue #110)
+
+- Both had been firing the tank cannon's shell sprite ever since they replaced the flame weapons. They now
+  fire a green-white arc that jumps from the turret's electrodes, or the trooper's prod, to the target - the
+  same kind of lightning the Tesla Coil throws, in Sungrid's own colour so the two stay distinct.
+- Sounds: the Disruptor Trooper had been completely silent, and the Arc Turret sounded like a machine-gun
+  turret. Both have original discharge sounds now - a heavy crack for the turret, a sustained sizzle for
+  the trooper's burst. Please report how they sit in the mix; they have not been heard in a running game
+  yet.
+- The Arc Turret's head sweeps to its target instead of snapping to it.
+- The trooper's firing animation now lines up with when its shots actually land; the bolt at the prod is
+  the same green as the arc.
+- Damage numbers are unchanged. The arc always connects on the tick where the old shell could scatter or
+  be blocked by a wall, so both hit a little more reliably - flagged for playtest.
 
 ## Open / recorded but not implemented
 

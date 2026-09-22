@@ -909,14 +909,14 @@ ARCT:
 	WithBuildingBib:
 		HasMinibib: true
 	Turreted:
-		TurnSpeed: 512
+		TurnSpeed: 120
 		Offset: 0,0,112
 	WithSpriteTurret:
 		RequiresCondition: !build-incomplete
 		Recoils: false
 	Armament:
 		Weapon: ArcDischarge
-		LocalOffset: 512,0,0
+		LocalOffset: 64,0,470
 	AttackTurreted:
 		PauseOnCondition: build-incomplete
 	Power:
