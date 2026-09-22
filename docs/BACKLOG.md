@@ -3635,3 +3635,54 @@ in a live client.
 
 **Definition of done:** Met.
 
+---
+
+### 112. The Grid Defense Turret read as flat and basic - the station rebuilt on the cameo's silhouette as a pale bevelled block
+
+**Raised as:** "The grid defense turret design is the weakest right now. I love the concept but it feels 2d and
+basic still." Owner's choices on the clarifying questions: pale material like the photographic cameo; drop the
+black outline; the cameo's silhouette built plastically rather than the old shapes with fasen.
+
+**Problem.** Three things made the station (`sgturturret.png`, issue #65's rebuild) read as a cutout however
+carefully it was shaded. Its hull was blue-black (`_TUR_HULL`), so the six-step flat shading had no value room
+between a lit and a shaded face; it was the only `Mesh` actor wearing `outline_sprite`'s 1px black contour,
+which turns a solid into a sticker; and its base was a stack of 2D ellipses (`_sgtur_mount`) under a plain
+box with a thin bar for a gun. The photographic cameo it ships with shows something else entirely: a pale
+armoured block, a dark recessed weapon port, and a short, thick gun.
+
+**Change (`mods/sungrid/bits/gen_concept_art.py`).**
+
+- **Station** (`sgtur_mesh`): `PALE_STEEL` hull in two tiers - a wide lower hull, a bevel ring of four
+  sloped quads, a narrower upper hull - so every face lands on a different shade step; the team-coloured
+  conduit band wraps the lower tier; a dark recessed weapon port on the front-right; the gun as a recoil
+  sleeve, a thick square-section barrel and a muzzle ring with a black bore, the team-colour tally under
+  the muzzle; sensor block with its status pip and a thin mast; a roof hatch; two capacitor drums with
+  team-coloured end caps on the lit flank (the grid-fed part of a grid turret). The turntable is a
+  32-gon collar: 32 facings x 11.25 degrees map it onto itself, so it is pixel-identical under every
+  facing - sam2.shp's fixed-mount rule - without having to be an ellipse. Damaged: scorch-tinted hull,
+  shortened barrel with no muzzle ring, snapped mast, dim pip, plus the blown roof panel and a rust
+  streak as fixed-orientation 2D decals (now composited by `_mesh_render`'s new `decals` argument, so
+  the frames also get the native accent re-stamp; the black outline is gone).
+- **Pad** (`sgtur_pad_mesh`): the seat is a dark race ring with a lighter bearing plate inside it, both
+  32-gons; its top is `SGTUR_SEAT_TOP`, and `_sgtur_station_origin` puts the station's collar exactly
+  there. `SGTUR_PIVOT_DY` and the pad footprint are unchanged, so the `grid-strained` lamp overlay still
+  sits on the slab's rim.
+- **Rules:** `SGTUR`'s `Armament.LocalOffset` 0,0,320 -> 384,128,270. The muzzle flash used to spawn at
+  the hull's centre; it now spawns at the drawn barrel tip at facing north (16.6 units forward and 8.8 up
+  at the mesh's 2:1 camera, which the engine's flat camera cannot reproduce at every facing - the values
+  are the compromise that is exact at north and within a few pixels at east and south).
+
+**Verified:** `--check-yaml` exits 0 across all maps; `--check-missing-sprites` reports the same set as before
+the change; `sgturturret.png` keeps its 48x44 x64 layout and `sgturpad.png`/`sgturmake.png` theirs, so no
+sequence YAML moved; regeneration changes only those three sheets. Review render
+`docs/concept-art/issue112-grid-turret.png` (the cameo, eight facings idle, five damaged, before at 2x and
+after at 1x). Not verified in a live client.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/sgturturret.png`,
+`mods/sungrid/bits/sgturpad.png`, `mods/sungrid/bits/sgturmake.png`, `mods/sungrid/rules/structures.yaml`,
+`docs/concept-art/issue112-grid-turret.png`.
+
+**Phase:** 6/7 follow-up (art identity).
+
+**Definition of done:** Met.
+

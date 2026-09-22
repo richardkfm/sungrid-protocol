@@ -1939,10 +1939,12 @@ def _mesh_frame(fam, fn, **kw):
     return _mesh_render(fn(**kw), w, h, w // 2, _oy(h, half), BUILDING_YAW)
 
 
-def _mesh_render(mesh, w, h, ox, oy, yaw):
+def _mesh_render(mesh, w, h, ox, oy, yaw, decals=None):
     """The shaded model at (ox, oy, yaw) with its accent faces re-stamped --
-    the frame path shared by the roster buildings (via _mesh_frame) and the
-    two defence pedestals, which sit at their own origins and yaw 0."""
+    the frame path shared by the roster buildings (via _mesh_frame), the two
+    defence pedestals and the Grid Defense Turret's station, which sit at
+    their own origins. `decals(sd, w, h)` paints 2D damage marks over the
+    finished frame."""
     body = render(lambda sd, w_, h_: mesh.draw(sd, ox, oy, yaw), w, h)
     mask_big = Image.new("RGBA", (w * SS, h * SS), (0, 0, 0, 0))
     mesh.draw(SD(mask_big), ox, oy, yaw, mode="mask")
@@ -1957,6 +1959,8 @@ def _mesh_render(mesh, w, h, ox, oy, yaw):
                 # Snap to the nearest gold reference shade: those are, by
                 # construction, the colours _index_for routes onto the ramp.
                 px[x, y] = min(_GOLD_REFS, key=lambda ref: _d2(ref, col[x, y][:3])) + (255,)
+    if decals is not None:
+        body = Image.alpha_composite(body, render(decals, w, h))
     return body
 
 
@@ -2173,72 +2177,98 @@ SGTUR_W, SGTUR_H = 48, 44
 SGTUR_PIVOT_DY = 3      # pad contact point, just below the frame centre
 
 
+SGTUR_SEAT_TOP = 3.8    # turntable seat top above the pad's ground contact (see sgtur_pad_mesh)
+
+
 def sgtur_mesh(damaged=False):
-    """The rotating assembly in world units (x east, y north, z up), zeroed on
-    the pivot at pad level and pointing north at facing 0."""
-    hull = _TUR_HULL if not damaged else mix(_TUR_HULL, DAMAGE_SCORCH, 0.38)
-    cap = _TUR_CAP if not damaged else mix(_TUR_CAP, DAMAGE_SCORCH, 0.42)
+    """The rotating station in world units (x east, y north, z up), zeroed on
+    the pivot at the turntable seat's top and pointing north at facing 0.
+
+    Rebuilt for issue #112 on the photographic cameo's read: a pale armoured
+    block (PALE_STEEL, so lit and shaded faces have room for real value
+    steps -- the old blue-black hull had none, which is most of why it read
+    flat), bevelled between a wide lower hull and a narrower upper hull, a
+    dark recessed weapon port on the front-right, and a short, thick gun
+    with a recoil sleeve and muzzle ring instead of the old thin bar. The
+    turntable is a 32-gon collar: 32 facings x 11.25 degrees map it onto
+    itself, so it is pixel-identical under every facing (sam2.shp's
+    fixed-mount rule) without needing to be drawn as an ellipse."""
+    hull = PALE_STEEL if not damaged else mix(PALE_STEEL, DAMAGE_SCORCH, 0.3)
+    dark = mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.35)
     barrel = _TUR_BARREL if not damaged else mix(_TUR_BARREL, DAMAGE_SCORCH, 0.5)
     accent = SUN_GOLD if not damaged else RUST
+    collar = dim(LEGACY_GRAY, 0.2)
     m = Mesh()
-    # Hull, then the recessed cap plate above it.
-    m.box(-7.5, -6.5, 2.0, 7.5, 4.5, 9.0, hull, top=lit(hull, 0.12))
-    m.box(-6.2, -5.5, 9.0, 6.2, 3.5, 10.3, cap, top=lit(cap, 0.18))
-    # Conduit band wrapping the hull: the one team-coloured element, sitting
-    # slightly proud so it catches its own shading on every face.
-    m.box(-7.9, -6.9, 4.4, 7.9, 4.9, 5.9, accent, top=lit(accent, 0.25))
-    # Front apron below the barrel line.
-    m.box(-5.5, 4.5, 2.0, 5.5, 6.2, 6.6, dim(hull, 0.12))
-    # Sensor block on the rear left of the cap, with a live status pip.
-    m.box(-5.4, -4.8, 10.3, -3.2, -2.2, 12.6, dim(cap, 0.15),
-          top=(GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.55)))
-    # Mantlet + barrel, carried on top of the hull rather than through its
-    # front face, so the gun is still visible over the roofline when it points
-    # away from the camera -- the read stock turret art keeps at every facing.
-    # Both sit right of the pivot (as in the concept art), so a facing is
-    # legible from the offset alone, not just the barrel angle.
-    tip = 16.4 if not damaged else 13.2
-    m.prism(3.2, 1.2, 9.0, 12.9, 2.5, dim(hull, 0.18), sides=8, top=lit(hull, 0.22))
-    m.box(1.9, 4.0, 10.2, 4.5, tip, 12.5, barrel, top=lit(barrel, 0.3))
+    # Turntable collar the hull turns on.
+    m.prism(0, 0, 0.0, 1.4, 8.6, collar, sides=32, top=lit(collar, 0.12))
+    # Lower hull, the bevel ring, then the upper hull.
+    lx0, ly0, lx1, ly1, lz = -8.0, -7.0, 8.0, 5.0, 5.4
+    ux0, uy0, ux1, uy1, uz = -6.4, -5.6, 6.4, 3.6, 7.0
+    m.box(lx0, ly0, 1.4, lx1, ly1, lz, hull, top=lit(hull, 0.08), top_face=False)
+    m.quad((lx0, ly0, lz), (lx1, ly0, lz), (ux1, uy0, uz), (ux0, uy0, uz), hull)          # front glacis (-y)
+    m.quad((lx1, ly1, lz), (lx0, ly1, lz), (ux0, uy1, uz), (ux1, uy1, uz), hull)          # rear
+    m.quad((lx1, ly0, lz), (lx1, ly1, lz), (ux1, uy1, uz), (ux1, uy0, uz), hull)          # +x
+    m.quad((lx0, ly1, lz), (lx0, ly0, lz), (ux0, uy0, uz), (ux0, uy1, uz), hull)          # -x
+    m.box(ux0, uy0, uz, ux1, uy1, 10.6, hull, top=lit(hull, 0.14), shadow=False)
+    m.solids.append([(x, y, z) for x in (ux0, ux1) for y in (uy0, uy1) for z in (uz, 10.6)])
+    # Conduit band wrapping the lower hull, proud so it shades on every face.
+    m.box(lx0 - 0.4, ly0 - 0.4, 3.0, lx1 + 0.4, ly1 + 0.4, 4.2, accent, top=lit(accent, 0.25),
+          order=1, shadow=False, top_face=False, accent=True)
+    # Weapon port: a dark recess in the upper hull's front face, to the right
+    # of centre, that the gun comes out of.
+    m.box(0.2, uy1 - 0.2, 7.5, 5.8, uy1 + 0.5, 10.1, dark, top=dim(dark, 0.3), order=1, shadow=False)
+    # Gun: recoil sleeve, barrel, muzzle ring -- square-section struts along +y.
+    tip = 16.6 if not damaged else 12.8
+    gx, gz = 3.0, 8.8
+    m.strut((gx, uy1 + 0.2, gz), (gx, uy1 + 4.6, gz), 2.2, dark, cap=dark, order=2, shadow=False)
+    m.strut((gx, uy1 + 4.4, gz), (gx, tip, gz), 1.55, barrel, cap=dim(barrel, 0.4), order=2)
     if not damaged:
-        m.box(1.3, tip - 1.5, 9.8, 5.1, tip + 0.9, 12.9, accent, top=lit(accent, 0.3))
+        m.strut((gx, tip - 2.4, gz), (gx, tip + 0.4, gz), 2.0, lit(barrel, 0.15), cap=DAMAGE_SCORCH,
+                order=3, shadow=False)
+        m.strut((gx, tip - 0.6, gz - 2.3), (gx, tip + 0.2, gz - 2.3), 0.5, accent, cap=accent,
+                order=3, shadow=False, accent=True)
+    # Sensor block on the rear-left of the roof with its status pip, and a
+    # thin mast (snapped when damaged).
+    m.box(-5.6, -5.2, 10.6, -2.6, -2.2, 12.8, dim(hull, 0.25),
+          top=(GREEN_ACCENT if not damaged else dim(GREEN_ACCENT, 0.55)), shadow=False)
+    m.strut((-4.1, -3.7, 12.8), (-4.1, -3.7, 17.2 if not damaged else 14.0), 0.4, PALE_STEEL,
+            cap=(accent if not damaged else DAMAGE_SCORCH), shadow=False)
+    # Roof hatch, right of centre.
+    m.prism(2.6, -2.6, 10.6, 11.3, 2.1, dim(hull, 0.12), sides=8, top=lit(hull, 0.05), shadow=False)
+    # Capacitor drums on the lit flank -- the grid-fed part of the turret --
+    # lying along the hull with a team-coloured end cap each.
+    for z in (3.2, 6.3):
+        m.strut((-9.6, -6.0, z), (-9.6, 1.0, z), 1.25, dim(LEGACY_GRAY, 0.15), cap=accent,
+                order=1, shadow=False, accent=False)
+        m.box(-10.6, 1.0, z - 1.0, -8.6, 1.5, z + 1.0, accent, top=lit(accent, 0.2),
+              order=2, shadow=False, accent=True)
     return m
 
 
-def _sgtur_mount(sd, ox, oy, damaged=False):
-    """Turntable under the assembly. Drawn with ellipses rather than as mesh
-    faces so it is pixel-identical in all 32 facings (sam2.shp keeps 227
-    pixels byte-identical across its facings for exactly this reason)."""
-    ring = dim(SUN_GOLD, 0.35) if not damaged else dim(RUST, 0.2)
-    base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
-    sd.ellipse([ox - 11, oy - 5.5, ox + 11, oy + 5.5], fill=dim(base, 0.35))
-    sd.ellipse([ox - 11, oy - 6.8, ox + 11, oy + 4.2], fill=base)
-    sd.ellipse([ox - 11, oy - 6.8, ox + 11, oy + 4.2], outline=lit(base, 0.3), width=0.6)
-    sd.ellipse([ox - 8.6, oy - 5.4, ox + 8.6, oy + 3.2], fill=dim(base, 0.25))
-    # Bolt ring: eight studs around the race, one team-coloured feed lug.
-    for i in range(8):
-        a = i * math.pi / 4 + math.pi / 8
-        sd.px(round(ox + 9.7 * math.cos(a)), round(oy - 1.3 + 4.8 * math.sin(a)), lit(base, 0.45))
-    sd.rect([ox - 2, oy + 2.4, ox + 2, oy + 4.2], fill=ring)
+def _sgtur_station_origin(w, h):
+    """Screen origin of the station: the pad's turntable seat top."""
+    return w // 2, h // 2 + SGTUR_PIVOT_DY + SGTUR_PAD_H - SGTUR_SEAT_TOP
 
 
 def sgtur_turret_draw(sd, w, h, damaged=False, facing=0.0):
-    ox, oy = w // 2, h // 2 + SGTUR_PIVOT_DY
-    _sgtur_mount(sd, ox, oy, damaged)
+    ox, oy = _sgtur_station_origin(w, h)
     sgtur_mesh(damaged).draw(sd, ox, oy, facing)
     if damaged:
-        # Blown cap panel and a rust streak down the hull, on the fixed
-        # top-left the key light comes from (so it never spins with the
-        # barrel the way the old rotated-image damage decal did).
-        sd.ellipse([ox - 5.5, oy - 11.5, ox - 1.5, oy - 8.5], fill=DAMAGE_SCORCH + (235,))
-        sd.ellipse([ox - 4.6, oy - 10.8, ox - 2.6, oy - 9.6], fill=(0, 0, 0, 255))
-        sd.px(ox + 5, oy - 4, RUST)
-        sd.px(ox + 5, oy - 3, dim(RUST, 0.3))
+        _sgtur_damage_decals(sd, w, h)
+
+
+def _sgtur_damage_decals(sd, w, h):
+    """Blown roof panel and a rust streak down the hull, on the fixed
+    top-left the key light comes from (so they never spin with the gun the
+    way the old rotated-image damage decal did)."""
+    ox, oy = _sgtur_station_origin(w, h)
+    sd.ellipse([ox - 5.0, oy - 12.0, ox - 1.0, oy - 9.2], fill=DAMAGE_SCORCH + (235,))
+    sd.ellipse([ox - 4.2, oy - 11.4, ox - 2.0, oy - 10.0], fill=(0, 0, 0, 235))
+    sd.rect([ox + 5.2, oy - 6.5, ox + 6.0, oy - 2.5], fill=RUST + (220,))
 
 
 def sgtur_shadow_draw(sd, w, h, damaged=False, facing=0.0):
-    ox, oy = w // 2, h // 2 + SGTUR_PIVOT_DY
-    sd.ellipse([ox - 10, oy - 4.5, ox + 12, oy + 5], fill=(0, 0, 0, 255))
+    ox, oy = _sgtur_station_origin(w, h)
     sgtur_mesh(damaged).draw_shadow(sd, ox, oy, facing)
 
 
@@ -2248,8 +2278,9 @@ def sgtur_frames(damaged=False, n=32):
     bodies, shadows = [], []
     for i in range(n):
         deg = i * (360.0 / n)
-        bodies.append(outline_sprite(render(sgtur_turret_draw, SGTUR_W, SGTUR_H,
-                                            damaged=damaged, facing=deg)))
+        bodies.append(_mesh_render(sgtur_mesh(damaged), SGTUR_W, SGTUR_H,
+                                   *_sgtur_station_origin(SGTUR_W, SGTUR_H), deg,
+                                   decals=_sgtur_damage_decals if damaged else None))
         shadows.append(render_shadow_mask(sgtur_shadow_draw, SGTUR_W, SGTUR_H,
                                           damaged=damaged, facing=deg))
     return bodies, shadows
@@ -2274,9 +2305,14 @@ def sgtur_pad_mesh():
     con = CONCRETE
     m = Mesh()
     ph = math.pi / 8
+    base = LEGACY_GRAY_DARK
     m.prism(0, 0, 0.0, SGTUR_PAD_H, SGTUR_PAD_R, con, sides=8, top=lit(con, 0.22), phase=ph)
-    m.prism(0, 0, SGTUR_PAD_H, SGTUR_PAD_H + 0.9, 11.0, dim(con, 0.1), sides=16,
-            top=lit(con, 0.1), phase=math.pi / 16, shadow=False)
+    # Turntable seat: a dark race ring with a lighter bearing plate inside it
+    # (its top is SGTUR_SEAT_TOP, where the station's collar sits). 32-gons,
+    # the same count as the station's collar.
+    m.prism(0, 0, SGTUR_PAD_H, SGTUR_PAD_H + 1.0, 11.0, base, sides=32, top=lit(base, 0.3), shadow=False)
+    m.prism(0, 0, SGTUR_PAD_H + 1.0, SGTUR_SEAT_TOP, 9.4, dim(con, 0.05), sides=32,
+            top=lit(con, 0.16), shadow=False)
     for i in range(4):
         ang = ph + i * math.pi / 2 + math.pi / 4
         m.prism(12.6 * math.cos(ang), 12.6 * math.sin(ang), SGTUR_PAD_H, SGTUR_PAD_H + 0.7, 0.7,

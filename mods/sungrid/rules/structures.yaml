@@ -2708,7 +2708,7 @@ SGTUR:
 		Recoils: false
 	Armament:
 		Weapon: GridPulseCannon
-		LocalOffset: 0,0,320
+		LocalOffset: 384,128,270
 		MuzzleSequence: muzzle
 	AttackTurreted:
 		PauseOnCondition: build-incomplete

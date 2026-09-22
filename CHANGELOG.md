@@ -520,6 +520,14 @@ missing `using` that would otherwise have broken CI and all three platform insta
   on bare ground.
 - Footprints, placement, build-ups and team colour are unchanged.
 
+## The Grid Defense Turret finally looks like its cameo (issue #112)
+
+- The station is a pale armoured block now, bevelled between a wide base and a narrower top, with a dark
+  weapon port and a short, thick gun with a muzzle ring - the silhouette its build-menu cameo has shown
+  all along. The old dark box with a thin bar and a black outline read as flat.
+- It turns on a proper turntable ring seated in the pad, and carries capacitor drums on its flank.
+- The muzzle flash now comes out of the barrel instead of the middle of the hull.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

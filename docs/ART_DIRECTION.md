@@ -163,6 +163,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 111 review render: the Arc Turret before and after with the head at four facings and damaged, and the Grid Defense Turret pad before and after under its station and alone.](concept-art/issue111-defence-pedestals.png)
 
+**Follow-up: the Grid Defense Turret's station (`docs/BACKLOG.md` issue #112).** The owner's read after #111: "I love the concept but it feels 2d and basic still" - and its photographic cameo said why. The cameo is a pale armoured block with a dark weapon port and a short thick gun; the sprite was a blue-black box with a thin bar and a black outline. Two rules fell out of rebuilding it on the cameo's silhouette: a dark material has no value room for flat shading to work in, so a solid that must read as one is built in `PALE_STEEL` and given a bevel ring so every face lands on its own shade step; and a black outline turns a solid into a sticker - no `Mesh` actor wears one now. The turntable is a 32-gon prism seated in the pad rather than a drawn ellipse, which is pixel-identical across the 32 facings for free.
+
+![Issue 112 review render: the cameo, the rebuilt station at eight facings and five damaged facings on the new pad, and the old station before at 2× beside the new one at 1×.](concept-art/issue112-grid-turret.png)
+
 The turbine and the dish at their real per-frame timing: [`issue109-sgwnd.gif`](concept-art/issue109-sgwnd.gif), [`issue109-sgsns.gif`](concept-art/issue109-sgsns.gif).
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

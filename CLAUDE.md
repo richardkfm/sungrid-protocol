@@ -380,6 +380,13 @@ is the regression check.
     top raises the head, which is why the Arc Turret's rods are 19.5 units (check the head's bbox row 0
     after touching either). Greenery here is `grass_ring()`, a narrow fringe of tufts, not the roster's
     `bed()`s. The old flat `draw_ground_strip` vocabulary is gone entirely.
+19. **A dark material cannot look solid under six-step flat shading, and a black outline makes a solid a
+    sticker (issue #112).** The Grid Defense Turret's blue-black hull had no value room between its lit and
+    shaded faces; rebuilt in `PALE_STEEL` with a bevel ring between two hull tiers, every face reads. It was
+    also the only `Mesh` actor run through `outline_sprite` - don't add that to a solid. A rotating part that
+    must stay pixel-identical across 32 facings can be a 32-gon prism instead of an ellipse (11.25 degrees
+    maps it onto itself); the station's collar and the pad's seat both are. Fixed-orientation damage decals
+    go through `_mesh_render(..., decals=fn)` so the frame still gets the accent re-stamp.
 
 ### What can and can't be verified in this environment
 
