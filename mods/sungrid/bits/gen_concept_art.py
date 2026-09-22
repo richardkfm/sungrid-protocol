@@ -1171,8 +1171,10 @@ def pv_panel(m, x0, y, w, d, z, rise=6.5, face=None, order=2, damaged=False, fra
                DAMAGE_SCORCH, order=order + 3)
 
 
-def tilted_disc(m, cx, cy, cz, r, normal, col, inner=None, sides=12, order=2):
-    """A dish/disc facing `normal`: a flat n-gon in the plane perpendicular to it."""
+def tilted_disc(m, cx, cy, cz, r, normal, col, inner=None, sides=12, order=2, back=None):
+    """A dish/disc facing `normal`: a flat n-gon in the plane perpendicular to it.
+    `back` gives it a rear face too (the renderer culls by winding, so a dish
+    that sweeps away from the camera would otherwise vanish for half a turn)."""
     n = _v_norm(normal)
     up = (0.0, 0.0, 1.0) if abs(n[2]) < 0.9 else (1.0, 0.0, 0.0)
     u = _v_norm((n[1] * up[2] - n[2] * up[1], n[2] * up[0] - n[0] * up[2], n[0] * up[1] - n[1] * up[0]))
@@ -1185,6 +1187,15 @@ def tilted_disc(m, cx, cy, cz, r, normal, col, inner=None, sides=12, order=2):
     m.poly(ring(r, 0.0), col, order=order)
     if inner is not None:
         m.poly(ring(r * 0.72, 0.2), inner, order=order + 1)
+    if back is not None:
+        m.poly(list(reversed(ring(r, -0.2))), back, order=order)
+
+
+def _rot_about(cx, cy, x, y, deg):
+    """(x, y) turned `deg` degrees about (cx, cy) in the ground plane."""
+    a = math.radians(deg)
+    dx, dy = x - cx, y - cy
+    return (cx + dx * math.cos(a) - dy * math.sin(a), cy + dx * math.sin(a) + dy * math.cos(a))
 
 
 def drone_model(m, cx, cy, z, col=GREEN_PRIMARY, r=7.5, damaged=False):
@@ -1267,9 +1278,10 @@ def sgapwr_mesh(damaged=False):
     return m
 
 
-def sgcry_mesh(damaged=False):
+def sgcry_mesh(damaged=False, flicker=None):
     """Cryptominer: worn, scavenged server-rack blocks under a lean-to PV
-    canopy -- the untidy legacy-tech foil to the Datacenter."""
+    canopy -- the untidy legacy-tech foil to the Datacenter. `flicker` (0-7)
+    picks which amber status pips are lit that frame (issue #109)."""
     m = Mesh()
     plinth(m, 20, live=not damaged)
     racks = [((-17, -12, -5, 1), 12, LEGACY_GRAY), ((-3, -15, 10, -3), 9, mix(LEGACY_GRAY, RUST, 0.35)),
@@ -1284,6 +1296,8 @@ def sgcry_mesh(damaged=False):
         for zz in range(4, hgt - 1, 3):
             m.box(x0 - 0.4, y0 + 1.5, 2.2 + zz, x0 + 0.1, y1 - 1.5, 2.2 + zz + 1.0, dim(col, 0.45), top=dim(col, 0.45), order=1, shadow=False)
         pip = AMBER if not damaged else dim(AMBER, 0.6)
+        if flicker is not None and not damaged and _scatter(k, flicker, 21) < 0.3:
+            pip = dim(AMBER, 0.55)
         m.box(x0 - 0.5, y0 + 1.5, 2.2 + hgt - 2.2, x0 + 0.1, y0 + 3.5, 2.2 + hgt - 1.2, pip, top=pip, order=2, shadow=False)
     # Lean-to canopy of salvaged panels over the front racks, on two poles.
     m.strut((-19, -19, 2.2), (-19, -19, 15), 0.7, POLE_DARK)
@@ -1303,9 +1317,10 @@ def sgcry_mesh(damaged=False):
     return m
 
 
-def sgdai_mesh(damaged=False):
+def sgdai_mesh(damaged=False, beacon=True):
     """Datacenter for AI: a sealed machine hall with a rooftop chiller bank --
-    tidy, capital-intensive, the foil to the Cryptominer."""
+    tidy, capital-intensive, the foil to the Cryptominer. `beacon=False` is
+    the mast light's off frame (issue #109)."""
     m = Mesh()
     plinth(m, 20, live=not damaged)
     hall = mix(PANEL_BLUEBLACK, LEGACY_GRAY, 0.35)
@@ -1336,16 +1351,20 @@ def sgdai_mesh(damaged=False):
     tree(m, 15.5, -17.3, 2.2, h=8.5, r=5.0)
     # Beacon mast on the near corner of the roof.
     m.strut((15, -12, 15), (15, -12, 22 if not damaged else 17), 0.6, STEEL, cap=RUST if damaged else None)
-    if not damaged:
+    if not damaged and beacon:
         m.box(14.3, -12.7, 22, 15.7, -11.3, 23.2, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
+    elif not damaged:
+        m.box(14.3, -12.7, 22, 15.7, -11.3, 23.2, dim(PALE_STEEL, 0.45), top=dim(PALE_STEEL, 0.3), order=4, shadow=False)
     if damaged:
         m.box(4, -16, 8, 12, -14.5, 15, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
     return m
 
 
-def sgdrn_mesh(damaged=False):
+def sgdrn_mesh(damaged=False, chase=None):
     """Drone Bay: an octagonal landing pad with a team-colour ring, control
-    cabin, charging mast, and a Recon Drone parked on the pad."""
+    cabin, charging mast, and a Recon Drone parked on the pad. `chase` (0-7)
+    lights one opposite pair of the eight pad markers for the idle animation
+    (issue #109); None is the even, unanimated ring."""
     m = Mesh()
     plinth(m, 20, live=not damaged)
     m.prism(1, -3, 2.2, 4.0, 15.5, dim(CONCRETE, 0.05), sides=8, top=PAD_TOP, phase=math.pi / 8)
@@ -1355,8 +1374,13 @@ def sgdrn_mesh(damaged=False):
     for i in range(8):
         a = i * math.pi / 4 + math.pi / 8
         px, py = 1 + 15.5 * math.cos(a), -3 + 15.5 * math.sin(a)
-        m.box(px - 0.7, py - 0.7, 4.7, px + 0.7, py + 0.7, 6.0, LEGACY_GRAY_DARK,
-              top=(GREEN_ACCENT if not damaged else RUST), order=3, shadow=False)
+        if damaged:
+            marker = RUST
+        elif chase is None:
+            marker = GREEN_ACCENT
+        else:
+            marker = lit(GREEN_ACCENT, 0.55) if i in (chase, (chase + 4) % 8) else dim(GREEN_ACCENT, 0.45)
+        m.box(px - 0.7, py - 0.7, 4.7, px + 0.7, py + 0.7, 6.0, LEGACY_GRAY_DARK, top=marker, order=3, shadow=False)
     m.box(-19, 8, 2.2, -6, 19, 11, STEEL, top=lit(STEEL, 0.2))
     m.box(-18, 9, 11, -7, 18, 11.8, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.35), shadow=False)
     m.box(-17.5, 7.5, 5, -7.5, 8.2, 8.5, PANEL_BLUEBLACK, top=PANEL_BLUEBLACK, order=1, shadow=False)
@@ -1422,9 +1446,10 @@ def sgdra_mesh(damaged=False):
     return m
 
 
-def sgshl_mesh(damaged=False):
+def sgshl_mesh(damaged=False, beacon=True):
     """Resilience Shelter: a hardened dome banked into an earth berm, with a
-    sandbagged entry throat facing the front."""
+    sandbagged entry throat facing the front. `beacon=False` is the crown
+    light's off frame (issue #109)."""
     m = Mesh()
     plinth(m, 18, live=not damaged)
     m.prism(0, 1, 2.2, 5.5, 16.5, DIRT, sides=12, top=LEAF_MID)
@@ -1456,14 +1481,21 @@ def sgshl_mesh(damaged=False):
             m.box(x - 1.5, -17 + i * 3, 2.2, x + 1.5, -14.5 + i * 3, 4.0, lit(DIRT, 0.25), top=lit(DIRT, 0.4), shadow=False)
     # Vent stack and the live beacon on the crown.
     m.strut((-8, 6, 12), (-8, 6, 17), 0.9, STEEL, cap=lit(STEEL, 0.3))
-    m.box(-1, 0, 17.5, 1, 2, 19, SUN_GOLD if not damaged else RUST, top=SUN_GOLD, order=4, shadow=False, accent=not damaged)
+    if damaged:
+        m.box(-1, 0, 17.5, 1, 2, 19, RUST, top=SUN_GOLD, order=4, shadow=False)
+    elif beacon:
+        m.box(-1, 0, 17.5, 1, 2, 19, SUN_GOLD, top=SUN_GOLD, order=4, shadow=False, accent=True)
+    else:
+        m.box(-1, 0, 17.5, 1, 2, 19, dim(PALE_STEEL, 0.45), top=dim(PALE_STEEL, 0.3), order=4, shadow=False)
     tree(m, 14, -14, 2.2, h=7.5, r=4.5)
     shrub(m, -14, -13.5, 2.2, r=2.2)
     return m
 
 
-def sgsns_mesh(damaged=False):
-    """Sensor Array: a parabolic dish on a mast over its equipment cabinet."""
+def sgsns_mesh(damaged=False, sweep=0.0):
+    """Sensor Array: a parabolic dish on a mast over its equipment cabinet.
+    `sweep` turns the dish assembly about the mast (degrees) for the idle
+    animation (issue #109); the fallen damaged dish does not turn."""
     m = Mesh()
     plinth(m, 13, live=not damaged)
     m.box(-11, 1, 2.2, -2, 10, 8, STEEL, top=lit(STEEL, 0.2))
@@ -1476,18 +1508,24 @@ def sgsns_mesh(damaged=False):
     m.prism(4, -3, 2.2, 4.0, 3.5, dim(CONCRETE, 0.1), sides=8, top=lit(CONCRETE, 0.1))
     m.prism(4, -3, 4.0, 15.0, 1.4, STEEL, sides=8, top=lit(STEEL, 0.2))
     if not damaged:
-        m.strut((4, -3, 15), (3, -4, 17), 0.8, STEEL)
-        tilted_disc(m, 2.5, -4.5, 19, 7.5, (-0.45, -0.5, 0.74), lit(PALE_STEEL, 0.2), inner=lit(PANEL_BLUEBLACK, 0.3), sides=10)
-        m.strut((2.5, -4.5, 19), (0.5, -6.8, 22.5), 0.4, STEEL)
-        m.box(-0.1, -7.4, 22.3, 1.1, -6.2, 23.4, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
+        R = lambda x, y: _rot_about(4, -3, x, y, sweep)
+        nx, ny = _rot_about(0, 0, -0.45, -0.5, sweep)
+        m.strut((4, -3, 15), R(3, -4) + (17,), 0.8, STEEL)
+        dx, dy = R(2.5, -4.5)
+        tilted_disc(m, dx, dy, 19, 7.5, (nx, ny, 0.74), lit(PALE_STEEL, 0.2), inner=lit(PANEL_BLUEBLACK, 0.3), sides=10,
+                    back=dim(PALE_STEEL, 0.3))
+        fx, fy = R(0.5, -6.8)
+        m.strut((dx, dy, 19), (fx, fy, 22.5), 0.4, STEEL)
+        m.box(fx - 0.6, fy - 0.6, 22.3, fx + 0.6, fy + 0.6, 23.4, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
     else:
         tilted_disc(m, 6.5, -1.0, 6.5, 7.5, (0.3, 0.1, 0.95), dim(PALE_STEEL, 0.35), inner=dim(PANEL_BLUEBLACK, 0.3), sides=10)
     return m
 
 
-def sgrel_mesh(damaged=False):
+def sgrel_mesh(damaged=False, arc=None):
     """Smart Grid Relay: a pad-mounted step-down transformer -- tank, radiator
-    fins, three bushings with live terminals."""
+    fins, three bushings with live terminals. `arc` (0-5) flickers the
+    discharge between the terminals for the idle animation (issue #109)."""
     m = Mesh()
     plinth(m, 13, live=not damaged)
     tank = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.22)
@@ -1506,14 +1544,25 @@ def sgrel_mesh(damaged=False):
         if not snapped:
             m.box(x - 1.2, -1.2, top, x + 1.2, 1.2, top + 1.2, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4),
                   top=lit(SUN_GOLD, 0.3), order=2, shadow=False, accent=True)
-    m.strut((-5.5, 0, 16.4), (2.5, 0, 16.4), 0.35, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), order=3, shadow=False, accent=True)
+    if arc is None or damaged:
+        m.strut((-5.5, 0, 16.4), (2.5, 0, 16.4), 0.35, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4), order=3, shadow=False, accent=True)
+    elif arc not in (2, 5):
+        # Live arc: alternately thin and bright, thick and full, with a spark
+        # jumping off one terminal on the bright frames.
+        bright = arc % 2 == 1
+        m.strut((-5.5, 0, 16.4), (2.5, 0, 16.4), 0.5 if bright else 0.35, lit(SUN_GOLD, 0.4) if bright else SUN_GOLD,
+                order=3, shadow=False, accent=True)
+        if bright:
+            sx = (-5.5, 2.5, -1.5)[arc // 2]
+            m.box(sx - 0.5, -0.5, 16.7, sx + 0.5, 0.5, 17.9, lit(SUN_GOLD, 0.5), top=lit(SUN_GOLD, 0.5), order=4, shadow=False, accent=True)
     if damaged:
         m.box(-8.5, -5, 4, -7.9, 0, 9, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=1, shadow=False)
     return m
 
 
-def sgwnd_mesh(damaged=False):
-    """Wind Turbine Array: one slim mast on a single-cell footing."""
+def sgwnd_mesh(damaged=False, spin=0.0):
+    """Wind Turbine Array: one slim mast on a single-cell footing. `spin` turns
+    the rotor (degrees) for the idle animation (issue #109)."""
     m = Mesh()
     plinth(m, 13, live=not damaged)
     # Planted bed inside the rim, the mast footing standing in it (issue #108).
@@ -1531,6 +1580,7 @@ def sgwnd_mesh(damaged=False):
         if damaged and k == 2:
             continue
         r = 7.5 if not damaged else 6.0
+        a += spin
         tip = (hub[0] + r * math.cos(math.radians(a)), hub[1], hub[2] + r * math.sin(math.radians(a)))
         m.strut(hub, tip, 0.45, lit(PALE_STEEL, 0.15), cap=lit(PALE_STEEL, 0.3), shadow=False)
     m.box(-0.6, -0.6, 19.5, 0.6, 0.6, 20.5, SUN_GOLD if not damaged else RUST, top=SUN_GOLD, order=3, shadow=False, accent=not damaged)
@@ -1664,11 +1714,12 @@ def rcyd_mesh(damaged=False, charge=RCYD_STAGES - 1):
     return m
 
 
-def sgfact_mesh(damaged=False, build=None):
+def sgfact_mesh(damaged=False, build=None, beacon=True):
     """Construction Yard: a vaulted space-frame fabrication hall with a PV
     field on its sunward flank, a team-colour door frame, and an open assembly
     yard under a gantry crane. `build` (0..1) moves the crane trolley along
-    the beam for the 25-frame placed-building animation."""
+    the beam for the 25-frame placed-building animation; `beacon=False` is
+    the mast light's off frame in the idle animation (issue #109)."""
     m = Mesh()
     plinth(m, 25, z=2.0, live=not damaged)
     hall = PALE_STEEL if not damaged else mix(PALE_STEEL, DAMAGE_SCORCH, 0.15)
@@ -1716,11 +1767,73 @@ def sgfact_mesh(damaged=False, build=None):
     shrub(m, 12, -22.0, 2.0, r=2.4)
     tuft(m, 16.5, -22.5, 2.0)
     m.strut((21, 21, 20), (21, 21, 32 if not damaged else 24), 0.8, STEEL, cap=RUST if damaged else None)
-    if not damaged:
+    if not damaged and beacon:
         m.box(20.2, 20.2, 32, 21.8, 21.8, 33.4, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
+    elif not damaged:
+        m.box(20.2, 20.2, 32, 21.8, 21.8, 33.4, dim(PALE_STEEL, 0.45), top=dim(PALE_STEEL, 0.3), order=4, shadow=False)
     if damaged:
         m.box(-22, -0.5, 4, -14, 0.2, 12, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
         m.box(6, -20, 2, 14, -13, 4, mix(STEEL, DAMAGE_SCORCH, 0.5), top=DAMAGE_SCORCH)
+    return m
+
+
+# Idle overlays (issue #109): sheets WithIdleOverlay draws *over* the body, at
+# the body's own frame size and origin so no offset is needed. Two reasons a
+# moving part is an overlay rather than body frames: the Depot's body is a
+# WithResourceLevelSpriteBody stage strip (the frame is picked by fill level,
+# so it cannot animate), and the grid-strained lamps only exist while a
+# condition holds, which is exactly what RequiresCondition on an overlay is.
+STRAIN_ORANGE = (252, 92, 0)        # palette 229: the 'strained' warning tone. Redder than AMBER on purpose:
+                                    # a mesh face is *shaded*, and shaded amber (~(150,85,10)) lies inside
+                                    # _index_for's gold radius and goes onto the remap ramp; shaded red-orange
+                                    # stays next to the palette's own (180,72,0) instead.
+FAULT_RED = (204, 0, 0)             # palette 233
+LAMP_OFF = dim(LEGACY_GRAY, 0.2)    # an unlit lamp: plain dark grey, nowhere near the gold ramp
+
+
+def rcyd_smoke_mesh(phase=0):
+    """Recycling Depot stack puffs: three puffs at staggered ages rising from
+    the shredder stack and drifting downwind. Opaque greys shrinking to
+    nothing rather than a fade -- indexed alpha is 1-bit."""
+    m = Mesh()
+    for j in range(3):
+        age = (phase + j * 8 / 3) % 8
+        if age > 6.5:
+            continue
+        z = 15.3 + age * 1.1
+        r = 0.8 + age * 0.22 if age < 4.5 else 1.8 - (age - 4.5) * 0.45
+        col = (196, 196, 196) if age < 2.5 else ((160, 160, 160) if age < 4.5 else (124, 124, 124))
+        m.prism(9 + age * 0.3, 9 + age * 0.15, z, z + r * 0.9, r, col, sides=6, top=lit(col, 0.15), shadow=False)
+    return m
+
+
+def sgdai_strained_mesh(phase=0, damaged=False):
+    """grid-strained overlay for the Datacenter: the green data line goes
+    amber and the mast beacon blinks amber over the body's own team-colour
+    one (the damaged body has no beacon, so its variant is the line alone)."""
+    # Fixed-palette tones only, and none that shade into the gold radius: a
+    # dark amber for the off lamp and a shaded amber line both landed on the
+    # remap ramp on the first renders (see STRAIN_ORANGE). An overlay sheet
+    # must carry zero remap-ramp pixels.
+    m = Mesh()
+    m.box(-16, -15.5, 3.2, 16, -14.9, 4.0, STRAIN_ORANGE, top=STRAIN_ORANGE, order=1, shadow=False)
+    if not damaged:
+        on = phase != 3
+        m.box(14.3, -12.7, 22, 15.7, -11.3, 23.2, STRAIN_ORANGE if on else LAMP_OFF, top=AMBER if on else LAMP_OFF,
+              order=4, shadow=False)
+    return m
+
+
+def sgcry_strained_mesh(phase=0, damaged=False):
+    """grid-strained overlay for the Cryptominer: every status pip dark, with
+    a red fault blink on the back-left rack, over the body's amber flicker."""
+    m = Mesh()
+    racks = [((-17, -12, -5, 1), 12), ((-3, -15, 10, -3), 9), ((-14, 4, -1, 17), 15), ((3, 1, 16, 15), 11)]
+    for k, ((x0, y0, x1, y1), hgt) in enumerate(racks):
+        if damaged and k == 1:
+            continue
+        pip = FAULT_RED if (k == 0 and phase in (0, 1)) else LAMP_OFF
+        m.box(x0 - 0.5, y0 + 1.5, 2.2 + hgt - 2.2, x0 + 0.1, y0 + 3.5, 2.2 + hgt - 1.2, pip, top=pip, order=2, shadow=False)
     return m
 
 
@@ -1750,6 +1863,12 @@ ACCENT_COVERAGE = 90   # of 255: a native pixel at least ~35% covered by accent 
 
 
 def mesh_frame(name, **kw):
+    """One finished frame of a roster building (see _mesh_frame)."""
+    fam, fn = MESHES[name]
+    return _mesh_frame(fam, fn, **kw)
+
+
+def _mesh_frame(fam, fn, **kw):
     """One finished frame: the shaded model, with every accent face re-stamped
     at native resolution so it lands on the player-remap ramp.
 
@@ -1762,7 +1881,6 @@ def mesh_frame(name, **kw):
     native pixels the band owns, and an accent-only colour pass on a solid gold
     background says what shade each one should be, without ever blending with
     a non-gold neighbour."""
-    fam, fn = MESHES[name]
     w, h, half = FAM[fam]
     ox, oy = w // 2, _oy(h, half)
     mesh = fn(**kw)
@@ -1783,11 +1901,40 @@ def mesh_frame(name, **kw):
     return body
 
 
-def building_sheet(name, **kw):
-    frames = [mesh_frame(name, damaged=d, **kw) for d in (False, True)]
+# Idle animation (issue #109): the frames each animated building's body sheet
+# carries, as kwargs for its *_mesh() -- idle frames first, then damaged.
+# `idle:` Length, `damaged-idle:` Start/Length and the Tick per state live in
+# sequences/structures.yaml and must agree with these counts; the engine's
+# --check-missing-sprites reports a sheet that is short. Buildings not listed
+# keep the two-frame idle/damaged sheet.
+ANIM = {
+    # Three blades, so a 120-degree turn is one visual cycle: 24 x 5 degrees
+    # at Tick 100 is 2.4 s per cycle, a stately 7 s per revolution. Damaged
+    # (two blades) the cycle is a full turn: 24 x 15 degrees at Tick 400,
+    # a quarter slower.
+    "sgwnd": ([dict(spin=5.0 * i) for i in range(24)], [dict(damaged=True, spin=15.0 * i) for i in range(24)]),
+    # The dish sweeps a full circle in 16 steps at Tick 250 (4 s); the fallen dish is still.
+    "sgsns": ([dict(sweep=22.5 * i) for i in range(16)], [dict(damaged=True)]),
+    # Beacons: on five frames, off three, Tick 200 (1.6 s). Damaged masts carry no beacon.
+    "sgdai": ([dict(beacon=i < 5) for i in range(8)], [dict(damaged=True)]),
+    "sgshl": ([dict(beacon=i < 5) for i in range(8)], [dict(damaged=True)]),
+    # Pad-ring chase lights, Tick 150; the damaged ring is dead.
+    "sgdrn": ([dict(chase=i) for i in range(8)], [dict(damaged=True)]),
+    # Amber status pips flicker, Tick 150.
+    "sgcry": ([dict(flicker=i) for i in range(8)], [dict(damaged=True)]),
+    # The arc between the terminals flickers, Tick 120.
+    "sgrel": ([dict(arc=i) for i in range(6)], [dict(damaged=True)]),
+}
+
+
+def building_sheet(name):
+    """Every body-sheet frame of a roster building (idle states, then damaged)
+    as one indexed strip, plus the frames themselves."""
+    idle_kws, dmg_kws = ANIM.get(name, ([{}], [dict(damaged=True)]))
+    frames = [mesh_frame(name, **kw) for kw in idle_kws + dmg_kws]
     fam, _ = MESHES[name]
     w, h, _ = FAM[fam]
-    return indexed_strip(frames, [silhouette_shadow(f, 2, 2) for f in frames], w, h), frames[0]
+    return indexed_strip(frames, [silhouette_shadow(f, 2, 2) for f in frames], w, h), frames
 
 
 
@@ -2077,6 +2224,17 @@ def sgtur_pad_draw(sd, w, h, damaged=False):
     # Cable trench feeding the mount, on the remap ramp like every other
     # building's conduit.
     sd.rect([cx - 3, cy + ry * 0.4, cx + 3, cy + ry * 0.4 + 1.6], fill=dim(SUN_GOLD, 0.25))
+
+
+def sgtur_strained_draw(sd, w, h, phase=0):
+    """grid-strained overlay for the turret pad (issue #109): an amber fault
+    lamp blinking on the pad's near-left rim, clear of the station on top."""
+    cy = h // 2 + SGTUR_PIVOT_DY
+    cx = w // 2
+    x, y = cx - 15.0 * 0.62, cy + 8.0 * 0.62
+    sd.rect([x - 1.0, y - 1.0, x + 1.0, y + 0.6], fill=dim(CONCRETE, 0.3))
+    if phase != 3:
+        sd.rect([x - 0.8, y - 2.6, x + 0.8, y - 1.0], fill=AMBER)
 
 
 def _drone_boom(sd, cx, cy, ex, ey, col, wide=1.5):
@@ -3356,10 +3514,11 @@ def main():
         if name in ("sgvlt", "rcyd", "sgfact"):
             continue          # multi-state sheets, assembled below
         w, h, _half = FAM[fam]
-        sheet, idle = building_sheet(name)
-        save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
+        sheet, frames = building_sheet(name)
+        save_pngsheet(sheet, f"{name}.png", w, h, len(frames), indexed=True)
         save_pngsheet(make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name)),
                       f"{name}icon.png", ICON_W, ICON_H, 1)
+        idle = frames[0]
         mk = make_frames(mesh_draw_fn(name), w, h, final=idle)
         save_pngsheet(indexed_strip(mk, [None] * (len(mk) - 1) + [silhouette_shadow(idle, 2, 2)], w, h),
                       f"{name}make.png", w, h, len(mk), indexed=True)
@@ -3395,16 +3554,18 @@ def main():
                   "rcydmake.png", SG1x1_W, SG1x1_H, len(rcy_mk), indexed=True)
 
     # Construction Yard (issue #106): the mod's own FACT art, on stock
-    # fact.shp's exact 52-frame layout -- idle, 25 `build` frames (the crane
-    # trolley traversing, played by WithBuildingPlacedAnimation), damaged
-    # idle, 25 damaged build frames -- so the stock sequence node is mirrored
-    # one-to-one by sgfact: in sequences/structures.yaml.
+    # fact.shp's layout -- idle, 25 `build` frames (the crane trolley
+    # traversing, played by WithBuildingPlacedAnimation), damaged idle, 25
+    # damaged build frames -- except that the idle is now eight frames (the
+    # mast beacon blinking, issue #109), so the layout is idle 0-7, build
+    # 8-32, damaged-idle 33, damaged-build 34-58 and sgfact: in
+    # sequences/structures.yaml carries those starts.
     fw, fh, _half = FAM["fact"]
-    fact_frames = []
-    for dmg in (False, True):
-        fact_frames.append(mesh_frame("sgfact", damaged=dmg))
-        fact_frames += [mesh_frame("sgfact", damaged=dmg, build=i / 24) for i in range(25)]
-    assert len(fact_frames) == 52
+    fact_frames = [mesh_frame("sgfact", beacon=i < 5) for i in range(8)]
+    fact_frames += [mesh_frame("sgfact", build=i / 24) for i in range(25)]
+    fact_frames.append(mesh_frame("sgfact", damaged=True))
+    fact_frames += [mesh_frame("sgfact", damaged=True, build=i / 24) for i in range(25)]
+    assert len(fact_frames) == 59
     save_pngsheet(indexed_strip(fact_frames, [silhouette_shadow(f, 2, 2) for f in fact_frames], fw, fh),
                   "sgfact.png", fw, fh, len(fact_frames), indexed=True)
     # No cameo of its own: FACT keeps stock facticon.shp (the owner's call,
@@ -3412,6 +3573,21 @@ def main():
     fact_mk = make_frames(mesh_draw_fn("sgfact"), fw, fh, final=fact_frames[0])
     save_pngsheet(indexed_strip(fact_mk, [None] * (len(fact_mk) - 1) + [silhouette_shadow(fact_frames[0], 2, 2)], fw, fh),
                   "sgfactmake.png", fw, fh, len(fact_mk), indexed=True)
+
+    # Idle overlays (issue #109), drawn over the body by WithIdleOverlay:
+    # the Depot's stack puffs, and the grid-strained lamps on the three
+    # buildings that consume that condition. `strained` frames first, then
+    # the `damaged-strained` variant where the damaged body differs.
+    smoke = [_mesh_frame("1x1", rcyd_smoke_mesh, phase=i) for i in range(8)]
+    save_pngsheet(indexed_strip(smoke, None, SG1x1_W, SG1x1_H), "rcydsmoke.png", SG1x1_W, SG1x1_H, len(smoke), indexed=True)
+    for name, fn, dmg_frames in (("sgdai", sgdai_strained_mesh, 1), ("sgcry", sgcry_strained_mesh, 4)):
+        fam = MESHES[name][0]
+        w, h, _half = FAM[fam]
+        fr = [_mesh_frame(fam, fn, phase=i) for i in range(4)]
+        fr += [_mesh_frame(fam, fn, phase=i, damaged=True) for i in range(dmg_frames)]
+        save_pngsheet(indexed_strip(fr, None, w, h), f"{name}strained.png", w, h, len(fr), indexed=True)
+    lamp = [render(sgtur_strained_draw, SGTUR_W, SGTUR_H, phase=i) for i in range(4)]
+    save_pngsheet(indexed_strip(lamp, None, SGTUR_W, SGTUR_H), "sgturstrained.png", SGTUR_W, SGTUR_H, len(lamp), indexed=True)
 
     # Arc Turret: the head is its own 32-facing turret sprite (issue #66), so
     # arct.png above is the pedestal alone and this is what rotates on top.

@@ -101,6 +101,12 @@ rcyd:
 		Filename: rcyd.png
 		Start: 9
 		Length: 9
+	# Stack puffs, drawn over the body by WithIdleOverlay (issue #109): the
+	# body is a fill-level stage strip, so the motion has to be an overlay.
+	smoke:
+		Filename: rcydsmoke.png
+		Length: 8
+		Tick: 200
 	make:
 		Filename: rcydmake.png
 		Length: *
@@ -152,17 +158,22 @@ fact:
 sgfact:
 	Defaults:
 		Filename: sgfact.png
+	# Stock fact.shp's layout (idle, 25 build frames, damaged idle, 25 damaged
+	# build frames), except that the idle is eight frames with the mast beacon
+	# blinking (issue #109), which shifts every later start by seven.
 	idle:
+		Length: 8
+		Tick: 200
 	make:
 		Filename: sgfactmake.png
 		Length: *
 	build:
-		Start: 1
+		Start: 8
 		Length: 25
 	damaged-idle:
-		Start: 26
+		Start: 33
 	damaged-build:
-		Start: 27
+		Start: 34
 		Length: 25
 	dead:
 		Filename: sgfactdead.png
@@ -351,9 +362,22 @@ sgapwr:
 sgcry:
 	Defaults:
 		Filename: sgcry.png
+	# Amber status pips flicker (issue #109). `strained` is the grid-strained
+	# WithIdleOverlay: pips dark, a red fault blink on the back-left rack.
 	idle:
+		Length: 8
+		Tick: 150
 	damaged-idle:
-		Start: 1
+		Start: 8
+	strained:
+		Filename: sgcrystrained.png
+		Length: 4
+		Tick: 250
+	damaged-strained:
+		Filename: sgcrystrained.png
+		Start: 4
+		Length: 4
+		Tick: 250
 	make:
 		Filename: sgcrymake.png
 		Length: *
@@ -369,9 +393,20 @@ sgcry:
 sgdai:
 	Defaults:
 		Filename: sgdai.png
+	# Mast beacon blinks (issue #109); the damaged mast has none. `strained`
+	# is the grid-strained WithIdleOverlay: amber data line and beacon.
 	idle:
+		Length: 8
+		Tick: 200
 	damaged-idle:
-		Start: 1
+		Start: 8
+	strained:
+		Filename: sgdaistrained.png
+		Length: 4
+		Tick: 250
+	damaged-strained:
+		Filename: sgdaistrained.png
+		Start: 4
 	make:
 		Filename: sgdaimake.png
 		Length: *
@@ -387,9 +422,12 @@ sgdai:
 sgdrn:
 	Defaults:
 		Filename: sgdrn.png
+	# Pad-ring chase lights (issue #109); the damaged ring is dead.
 	idle:
+		Length: 8
+		Tick: 150
 	damaged-idle:
-		Start: 1
+		Start: 8
 	make:
 		Filename: sgdrnmake.png
 		Length: *
@@ -429,6 +467,12 @@ sgtur: # WithSpriteBody draws the fixed emplacement pad; the weapon station on t
 	make:
 		Filename: sgturmake.png
 		Length: *
+	# grid-strained fault lamp on the pad rim, a WithIdleOverlay gated on the
+	# condition (issue #109).
+	strained:
+		Filename: sgturstrained.png
+		Length: 4
+		Tick: 250
 	muzzle:
 		Filename: samfire.shp
 		Length: 18
@@ -447,9 +491,12 @@ sgtur: # WithSpriteBody draws the fixed emplacement pad; the weapon station on t
 sgrel:
 	Defaults:
 		Filename: sgrel.png
+	# The arc between the terminals flickers (issue #109).
 	idle:
+		Length: 6
+		Tick: 120
 	damaged-idle:
-		Start: 1
+		Start: 6
 	make:
 		Filename: sgrelmake.png
 		Length: *
@@ -466,9 +513,12 @@ sgrel:
 sgshl:
 	Defaults:
 		Filename: sgshl.png
+	# Crown beacon blinks (issue #109); the damaged crown's is dead.
 	idle:
+		Length: 8
+		Tick: 200
 	damaged-idle:
-		Start: 1
+		Start: 8
 	make:
 		Filename: sgshlmake.png
 		Length: *
@@ -486,9 +536,13 @@ sgshl:
 sgsns:
 	Defaults:
 		Filename: sgsns.png
+	# The dish sweeps a full circle in 16 steps (issue #109); the fallen
+	# damaged dish is one still frame.
 	idle:
+		Length: 16
+		Tick: 250
 	damaged-idle:
-		Start: 1
+		Start: 16
 	make:
 		Filename: sgsnsmake.png
 		Length: *
@@ -505,9 +559,17 @@ sgsns:
 sgwnd:
 	Defaults:
 		Filename: sgwnd.png
+	# The rotor turns (docs/BACKLOG.md issue #109): 24 frames of 5 degrees at
+	# Tick 100 -- three blades, so that is one visual cycle, 2.4 s. The damaged
+	# two-blade rotor needs a full turn per cycle, 24 x 15 degrees, and runs
+	# slower. Frame counts match ANIM in bits/gen_concept_art.py.
 	idle:
+		Length: 24
+		Tick: 100
 	damaged-idle:
-		Start: 1
+		Start: 24
+		Length: 24
+		Tick: 400
 	make:
 		Filename: sgwndmake.png
 		Length: *

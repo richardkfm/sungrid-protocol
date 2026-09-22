@@ -1416,6 +1416,11 @@ SILO:
 
 RCYD:
 	Inherits: ^Building
+	# Stack puffs (docs/BACKLOG.md issue #109). An overlay, not body frames:
+	# the body is WithResourceLevelSpriteBody's fill-level strip.
+	WithIdleOverlay@SMOKE:
+		Sequence: smoke
+		RequiresCondition: !build-incomplete
 	RenderSprites:
 		Image: rcyd
 	Selectable:
@@ -2385,6 +2390,11 @@ ANYPOWER:
 SGCRY:
 	Inherits: ^ScienceBuilding
 	Inherits@shape: ^2x2Shape
+	# grid-strained is visible now (docs/BACKLOG.md issue #109): the status
+	# pips go dark with a red fault blink while the grid is short.
+	WithIdleOverlay@STRAINED:
+		Sequence: strained
+		RequiresCondition: grid-strained && !build-incomplete
 	RenderSprites:
 		Image: sgcry
 	Selectable:
@@ -2451,6 +2461,11 @@ SGCRY:
 SGDAI:
 	Inherits: ^ScienceBuilding
 	Inherits@shape: ^2x2Shape
+	# grid-strained is visible now (docs/BACKLOG.md issue #109): the data
+	# line and the mast beacon go amber while the grid is short.
+	WithIdleOverlay@STRAINED:
+		Sequence: strained
+		RequiresCondition: grid-strained && !build-incomplete
 	RenderSprites:
 		Image: sgdai
 	Selectable:
@@ -2646,6 +2661,11 @@ SGTUR:
 	Inherits: ^Defense
 	Inherits@AUTOTARGET: ^AutoTargetGround
 	Inherits@shape: ^2x1Shape
+	# grid-strained is visible now (docs/BACKLOG.md issue #109): an amber
+	# fault lamp blinks on the pad rim while the grid is short.
+	WithIdleOverlay@STRAINED:
+		Sequence: strained
+		RequiresCondition: grid-strained && !build-incomplete
 	RenderSprites:
 		Image: sgtur
 	Selectable:

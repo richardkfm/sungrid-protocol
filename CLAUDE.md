@@ -12,7 +12,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, it usually does **not** need a separate personal fork repo: this repo's own pre-Phase-0 history already contains the full engine tree, so a fix can be pinned via an `engine-patch/*` branch built on the currently-pinned commit — see "Engine version pinning" below before touching `ENGINE_VERSION` or any `engine-patch/*` branch. Only reach for an actual personal fork of `OpenRA/OpenRA` if the needed base commit genuinely isn't already reachable in this repo's own history (see `docs/ARCHITECTURE.md`).
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
-- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 — build-ups, rubble, husks, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
+- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 and animated since issue #109 — build-ups, rubble, husks, idle overlays, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
 - `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy.
 - `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling).
@@ -344,6 +344,22 @@ is the regression check.
     pass: **marks have to be few and large** (clumps under ~1.5 units dissolve into speckle under the 4×
     downscale), and **no tree beside a solar panel** (it shades it — the arrays get beds, shrubs and grasses
     only; halls get one tree at the near-right corner).
+16. **A moving part goes in the body sheet unless the body cannot animate or the motion is conditional
+    (issue #109).** `ANIM` in `gen_concept_art.py` lists each animated building's frames as kwargs for its
+    `*_mesh()` (idle first, then damaged); `idle:` Length, `damaged-idle:` Start/Length and the `Tick` per
+    state in `sequences/structures.yaml` must agree with it, and the negative control is to bump
+    `damaged-idle` Length by one and watch `--check-missing-sprites` fail (`does not contain frames: N`).
+    `WithResourceLevelSpriteBody` bodies (Battery Bank, Depot) pick their frame by fill level and cannot
+    animate — motion there is a `WithIdleOverlay` with its own sheet at the body's frame size, and so is
+    anything gated on a condition (the grid-strained lamps, `RequiresCondition: grid-strained &&
+    !build-incomplete`). Three traps: `--check-yaml` counts a `PauseOnCondition` as a consumed condition, so
+    an overlay on an actor that removed `^Building`'s `WithSpriteBody` cannot pause on `disabled`; the
+    renderer culls by winding, so a part that turns away from the camera needs a back face
+    (`tilted_disc(back=...)`); and a **dark amber is a dim gold to `_index_for`** — it lands on the remap
+    ramp, so an unlit lamp is a plain dark grey and fixed ambers are exact palette entries (`AMBER`,
+    `AMBER_DIM`), checked by counting indices 80–95 in an overlay sheet, which must be zero. The Yard's
+    sheet no longer mirrors stock `fact:`'s starts (its idle is 8 frames; build starts at 8, damaged idle
+    at 33, damaged build at 34).
 
 ### What can and can't be verified in this environment
 
@@ -422,18 +438,18 @@ widely, including `.lua`, when removing an actor).
 
 ### Known-open, deliberately not done
 
-- **Animated sprite states, "batch 5"** (from issue #74's audit): no Sungrid-original building has an
-  idle animation (`WithIdleOverlay` appears exactly once in `rules/structures.yaml`, on the ported
-  stock `PROC`), so the Wind Turbine's blades don't turn and the Sensor Array's dish doesn't sweep;
-  the `grid-normal`/`grid-strained` power-tier conditions on `SGCRY`/`SGDAI`/`SGTUR` and
-  `drone-uplink`/`drone-uplink-degraded` on both drones change output with no visual cue; `ARCT` has
-  no `WithMuzzleOverlay`, so the Arc Turret fires with no flash. Three items came off this list: in
+- **Animated sprite states, "batch 5"** (from issue #74's audit), mostly closed by issue #109: the
+  Wind Turbine's rotor turns, the Sensor Array's dish sweeps, beacons/pips/pad lights/the Relay arc
+  blink, the Depot's stack puffs, and `grid-strained` on `SGCRY`/`SGDAI`/`SGTUR` finally shows (amber
+  line and beacon, dark pips with a red fault blink, a pad lamp). Earlier items off the list: in
   issue #80, the drones' doubled rotors (the stock overlays are gone) and `SGHAU`'s hex-sled fullness
   sheets (redrawn as the six-wheel scrap rover, cargo shown as the load itself); in issue #81, the
-  drones' flight animation — both drone sheets are now `Facings: 32` x `Length: 4` and their rotors
-  turn, which is also the worked example for how to animate anything else here. Still open on the
-  drones: no separate slow-rotor state while landed (deliberate — a second 128-frame sheet and a pair
-  of conditional sprite bodies for a state a 15px drone barely occupies).
+  drones' flight animation — both drone sheets are `Facings: 32` x `Length: 4` and their rotors turn.
+  Still open: `drone-uplink`/`drone-uplink-degraded` on both drones change output with no visual cue;
+  `ARCT` has no `WithMuzzleOverlay`, so the Arc Turret fires with no flash; the drones have no separate
+  slow-rotor state while landed (deliberate — a second 128-frame sheet and a pair of conditional sprite
+  bodies for a state a 15px drone barely occupies); the arrays, Hydrogen Plant, Fab Bay, Battery Bank
+  and the greenery are static by choice.
 - **Terrain scenery** — the Phase 6 item that isn't palette work.
 - **Phase 7 proper** — unit sprites, voices, announcer, in-game music.
 - **Issue #60** — consolidating European sub-factions into an EU faction (and Iran et al. into a
