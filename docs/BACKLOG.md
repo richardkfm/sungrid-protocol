@@ -3686,3 +3686,63 @@ after at 1x). Not verified in a live client.
 
 **Definition of done:** Met.
 
+---
+
+### 113. Idle animations for both defences: the arc flickers, the Grid Defense Turret scans, both pedestals blink
+
+**Raised as:** "Give all of them idle animations. The grid defense turret could just turn around a bit." Owner's
+choices on the clarifying questions: both heads and both pedestals (the Disruptor Trooper already carries two
+idle loops); the Arc Turret's arc flickers rather than the head sweeping; the Grid Defense Turret scans a
+subtle +-15 degrees in about four seconds.
+
+**Problem.** After #111/#112 both defences were solids, and still the only Sungrid buildings that never moved:
+issue #109 animated the roster but left the turrets out because their body sheets were flat pads and their
+heads single-frame-per-facing sheets.
+
+**Change.**
+
+- **Arc Turret head** (`arctturret.png`, `arct_turret_draw(phase=)`): six arc-flicker phases per facing,
+  facing-major - `ARCT_ARC_FLICKER` moves the zigzag's two knees along and across the tip-to-tip line, drops a
+  white core pixel on some phases and forks a short branch on others, the Smart Grid Relay's jitter grammar.
+  `turret:` is `Facings: 32, Length: 6, Tick: 120` (0.72 s cycle); `damaged-turret:` keeps one frame per
+  facing (no arc) and starts at 192. The sheet is 224 frames; `Armament.LocalOffset` is unchanged since
+  the rods do not move.
+- **Arc Turret pedestal** (`arct.png`): a status lamp above the access hatch, fixed-palette green when lit and
+  plain dark grey when not (a dark green or amber would land on the remap ramp - issue #109's lamp lesson).
+  Eight idle frames, on five / off three, `idle: Length: 8, Tick: 200`; `damaged-idle:` at 8, lamp dead.
+  `main()`'s generic flat-building loop and its three single-entry dicts are gone; the Arc Turret has its own
+  block like the other multi-state sheets, and the build-up still ends on idle frame 0.
+- **Grid Defense Turret station** (`sgturturret.png`, `sgtur_frames(sweep=True)`): sixteen frames per facing
+  in which the station is rendered at the facing +-15 degrees on a sine (`SGTUR_SWEEP_DEG`,
+  `SGTUR_SWEEP_FRAMES`), `turret: Length: 16, Tick: 250` (4 s per scan). A baked sweep would swing the gun
+  past its target while firing, so the rules now carry **two** `WithSpriteTurret`s: `@IDLE` (`turret`,
+  `RequiresCondition: !build-incomplete && !aiming`) and `@AIM` (`Sequence: aim`, static one-frame-per-facing
+  frames at 544, `&& aiming`), flipped by `GrantConditionWhileAiming: Condition: aiming`. Damaged is static
+  (`damaged-turret` at 512, `damaged-aim` at 576) - a damaged drive does not scan. 608 frames in all.
+  `WithTurretAimAnimation` was considered and rejected: it swaps sequence names raw, without the damage
+  prefix, so a damaged turret that aimed once would show undamaged art until its next damage-state change.
+- **Grid Defense Turret pad** (`sgturpad.png`): a green status lamp on the slab's near-right rim, mirroring
+  the grid-strained fault lamp's spot on the near-left (issue #109's overlay, untouched). Eight frames, on
+  five / off three, `idle: Length: 8, Tick: 200`; the build-up ends on frame 0.
+
+**Verified:** `--check-yaml` exits 0 across all maps (which also proves `aiming` is both granted and consumed);
+`--check-missing-sprites` reports the same set as before; negative controls on both turret sheets (`Length: 2` on
+the *last* block of each - `sgtur`'s `damaged-aim:` and `arct`'s `damaged-turret:`) each fail with `does not
+contain frames`. A first attempt bumped the animated `turret:` block's Length instead and passed silently: 32 x 17
+still fits inside a 608-frame sheet, so the control has to overflow the sheet, not the block - and the per-block
+math (32 x 16 = 512 = `damaged-turret`'s Start, 32 x 6 = 192) is checked by construction;
+regeneration changes only `arct.png`, `arctmake.png`, `arctturret.png`, `sgturpad.png`, `sgturmake.png`,
+`sgturturret.png`. Reviewed as GIFs at the real per-frame timing (`docs/concept-art/issue113-arct.gif`,
+`issue113-sgtur.gif`) and a contact sheet (`issue113-idle-animations.png`). Not verified in a live client -
+the idle/aim hand-over in particular is worth watching in a match.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/arct.png`, `mods/sungrid/bits/arctmake.png`,
+`mods/sungrid/bits/arctturret.png`, `mods/sungrid/bits/sgturpad.png`, `mods/sungrid/bits/sgturmake.png`,
+`mods/sungrid/bits/sgturturret.png`, `mods/sungrid/sequences/structures.yaml`, `mods/sungrid/rules/structures.yaml`,
+`docs/concept-art/issue113-idle-animations.png`, `docs/concept-art/issue113-arct.gif`,
+`docs/concept-art/issue113-sgtur.gif`.
+
+**Phase:** 6/7 follow-up (art identity).
+
+**Definition of done:** Met.
+

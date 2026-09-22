@@ -167,6 +167,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 112 review render: the cameo, the rebuilt station at eight facings and five damaged facings on the new pad, and the old station before at 2× beside the new one at 1×.](concept-art/issue112-grid-turret.png)
 
+**Follow-up: the defences move (`docs/BACKLOG.md` issue #113).** Issue #109's rule - a moving part goes in the body sheet - extends to turret sheets, which animate *within* a facing: `Facings: 32, Length: N` is N frames per facing. The Arc Turret's arc now flickers between its rods on six phases and its pedestal lamp blinks; the Grid Defense Turret scans ±15° either side of its facing on a sixteen-frame sine while idle, and its pad lamp blinks. The one new rule: a baked sweep must not play while the gun is aimed, so the turret carries a static `aim` twin of its sheet and `GrantConditionWhileAiming` flips between the two sprite turrets. Damaged turrets are still - no arc, no scan, lamps dark - so damage reads at a glance even from the motion alone. Reviewed as GIFs at the real frame timing.
+
+![Issue 113 review render: the Arc Turret's eight lamp frames with the head's six arc phases, and the Grid Defense Turret's sixteen scan frames over its blinking pad, at 4×/3× and at 1×.](concept-art/issue113-idle-animations.png)
+
 The turbine and the dish at their real per-frame timing: [`issue109-sgwnd.gif`](concept-art/issue109-sgwnd.gif), [`issue109-sgsns.gif`](concept-art/issue109-sgsns.gif).
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

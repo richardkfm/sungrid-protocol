@@ -455,13 +455,27 @@ sgdra:
 sgtur: # WithSpriteBody draws the fixed emplacement pad; the weapon station on top
 	idle: # is the separate `turret:` sheet, the same split `sam:` uses above. The pad
 		Filename: sgturpad.png # used to be stock gunmake.shp (docs/BACKLOG.md issue #74).
-	turret:
+		Length: 8 # Status lamp blinks: on five frames, off three (issue #113).
+		Tick: 200
+	turret: # Idle scan: 16 frames per facing, the station sweeping +-15 degrees
+		Filename: sgturturret.png # on a sine (issue #113). Facing-major: 32 x 16.
+		Facings: 32
+		Length: 16
+		Tick: 250
+		UseClassicFacings: True
+	damaged-turret: # Static: a damaged drive does not scan.
 		Filename: sgturturret.png
+		Start: 512
 		Facings: 32
 		UseClassicFacings: True
-	damaged-turret:
+	aim: # Static frames shown while aiming (WithSpriteTurret@AIM), so the gun
+		Filename: sgturturret.png # points at its target rather than sweeping past it.
+		Start: 544
+		Facings: 32
+		UseClassicFacings: True
+	damaged-aim:
 		Filename: sgturturret.png
-		Start: 32
+		Start: 576
 		Facings: 32
 		UseClassicFacings: True
 	make:
@@ -1026,19 +1040,23 @@ agun:
 arct: # Body sheet is the fixed pedestal only; the emitter head rotates as a
 	Defaults: # separate turret sprite, the same split `sam:`/`sgtur:` use.
 		Filename: arct.png
-	idle:
+	idle: # Status lamp blinks: on five frames, off three (issue #113).
+		Length: 8
+		Tick: 200
 	damaged-idle:
-		Start: 1
+		Start: 8
 	make:
 		Filename: arctmake.png
 		Length: *
-	turret:
+	turret: # Six arc-flicker frames per facing, facing-major (issue #113).
 		Filename: arctturret.png
 		Facings: 32
+		Length: 6
+		Tick: 120
 		UseClassicFacings: True
-	damaged-turret:
+	damaged-turret: # No arc, one frame per facing.
 		Filename: arctturret.png
-		Start: 32
+		Start: 192
 		Facings: 32
 		UseClassicFacings: True
 	bib:

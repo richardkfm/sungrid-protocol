@@ -528,6 +528,14 @@ missing `using` that would otherwise have broken CI and all three platform insta
 - It turns on a proper turntable ring seated in the pad, and carries capacitor drums on its flank.
 - The muzzle flash now comes out of the barrel instead of the middle of the hull.
 
+## Both defences move now (issue #113)
+
+- The Arc Turret's discharge arc flickers and jumps between its rods, and a status lamp on its pedestal
+  blinks.
+- The Grid Defense Turret scans a little either side of where it is pointing while idle, and settles on
+  its target the moment it starts aiming. Its pad has a blinking status lamp too.
+- Damaged turrets stop moving: no arc, no scan, lamps dark.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

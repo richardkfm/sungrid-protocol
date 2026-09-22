@@ -387,6 +387,16 @@ is the regression check.
     must stay pixel-identical across 32 facings can be a 32-gon prism instead of an ellipse (11.25 degrees
     maps it onto itself); the station's collar and the pad's seat both are. Fixed-orientation damage decals
     go through `_mesh_render(..., decals=fn)` so the frame still gets the accent re-stamp.
+20. **A turret sheet animates within a facing, and a baked idle sweep needs a static `aim` twin (issue
+    #113).** `WithSpriteTurret` plays its sequence repeating, so `Facings: 32, Length: N` gives N frames per
+    facing, facing-major (the Arc Turret's arc flicker, the Grid Defense Turret's +-15 degree scan). A sweep
+    baked into the frames would swing the gun past its target while firing, so `SGTUR` carries two
+    `WithSpriteTurret`s (`@IDLE` on `turret`, `@AIM` on the static `aim` frames) flipped by
+    `GrantConditionWhileAiming`. Don't reach for `WithTurretAimAnimation` for this: it replaces sequence
+    names raw, without the damage prefix, so a damaged turret that has aimed shows undamaged art until its
+    next damage-state change. The negative control has to overflow the *sheet*, not the block: bumping the
+    animated block's `Length` by one passed silently (32 x 17 still fits in a 608-frame sheet); put the extra
+    `Length` on the sheet's last block (`damaged-aim:` / `damaged-turret:`) and `--check-missing-sprites` names it.
 
 ### What can and can't be verified in this environment
 
@@ -472,6 +482,8 @@ widely, including `.lua`, when removing an actor).
   issue #80, the drones' doubled rotors (the stock overlays are gone) and `SGHAU`'s hex-sled fullness
   sheets (redrawn as the six-wheel scrap rover, cargo shown as the load itself); in issue #81, the
   drones' flight animation — both drone sheets are `Facings: 32` x `Length: 4` and their rotors turn.
+  Issue #113 closed the two defences: the Arc Turret's arc flickers and its pedestal lamp blinks, the Grid
+  Defense Turret scans while idle (static `aim` twin while firing) and its pad lamp blinks.
   Still open: `drone-uplink`/`drone-uplink-degraded` on both drones change output with no visual cue;
   `ARCT`'s head has no firing-flash state (issue #110 made the discharge itself leave the electrodes and
   the owner declined a `WithTurretAttackAnimation` pass on top); the drones have no separate

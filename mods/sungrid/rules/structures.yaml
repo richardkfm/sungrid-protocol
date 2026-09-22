@@ -2703,8 +2703,18 @@ SGTUR:
 		InitialFacing: 0
 		RealignDelay: -1
 		RequiresCondition: !build-incomplete
-	WithSpriteTurret:
-		RequiresCondition: !build-incomplete
+	# Two turret sprites (issue #113): the idle one scans a little on its own
+	# baked sweep; while the turret is actually aiming the static `aim` frames
+	# take over so the gun points at its target. GrantConditionWhileAiming is
+	# what flips between them.
+	GrantConditionWhileAiming:
+		Condition: aiming
+	WithSpriteTurret@IDLE:
+		RequiresCondition: !build-incomplete && !aiming
+		Recoils: false
+	WithSpriteTurret@AIM:
+		Sequence: aim
+		RequiresCondition: !build-incomplete && aiming
 		Recoils: false
 	Armament:
 		Weapon: GridPulseCannon

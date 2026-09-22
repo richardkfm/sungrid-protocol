@@ -840,6 +840,8 @@ ARCT_RACE_TOP = 5.0                  # mount-race top, world units above that co
 ARCT_PEDESTAL_DY = ARCT_GROUND_DY - ARCT_RACE_TOP   # pedestal top, below the body frame centre
 ARCT_TUR_OY = SG1x1_H / 2 + ARCT_PEDESTAL_DY + ARCT_TUR_LIFT
 ARCT_RING_R = 13.6                   # grass ring radius around the hardstand
+ARCT_ARC_PHASES = 6                  # idle arc-flicker frames per facing (issue #113); `turret:` Length
+ARCT_LAMP_FRAMES = 8                 # pedestal status lamp: on 5, off 3; `idle:` Length
 
 
 def arct_mesh(damaged=False):
@@ -930,7 +932,7 @@ def grass_ring(m, r, n, salt, skip=_ring_front, z=0.0):
             tuft(m, x, y, z, cap=2.0 + b * 1.2)
 
 
-def arct_pedestal_mesh(damaged=False):
+def arct_pedestal_mesh(damaged=False, lamp=True):
     """The fixed pedestal as a solid (issue #111): a gravel hardstand, the
     concrete drum with a chamfered upper step, the dark mount race the head
     turns in, a ring of anchor bolts, the team-coloured feed lug and its
@@ -958,8 +960,14 @@ def arct_pedestal_mesh(damaged=False):
           order=1, shadow=False, accent=True)
     m.box(-0.9, -14.2, 1.0, 0.9, -12.2, 1.7, accent, top=lit(accent, 0.2),
           order=1, shadow=False, accent=True)
-    # Access hatch on the lit (-x) flank, vent slots on the shaded (+x) one.
+    # Access hatch on the lit (-x) flank, vent slots on the shaded (+x) one,
+    # and a status lamp above the hatch that blinks while the pedestal is
+    # intact (issue #113): a fixed-palette green when lit, plain dark grey
+    # when not -- never a dark green/amber, which _index_for would route
+    # onto the remap ramp (issue #109's lamp lesson).
     m.box(-10.9, -1.8, 1.6, -10.0, 1.8, 3.4, dim(con, 0.45), order=1, shadow=False, top_face=False)
+    lamp_col = (lit(GREEN_ACCENT, 0.2) if (lamp and not damaged) else dim(con, 0.5))
+    m.box(-11.1, -0.7, 3.7, -10.0, 0.7, 4.6, lamp_col, top=lamp_col, order=2, shadow=False)
     for y0 in (-2.6, 0.4):
         m.box(10.0, y0, 1.8, 10.9, y0 + 1.7, 3.2, dim(con, 0.5), order=1, shadow=False, top_face=False)
     if damaged:
@@ -969,34 +977,50 @@ def arct_pedestal_mesh(damaged=False):
     return m
 
 
-def arct_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
+def arct_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, lamp=True):
     """Body sheet: the fixed pedestal only (plain shaded model, for the
     build-up strip and the cameo fallback -- the shipped idle frames go
     through arct_body_frame so the feed lug lands on the remap ramp). The
     emitter head rides above this as a separate 32-facing turret sprite."""
     ox, oy = w // 2, h / 2 + ARCT_GROUND_DY
-    arct_pedestal_mesh(damaged).draw(sd, ox, oy, 0.0)
+    arct_pedestal_mesh(damaged, lamp).draw(sd, ox, oy, 0.0)
     if damaged:
-        scorch(sd, [(ox + 6, oy - 6, 2.6), (ox - 6, oy - 3.5, 2.2)])
+        _arct_damage_decals(sd, w, h)
 
 
-def arct_body_frame(damaged=False):
+def _arct_damage_decals(sd, w, h):
+    ox, oy = w // 2, h / 2 + ARCT_GROUND_DY
+    scorch(sd, [(ox + 6, oy - 6, 2.6), (ox - 6, oy - 3.5, 2.2)])
+
+
+def arct_body_frame(damaged=False, lamp=True):
     """One shipped pedestal frame: the model with its accent faces re-stamped
     natively (see _mesh_render), then the scorch decals."""
     ox, oy = SG1x1_W // 2, SG1x1_H / 2 + ARCT_GROUND_DY
-    frame = _mesh_render(arct_pedestal_mesh(damaged), SG1x1_W, SG1x1_H, ox, oy, 0.0)
-    if damaged:
-        decals = render(lambda sd, w, h: scorch(sd, [(ox + 6, oy - 6, 2.6), (ox - 6, oy - 3.5, 2.2)]),
-                        SG1x1_W, SG1x1_H)
-        frame = Image.alpha_composite(frame, decals)
-    return frame
+    return _mesh_render(arct_pedestal_mesh(damaged, lamp), SG1x1_W, SG1x1_H, ox, oy, 0.0,
+                        decals=_arct_damage_decals if damaged else None)
 
 
 def arct_shadow_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False):
     arct_pedestal_mesh(damaged).draw_shadow(sd, w // 2, h / 2 + ARCT_GROUND_DY, 0.0)
 
 
-def arct_turret_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0):
+# Idle arc flicker (issue #113): per phase, the zigzag's two knees (as
+# fractions along the tip-to-tip line, and their perpendicular throw), whether
+# a white core pixel sits on the first knee, and whether a short side branch
+# forks off it. Six phases at Tick 120 is a 0.72 s cycle, the same jitter
+# grammar as the Smart Grid Relay's arc.
+ARCT_ARC_FLICKER = (
+    ((0.42, -1.8), (0.58, 1.4), True, False),
+    ((0.35, -1.2), (0.62, 1.9), False, True),
+    ((0.48, -2.2), (0.55, 0.9), True, False),
+    ((0.30, -0.9), (0.68, 1.5), False, False),
+    ((0.45, -1.6), (0.52, 2.0), True, True),
+    ((0.38, -2.0), (0.60, 1.1), False, False),
+)
+
+
+def arct_turret_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0, phase=0):
     """Rotating emitter head: the mesh plus its live discharge arc."""
     ox, oy = w // 2, ARCT_TUR_OY
     arct_mesh(damaged).draw(sd, ox, oy, facing)
@@ -1009,9 +1033,18 @@ def arct_turret_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0):
     tips = sorted(mesh_screen((t[0], t[1], t[2] + 1.7), ox, oy, facing)
                   for t in (_arct_rod_tip(-1), _arct_rod_tip(1)))
     (lx, ly), (rx, ry) = tips
-    mid = ((lx + rx) / 2, (ly + ry) / 2)
-    sd.line([(lx, ly), (mid[0] - 1.2, mid[1] - 1.8), (mid[0] + 1.2, mid[1] + 1.4), (rx, ry)],
-            fill=lit(GREEN_ACCENT, 0.5), width=1.0)
+    (ka, ta), (kb, tb), core, branch = ARCT_ARC_FLICKER[phase % len(ARCT_ARC_FLICKER)]
+    dx, dy = rx - lx, ry - ly
+    span = max(1.0, math.hypot(dx, dy))
+    nx, ny = -dy / span, dx / span                         # perpendicular, screen space
+    knee_a = (lx + dx * ka + nx * ta, ly + dy * ka + ny * ta)
+    knee_b = (lx + dx * kb + nx * tb, ly + dy * kb + ny * tb)
+    sd.line([(lx, ly), knee_a, knee_b, (rx, ry)], fill=lit(GREEN_ACCENT, 0.5), width=1.0)
+    if branch:
+        sd.line([knee_a, (knee_a[0] + nx * ta * 0.9 + 0.6, knee_a[1] + ny * ta * 0.9 - 1.2)],
+                fill=lit(GREEN_ACCENT, 0.5), width=0.8)
+    if core:
+        sd.px(round(knee_a[0]), round(knee_a[1]), (0xFC, 0xFC, 0xFC))
     for (px_, py_) in ((lx, ly), (rx, ry)):
         sd.px(round(px_), round(py_), lit(GREEN_ACCENT, 0.75))
 
@@ -1020,13 +1053,19 @@ def arct_turret_shadow_draw(sd, w=SG1x1_W, h=SG1x1_H, damaged=False, facing=0.0)
     arct_mesh(damaged).draw_shadow(sd, w // 2, ARCT_TUR_OY, facing)
 
 
-def arct_turret_frames(damaged=False, n=32):
+def arct_turret_frames(damaged=False, n=32, phases=1):
+    """Facing-major: for each of the n facings, `phases` arc-flicker frames
+    (the engine indexes facing * Length + frame, issue #35's lesson). The
+    damaged head has no arc, so it gets one frame per facing."""
     bodies, shadows = [], []
     for i in range(n):
         deg = i * (360.0 / n)
-        bodies.append(render(arct_turret_draw, SG1x1_W, SG1x1_H, damaged=damaged, facing=deg))
-        shadows.append(render_shadow_mask(arct_turret_shadow_draw, SG1x1_W, SG1x1_H,
-                                          damaged=damaged, facing=deg))
+        shadow = render_shadow_mask(arct_turret_shadow_draw, SG1x1_W, SG1x1_H,
+                                    damaged=damaged, facing=deg)
+        for ph in range(phases):
+            bodies.append(render(arct_turret_draw, SG1x1_W, SG1x1_H, damaged=damaged,
+                                 facing=deg, phase=ph))
+            shadows.append(shadow)
     return bodies, shadows
 
 
@@ -2272,17 +2311,33 @@ def sgtur_shadow_draw(sd, w, h, damaged=False, facing=0.0):
     sgtur_mesh(damaged).draw_shadow(sd, ox, oy, facing)
 
 
-def sgtur_frames(damaged=False, n=32):
+SGTUR_SWEEP_FRAMES = 16     # idle scan frames per facing (issue #113); `turret:` Length
+SGTUR_SWEEP_DEG = 15.0      # scan amplitude either side of the facing, degrees
+SGTUR_LAMP_FRAMES = 8       # pad status lamp: on 5, off 3; `idle:` Length
+
+
+def sgtur_frames(damaged=False, n=32, sweep=False):
     """One genuine viewpoint per facing: frame 0 = north, winding
-    counter-clockwise (the convention heli.shp's 32-facing sheet confirms)."""
+    counter-clockwise (the convention heli.shp's 32-facing sheet confirms).
+
+    With `sweep`, each facing carries SGTUR_SWEEP_FRAMES frames in which the
+    station scans SGTUR_SWEEP_DEG either side of that facing on a sine, so an
+    idle turret looks around a little (issue #113). The engine indexes
+    facing * Length + frame, so the strip is facing-major. The rules switch
+    to the static `aim:` frames while the turret is actually aiming, which is
+    what keeps the gun on its target."""
     bodies, shadows = [], []
+    phases = range(SGTUR_SWEEP_FRAMES) if sweep else (0,)
     for i in range(n):
-        deg = i * (360.0 / n)
-        bodies.append(_mesh_render(sgtur_mesh(damaged), SGTUR_W, SGTUR_H,
-                                   *_sgtur_station_origin(SGTUR_W, SGTUR_H), deg,
-                                   decals=_sgtur_damage_decals if damaged else None))
-        shadows.append(render_shadow_mask(sgtur_shadow_draw, SGTUR_W, SGTUR_H,
-                                          damaged=damaged, facing=deg))
+        for ph in phases:
+            deg = i * (360.0 / n)
+            if sweep:
+                deg += SGTUR_SWEEP_DEG * math.sin(2 * math.pi * ph / SGTUR_SWEEP_FRAMES)
+            bodies.append(_mesh_render(sgtur_mesh(damaged), SGTUR_W, SGTUR_H,
+                                       *_sgtur_station_origin(SGTUR_W, SGTUR_H), deg,
+                                       decals=_sgtur_damage_decals if damaged else None))
+            shadows.append(render_shadow_mask(sgtur_shadow_draw, SGTUR_W, SGTUR_H,
+                                              damaged=damaged, facing=deg))
     return bodies, shadows
 
 
@@ -2295,7 +2350,7 @@ SGTUR_PAD_H = 2.4       # hardstand slab height, world units
 SGTUR_PAD_R = 15.0      # octagon circumradius; its top face centre is the station's pivot
 
 
-def sgtur_pad_mesh():
+def sgtur_pad_mesh(lamp=True):
     """The fixed emplacement pad as a solid (issue #111): an octagonal
     concrete slab with a raised turntable seat, anchor bolts on the corner
     flats, the team-coloured cable trench feeding the mount from the camera
@@ -2319,6 +2374,14 @@ def sgtur_pad_mesh():
                 lit(LEGACY_GRAY_DARK, 0.35), sides=6, top=lit(LEGACY_GRAY_DARK, 0.6), shadow=False)
     m.box(-2.4, -15.4, SGTUR_PAD_H, 2.4, -11.2, SGTUR_PAD_H + 0.7, SUN_GOLD, top=lit(SUN_GOLD, 0.2),
           order=1, shadow=False, accent=True)
+    # Status lamp on the near-right rim, mirroring the grid-strained fault
+    # lamp's spot on the near-left (issue #109's overlay), blinking green
+    # while the pad is powered (issue #113). Off is plain dark grey.
+    lamp_col = lit(GREEN_ACCENT, 0.2) if lamp else dim(con, 0.5)
+    m.box(8.4, -10.6, SGTUR_PAD_H, 10.0, -9.4, SGTUR_PAD_H + 1.2, dim(con, 0.3), top=dim(con, 0.2),
+          order=1, shadow=False)
+    m.box(8.6, -10.4, SGTUR_PAD_H + 1.2, 9.8, -9.6, SGTUR_PAD_H + 1.9, lamp_col, top=lamp_col,
+          order=2, shadow=False)
     # Expansion-joint groove across the slab, so the top face is not one flat tone.
     m.box(-13.0, -0.5, SGTUR_PAD_H, -11.4, 0.5, SGTUR_PAD_H + 0.15, dim(con, 0.35), order=1, shadow=False)
     m.box(11.4, -0.5, SGTUR_PAD_H, 13.0, 0.5, SGTUR_PAD_H + 0.15, dim(con, 0.35), order=1, shadow=False)
@@ -2342,9 +2405,9 @@ def sgtur_pad_draw(sd, w, h, damaged=False):
     sgtur_pad_mesh().draw(sd, ox, oy, 0.0)
 
 
-def sgtur_pad_frame():
+def sgtur_pad_frame(lamp=True):
     ox, oy = _sgtur_pad_origin(SGTUR_W, SGTUR_H)
-    return _mesh_render(sgtur_pad_mesh(), SGTUR_W, SGTUR_H, ox, oy, 0.0)
+    return _mesh_render(sgtur_pad_mesh(lamp), SGTUR_W, SGTUR_H, ox, oy, 0.0)
 
 
 def sgtur_strained_draw(sd, w, h, phase=0):
@@ -3599,16 +3662,6 @@ def sghau_husk_frames(laden):
     return bodies, [silhouette_shadow(b, 1, 1) for b in bodies]
 
 
-# Buildings that bake a cast shadow into their sprite the way the stock art
-# does. The rest of the roster still has none -- a deliberate follow-up, not
-# an oversight (docs/BACKLOG.md issue #65).
-SHADOW_DRAWS = {"arct": lambda sd, w, h, damaged=False: arct_shadow_draw(sd, w, h, damaged)}
-BODY_FRAMES = {"arct": arct_body_frame}
-
-# Cameos whose motif is not simply the body sheet's draw function (the Arc
-# Turret's body is only its pedestal now that the head rotates separately).
-ICON_DRAWS = {"arct": arct_icon_draw}
-
 # Buildings whose team-coloured pixels have to be re-stamped at native
 # resolution after the supersampled downscale (see _sgrel_accents).
 
@@ -3682,36 +3735,23 @@ def scrap_pile_draw(sd, w, h, stage):
 
 def main():
     # Arc Turret pedestal (a solid since issue #111, at its own origin rather
-    # than the roster's diamond plinth, so it keeps the flat-building path).
-    flat_buildings = [
-        ("arct", arct_draw, SG1x1_W, SG1x1_H),
-    ]
-
-    for name, draw_fn, w, h in flat_buildings:
-        idle_shadow = None
-        if name in SHADOW_DRAWS:
-            # Buildings whose sprite carries a baked ground shadow have to go
-            # through indexed_strip so SHADOW_IDX survives (see its docstring).
-            # The Arc Turret's frames come from arct_body_frame: the same
-            # model, with the feed lug re-stamped onto the remap ramp.
-            bodies = [BODY_FRAMES[name](damaged=d) if name in BODY_FRAMES
-                      else render(draw_fn, w, h, damaged=d) for d in (False, True)]
-            shadows = [render_shadow_mask(SHADOW_DRAWS[name], w, h, damaged=d) for d in (False, True)]
-            sheet = indexed_strip(bodies, shadows, w, h)
-            idle, idle_shadow = bodies[0], shadows[0]
-        else:
-            idle = render(draw_fn, w, h, damaged=False)
-            sheet = sheet_of([idle, render(draw_fn, w, h, damaged=True)], w, h)
-        save_pngsheet(sheet, f"{name}.png", w, h, 2, indexed=True)
-        icon = make_icon(ICON_DRAWS.get(name, draw_fn), w, h, label=ICON_LABELS.get(name))
-        save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
-
-        # Build-up (issue #74): the structure rising out of the ground, ending
-        # on this sheet's own idle frame so completion never pops.
-        mk = make_frames(draw_fn, w, h, final=idle)
-        mk_shadows = [None] * (len(mk) - 1) + [idle_shadow]
-        save_pngsheet(indexed_strip(mk, mk_shadows, w, h), f"{name}make.png",
-                      w, h, len(mk), indexed=True)
+    # than the roster's diamond plinth): eight idle frames with the status
+    # lamp on five and off three (issue #113), then the damaged frame. The
+    # baked ground shadow goes through indexed_strip so SHADOW_IDX survives.
+    arct_kws = [dict(lamp=i < 5) for i in range(ARCT_LAMP_FRAMES)] + [dict(damaged=True)]
+    arct_bodies = [arct_body_frame(**kw) for kw in arct_kws]
+    arct_shadows = [render_shadow_mask(arct_shadow_draw, SG1x1_W, SG1x1_H,
+                                       damaged=kw.get("damaged", False)) for kw in arct_kws]
+    save_pngsheet(indexed_strip(arct_bodies, arct_shadows, SG1x1_W, SG1x1_H), "arct.png",
+                  SG1x1_W, SG1x1_H, len(arct_bodies), indexed=True)
+    save_pngsheet(make_icon(arct_icon_draw, SG1x1_W, SG1x1_H, label=ICON_LABELS["arct"]),
+                  "arcticon.png", ICON_W, ICON_H, 1)
+    # Build-up (issue #74): the structure rising out of the ground, ending on
+    # this sheet's own first idle frame so completion never pops.
+    arct_mk = make_frames(arct_draw, SG1x1_W, SG1x1_H, final=arct_bodies[0])
+    save_pngsheet(indexed_strip(arct_mk, [None] * (len(arct_mk) - 1) + [arct_shadows[0]],
+                                SG1x1_W, SG1x1_H),
+                  "arctmake.png", SG1x1_W, SG1x1_H, len(arct_mk), indexed=True)
 
     # Volumetric roster (issue #106): idle + damaged, cameo fallback, build-up.
     # Every frame carries the stock-style silhouette shadow rim, the build-up's
@@ -3797,20 +3837,29 @@ def main():
 
     # Arc Turret: the head is its own 32-facing turret sprite (issue #66), so
     # arct.png above is the pedestal alone and this is what rotates on top.
-    arct_idle, arct_idle_sh = arct_turret_frames(damaged=False)
+    # Layout: 32 facings x ARCT_ARC_PHASES flicker frames, then 32 damaged
+    # facings (no arc, one frame each) -- `turret:` / `damaged-turret:` Start
+    # in sequences/structures.yaml must agree (issue #113).
+    arct_idle, arct_idle_sh = arct_turret_frames(damaged=False, phases=ARCT_ARC_PHASES)
     arct_dmg, arct_dmg_sh = arct_turret_frames(damaged=True)
     save_pngsheet(indexed_strip(arct_idle + arct_dmg, arct_idle_sh + arct_dmg_sh,
                                 SG1x1_W, SG1x1_H),
-                  "arctturret.png", SG1x1_W, SG1x1_H, 64, indexed=True)
+                  "arctturret.png", SG1x1_W, SG1x1_H, len(arct_idle) + len(arct_dmg), indexed=True)
 
     # Turret: 32 idle-facing frames + 32 damaged-facing frames, single strip.
     # Each facing is a separate view of the 3D assembly (issue #65), and the
     # baked ground shadow is injected as SHADOW_IDX rather than painted.
-    idle_bodies, idle_shadows = sgtur_frames(damaged=False)
+    # Layout (issue #113): 32 facings x SGTUR_SWEEP_FRAMES idle-scan frames,
+    # 32 damaged (static), 32 `aim` (static), 32 `damaged-aim` (static) --
+    # the Start values in sequences/structures.yaml must agree.
+    idle_bodies, idle_shadows = sgtur_frames(damaged=False, sweep=True)
     dmg_bodies, dmg_shadows = sgtur_frames(damaged=True)
+    aim_bodies, aim_shadows = sgtur_frames(damaged=False)
+    idle_bodies += dmg_bodies + aim_bodies
+    idle_shadows += dmg_shadows + aim_shadows
     save_pngsheet(indexed_strip(idle_bodies + dmg_bodies, idle_shadows + dmg_shadows,
                                 SGTUR_W, SGTUR_H),
-                  "sgturturret.png", SGTUR_W, SGTUR_H, 64, indexed=True)
+                  "sgturturret.png", SGTUR_W, SGTUR_H, len(idle_bodies) + len(dmg_bodies), indexed=True)
     save_pngsheet(make_icon(sgtur_base_draw, SGTUR_W, SGTUR_H, label=ICON_LABELS["sgtur"]),
                   "sgturicon.png", ICON_W, ICON_H, 1)
 
@@ -3819,10 +3868,11 @@ def main():
     # build-up (issue #74). The station itself is gated on !build-incomplete,
     # so the build-up shows the pad alone and the turret pops in on completion
     # -- exactly how SAM/GUN/AGUN behave.
-    pad = sgtur_pad_frame()
-    pad_shadow = silhouette_shadow(pad, 2, 2)
-    save_pngsheet(indexed_strip([pad], [pad_shadow], SGTUR_W, SGTUR_H),
-                  "sgturpad.png", SGTUR_W, SGTUR_H, 1, indexed=True)
+    # Eight idle frames, the status lamp on five and off three (issue #113).
+    pads = [sgtur_pad_frame(lamp=i < 5) for i in range(SGTUR_LAMP_FRAMES)]
+    pad, pad_shadow = pads[0], silhouette_shadow(pads[0], 2, 2)
+    save_pngsheet(indexed_strip(pads, [silhouette_shadow(f, 2, 2) for f in pads], SGTUR_W, SGTUR_H),
+                  "sgturpad.png", SGTUR_W, SGTUR_H, len(pads), indexed=True)
     pad_mk = make_frames(sgtur_pad_draw, SGTUR_W, SGTUR_H, final=pad)
     save_pngsheet(indexed_strip(pad_mk, [None] * (len(pad_mk) - 1) + [pad_shadow],
                                 SGTUR_W, SGTUR_H),
