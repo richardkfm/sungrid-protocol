@@ -60,6 +60,10 @@ See [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for a full walkthrough includin
 * Read and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 * Engine-level C# style still follows the upstream OpenRA coding standard linked from the root [`CONTRIBUTING.md`](CONTRIBUTING.md) (the Mod SDK's own contributing guidelines).
 
+
+<img width="1592" height="1027" alt="grafik" src="https://github.com/user-attachments/assets/721e2b1f-7827-41eb-a804-3191ec861095" />
+Multiplayer tested in LAN (alpha38)
+
 ## Upstream OpenRA
 
 Sungrid Protocol builds on the OpenRA engine and community tooling. If you're looking for the original OpenRA project (Red Alert, Tiberian Dawn, and Dune 2000 mods): [https://github.com/OpenRA/OpenRA](https://github.com/OpenRA/OpenRA), [https://www.openra.net](https://www.openra.net), [Discord](https://discord.openra.net).
