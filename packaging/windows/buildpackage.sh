@@ -129,9 +129,13 @@ function build_platform()
 	# Use rcedit to patch the generated EXE with missing assembly/PortableExecutable information because .NET 6 ignores that when building on Linux.
 	# Using a backwards version tag because rcedit is unable to set versions starting with a letter.
 	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-product-version "${BACKWARDS_TAG}"
-	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "ProductName" "OpenRA"
-	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "CompanyName" "The OpenRA team"
-	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "FileDescription" "${PACKAGING_WINDOWS_LAUNCHER_NAME} mod for OpenRA"
+	# ProductName / FileDescription are what Explorer's Properties dialog and
+	# Task Manager show for the running game, so they carry the mod's display
+	# name rather than the SDK's "OpenRA" / "<launcher> mod for OpenRA"
+	# defaults (docs/BACKLOG.md issue #114).
+	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "ProductName" "${PACKAGING_DISPLAY_NAME}"
+	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "CompanyName" "${PACKAGING_AUTHORS}"
+	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "FileDescription" "${PACKAGING_DISPLAY_NAME} (OpenRA mod)"
 	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-version-string "LegalCopyright" "Copyright (c) The OpenRA Developers and Contributors"
 	wine64 rcedit-x64.exe "${BUILTDIR}/${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" --set-icon "${BUILTDIR}/${MOD_ID}.ico"
 

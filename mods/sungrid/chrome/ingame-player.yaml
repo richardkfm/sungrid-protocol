@@ -42,7 +42,7 @@ Container@PLAYER_WIDGETS:
 					TooltipTemplate: SIMPLE_TOOLTIP
 		Container@GRID_RESERVE_BRIEFING:
 			Logic: GridReserveBriefingLogic
-			Width: 520
+			Width: 560
 			Height: 240
 			X: (WINDOW_WIDTH - WIDTH) / 2
 			Y: (WINDOW_HEIGHT - HEIGHT) / 2

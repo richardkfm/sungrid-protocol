@@ -2,7 +2,9 @@
 """Phase 6 chrome redesign (docs/BACKLOG.md issue #41).
 
 Generates ALL thematic UI chrome from scratch — dialog.png, sidebar.png,
-loadscreen.png(+2x/3x) and the mod icons (../icon*.png). Unlike the retired
+loadscreen.png(+2x/3x), the mod icons (../icon*.png) and the packaging
+artwork (../../../packaging/artwork: the installer/desktop app icons and the
+macOS disk-image background; docs/BACKLOG.md issue #114). Unlike the retired
 first-pass reskin_chrome.py (which hue-shifted the stock RA art in place),
 nothing here derives from stock pixels: every surface, bevel, button state
 and the emblem are drawn programmatically in the locked palette
@@ -30,7 +32,7 @@ the previous file contents.
 import itertools
 import math
 import os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 UIBITS = os.path.dirname(os.path.abspath(__file__))
 
@@ -106,34 +108,45 @@ def inset(img, x, y, w, h, fill=PANEL_DEEP, frame=GREEN_DIM, radius=3):
 
 SS = 4
 
-def emblem(size, accent=SUN_GOLD):
+def emblem(size, accent=SUN_GOLD, simple=False):
     """`accent` drives the whole ring/hex/sun/rays so each faction's
     placeholder badge is genuinely its own mark (Consortium gold, Assembly
-    green — docs/ART_DIRECTION.md), not a recolor-in-name-only."""
+    green — docs/ART_DIRECTION.md), not a recolor-in-name-only.
+
+    `simple` is the small-size cut (app icons below 48px, issue #114): no
+    ring, filaments or vertex nodes — at 16-32px they are sub-pixel and only
+    smear the silhouette — and a heavier hexagon so the mark still reads.
+    Every existing caller keeps the full mark, so their output is unchanged."""
     s = size * SS
     im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     cx = cy = s / 2
     r = s * 0.46
     lw = max(SS, round(s * 0.014))
+    # the hexagon's own stroke: heavier in the small-size cut, while rays and
+    # the baseline keep `lw` so they don't weld to it
+    hw = max(SS * 2, round(s * 0.035)) if simple else lw
 
     # outer ring
-    d.ellipse((cx - r, cy - r, cx + r, cy + r),
-              outline=accent + (110,), width=max(SS // 2, lw // 2))
+    if not simple:
+        d.ellipse((cx - r, cy - r, cx + r, cy + r),
+                  outline=accent + (110,), width=max(SS // 2, lw // 2))
 
     # hexagon (pointy-top) + vertex nodes + filaments to the ring
-    hr = r * 0.82
+    hr = r * (0.92 if simple else 0.82)
     pts = [(cx + hr * math.sin(k * math.pi / 3),
             cy - hr * math.cos(k * math.pi / 3)) for k in range(6)]
-    for k in range(6):
-        px, py = pts[k]
-        ox = cx + r * math.sin(k * math.pi / 3)
-        oy = cy - r * math.cos(k * math.pi / 3)
-        d.line((px, py, ox, oy), fill=accent + (150,), width=max(SS // 2, lw // 2))
-    d.polygon(pts, outline=accent + (255,), width=lw)
-    nr = s * 0.016
-    for px, py in pts:
-        d.ellipse((px - nr, py - nr, px + nr, py + nr), fill=accent + (255,))
+    if not simple:
+        for k in range(6):
+            px, py = pts[k]
+            ox = cx + r * math.sin(k * math.pi / 3)
+            oy = cy - r * math.cos(k * math.pi / 3)
+            d.line((px, py, ox, oy), fill=accent + (150,), width=max(SS // 2, lw // 2))
+    d.polygon(pts, outline=accent + (255,), width=hw)
+    if not simple:
+        nr = s * 0.016
+        for px, py in pts:
+            d.ellipse((px - nr, py - nr, px + nr, py + nr), fill=accent + (255,))
 
     # sun disc, centered so the horizon band overlaps its lower third
     sr = hr * 0.44
@@ -714,9 +727,103 @@ def gen_icons():
         print(name, im.size)
 
 
+# --------------------------------------------------------------------------
+# packaging/artwork (docs/BACKLOG.md issue #114) — the icons the three
+# platform packages ship as the *application* icon (Windows launcher .exe /
+# installer, macOS .app / .icns, Linux AppImage / .desktop) and the macOS
+# disk-image background. Until this pass all of them were still the Mod SDK's
+# example-mod placeholders: a black "Ex" glyph, and a DMG background titled
+# "OpenRA Example Mod". packaging/*/buildpackage.sh consume these files by
+# fixed name and size, so the set below is exactly what those scripts list.
+#
+# Unlike the in-game icon (emblem on transparency, drawn over the mod
+# chooser's own panel) an app icon sits on an arbitrary desktop or Finder
+# background, so it carries its own rounded grid-glass tile. Below 48px the
+# full mark's ring and filaments would be sub-pixel, so `emblem(simple=True)`
+# drops them and thickens the hexagon — the same "draw less, not smaller"
+# rule as the sprite pipeline (CLAUDE.md, art rule 10).
+
+ARTWORK = os.path.normpath(os.path.join(UIBITS, "..", "..", "..", "packaging", "artwork"))
+APP_ICON_SIZES = (16, 24, 32, 48, 64, 128, 256, 512, 1024)
+
+def app_icon(size):
+    s = size * SS
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    tile = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    pv_grid(tile, 0, 0, s, s, base=PANEL, cell=max(8, s // 7), line=-6, alt=2)
+    mask = Image.new("L", (s, s), 0)
+    r = round(s * 0.18)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, s - 1, s - 1), radius=r, fill=255)
+    im.paste(tile, (0, 0), mask)
+    d = ImageDraw.Draw(im)
+    # frame: one living-green line, lit toward the top-left like every other
+    # panel in this file
+    lw = max(SS, round(s * 0.012))
+    d.rounded_rectangle((lw // 2, lw // 2, s - 1 - lw // 2, s - 1 - lw // 2), radius=r,
+                        outline=mix(GREEN_MID, PANEL, 0.25), width=lw)
+    d.arc((lw // 2, lw // 2, 2 * r, 2 * r), 180, 270, fill=GREEN_ACCENT, width=lw)
+    im = im.resize((size, size), Image.LANCZOS)
+    e = emblem(round(size * 0.80), SUN_GOLD, simple=size < 48)
+    im.alpha_composite(e, ((size - e.width) // 2, (size - e.height) // 2))
+    return im
+
+def gen_app_icons():
+    os.makedirs(ARTWORK, exist_ok=True)
+    for size in APP_ICON_SIZES:
+        im = app_icon(size)
+        name = f"icon_{size}x{size}.png"
+        im.save(f"{ARTWORK}/{name}")
+        print(name, im.size)
+
+def gen_macos_background():
+    """600x450 (+2x) Finder window background for the DMG. The two icon
+    positions and the 72px icon size are mod.config's
+    PACKAGING_OSX_DMG_*_ICON_POSITION / packaging/macos/buildpackage.sh:
+    the app at (190,210), the Applications alias at (410,210); Finder
+    draws the icons and their names, so the background only carries the
+    title, the arrow between the two slots and a hint line."""
+    font_path = os.path.join(os.path.dirname(UIBITS), "ZoodRangmah.ttf")
+    for name, scale in (("macos-background.png", 1), ("macos-background-2x.png", 2)):
+        W, H = 600 * scale, 450 * scale
+        im = Image.new("RGBA", (W, H), PANEL + (255,))
+        pv_grid(im, 0, 0, W, H, base=PANEL, cell=25 * scale, line=-6, alt=2)
+        d = ImageDraw.Draw(im)
+        # top/bottom rules, as on the loadscreen stripe
+        d.line((0, 6 * scale, W - 1, 6 * scale), fill=GREEN_MID, width=scale)
+        d.line((0, H - 1 - 6 * scale, W - 1, H - 1 - 6 * scale), fill=GREEN_MID, width=scale)
+
+        badge = emblem(56 * scale, SUN_GOLD)
+        title = ImageFont.truetype(font_path, 40 * scale)
+        tw = round(d.textlength("Sungrid Protocol", font=title))
+        gap = 14 * scale
+        x0 = (W - (badge.width + gap + tw)) // 2
+        ty = 70 * scale
+        im.alpha_composite(badge, (x0, ty - badge.height // 2))
+        d.text((x0 + badge.width + gap, ty), "Sungrid Protocol", font=title,
+               fill=SUN_GOLD, anchor="lm")
+
+        # arrow from the app slot to the Applications slot (72px icons,
+        # centres 220px apart) — a sun-gold filament, nodes at both ends
+        ax0, ax1, ay = 240 * scale, 360 * scale, 210 * scale
+        lw = 3 * scale
+        d.line((ax0, ay, ax1, ay), fill=GOLD_DIM, width=lw)
+        d.polygon([(ax1 + 10 * scale, ay), (ax1 - 8 * scale, ay - 11 * scale),
+                   (ax1 - 8 * scale, ay + 11 * scale)], fill=SUN_GOLD)
+        nr = 4 * scale
+        d.ellipse((ax0 - nr, ay - nr, ax0 + nr, ay + nr), fill=SUN_GOLD)
+
+        hint = ImageFont.truetype(font_path, 20 * scale)
+        d.text((W // 2, 330 * scale), "Drag Sungrid Protocol into Applications to install",
+               font=hint, fill=GREEN_ACCENT, anchor="mm")
+        im.save(f"{ARTWORK}/{name}")
+        print(name, im.size)
+
+
 if __name__ == "__main__":
     gen_dialog()
     gen_sidebar()
     gen_loadscreen()
     gen_icons()
     gen_flags()
+    gen_app_icons()
+    gen_macos_background()
