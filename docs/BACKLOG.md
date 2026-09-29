@@ -3794,9 +3794,8 @@ mode info box has an overlap (screenshot); find more issues and fix them too."
   since the launcher binary is theirs. `buildpackage.nsi`'s default Start Menu folder is
   `PACKAGING_DISPLAY_NAME`; the uninstaller only removes that folder when it is empty, as before.
 
-**Not changed, and worth a decision:** the Windows desktop shortcut and the macOS bundle are still named
-"OpenRA - Sungrid Protocol" (`.lnk` / `.app`), the SDK's convention that other OpenRA mods keep too. Dropping
-the prefix is a one-line change in each script if the owner wants the plain name.
+**Not changed here:** the Windows desktop shortcut and the macOS bundle were still named
+"OpenRA - Sungrid Protocol" (`.lnk` / `.app`), the SDK's convention. Dropped by issue #115 on the owner's call.
 
 **Verified:** `--check-yaml` exits 0 across all maps; regenerating `gen_chrome.py` changes only the eleven
 `packaging/artwork/` files (every in-mod sheet byte-identical); the five briefing lines measured against the
@@ -3814,3 +3813,32 @@ paths only run in the release workflow - and the popup in a live client.
 **Phase:** 4 (release packaging) / 6 (UI identity) follow-up.
 
 **Definition of done:** Met, pending a look at the next release's installers.
+
+### 115. The desktop shortcut, macOS bundle and Linux menu entry were named "OpenRA - Sungrid Protocol"
+
+**Raised as:** "drop the 'OpenRA - ' prefix from the shortcut and app name" - the decision issue #114 left open.
+
+**Problem.** The Mod SDK names the things a player double-clicks with an "OpenRA - " prefix: the NSIS desktop
+shortcut (`OpenRA - ${PACKAGING_DISPLAY_NAME}.lnk`), the macOS bundle (`PACKAGING_OSX_APP_NAME`), and - via the
+engine's `packaging/linux/openra.desktop.in` template, `Name=OpenRA - {MODNAME}` - the AppImage's application
+menu entry. Every other visible name (installer title, Start Menu shortcut, window title, `.desktop` `Name`'s
+neighbours, the DMG volume) was already the plain display name.
+
+**Change.** Windows: the shortcut is `${PACKAGING_DISPLAY_NAME}.lnk`; the uninstaller deletes both the new and the
+old name, so upgrading over an alpha36-or-earlier install does not strand the old shortcut. macOS:
+`PACKAGING_OSX_APP_NAME="${PACKAGING_DISPLAY_NAME}.app"` - the DMG layout uses that variable for the icon
+position and the staple step, so nothing else moves, and the background's hint already said "Drag Sungrid
+Protocol into Applications". Linux: the engine template is not editable here (`engine/` is fetched), so the
+mod-side `sed` pipeline that already substitutes `{MODNAME}` strips the prefix from the `Name=` line; `Exec`,
+`Icon`, `StartupWMClass` and the mime handler keep their `openra-sungrid` ids, which is what the launcher scripts
+and URL scheme key on.
+
+**Verified:** `bash -n` on both shell scripts; the Linux `sed` pipeline run against the engine's actual template
+produces `Name=Sungrid Protocol` with every other line unchanged. Not verified: the built packages - the
+packaging workflow only runs on a release tag.
+
+**Files:** `packaging/windows/buildpackage.nsi`, `packaging/macos/buildpackage.sh`, `packaging/linux/buildpackage.sh`.
+
+**Phase:** 4 (release packaging) follow-up.
+
+**Definition of done:** Met, pending a look at the next release's packages.

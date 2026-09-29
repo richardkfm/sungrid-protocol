@@ -543,6 +543,8 @@ missing `using` that would otherwise have broken CI and all three platform insta
   tile, at every size from 16 px up. The macOS disk image's backdrop no longer says "OpenRA Example Mod".
 - Windows file properties and Task Manager now name the game "Sungrid Protocol" instead of "OpenRA"; the
   Start Menu folder defaults to "Sungrid Protocol" too.
+- The desktop shortcut, the macOS app and the Linux application-menu entry are named plain
+  "Sungrid Protocol" rather than "OpenRA - Sungrid Protocol" (issue #115).
 - The "Grid Reserve Enabled" popup at match start no longer has a line of text running out through its
   border. The text was reflowed so each line fits, and reads as whole sentences.
 

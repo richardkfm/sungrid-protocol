@@ -131,7 +131,8 @@ SectionEnd
 
 Section "Desktop Shortcut" DESKTOPSHORTCUT
 	SetOutPath "$INSTDIR"
-	CreateShortCut "$DESKTOP\OpenRA - ${PACKAGING_DISPLAY_NAME}.lnk" "$INSTDIR\${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" "" \
+	; Plain display name, no "OpenRA - " prefix (docs/BACKLOG.md issue #115)
+	CreateShortCut "$DESKTOP\${PACKAGING_DISPLAY_NAME}.lnk" "$INSTDIR\${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" "" \
 		"$INSTDIR\${PACKAGING_WINDOWS_LAUNCHER_NAME}.exe" "" "" "" ""
 SectionEnd
 
@@ -194,6 +195,8 @@ Function ${UN}Clean
 	Delete "$SMPROGRAMS\$StartMenuFolder\${PACKAGING_DISPLAY_NAME}.lnk"
 	RMDir "$SMPROGRAMS\$StartMenuFolder"
 
+	Delete "$DESKTOP\${PACKAGING_DISPLAY_NAME}.lnk"
+	; Shortcut name used by releases up to alpha36 (issue #115), so an upgrade-over-install still cleans up
 	Delete "$DESKTOP\OpenRA - ${PACKAGING_DISPLAY_NAME}.lnk"
 	DeleteRegKey HKLM "Software\${PACKAGING_WINDOWS_REGISTRY_KEY}"
 FunctionEnd
