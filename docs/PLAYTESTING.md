@@ -4,7 +4,7 @@ Step-by-step instructions to build, launch, and play a local Sungrid Protocol sk
 
 The mod is playable today: `mods/sungrid` holds real Red Alert-derived gameplay (not the SDK's placeholder example content), including the full Phase 2/5 building roster and the Grid Reserve economic victory mode. See `CLAUDE.md`'s "Current status" for where the project stands.
 
-This guide is for building from source. If you just want to play, download the pre-built package for your platform from the [Releases](https://github.com/richardkfm/sungrid-protocol/releases) page instead — no build step required.
+This guide is for building from source. If you just want to play, download the pre-built package for your platform from the [Releases](https://github.com/richardkfm/sungrid-protocol/releases) page instead — no build step required. **Testing a packaged release?** [`docs/BETA_TESTING.md`](BETA_TESTING.md) is the tester-facing guide: install, first launch, playing together over LAN/VPN, where the logs and replays are, and how to report.
 
 ## Prerequisites
 
@@ -39,9 +39,9 @@ This works because the app targets `net8.0` but is compatible with newer majors;
 
 ## Debugging a crash
 
-If the game crashes on startup, on entering a map, or mid-match, the full exception and stack trace print to **the terminal you launched from** — not to the log files under `~/.config/openra/Logs/<mod>/` (or the platform equivalent). Those logs (`install.log`, `lua.log`, `nat.log`, `perf.log`, `server.log`, `sound.log`) cover other subsystems and usually won't contain a rules-loading or widget-rendering crash.
+If the game crashes on startup, on entering a map, or mid-match, the engine writes the full exception and stack trace to **`<SupportDir>/Logs/exception-<UTC timestamp>.log`** — `%APPDATA%\OpenRA\Logs\` on Windows, `~/Library/Application Support/OpenRA/Logs/` on macOS, `~/.config/openra/Logs/` on Linux (there is no per-mod subfolder). The log starts with the engine version, the mod version, the map and the OS, so it is self-describing. Both launchers route unhandled exceptions there (`OpenRA.Launcher`/`OpenRA.WindowsLauncher` → `ExceptionHandler.HandleFatalError`, read at the pinned `ENGINE_VERSION` in issue #116), and the packaged builds' crash dialog has a **View Logs** button that opens that folder. An earlier version of this section said crashes only reach the terminal; that was wrong for unhandled exceptions. The other logs there (`lua.log`, `nat.log`, `perf.log`, `server.log`, `sound.log`, …) cover other subsystems; a desync writes `syncreport-<timestamp>-<client>.log` beside them, and replays go to `<SupportDir>/Replays/sungrid/<version>/`.
 
-To capture a crash for a bug report, redirect and tee stdout/stderr instead of relying on the log directory:
+The terminal still shows everything, including errors that are caught and logged without crashing. To capture it as well:
 
 ```sh
 DOTNET_ROLL_FORWARD=LatestMajor ./launch-game.sh 2>&1 | tee /tmp/sungrid-crash.txt
@@ -62,7 +62,7 @@ A full skirmish (build queue, Recycling Depot, Grid Reserve HUD bar, Phase 5 bui
 
 ## Multiplayer / dedicated server
 
-Use `launch-dedicated.sh` (`.cmd` on Windows) to host a headless dedicated server instead of a local skirmish, or use the in-client "Host Game" flow from the Multiplayer menu — both go through the same engine server code below. Not yet covered by a structured external-playtest package (see `docs/BACKLOG.md` issue #10) — treat this as LAN/direct-connect only for now.
+Use `launch-dedicated.sh` (`.cmd` on Windows) to host a headless dedicated server instead of a local skirmish, or use the in-client **Multiplayer → Create** flow — both go through the same engine server code below. Treat this as LAN/VPN + Direct IP only for now: as of alpha38 a LAN game has been confirmed *visible* from a second machine (not yet joined), and the one internet attempt failed on both the server list and Direct IP. `docs/BETA_TESTING.md` gives testers the VPN route (Tailscale/ZeroTier, Direct IP to the host's VPN address, port 1234; the LAN beacon is a broadcast, which Tailscale does not carry, so the server list may not show it) — and on Windows, a VPN adapter usually lands in the *public* firewall profile, so the host must allow the game there too.
 
 ### Troubleshooting: hosted online, but the other player couldn't find or join it
 
@@ -78,7 +78,7 @@ Confirmed by reading the actual pinned-engine source (`OpenRA.Mods.Common/Server
    - A firewall on the host machine itself (ufw/firewalld/Windows Defender Firewall) blocking inbound TCP on that port.
    - **The host is behind CGNAT / double-NAT** (common on many ISPs, especially mobile/some cable/fiber plans) — port-forwarding your own router does nothing here because the ISP's own NAT sits upstream of you, so the "public IP" your router shows isn't actually internet-routable. This is the most likely explanation for *this specific report*, since the direct public-IP:port connect attempt failed too — if forwarding and the local firewall are both already correct, a failed direct connect from outside the LAN is the classic CGNAT symptom, not a config mistake.
 
-   **Fixes, in order of effort:** verify/add the router port-forward and host firewall rule first; test from truly outside the LAN (an online open-port checker against the host's public IP:port, run while the server is up, is a faster signal than a friend's client); if that still fails, assume CGNAT and either ask the ISP for a public IP / to disable CGNAT, or — the reliable option for a 2-3 person playtest — put both machines on a mesh VPN (Tailscale, ZeroTier, etc.) and connect using the VPN-assigned IP instead of the public one, sidestepping NAT/CGNAT entirely.
+   **Fixes, in order of effort:** try the engine's own UPnP/NAT-PMP first — it is **off by default** (`Server.DiscoverNatDevices = false` in the pinned engine's `Settings.cs`); **Settings → Advanced → Enable UPnP/NAT-PMP Discovery**, restart, and the Create Server panel's notices switch to "Game will automatically configure port forwarding" if the router accepted it. Otherwise verify/add the router port-forward and host firewall rule; test from truly outside the LAN (an online open-port checker against the host's public IP:port, run while the server is up, is a faster signal than a friend's client); if that still fails, assume CGNAT and either ask the ISP for a public IP / to disable CGNAT, or — the reliable option for a 2-3 person playtest — put both machines on a mesh VPN (Tailscale, ZeroTier, etc.) and connect using the VPN-assigned IP instead of the public one, sidestepping NAT/CGNAT entirely.
 
 Not yet verified: an actual successful cross-machine online (non-LAN) match for this mod — this is exactly the open gap in `docs/BACKLOG.md` issue #10 ("cross-machine dry-run still open"). If the checks above get a match connecting, that closes real verification work on that issue; note it there.
 

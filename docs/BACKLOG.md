@@ -3842,3 +3842,85 @@ packaging workflow only runs on a release tag.
 **Phase:** 4 (release packaging) follow-up.
 
 **Definition of done:** Met, pending a look at the next release's packages.
+
+### 116. Nothing let a tester who isn't the author install, get help or report - beta groundwork
+
+**Raised as:** "what would you see necessary for a first beta release? list before you implement." Owner's
+answers to the follow-up questions set the scope: beta is distributed as GitHub Release downloads, feedback comes
+back as GitHub Issues, the alpha38 multiplayer test only established that a LAN game is *visible* from a second
+machine, and internet play has never worked - the game did not appear in the server list and a direct connect
+failed, cause unknown.
+
+**Finding.** Issue #104's Beta gate names B6 (clean-machine install) and B7 (3+ external testers, one match) as
+the open items, but everything *around* those two sessions was missing, so running them would have meant the
+author walking each tester through it - which is exactly what B6 says must not happen:
+
+- **No reporting channel.** GitHub Issues is disabled, and `.github/ISSUE_TEMPLATE/` still held the Mod SDK's
+  copies of OpenRA's own templates ("Report ... issues you experienced in OpenRA", contact links to OpenRA's FAQ,
+  forum, Discord and IRC). Switching Issues on as-is would have routed Sungrid testers to the OpenRA community.
+- **The crash dialog's "View FAQ" opened `docs/BLUEPRINT.md`.** `PACKAGING_FAQ_URL` feeds the crash dialog on all
+  three platforms (Windows launcher assembly metadata, the macOS `Info.plist`, the Linux AppImage wrapper).
+- **`docs/PLAYTESTING.md` gave wrong crash-log instructions.** It said an exception only reaches the terminal. Read
+  at the pinned `ENGINE_VERSION`: both launchers hook `AppDomain.UnhandledException` and catch around
+  `Game.InitializeAndRun`, routing to `ExceptionHandler.HandleFatalError`, which opens a new
+  `exception-<UTC timestamp>.log` channel in `Platform.SupportDir + "Logs"` (no per-mod subfolder) and writes the
+  engine version, mod version, map, OS and runtime before the stack trace. A packaged-build player has no
+  terminal, so the doc's advice was unusable exactly where it mattered. Desyncs write
+  `syncreport-<timestamp>-<client>.log` beside it; replays go to `Replays/<mod>/<version>/`.
+- **No tester-facing guide.** Install warnings (the packages are unsigned on Windows; macOS signing only happens if
+  the release workflow's `MACOS_DEVELOPER_*` secrets are set), the content installer, version matching, hosting,
+  known issues - scattered across `README.md` and a source-build guide, or not written down.
+
+**Online play, what the engine says.** Read in `MasterServerPinger` at the pinned commit: the host POSTs to the
+master server, and the first response is logged verbatim as `Master server: ...` in `Logs/server.log`; error code 1
+("Server port is not accessible from the internet.") and a following "Game has not been advertised online." are
+also printed into the host's lobby chat. A positive code means the game is *not listed*. So the failed test's two
+symptoms - not in the list, direct connect refused - are both what an unreachable host port produces (no forward,
+host firewall, or CGNAT), and one `server.log` from a host settles it. Two more facts worth having:
+`Server.DiscoverNatDevices` (UPnP/NAT-PMP) defaults to **off**, and a LAN game's discovery is a broadcast beacon,
+which Tailscale does not carry - over a VPN, Direct IP is the reliable way in. Not established: whether anything
+mod-side contributes. Nothing found suggests it (`mod.yaml` has no `WebServices` override, `MasterServerPinger` is
+stock), but that is absence of evidence, not a diagnosis.
+
+**Change.**
+
+- `docs/BETA_TESTING.md` (new): download table per platform, the SmartScreen/Gatekeeper steps, the content
+  installer, same-version rule, LAN hosting, **LAN/VPN + Direct IP as the supported way to play across homes**,
+  the port-forward/UPnP route framed as a diagnostic ("send us `server.log`"), how to report, crash/desync/replay
+  file locations per OS, what feedback is wanted, and a known-issues list mirroring the Beta gate's non-blockers.
+- `.github/ISSUE_TEMPLATE/`: the three OpenRA markdown templates replaced by four issue forms - bug, crash
+  (asks for the `exception-*.log`, says where it is), multiplayer/connection (connection method, host's
+  `server.log`, every player's `syncreport-*.log`), playtest feedback (match setup, first-install experience,
+  Lockdown reached/raided/won, hiding-to-win, balance, clarity, fun). `config.yml`'s contact links point at the
+  guide and its known-issues list instead of OpenRA's channels. Labels: `bug`, `crash`, `multiplayer`,
+  `playtest-feedback`, `beta-feedback`.
+- `mod.config`: `PACKAGING_FAQ_URL` → `docs/BETA_TESTING.md`. Deliberately no `#fragment` - the value passes
+  through `sed` on Linux/macOS and an msbuild `-p:` property on Windows, and the plain URL is the form all three
+  are known to carry.
+- `docs/PLAYTESTING.md`: crash-log section corrected; UPnP added as the first fix to try; the multiplayer section
+  records the alpha38 result and points testers at the VPN route.
+- `docs/ROADMAP.md` Beta gate: B6/B7 statuses updated with the alpha38 result; **B8** added (a non-author can
+  install, find help and report unassisted - met once Issues is enabled); "How B7 gets run" (LAN/VPN, internet
+  play a known issue rather than a gate - unless the VPN route fails too); the issue #49 caveat closed (desktop
+  clients render normally - the alpha35 screenshot); a `beta1` cutting checklist.
+- `README.md`, `CHANGELOG.md` (release history mapped through alpha39, entry for this issue), `docs/CONTRIBUTING.md`
+  (tag naming through alpha39 and `betaN`, where tester reports go), `CLAUDE.md`.
+
+**Owner actions this cannot do from the repo:** enable Issues (Settings → General → Features) and create the five
+labels (an issue form silently skips a missing label).
+
+**Open decision:** whether `beta1` is cut after B6/B7 - as the gate reads - or before them, as the build handed
+to testers for B6/B7. Recorded in the gate's `beta1` checklist.
+
+**Verified:** the four forms and `config.yml` parse as YAML; every engine claim above read from the pinned
+commit's source (`ExceptionHandler.cs`, `Log.cs`, `Platform.cs`, `SyncReport.cs`, `ReplayRecorder.cs`,
+`MasterServerPinger.cs`, `Settings.cs`, `OpenRA.WindowsLauncher/Program.cs`, `mods/common/fluent/*.ftl` for the UI
+labels the guide quotes). Not verified: the forms as rendered by GitHub (Issues is off), the guide's
+SmartScreen/Gatekeeper steps on real machines, and the VPN route itself - which is precisely what B6/B7 test.
+
+**Files:** `docs/BETA_TESTING.md`, `.github/ISSUE_TEMPLATE/*`, `mod.config`, `docs/PLAYTESTING.md`,
+`docs/ROADMAP.md`, `docs/CONTRIBUTING.md`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Phase:** 4 (playtest hardening / release packaging); Beta gate B6-B8.
+
+**Definition of done:** Met for the repo side. The gate itself still waits on B6 and B7, which only testers can run.

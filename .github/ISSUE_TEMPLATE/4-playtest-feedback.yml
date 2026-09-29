@@ -1,0 +1,69 @@
+name: Playtest feedback
+description: After a match - what was fun, what felt unfair, what was confusing.
+labels: ["playtest-feedback", "beta-feedback"]
+title: "Playtest: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for playing! Matches with **three or more human players** are what we need most, but every match helps. Skip anything you can't answer.
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      placeholder: beta1
+    validations:
+      required: true
+  - type: textarea
+    id: match
+    attributes:
+      label: The match
+      description: Map, number of humans and bots (which AI), factions, Grid Reserve on or off, roughly how long it lasted, who won and how.
+    validations:
+      required: true
+  - type: textarea
+    id: install
+    attributes:
+      label: First install (if this was your first time)
+      description: Did the download, the security warning and the content installer on first launch work without help? Where did you get stuck?
+  - type: dropdown
+    id: lockdown
+    attributes:
+      label: Did anyone reach Grid Lockdown (the 90-second hold)?
+      options:
+        - "No"
+        - Yes, and they won that way
+        - Yes, but it was broken by a raid
+        - Yes, but it was cancelled some other way
+        - Grid Reserve was off
+  - type: textarea
+    id: gridreserve
+    attributes:
+      label: Grid Reserve
+      description: |
+        Was saving a real alternative to fighting? Could someone win by hiding and saving without being threatened? Did raiding a Battery Bank feel worth it? Was the Reserve bar at the top of the screen clear?
+  - type: textarea
+    id: balance
+    attributes:
+      label: Anything clearly too strong or useless?
+      description: Units, buildings, drones, the Cryptominer, defences, an AI personality...
+  - type: textarea
+    id: clarity
+    attributes:
+      label: Anything confusing?
+      description: A building whose purpose wasn't clear, a tooltip that didn't match what happened, art you couldn't tell apart.
+  - type: dropdown
+    id: fun
+    attributes:
+      label: Overall, how much fun was it?
+      options:
+        - 5 - great
+        - 4
+        - 3
+        - 2
+        - 1 - not fun
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else?
+      description: Ideas are welcome here too. Replays (zipped `.orarep`) and screenshots can be dragged in.

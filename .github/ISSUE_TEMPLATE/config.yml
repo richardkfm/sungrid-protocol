@@ -1,14 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Frequently Asked Questions
-    url: https://github.com/OpenRA/OpenRA/wiki/FAQ#frequently-asked-questions
-    about: Explanations for common problems and questions.
-  - name: OpenRA Forum
-    url: https://forum.openra.net/
-    about: Please ask questions about modding here.
-  - name: OpenRA Discord server
-    url: https://discord.openra.net/
-    about: Join the community Discord server for community discussion and support.
-  - name: OpenRA IRC Channel
-    url: https://web.libera.chat/#openra
-    about: Join our development IRC channel on Libera for discussion of development topics.
+  - name: Beta tester guide
+    url: https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md
+    about: Install, first launch, playing together over LAN/VPN, where the log files are.
+  - name: Known issues (please don't report these)
+    url: https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md#6-known-issues--please-dont-report-these
+    about: Stock Red Alert unit art/audio, recoloured terrain, internet play via the server list, and more.

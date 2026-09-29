@@ -26,6 +26,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `docs/BUILDINGS.md` — the building roster (the original ten, plus the three from the energy pass), categorized and staged.
 - `docs/ENERGY_BALANCE.md` — the energy-scarcity rebalance and faction power-identity pass, plus the sub-faction rename history.
 - `docs/ART_DIRECTION.md` — solarpunk tone/visual guardrails and the locked palette. `docs/concept-art/` holds non-canonical HTML sketches (the Phase 5 building dossier, its faux-pixel-art follow-up, the faction-roster dossier) — discussion drafts, not shippable assets — plus per-issue PNG review renders of actual generator output referenced inline from `docs/ART_DIRECTION.md`, and `cameo-sources/` (author-supplied concept renders the photographic cameos are cropped from).
+- `docs/BETA_TESTING.md` — the **tester-facing** guide (issue #116): install and unsigned-app warnings, content install, LAN/VPN + Direct IP hosting, crash/desync/replay file locations, known issues. The packaged crash dialog's "View FAQ" opens it, and the issue forms in `.github/ISSUE_TEMPLATE/` link to it — keep its UI labels and paths in step with the engine.
 - `docs/PLAYTESTING.md` — build/launch/troubleshooting steps for actually running a local match, including the RA content install and the known headless-environment blockers.
 - `docs/CONTRIBUTING.md` — Sungrid-specific workflow (branches, labels, RFCs, PR checklist). Root `CONTRIBUTING.md` is the Mod SDK's own contributing guidelines (still points to OpenRA's coding-standard wiki for engine-level style).
 - `docs/LICENSE_NOTES.md` — GPLv3 inheritance, EA non-affiliation, original-asset licensing notes.
@@ -72,8 +73,14 @@ and the two open ones (B6 first-run install verified on a clean machine, B7 one 
 with 3+ testers) are the same session's work. **B7 is the real gate** — nothing has ever been played by
 anyone but the author, and no further solo auditing substitutes for that. The section also lists what is
 explicitly *not* a beta blocker (all of Phase 7, terrain scenery, issues #60 and #31), so the bar can't drift.
+Issue #116 added **B8** (a non-author can install, find help and report unassisted: `docs/BETA_TESTING.md`,
+Sungrid issue forms, the crash dialog's FAQ link) and a `beta1` checklist. Multiplayer facts as of alpha38: a LAN
+game is *visible* from a second machine, nothing has been joined or played across machines, and internet play via
+the server list has failed with cause unknown — so testers are pointed at LAN or a mesh VPN with Direct IP, and the
+host's `Logs/server.log` (`Master server: ...` line) is what will diagnose the internet path. Crashes land in
+`<SupportDir>/Logs/exception-*.log`, not only the terminal.
 
-Releases: `alpha1` … `alpha25`. `alpha17` was the first run in the repo's history where all three
+Releases: `alpha1` … `alpha39`; beta tags will be `betaN`. `alpha17` was the first run in the repo's history where all three
 platform jobs (Linux AppImage, Windows installer, macOS DMG) succeeded together — Windows was fixed
 twice (issues #21, #23) and macOS twice (issues #29, #30).
 

@@ -16,11 +16,12 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 * [`docs/GAME_MODES.md`](docs/GAME_MODES.md) — full spec for the Grid Reserve economic victory mode.
 * [`docs/BUILDINGS.md`](docs/BUILDINGS.md) — the initial building roster. Full unit/building roster by faction, plus a makeover-vs-new-mechanic breakdown and parity flags: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/faction-roster-dossier.html">via githack</a>
 * [`docs/ENERGY_BALANCE.md`](docs/ENERGY_BALANCE.md) — the energy-scarcity rebalance and faction power-identity pass (Wind Turbine Array, Hydrogen Plant, Drone Bay parity, drone/AI Datacenter power-gating), plus scoped suggestions for a future unit/vehicle reskin pass.
+* [`docs/BETA_TESTING.md`](docs/BETA_TESTING.md) — **for testers:** install, first launch, playing together over LAN/VPN, where the logs and replays are, how to report, and the known-issues list.
 * [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) — step-by-step build/launch/troubleshooting instructions to actually run a local match.
 * [`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md) — tone and visual direction. Non-canonical concept art: <a href="https://raw.githack.com/richardkfm/sungrid-protocol/main/docs/concept-art/phase5-pixel-mockups.html">via githack</a> 
 * [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — branch strategy, labels, RFC process, PR checklist, release strategy (Sungrid-specific — for engine-level C# style, see the root [`CONTRIBUTING.md`](CONTRIBUTING.md)).
 * [`docs/LICENSE_NOTES.md`](docs/LICENSE_NOTES.md) — license inheritance and EA non-affiliation.
-* [`docs/BACKLOG.md`](docs/BACKLOG.md) — the engineering issue log (105 issues and counting), held here because GitHub Issues is currently disabled on this repo; import as real issues once it's enabled.
+* [`docs/BACKLOG.md`](docs/BACKLOG.md) — the engineering issue log (116 issues and counting), with the full detail for every change. Player and tester reports go to [GitHub Issues](https://github.com/richardkfm/sungrid-protocol/issues/new/choose) instead.
 * [`CHANGELOG.md`](CHANGELOG.md) — what has actually shipped, in plain language, grouped by phase.
 * [`CLAUDE.md`](CLAUDE.md) — navigation map for AI-assisted development sessions in this repo.
 
@@ -43,6 +44,8 @@ Gameplay (alpha35)
 
 You don't need to build from source to try it — pre-built Windows installers, macOS disk images, and Linux AppImages are published on the [Releases](https://github.com/richardkfm/sungrid-protocol/releases) page for each tagged version. Grab the package for your platform and run it; building (below) is only needed if you want the latest `main` or plan to make changes.
 
+**Testing it?** Read the [beta tester guide](docs/BETA_TESTING.md) — it covers the install warnings, playing together over a LAN or VPN, and where the crash logs are — and report bugs, crashes, connection problems and match feedback through the [issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
+
 **Game content:** like OpenRA's own Red Alert mod, Sungrid Protocol doesn't ship the underlying Red Alert asset files — it reads them from your own copy. On first launch it offers the same options OpenRA does: download the official freeware Red Alert package (~13MB, no purchase required), or install from an original disc, Steam, or Origin copy. Everything Sungrid Protocol-specific — buildings, drones, UI, cursors, cameos, menu music — is original art shipped in the package itself.
 
 ## Building
@@ -62,7 +65,7 @@ See [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for a full walkthrough includin
 
 
 <img width="1592" height="1027" alt="grafik" src="https://github.com/user-attachments/assets/721e2b1f-7827-41eb-a804-3191ec861095" />
-Multiplayer tested in LAN (alpha38)
+LAN game visible from a second machine (alpha38) — a full cross-machine match is still the open beta gate
 
 ## Upstream OpenRA
 

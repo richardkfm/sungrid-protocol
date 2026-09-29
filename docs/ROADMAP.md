@@ -111,7 +111,7 @@ current state.
 ## Beta gate — what has to be true to stop shipping `alphaN`
 
 Added in issue #104. Until now nothing in this repo defined "beta": the roadmap thinks in phases, and
-releases are numbered `alpha1`…`alpha35` with no stated finish line, so "is it beta yet?" could only be
+releases were numbered `alpha1`…`alpha35` with no stated finish line, so "is it beta yet?" could only be
 answered by opinion. This section is that finish line, and it is deliberately **orthogonal to the phase
 plan** — beta is not "Phase 7 is done", because Phase 7 is the highest-volume item in the roadmap and
 gating a wider public test on a full unit-art and audio pass would mean never running one.
@@ -126,13 +126,36 @@ people who are not the author.** Phase-completeness is not the bar; nothing bein
 | B3 | No shipped actor's rules contradict its own fiction | **Met** as of issues #102/#103, which audited every Sungrid-original actor's inheritance chain |
 | B4 | `make test` green — `--check-yaml` and `--check-missing-sprites` across all 75 maps, on both CI platforms | **Met**, and CI-enforced on every PR |
 | B5 | All three platform packages build together (Linux AppImage, Windows installer, macOS DMG) | **Met** since alpha17; regressed once at alpha34 and fixed by issue #99 |
-| B6 | The first-run content-install flow works from a clean machine, verified by someone who has never run the mod | **Open** — `mods/sungrid-content` exists and is believed correct, but has never been verified from a genuinely clean install |
-| B7 | One full multiplayer match, 3+ external testers, no desyncs and no "obviously broken" balance complaints | **Open** — this is Phase 4's one unmet exit criterion, and the real gate |
+| B6 | The first-run content-install flow works from a clean machine, verified by someone who has never run the mod | **Open** — `mods/sungrid-content` exists and is believed correct, but has never been verified from a genuinely clean install. The tester guide and the feedback form both ask for exactly this (issue #116) |
+| B7 | One full multiplayer match, 3+ external testers, no desyncs and no "obviously broken" balance complaints | **Open** — this is Phase 4's one unmet exit criterion, and the real gate. As of alpha38 a LAN-hosted game has been confirmed *visible* from a second machine; no match has been joined or played across machines yet, and internet play has failed (see below) |
+| B8 | A tester who is not the author can install, find help and report a problem without being walked through it | **Met by issue #116 once GitHub Issues is enabled** — `docs/BETA_TESTING.md` (install, content, LAN/VPN hosting, log locations, known issues), Sungrid issue forms for bugs, crashes, connection problems and playtest feedback, and the crash dialog's "View FAQ" pointing at the guide instead of `BLUEPRINT.md` |
 
 **B7 is the gate.** Everything else is either already met or cheap to meet; the project has never been
 played by anyone but its author, and no amount of further single-player auditing substitutes for that.
 Treat B6 and B7 as one session's work (recruit testers, hand them a package, watch a match), not as a
 research project.
+
+**How B7 gets run (issue #116).** Beta is distributed the same way the alphas were — GitHub Releases — and
+feedback comes back as GitHub Issues through the forms in `.github/ISSUE_TEMPLATE/`. The supported way for
+testers in different homes to play together is **LAN or a mesh VPN (Tailscale/ZeroTier) with Direct IP**, not
+the public server list: the one attempt at internet play failed on both paths (the game never appeared in the
+list, and a direct connection to the host's public IP:port was refused), cause not yet established. The engine
+records the master server's verdict on the host — `Master server: …` in `Logs/server.log`, and "Server port is
+not accessible from the internet." in the lobby chat — so the first report that includes those settles whether
+this is the host's port forward/CGNAT (the working hypothesis in `docs/PLAYTESTING.md`) or something in the mod.
+
+### Cutting `beta1`
+
+Whether `beta1` is cut after B6/B7, as the gate reads, or before them as the build testers are handed *for*
+B6/B7, is an open owner decision (issue #116). Either way the packaging scripts treat `beta1` exactly like
+`alphaN`, and the steps are:
+
+1. GitHub repository **Settings → General → Features → Issues** on, and the labels the forms apply created:
+   `bug`, `crash`, `multiplayer`, `playtest-feedback`, `beta-feedback` (a form silently skips a label that
+   doesn't exist).
+2. Publish the Release per `docs/CONTRIBUTING.md`'s release strategy, tag `beta1`; check all three packaging
+   jobs went green. Link `docs/BETA_TESTING.md` and its known-issues list in the release notes.
+3. Download each package once and confirm the crash dialog's "View FAQ" and the main-menu version label.
 
 ### Explicitly *not* beta blockers
 
@@ -147,8 +170,12 @@ Recorded so the bar cannot quietly drift upward. None of these keep the project 
   it gets answered, not a precondition for B7.
 - **A human-designer pass over the programmatic art**, and a composer pass over the menu sting.
 - **The headless black-battlefield blocker** (issue #49) — an automation-environment problem, not a player-
-  facing one. *Caveat:* nobody has confirmed it doesn't reproduce in a normal client, so **determining
-  that** is a B-item; if it turns out to affect real play it becomes a B1 blocker immediately.
+  facing one. The caveat recorded here in issue #104 (nobody had confirmed it doesn't reproduce in a normal
+  client) is settled: every local match on a desktop client since — the alpha35 gameplay screenshot in
+  `README.md` among them — renders the battlefield normally. It stays open only as a headless-automation gap.
+- **Internet play via the public server list** — see "How B7 gets run" above. It is a known issue testers are
+  told about, not a gate, because LAN/VPN reaches the same B7 match. If the VPN route also fails, that is a
+  different finding and it *is* a blocker.
 
 ## Phase 8+ — Diplomacy and shared-resource systems (conditional)
 
