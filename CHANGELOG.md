@@ -6,9 +6,10 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha36** (issues #105's
-bot Vault-raiding plus the engine re-pin it required, the drone-briefing wording fix, and the Drone Bay / Aerial Fab
-tooltip rewording; #105 also includes the engine patch that lets the project build and verify itself, recorded below).
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha39** (issues #110–#113:
+the electric arc weapons and both defences rebuilt and animated). **Testing a release?** Start with the
+[beta tester guide](docs/BETA_TESTING.md) and report through the
+[issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
 
 ## Where the project stands
 
@@ -22,11 +23,17 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 ## Release history (recent)
 
-The detailed entries below track through issue #105 (all of alpha36). Releases have kept moving
-ahead of the write-up cadence; the short summary here keeps the changelog honest until each release
-gets its own prose pass.
+The detailed entries below track every issue through #116; this list maps them onto release tags.
 
-- **alpha36** (latest, all three platforms — Windows installer, macOS DMG, Linux AppImage): shipped
+- **Unreleased** (on `main`): the Sungrid app icons and disk-image background (issue #114), the plain
+  "Sungrid Protocol" shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
+- **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
+  both defences' pedestals rebuilt as solids, the Grid Defense Turret redrawn, and both defences animated.
+- **alpha38**: issue #109 — idle animations across the building roster (turbine, dish, lights,
+  grid-strained warnings).
+- **alpha37**: issues #106–#108 — every building rebuilt as a 3D solid, a Sungrid Construction Yard, the
+  cameo assessment, and greenery on every building.
+- **alpha36** (all three platforms — Windows installer, macOS DMG, Linux AppImage): shipped
   issues #102–#105 — the drone crew-removal and auto-fire fix, the Spy fixes at the
   Cryptominer/Datacenter, the "beta ready" definition (roadmap Beta gate), bot Vault raiding plus
   the engine patch it required, the Drone Reserve briefing text rewording, and the Drone Bay /
@@ -547,6 +554,27 @@ missing `using` that would otherwise have broken CI and all three platform insta
   "Sungrid Protocol" rather than "OpenRA - Sungrid Protocol" (issue #115).
 - The "Grid Reserve Enabled" popup at match start no longer has a line of text running out through its
   border. The text was reflowed so each line fits, and reads as whole sentences.
+
+## Getting ready for outside testers (issue #116)
+
+Nothing in the game changed; this is everything around it that a tester who isn't the author runs into.
+
+- **A tester guide**, [`docs/BETA_TESTING.md`](docs/BETA_TESTING.md): which file to download, how to get past
+  the Windows and macOS "unknown developer" warnings, what the first-launch content installer does, how to play
+  together, where the crash logs, desync logs and replays are, what to report, and a list of known issues not to
+  report (stock unit art and audio, recoloured terrain, internet play via the server list).
+- **Playing together over the internet: use a VPN for now.** Hosting through the public server list hasn't
+  worked yet (the game didn't appear, and a direct connection failed too). The guide walks through Tailscale or
+  ZeroTier plus Direct IP, and asks anyone trying the normal route to send the host's `server.log`, which
+  records the master server's verdict — that is what will pin the cause down.
+- **Reporting works now** — or will, once GitHub Issues is switched on. The issue templates were still
+  OpenRA's own and sent people to OpenRA's forum and Discord; they're replaced by four Sungrid forms: bug,
+  crash, multiplayer/connection problem, and a playtest-feedback form that asks the questions the beta
+  depends on (did anyone reach Lockdown, did a raid break it, could someone win by hiding).
+- **The crash dialog's "View FAQ" button** opened a Phase 0 design document. It now opens the tester guide.
+- **Fixed a wrong instruction:** the build guide said crash details only go to the terminal. The game writes
+  them to `Logs/exception-<date>.log` in its data folder on every platform, which is what a player without a
+  terminal needs to know.
 
 ## Open / recorded but not implemented
 

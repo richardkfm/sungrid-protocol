@@ -1,0 +1,56 @@
+name: Bug report
+description: Something behaves wrong, looks broken, or doesn't match its description.
+labels: ["bug", "beta-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing Sungrid Protocol. Please check the [known issues](https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md#6-known-issues--please-dont-report-these) first, and search existing issues - a comment on an existing report helps more than a duplicate.
+        If the game **crashed**, use the *Crash report* form instead. Connection problems go in *Multiplayer / connection problem*.
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: Shown in the main menu, e.g. `beta1`.
+      placeholder: beta1
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows (installer)
+        - Windows (portable zip)
+        - macOS
+        - Linux (AppImage)
+        - Built from source
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen
+      description: Steps, as far as you know them. "It happened once around minute 10" is fine too.
+      placeholder: |
+        1. Skirmish on <map>, Grid Reserve on, vs Easy Grid Broker AI
+        2. Build a Battery Bank
+        3. ...
+  - type: input
+    id: match
+    attributes:
+      label: Match setup
+      description: Map, number of players/bots, faction, Grid Reserve on or off.
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Screenshots or replay
+      description: |
+        Drag files in here. Replays are recorded automatically - zip the `.orarep` file first ([where to find it](https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md#where-the-files-are)).

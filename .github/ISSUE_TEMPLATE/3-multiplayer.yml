@@ -1,0 +1,54 @@
+name: Multiplayer / connection problem
+description: Can't see or join a game, got disconnected, or the match went "out of sync".
+labels: ["multiplayer", "beta-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Everyone in a match must run the **exact same version** - a different version doesn't show up in the list at all. Please check that first.
+        Internet play through the server list is a [known issue](https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md#over-the-internet-without-a-vpn-helps-us-fix-the-known-issue); reports that include the host's `server.log` are exactly what we need to fix it.
+  - type: input
+    id: version
+    attributes:
+      label: Game version (all players)
+      placeholder: beta1 on all three machines
+    validations:
+      required: true
+  - type: dropdown
+    id: problem
+    attributes:
+      label: What went wrong?
+      options:
+        - The game didn't show up in the server list
+        - Direct IP connection failed
+        - Connected, but got disconnected during the match
+        - '"Out of sync" message during the match'
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: network
+    attributes:
+      label: How were you connected?
+      options:
+        - Same local network (LAN)
+        - VPN (Tailscale, ZeroTier, ...)
+        - Internet via the server list
+        - Internet via Direct IP (port forwarded)
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup
+      description: Host's and players' operating systems, whether the host forwarded port 1234 or enabled UPnP, anything in the host's lobby chat after creating the server (e.g. "Server port is not accessible from the internet.").
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Drag files in here ([where they are](https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md#where-the-files-are)):
+        - **Host:** `Logs/server.log` - the line starting `Master server:` matters most.
+        - **Out of sync:** the newest `Logs/syncreport-*.log` from **every** player.

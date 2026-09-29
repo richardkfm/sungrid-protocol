@@ -1,0 +1,56 @@
+name: Crash report
+description: The game closed unexpectedly or showed an error dialog.
+labels: ["crash", "beta-feedback"]
+title: "Crash: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The game writes a crash log automatically: the newest `exception-<date>.log` in the `Logs` folder. If a crash dialog appeared, its **View Logs** button opens that folder.
+        Otherwise see [where the files are](https://github.com/richardkfm/sungrid-protocol/blob/main/docs/BETA_TESTING.md#where-the-files-are): Windows `%APPDATA%\OpenRA\Logs`, macOS `~/Library/Application Support/OpenRA/Logs`, Linux `~/.config/openra/Logs`.
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: Shown in the main menu, e.g. `beta1`. The crash log also names it.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows (installer)
+        - Windows (portable zip)
+        - macOS
+        - Linux (AppImage)
+        - Built from source
+    validations:
+      required: true
+  - type: dropdown
+    id: when
+    attributes:
+      label: When did it crash?
+      options:
+        - On startup / in the content installer
+        - In the main menu or lobby
+        - While a map was loading
+        - During a match
+        - At the end of a match
+        - Watching a replay
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Crash log
+      description: Paste the whole content of the newest `exception-*.log`, or drag the file in.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What were you doing just before?
+      description: Map, what you had selected or ordered, whether it was single- or multiplayer. If it happened in a match, please attach the zipped replay.
