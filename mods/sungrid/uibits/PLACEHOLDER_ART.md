@@ -1,7 +1,8 @@
 # Programmatic chrome art in this folder — read before touching these files
 
 Everything thematic in this folder (`dialog.png`, `sidebar.png`, `loadscreen*.png`) plus the
-mod icons one level up (`../icon.png`, `../icon-2x.png`, `../icon-3x.png`) is **generated from
+mod icons one level up (`../icon.png`, `../icon-2x.png`, `../icon-3x.png`) and the packaging
+artwork (`packaging/artwork/`) is **generated from
 scratch by `gen_chrome.py`** — original programmatic art in the locked palette
 (`docs/ART_DIRECTION.md`), containing zero pixels derived from stock OpenRA/RA chrome.
 
@@ -23,6 +24,7 @@ emblem remains open follow-up, same status as the programmatic sprite set in
 | `loadscreen.png` / `-2x` / `-3x` (512×256 / 1024×512 / 2048×1024) | Emblem badge (the `logos` region) + tileable stripe. The "3x" file is actually 4x scale — filename inherited from stock, predates this repo |
 | `glyphs.png` / `glyphs-2x.png` / `glyphs-3x.png` | **Stock, patched in place** — bitmap font atlas + small functional glyphs (order/production/stance icons etc.), not thematic art, left alone except for the `allies`/`soviet` faction-flag slots, which `gen_flags()` overwrites with the Citadel Seal / Swarm Rig marks (`docs/BACKLOG.md` issues #56, #57). This is the one function in the script that edits an existing sheet instead of generating one. Redesigning the rest of the atlas is open follow-up |
 | `../icon*.png` (32/64/96) | Window/taskbar/mod-chooser icon — the emblem on transparency |
+| `../../../packaging/artwork/icon_*.png` (16 … 1024) and `macos-background*.png` | **Application** icon for all three platform packages (Windows launcher `.exe`/installer, macOS `.app`/DMG, Linux AppImage/`.desktop`) — the emblem on its own rounded grid-glass tile, a simplified heavier mark below 48px — and the macOS disk-image background. Were the Mod SDK's "Ex" / "OpenRA Example Mod" placeholders until issue #114; `packaging/*/buildpackage.sh` consume them by fixed name and size |
 
 ## Hard constraints if you touch any of this
 

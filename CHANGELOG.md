@@ -536,6 +536,16 @@ missing `using` that would otherwise have broken CI and all three platform insta
   its target the moment it starts aiming. Its pad has a blinking status lamp too.
 - Damaged turrets stop moving: no arc, no scan, lamps dark.
 
+## The installers finally carry the Sungrid logo (issue #114)
+
+- The Windows launcher `.exe`, its desktop and Start Menu shortcuts, the macOS app and the Linux AppImage
+  all showed the Mod SDK's placeholder "Ex" icon; they now carry the Sungrid emblem on a dark grid-glass
+  tile, at every size from 16 px up. The macOS disk image's backdrop no longer says "OpenRA Example Mod".
+- Windows file properties and Task Manager now name the game "Sungrid Protocol" instead of "OpenRA"; the
+  Start Menu folder defaults to "Sungrid Protocol" too.
+- The "Grid Reserve Enabled" popup at match start no longer has a line of text running out through its
+  border. The text was reflowed so each line fits, and reads as whole sentences.
+
 ## Open / recorded but not implemented
 
 - Consolidating the European sub-factions into a single EU faction, with a fictional Federation of the Middle East as the Assembly's counterpart, is recorded as a design question (issue #60) rather than implemented — unlike every rename so far, it would shrink the lobby's sub-faction list and force a decision about which special units each merged identity keeps.

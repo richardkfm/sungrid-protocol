@@ -3746,3 +3746,71 @@ the idle/aim hand-over in particular is worth watching in a match.
 
 **Definition of done:** Met.
 
+### 114. The installers still shipped the Mod SDK's "Ex" icon and "OpenRA Example Mod" disk image, and the Grid Reserve briefing overflowed its box
+
+**Raised as:** "icon of the file to start the game in windows is reading 'EX' but it should be our logo icon; grid
+mode info box has an overlap (screenshot); find more issues and fix them too."
+
+**Problem.** Three separate cosmetic leftovers, all user-visible at first contact with the game.
+
+- **The application icon was the SDK placeholder.** `packaging/artwork/icon_*.png` (16 to 1024) were still the
+  OpenRA Mod SDK's example-mod icon - a black "Ex" glyph on white - and every platform package consumes them:
+  `packaging/windows/buildpackage.sh` converts five of them into the `.ico` that `rcedit --set-icon` stamps onto
+  the launcher `.exe` (and the installer registers it as the uninstall / URL-scheme icon), the macOS script
+  builds the `.icns` from them, the Linux script installs them as the AppImage's hicolor icon set. Only the
+  *in-game* icon (`mods/sungrid/icon*.png`, the window/taskbar/mod-chooser one) had ever been replaced (issue
+  #41), so the desktop shortcut and the `.exe` in Explorer showed "Ex" while the running window showed the
+  emblem. `packaging/artwork/macos-background*.png`, the Finder window backdrop for the DMG, was likewise
+  stock: a dashed box and the title **"OpenRA Example Mod"**.
+- **The briefing popup's fourth line was wider than the popup.** `label-grid-reserve-briefing-line4` measured
+  ~531 px in `Regular` (FreeSans 14) inside a 480 px label in a 520 px dialog, so the centred text crossed the
+  dialog border on both sides - the "overlap" in the screenshot. The line was long because issue #40's wording
+  hand-broke one sentence across lines 3 and 4 ("... to win via" / "Grid Lockdown. Destroying ...") and then
+  appended a second sentence to line 4. `LabelWidget` has no per-line centring for `WordWrap` text (wrapped
+  lines are drawn left-aligned inside a centred block), so a wrapped paragraph would not keep the popup's look.
+- **Windows file metadata said OpenRA, not Sungrid Protocol.** `rcedit` stamped `ProductName` "OpenRA",
+  `CompanyName` "The OpenRA team" and `FileDescription` "SungridProtocol mod for OpenRA" onto the launcher -
+  `FileDescription` is the name Task Manager and Explorer's Properties dialog show for the running game - and the
+  NSIS script's default Start Menu folder was "OpenRA" (with the "Sungrid Protocol" shortcut inside it).
+
+**Change.**
+
+- `gen_chrome.py` now also generates `packaging/artwork/` (`gen_app_icons()`, `gen_macos_background()`), so the
+  packaging artwork obeys the same rule as the rest of the chrome: output depends only on the script. The app
+  icon is the emblem on its own rounded grid-glass tile with a green frame (an app icon sits on an arbitrary
+  desktop or Finder background, unlike the in-game icon, which is drawn over the mod chooser's own panel);
+  below 48 px `emblem(simple=True)` drops the ring, filaments and vertex nodes - sub-pixel at 16-32 px - and
+  thickens the hexagon, the sprite pipeline's "draw less, not smaller" rule. Every existing `emblem()` caller
+  is unchanged, so the regeneration diff is exactly the nine icon files and the two backgrounds. The DMG
+  background carries the badge and title in `ZoodRangmah`, an arrow between mod.config's two icon positions
+  (`190, 210` / `410, 210`, 72 px icons - Finder draws the icons and names themselves) and a drag-to-install hint.
+- The briefing is five lines that each fit with margin: line 3 keeps its whole sentence ("... to win via Grid
+  Lockdown."), line 4 is the Bank-loss sentence on its own ("Destroying a Bank drains part of its Reserve.
+  Selling one forfeits it entirely."), line 5 reads "your Banks are revealed". Widest line ~466 px; the dialog
+  is 560 wide (labels 520) for headroom against font-measure differences. Height, label rows and the button are
+  as before. The same hyphen-as-dash in the enemy-Lockdown HUD tooltip became a full stop.
+- `buildpackage.sh` stamps `ProductName` = `PACKAGING_DISPLAY_NAME`, `CompanyName` = `PACKAGING_AUTHORS`,
+  `FileDescription` = "Sungrid Protocol (OpenRA mod)"; `LegalCopyright` still credits the OpenRA developers,
+  since the launcher binary is theirs. `buildpackage.nsi`'s default Start Menu folder is
+  `PACKAGING_DISPLAY_NAME`; the uninstaller only removes that folder when it is empty, as before.
+
+**Not changed, and worth a decision:** the Windows desktop shortcut and the macOS bundle are still named
+"OpenRA - Sungrid Protocol" (`.lnk` / `.app`), the SDK's convention that other OpenRA mods keep too. Dropping
+the prefix is a one-line change in each script if the owner wants the plain name.
+
+**Verified:** `--check-yaml` exits 0 across all maps; regenerating `gen_chrome.py` changes only the eleven
+`packaging/artwork/` files (every in-mod sheet byte-identical); the five briefing lines measured against the
+real `FreeSans.ttf` at 14 px, and a composited mock at the widget's geometry
+(`docs/concept-art/issue114-packaging-artwork-and-briefing.png`, alongside the icons at every size on light
+and dark backgrounds and the DMG background). Not verified: the installers themselves - the icon/`.ico`/`.icns`
+paths only run in the release workflow - and the popup in a live client.
+
+**Files:** `mods/sungrid/uibits/gen_chrome.py`, `packaging/artwork/icon_*.png` (nine sizes),
+`packaging/artwork/macos-background.png`, `packaging/artwork/macos-background-2x.png`,
+`packaging/windows/buildpackage.sh`, `packaging/windows/buildpackage.nsi`, `mods/sungrid/fluent/chrome.ftl`,
+`mods/sungrid/chrome/ingame-player.yaml`, `mods/sungrid/uibits/PLACEHOLDER_ART.md`,
+`docs/concept-art/issue114-packaging-artwork-and-briefing.png`.
+
+**Phase:** 4 (release packaging) / 6 (UI identity) follow-up.
+
+**Definition of done:** Met, pending a look at the next release's installers.
