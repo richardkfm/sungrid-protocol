@@ -110,7 +110,9 @@ fi
 
 mkdir -p "${APPDIR}/usr/share/applications"
 chmod 0755 temp.desktop.in
-sed "s/{MODID}/${MOD_ID}/g" temp.desktop.in | sed "s/{MODNAME}/${PACKAGING_DISPLAY_NAME}/g" | sed "s/{TAG}/${TAG}/g" > "${APPDIR}/usr/share/applications/openra-${MOD_ID}.desktop"
+# The engine's template names the entry "OpenRA - {MODNAME}"; the app menu entry carries the plain
+# display name instead, matching the Windows shortcut and macOS bundle (docs/BACKLOG.md issue #115).
+sed "s/{MODID}/${MOD_ID}/g" temp.desktop.in | sed "s/{MODNAME}/${PACKAGING_DISPLAY_NAME}/g" | sed "s/{TAG}/${TAG}/g" | sed "s/^Name=OpenRA - /Name=/" > "${APPDIR}/usr/share/applications/openra-${MOD_ID}.desktop"
 cp "${APPDIR}/usr/share/applications/openra-${MOD_ID}.desktop" "${APPDIR}/openra-${MOD_ID}.desktop"
 rm temp.desktop.in
 
