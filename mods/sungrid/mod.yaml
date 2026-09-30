@@ -77,7 +77,7 @@ AssetBrowser:
 
 SupportsMapsFrom: sungrid
 
-LoadScreen: LogoStripeLoadScreen
+LoadScreen: SungridLoadScreen
 	Image: sungrid|uibits/loadscreen.png
 	Image2x: sungrid|uibits/loadscreen-2x.png
 	Image3x: sungrid|uibits/loadscreen-3x.png
