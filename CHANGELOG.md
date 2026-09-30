@@ -6,8 +6,8 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **alpha39** (issues #110–#113:
-the electric arc weapons and both defences rebuilt and animated). **Testing a release?** Start with the
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta01** (issues #114–#116:
+Sungrid app icons and names, and the tester guide and issue forms). **Testing a release?** Start with the
 [beta tester guide](docs/BETA_TESTING.md) and report through the
 [issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
 
@@ -25,8 +25,9 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 The detailed entries below track every issue through #116; this list maps them onto release tags.
 
-- **Unreleased** (on `main`): the Sungrid app icons and disk-image background (issue #114), the plain
-  "Sungrid Protocol" shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
+- **Unreleased** (on `main`): the window title while loading (issue #117).
+- **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
+  shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
   both defences' pedestals rebuilt as solids, the Grid Defense Turret redrawn, and both defences animated.
 - **alpha38**: issue #109 — idle animations across the building roster (turbine, dish, lights,
@@ -575,6 +576,13 @@ Nothing in the game changed; this is everything around it that a tester who isn'
 - **Fixed a wrong instruction:** the build guide said crash details only go to the terminal. The game writes
   them to `Logs/exception-<date>.log` in its data folder on every platform, which is what a player without a
   terminal needs to know.
+
+## The window no longer says "OpenRA" while the game loads (issue #117)
+
+- On Windows the taskbar button read "OpenRA" for the first seconds of every launch, and for the whole first-launch
+  content install, before switching to "Sungrid Protocol". The engine names its window "OpenRA" and only renamed it
+  after every map had loaded; Sungrid's loading screen now renames it as soon as the mod starts loading. The loading
+  screen itself looks exactly as before.
 
 ## Open / recorded but not implemented
 

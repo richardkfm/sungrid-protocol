@@ -3924,3 +3924,55 @@ SmartScreen/Gatekeeper steps on real machines, and the VPN route itself - which 
 **Phase:** 4 (playtest hardening / release packaging); Beta gate B6-B8.
 
 **Definition of done:** Met for the repo side. The gate itself still waits on B6 and B7, which only testers can run.
+
+### 117. The window and Windows taskbar read "OpenRA" while the game loads
+
+**Raised as:** "when opening sungrid on windows, the app tooltip still reads 'openra'" (beta01). Confirmed with the
+owner: the taskbar button says "OpenRA" for the first seconds of loading, then changes to "Sungrid Protocol".
+Owner's call: mod-side fixes only, no engine patch.
+
+**Cause.** Not the file metadata issue #114 fixed. At the pinned engine, `Sdl2PlatformWindow` creates the window with
+the hard-coded title `"OpenRA"`, and `Game.InitializeMod` only calls `SetWindowTitle(metadata.WindowTitleTranslated)`
+at its very end - after `LoadScreen.BeforeLoad`, the loaders, the fonts and `MapCache.LoadMaps` (75 maps). The
+window title is what the Windows taskbar button shows, so the whole load reads "OpenRA". When game content is
+missing, `BeforeLoad` switches to the content-installer mod and returns before that line, so the first-launch
+installer ran entirely under "OpenRA" too.
+
+**Fix, mod-side.** `ModData`'s constructor initializes the mod's fluent strings (`FluentProvider.Initialize`)
+immediately before it creates and `Init`s the load screen, so a load screen's `Init` is the earliest point the
+translated title exists - long before the maps load. `OpenRA.Mods.Sungrid/LoadScreens/SungridLoadScreen.cs` sets
+the title there, and `mods/sungrid/mod.yaml` uses it instead of `LogoStripeLoadScreen`. Two engine constraints
+shaped it:
+
+- `LogoStripeLoadScreen` is `sealed`, so the new screen derives from `SheetLoadScreen` and **wraps** a
+  `LogoStripeLoadScreen` for `DisplayInner` - the drawing is the stock code, not a copy of it.
+- `Renderer.Window` is `internal`. `IPlatformWindow` and its `SetWindowTitle` are public, so the screen reads the
+  property by reflection (the engine does the same elsewhere, e.g. `ActorInitializer`) and calls the engine's own
+  `SetWindowTitle`, keeping its `VerifyThreadAffinity` check rather than calling SDL directly. If the property
+  ever disappears in an engine upgrade the lookup yields null and the title is simply set late again - no crash.
+
+Still "OpenRA": the moments between window creation and the load screen's `Init` (engine start-up and the mod's
+filesystem mount - fractions of a second). Only the engine can close that gap (the title passed into
+`SDL_CreateWindow`); the owner declined an engine patch for it.
+
+**Verified** against the pinned engine, built here: `make`; `dotnet build OpenRA.Mods.Sungrid -c Debug -warnaserror
+-p:BuildProjectReferences=false` clean (negative control: a deliberate whitespace error in the new file fails it with
+`IDE0055`, so the style analyzers really run - the full `make check` still dies on the known SDK-version noise in
+engine files first); `--check-explicit-interfaces`, `--check-conditional-trait-interface-overrides` and
+`--check-yaml` all exit 0. **Live, under Xvfb**, logging the X window title every 50 ms from launch:
+
+| Launch | Stock `LogoStripeLoadScreen` | `SungridLoadScreen` |
+|---|---|---|
+| RA content installed (normal start) | "OpenRA" 0.54 s → 2.74 s | "OpenRA" 0.54 s → 1.06 s |
+| No content (first-launch installer) | "OpenRA" for the whole 20 s trace | "OpenRA" 0.53 s → 0.88 s, then "Sungrid Protocol" throughout the installer |
+
+The ~0.4 s left is window creation to `LoadScreen.Init` - the engine-only gap. A mid-load screenshot shows the load
+screen unchanged (stripe, emblem, rotating loading message). The headless machine loads fast; on a slower Windows
+disk the stock window spends proportionally longer as "OpenRA", which is why it was noticeable there. Not verified:
+a real Windows taskbar - the next packaged release is that test.
+
+**Files:** `OpenRA.Mods.Sungrid/LoadScreens/SungridLoadScreen.cs` (new), `mods/sungrid/mod.yaml`.
+
+**Phase:** 4 (release packaging) follow-up to issue #114.
+
+**Definition of done:** Met in code, pending a look at the next Windows package.
