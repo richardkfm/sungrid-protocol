@@ -29,7 +29,7 @@ from PIL import Image, ImageDraw
 from gen_concept_art import (
     ICON_W, ICON_H, ICON_LABELS,
     LEGACY_GRAY, LEGACY_GRAY_DARK,
-    lit, dim, draw_icon_label, save_pngsheet,
+    lit, dim, draw_icon_label, save_pngsheet, _load_label_font,
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -80,6 +80,32 @@ LABEL_OVERRIDES = {
 }
 
 
+# Fake buildings (rules/fakes.yaml, `Icon: fake-icon`) whose real counterpart
+# has a photographic cameo. FPWR/FAPW rendered the stock RA power plants and
+# used the stock fpwricon/fapwicon cameos until issue #118; now they render the
+# Sungrid arrays, so their cameos are the arrays' own photos with the same
+# FAKE stamp convention stock RA's fake cameos use, so the owner can still
+# tell decoy from real in the build menu at a glance.
+FAKES = ("sgpwr", "sgapwr")
+STAMP = (0xE8, 0xA9, 0x3D)  # sun-gold (docs/ART_DIRECTION.md locked palette)
+
+
+def fake_stamp(icon):
+    """A tilted FAKE band across the photo, above the name label."""
+    font = _load_label_font(11)
+    d = ImageDraw.Draw(icon, "RGBA")
+    text = "FAKE"
+    bbox = d.textbbox((0, 0), text, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    band = Image.new("RGBA", (tw + 10, th + 6), (0, 0, 0, 0))
+    bd = ImageDraw.Draw(band, "RGBA")
+    bd.rectangle([0, 0, band.width - 1, band.height - 1], fill=(0, 0, 0, 170), outline=STAMP + (255,))
+    bd.text((5 - bbox[0], 3 - bbox[1]), text, font=font, fill=STAMP + (255,))
+    band = band.rotate(12, resample=Image.BICUBIC, expand=True)
+    icon.alpha_composite(band, ((ICON_W - band.width) // 2, 3))
+    return icon
+
+
 def cover_fit(img, w, h):
     """Scale to fill w x h preserving aspect, then center-crop the overflow --
     the crop already frames the subject, so the subject stays centered."""
@@ -98,11 +124,13 @@ def vignette(icon):
         d.rectangle([i, i, ICON_W - 1 - i, ICON_H - 1 - i], outline=(0, 0, 0, a))
 
 
-def make_photo_icon(source, box, label):
+def make_photo_icon(source, box, label, fake=False):
     crop = Image.open(os.path.join(SRC, source)).convert("RGBA")
     icon = cover_fit(crop.crop(box), ICON_W, ICON_H)
     vignette(icon)
     d = ImageDraw.Draw(icon, "RGBA")
+    if fake:
+        fake_stamp(icon)
     if label:
         draw_icon_label(icon, label)
     # Border: dark outer frame with a lit top edge (same as make_icon).
@@ -116,6 +144,9 @@ def main():
         label = LABEL_OVERRIDES.get(name, ICON_LABELS.get(name))
         icon = make_photo_icon(source, box, label)
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
+        if name in FAKES:
+            icon = make_photo_icon(source, box, label, fake=True)
+            save_pngsheet(icon, f"{name}fakeicon.png", ICON_W, ICON_H, 1)
     print("done")
 
 

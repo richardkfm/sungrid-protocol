@@ -325,6 +325,10 @@ sgpwr:
 		Length: *
 	icon:
 		Filename: sgpwricon.png
+	# FPWR's build-menu cameo (fakes.yaml `Icon: fake-icon`): the photographic
+	# cameo with a FAKE stamp, written by gen_photo_cameos.py. Issue #118.
+	fake-icon:
+		Filename: sgpwrfakeicon.png
 
 sgapwr:
 	Defaults:
@@ -350,6 +354,9 @@ sgapwr:
 		# Do not inherit the Defaults Offset 0,-10 (tuned for the tall
 		# 90x60 world sprite); it pushed this cameo up in the build menu,
 		# overlapping the row above. docs/BACKLOG.md issue #63.
+		Offset: 0,0
+	fake-icon:
+		Filename: sgapwrfakeicon.png
 		Offset: 0,0
 
 # First-pass custom art (docs/BACKLOG.md issue #34) for the rest of the roster

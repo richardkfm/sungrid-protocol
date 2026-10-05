@@ -341,6 +341,45 @@ def emblem_panel(size, accent=SUN_GOLD, kind="neutral"):
 
 
 # --------------------------------------------------------------------------
+# wordmark badge — the 256x256 `logo` region of loadscreen.png, which is both
+# what LogoStripeLoadScreen centres on the load screen and what
+# chrome/mainmenu.yaml's Image@LOGO shows top-right of the main menu
+# (chrome.yaml `logos: logo: 0,0,256,256`). Until issue #118 this slot held
+# the bare emblem_panel: the emblem alone, so neither the load screen nor the
+# main menu ever said the game's name — the title only appeared as a Bold
+# label inside the 200px menu panel. The badge now carries the name in the
+# mod's own Title face (ZoodRangmah, the same face as the DMG background and
+# stock RA's own menu logo), stacked on two lines so it fills the 256px slot
+# at a cap height that still reads at 1x.
+
+def wordmark_badge(size, scale=1):
+    """Grid-glass tile (same recipe as emblem_panel) with the neutral emblem
+    on top and SUNGRID / PROTOCOL beneath, sun-gold, over a living-green
+    rule. `scale` only widens the outline and rule so the -2x/-3x sheets
+    stay a true upscale of the 1x layout."""
+    font_path = os.path.join(os.path.dirname(UIBITS), "ZoodRangmah.ttf")
+    im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    pv_grid(im, 0, 0, size, size, base=PANEL, cell=max(8, size // 14), line=-6, alt=2)
+    d = ImageDraw.Draw(im)
+    r = max(2, size // 30)
+    d.rounded_rectangle((0, 0, size - 1, size - 1), radius=r,
+                        outline=mix(GREEN_MID, PANEL, 0.30), width=2 * scale)
+    e = emblem(round(size * 0.54), SUN_GOLD)
+    im.alpha_composite(e, ((size - e.width) // 2, round(size * 0.05)))
+    f = ImageFont.truetype(font_path, round(size * 0.215))
+    y = round(size * 0.615)
+    for t in ("SUNGRID", "PROTOCOL"):
+        # 1px-per-scale shadow so the gold holds its edge over the cell grid
+        d.text((size / 2 + scale, y + scale), t, font=f, fill=PANEL_DEEP, anchor="mt")
+        d.text((size / 2, y), t, font=f, fill=SUN_GOLD, anchor="mt")
+        y = d.textbbox((size / 2, y), t, font=f, anchor="mt")[3] + round(size * 0.025)
+    ry = size - round(size * 0.055)
+    d.line((round(size * 0.2), ry, size - round(size * 0.2), ry),
+           fill=GREEN_MID, width=max(1, scale))
+    return im
+
+
+# --------------------------------------------------------------------------
 # glyphs.png faction-flag patch: the lobby/observer `flags` collection
 # (chrome.yaml) still ships the stock RA sheet, so The Consortium's logo slot
 # carried the stock Allied eagle and The Assembly's the Soviet
@@ -709,8 +748,8 @@ def gen_loadscreen():
         d.line((258 * scale, 4 * scale, W - 1, 4 * scale), fill=GREEN_MID, width=scale)
         d.line((258 * scale, H - 1 - 4 * scale, W - 1, H - 1 - 4 * scale),
                fill=GREEN_MID, width=scale)
-        # logo badge (0,0,256,256 at 1x)
-        im.paste(emblem_panel(256 * scale, SUN_GOLD), (0, 0))
+        # logo badge (0,0,256,256 at 1x): emblem + wordmark (issue #118)
+        im.paste(wordmark_badge(256 * scale, scale), (0, 0))
         im.save(f"{UIBITS}/{name}")
         print(name, im.size)
 

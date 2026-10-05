@@ -25,7 +25,9 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 The detailed entries below track every issue through #116; this list maps them onto release tags.
 
-- **Unreleased** (on `main`): the window title while loading (issue #117).
+- **Unreleased** (on `main`): the window title while loading (issue #117); the name on the load screen and main
+  menu, fake Solar Arrays on Sungrid art, the Hauler's Scrap spill, no fireball on the Disruptor Trooper, and the
+  visual-work proposals doc (issue #118).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -583,6 +585,19 @@ Nothing in the game changed; this is everything around it that a tester who isn'
   content install, before switching to "Sungrid Protocol". The engine names its window "OpenRA" and only renamed it
   after every map had loaded; Sungrid's loading screen now renames it as soon as the mod starts loading. The loading
   screen itself looks exactly as before.
+
+## The game finally says its name, and three small art bugs (issue #118)
+
+- The load screen and the main menu's logo now read **SUNGRID PROTOCOL** under the emblem. Before, neither screen
+  carried the name anywhere except a small label inside the menu panel.
+- The two fake Solar Arrays (the decoy buildings one Consortium sub-faction can build) looked like old Red Alert
+  power plants - the only place that art still appeared - which made the decoys easy to pick out. They now look
+  exactly like the real arrays, and their build-menu cameos carry a FAKE stamp so *you* can still tell.
+- A Hauler Drone destroyed with a load on board spilled Ore on the ground. It carries Scrap; it now spills Scrap.
+- The Disruptor Trooper no longer goes up in a fireball when killed, a leftover from the flamethrower he replaced.
+- A new `docs/VISUAL_PROPOSALS.md` lists the next visual work in priority order: the installer's stock look, a
+  Sungrid battle behind the main menu, the Grid Reserve HUD's styling, cameos that still show old unit names, the
+  Grid Defense Turret's tank shell, the first stock units to redraw, scenery, and more. Nothing in it is scheduled yet.
 
 ## Open / recorded but not implemented
 

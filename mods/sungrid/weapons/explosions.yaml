@@ -238,6 +238,16 @@ OreExplosion:
 		ImpactSounds: kaboom25.aud
 		ImpactActors: false
 
+# SGHAU's death spill. The Hauler only ever carries Scrap, but it inherited
+# HARV's OreExplosion, so a laden Hauler's wreck left an Ore patch - the one
+# resource it cannot pick up, drawn in a colour nothing else on its side of the
+# economy uses. Same damage and effect as OreExplosion; only the resource
+# differs. Issue #118.
+ScrapExplosion:
+	Inherits: OreExplosion
+	Warhead@3Res: CreateResource
+		AddsResourceType: Scrap
+
 CrateNuke:
 	ValidTargets: Ground, GroundActor, Trees, Water, WaterActor, Underwater, Air, AirborneActor
 	Warhead@1Dam_impact: SpreadDamage
