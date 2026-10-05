@@ -7,6 +7,7 @@ Player:
 		ResourceValues:
 			Ore: 0
 			Gems: 0
+			Scrap: 0
 
 World:
 	-CrateSpawner:
@@ -42,36 +43,11 @@ World:
 	DamageMultiplier:
 		Modifier: 0
 
-OILB:
-	CashTrickler:
-		ShowTicks: false
-
-TRAN.Husk2:
-	WithIdleOverlay@Burns:
-		Image: fire
-		Sequence: 1
-		IsDecoration: True
-
 MISS:
 	DamageMultiplier@INVULNERABLE:
 		Modifier: 0
 
-APC:
-	Cargo:
-		InitialUnits: e1, e1, e2, e3, disr
-
-Ant:
-	Buildable:
-		Prerequisites: barr
-	Health:
-		HP: 20000
-
-powerproxy.paratroopers:
-	ParatroopersPower:
-		DisplayBeacon: false
-		DropItems: E1,E1,E2,E3,DISR
-
-powerproxy.parazombies:
-	Inherits: powerproxy.paratroopers
-	ParatroopersPower:
-		DropItems: ZOMBIE,ZOMBIE,ZOMBIE,ZOMBIE,ZOMBIE
+# Issue #119: the stock Red Alert battle (paratroopers, Chinook and LST
+# reinforcements, the Chronosphere, MiG flights, tank columns) is gone from the
+# script, and with it the APC cargo, powerproxy and Halloween-ant overrides that
+# only served it.

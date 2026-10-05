@@ -106,6 +106,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		// left players with no way to tell how much longer they need to defend it.
 		public int LockdownTicksRemaining(Player player) => lockdownRemaining.TryGetValue(player, out var remaining) ? remaining : -1;
 
+		// The full hold length, so a HUD can draw a countdown as a draining bar (issue #119).
+		public int LockdownDurationTicks => info.LockdownDurationTicks;
+
 		void INotifyCreated.Created(Actor self)
 		{
 			Enabled = self.World.LobbyInfo.GlobalSettings.OptionOrDefault("gridreserve", info.CheckboxEnabled);

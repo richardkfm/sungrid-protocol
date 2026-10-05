@@ -7,44 +7,40 @@
    information, see COPYING.
 ]]
 
--- Halloween easter egg
-if DateTime.CurrentMonth == 10 and DateTime.CurrentDay == 31 then
-	UnitTypes = { "ant", "ant", "ant" }
-	BeachUnitTypes = { "ant", "ant" }
-	ProxyType = "powerproxy.parazombies"
-	ProducedUnitTypes =
-	{
-		{ factory = AlliedBarracks1,   types = { "e1", "e3" } },
-		{ factory = AlliedBarracks2,   types = { "e1", "e3" } },
-		{ factory = SovietBarracks1,   types = { "ant" } },
-		{ factory = SovietBarracks2,   types = { "ant" } },
-		{ factory = SovietBarracks3,   types = { "ant" } },
-		{ factory = AlliedWarFactory1, types = { "jeep", "1tnk", "2tnk", "arty", "ctnk" } },
-		{ factory = SovietWarFactory1, types = { "3tnk", "4tnk", "v2rl", "ttnk", "apc" } }
-	}
-else
-	UnitTypes = { "3tnk", "ftrk", "ttnk", "apc" }
-	BeachUnitTypes = { "e1", "e2", "e3", "disr", "e1", "e2", "e3", "disr", "e1", "e2", "e3", "disr", "e1", "e2", "e3", "disr" }
-	ProxyType = "powerproxy.paratroopers"
-	ProducedUnitTypes =
-	{
-		{ factory = AlliedBarracks1,   types = { "e1", "e3" } },
-		{ factory = AlliedBarracks2,   types = { "e1", "e3" } },
-		{ factory = SovietBarracks1,   types = { "dog", "e1", "e2", "e3", "disr", "shok" } },
-		{ factory = SovietBarracks2,   types = { "dog", "e1", "e2", "e3", "disr", "shok" } },
-		{ factory = SovietBarracks3,   types = { "dog", "e1", "e2", "e3", "disr", "shok" } },
-		{ factory = AlliedWarFactory1, types = { "jeep", "1tnk", "2tnk", "arty", "ctnk" } },
-		{ factory = SovietWarFactory1, types = { "3tnk", "4tnk", "v2rl", "ttnk", "apc" } }
-	}
-end
+-- Sungrid Protocol main-menu battle (docs/BACKLOG.md issue #119).
+--
+-- Rewritten from Scott_NZ's Red Alert desert shellmap script. The terrain and
+-- the camera path are his; the roster is ours. The Consortium ("Allies") holds
+-- the southern base behind a line of Grid Defense and Arc Turrets; the
+-- Assembly ("Soviets") probes it with Disruptor Troopers on foot and Strike
+-- Drones from its bays, Recon Drones sweep the valley, and Hauler Drones from
+-- both Recycling Depots run out to collect the Scrap the fighting leaves
+-- behind (SpawnsResourceOnDeath). No stock Red Alert unit is spawned: the
+-- MiGs, Chinooks, LST landings, paradrops, tank columns and the Chronosphere
+-- of the original script are gone, so nothing on the menu's moving background
+-- is art this mod hasn't drawn.
 
-ShipUnitTypes = { "1tnk", "1tnk", "jeep", "2tnk", "2tnk" }
-HelicopterUnitTypes = { "e1", "e1", "e1", "e1", "e3", "e3" };
+AssemblyWaveTypes = { "disr", "disr", "disr", "sgdrs" }
+AssemblyBeachTypes = { "disr", "disr", "disr", "disr", "disr", "disr" }
+ConsortiumPatrolTypes = { "disr", "disr" }
 
-ParadropWaypoints = { Paradrop1, Paradrop2, Paradrop3, Paradrop4, Paradrop5, Paradrop6, Paradrop7, Paradrop8 }
+ProducedUnitTypes =
+{
+	{ factory = AlliedBarracks1, types = { "disr" } },
+	{ factory = AlliedBarracks2, types = { "disr" } },
+	{ factory = SovietBarracks1, types = { "disr" } },
+	{ factory = SovietBarracks2, types = { "disr" } },
+	{ factory = SovietBarracks3, types = { "disr" } },
+	{ factory = AlliedDroneBay1, types = { "sgdrs", "sgdro" } },
+	{ factory = AlliedDroneBay2, types = { "sgdrs" } },
+	{ factory = SovietDroneBay1, types = { "sgdrs", "sgdrs", "sgdro" } },
+	{ factory = SovietDroneBay2, types = { "sgdrs" } },
+	{ factory = SovietDroneBay3, types = { "sgdrs", "sgdro" } }
+}
 
-Mig1Waypoints = { Mig11, Mig12, Mig13, Mig14 }
-Mig2Waypoints = { Mig21, Mig22, Mig23, Mig24 }
+-- The old MiG flight paths, flown by unarmed Recon Drones now.
+Recon1Waypoints = { Mig11, Mig12, Mig13, Mig14 }
+Recon2Waypoints = { Mig21, Mig22, Mig23, Mig24 }
 
 BindActorTriggers = function(a)
 	if a.HasProperty("Hunt") then
@@ -57,80 +53,43 @@ BindActorTriggers = function(a)
 		else
 			Trigger.OnIdle(a, function(a)
 				if a.IsInWorld then
-					a.AttackMove(AlliedTechnologyCenter.Location)
+					a.AttackMove(AlliedConstructionYard.Location)
 				end
 			end)
 		end
 	end
-
-	if a.HasProperty("HasPassengers") then
-		Trigger.OnPassengerExited(a, function(t, p)
-			BindActorTriggers(p)
-		end)
-
-		Trigger.OnDamaged(a, function()
-			if a.HasPassengers then
-				a.Stop()
-				a.UnloadPassengers()
-			end
-		end)
-	end
 end
 
-SendSovietUnits = function(entryCell, unitTypes, interval)
+-- Hauler Drones: a map-placed Harvester searches for resources on creation, and
+-- this keeps it searching between trips. Scrap appears where units die (after
+-- SpawnsResourceOnDeath's 30 s hold), i.e. along the Consortium's defence line,
+-- which is where the Haulers end up driving - the behaviour the mode is built on.
+BindHaulerTriggers = function(a)
+	Trigger.OnIdle(a, function(a)
+		if a.IsInWorld then
+			a.FindResources()
+		end
+	end)
+end
+
+SendAssemblyUnits = function(entryCell, unitTypes, interval)
 	local units = Reinforcements.Reinforce(Soviets, unitTypes, { entryCell }, interval)
 	Utils.Do(units, function(unit)
 		BindActorTriggers(unit)
 	end)
-	Trigger.OnAllKilled(units, function() SendSovietUnits(entryCell, unitTypes, interval) end)
+	Trigger.OnAllKilled(units, function() SendAssemblyUnits(entryCell, unitTypes, interval) end)
 end
 
-SendMigs = function(waypoints)
-	local migEntryPath = { waypoints[1].Location, waypoints[2].Location }
-	local migs = Reinforcements.Reinforce(Soviets, { "mig" }, migEntryPath, 4)
-	Utils.Do(migs, function(mig)
-		mig.Move(waypoints[3].Location)
-		mig.Move(waypoints[4].Location)
-		mig.Destroy()
+SendRecon = function(waypoints)
+	local entryPath = { waypoints[1].Location, waypoints[2].Location }
+	local drones = Reinforcements.Reinforce(Soviets, { "sgdro" }, entryPath, 4)
+	Utils.Do(drones, function(drone)
+		drone.Move(waypoints[3].Location)
+		drone.Move(waypoints[4].Location)
+		drone.Destroy()
 	end)
 
-	Trigger.AfterDelay(DateTime.Seconds(40), function() SendMigs(waypoints) end)
-end
-
-ShipAlliedUnits = function()
-	local units = Reinforcements.ReinforceWithTransport(Allies, "lst",
-		ShipUnitTypes, { LstEntry.Location, LstUnload.Location }, { LstEntry.Location })[2]
-
-	Utils.Do(units, function(unit)
-		BindActorTriggers(unit)
-	end)
-
-	Trigger.AfterDelay(DateTime.Seconds(60), ShipAlliedUnits)
-end
-
---- @param hpad actor
-InsertAlliedChinookReinforcements = function(entry, hpad)
-	local units = Reinforcements.ReinforceWithTransport(Allies, "tran",
-		HelicopterUnitTypes, { entry.Location, hpad.Location + CVec.New(1, 2) }, { entry.Location })[2]
-
-	Utils.Do(units, function(unit)
-		BindActorTriggers(unit)
-	end)
-
-	Trigger.AfterDelay(DateTime.Seconds(60), function() InsertAlliedChinookReinforcements(entry, hpad) end)
-end
-
-ParadropSovietUnits = function()
-	local lz = Utils.Random(ParadropWaypoints)
-	local aircraft = PowerProxy.TargetParatroopers(lz.CenterPosition)
-
-	Utils.Do(aircraft, function(a)
-		Trigger.OnPassengerExited(a, function(t, p)
-			BindActorTriggers(p)
-		end)
-	end)
-
-	Trigger.AfterDelay(DateTime.Seconds(35), ParadropSovietUnits)
+	Trigger.AfterDelay(DateTime.Seconds(40), function() SendRecon(waypoints) end)
 end
 
 ProduceUnits = function(t)
@@ -143,7 +102,7 @@ ProduceUnits = function(t)
 	end
 end
 
-SetupAlliedUnits = function()
+SetupConsortiumUnits = function()
 	Utils.Do(Map.NamedActors, function(a)
 		if a.Owner == Allies and a.HasProperty("AcceptsCondition") and a.AcceptsCondition("unkillable") then
 			a.GrantCondition("unkillable")
@@ -152,46 +111,44 @@ SetupAlliedUnits = function()
 	end)
 end
 
-SetupFactories = function()
-	Utils.Do(ProducedUnitTypes, function(production)
-		Trigger.OnProduction(production.factory, function(_, a) BindActorTriggers(a) end)
+SetupHaulers = function()
+	Utils.Do(Map.ActorsInWorld, function(a)
+		if a.Type == "sghau" then
+			BindHaulerTriggers(a)
+			a.FindResources()
+		end
 	end)
 end
 
-ChronoshiftAlliedUnits = function()
-	local cells = Utils.ExpandFootprint({ ChronoshiftLocation.Location }, false)
-	local units = {}
-	for i = 1, #cells do
-		local unit = Actor.Create("2tnk", true, { Owner = Allies, Facing = Angle.North })
-		BindActorTriggers(unit)
-		units[unit] = cells[i]
-	end
-	Chronosphere.Chronoshift(units)
-	Trigger.AfterDelay(DateTime.Seconds(60), ChronoshiftAlliedUnits)
+SetupFactories = function()
+	Utils.Do(ProducedUnitTypes, function(production)
+		Trigger.OnProduction(production.factory, function(_, a)
+			if a.Type == "sghau" then
+				BindHaulerTriggers(a)
+			else
+				BindActorTriggers(a)
+			end
+		end)
+	end)
 end
 
 WorldLoaded = function()
 	Allies = Player.GetPlayer("Allies")
 	Soviets = Player.GetPlayer("Soviets")
 
-	SetupAlliedUnits()
+	SetupConsortiumUnits()
+	SetupHaulers()
 	SetupFactories()
-	ShipAlliedUnits()
-	InsertAlliedChinookReinforcements(Chinook1Entry, HeliPad1)
-	InsertAlliedChinookReinforcements(Chinook2Entry, HeliPad2)
-	PowerProxy = Actor.Create(ProxyType, false, { Owner = Soviets })
-	ParadropSovietUnits()
-	Trigger.AfterDelay(DateTime.Seconds(5), ChronoshiftAlliedUnits)
 	Utils.Do(ProducedUnitTypes, ProduceUnits)
 
-	Trigger.AfterDelay(DateTime.Seconds(30), function() SendMigs(Mig1Waypoints) end)
-	Trigger.AfterDelay(DateTime.Seconds(30), function() SendMigs(Mig2Waypoints) end)
+	Trigger.AfterDelay(DateTime.Seconds(30), function() SendRecon(Recon1Waypoints) end)
+	Trigger.AfterDelay(DateTime.Seconds(30), function() SendRecon(Recon2Waypoints) end)
 
-	SendSovietUnits(Entry1.Location, UnitTypes, 50)
-	SendSovietUnits(Entry2.Location, UnitTypes, 50)
-	SendSovietUnits(Entry3.Location, UnitTypes, 50)
-	SendSovietUnits(Entry4.Location, UnitTypes, 50)
-	SendSovietUnits(Entry5.Location, UnitTypes, 50)
-	SendSovietUnits(Entry6.Location, UnitTypes, 50)
-	SendSovietUnits(Entry7.Location, BeachUnitTypes, 15)
+	SendAssemblyUnits(Entry1.Location, AssemblyWaveTypes, 50)
+	SendAssemblyUnits(Entry2.Location, AssemblyWaveTypes, 50)
+	SendAssemblyUnits(Entry3.Location, AssemblyWaveTypes, 50)
+	SendAssemblyUnits(Entry4.Location, AssemblyWaveTypes, 50)
+	SendAssemblyUnits(Entry5.Location, AssemblyWaveTypes, 50)
+	SendAssemblyUnits(Entry6.Location, AssemblyWaveTypes, 50)
+	SendAssemblyUnits(Entry7.Location, AssemblyBeachTypes, 15)
 end

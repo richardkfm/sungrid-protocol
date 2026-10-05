@@ -1,0 +1,49 @@
+# The content installer's chrome (issue #119). mod.yaml merges this after
+# sungrid|chrome.yaml, so every collection the stock common-content layout
+# (content.yaml) names resolves onto the game's own grid-glass sheets:
+# `dialog`, `button*`, `checkbox*`, `scrollpanel*` and `progressbar-*` come
+# straight from sungrid|chrome.yaml, and the installer-only names below map
+# onto the same art. Nothing here points at the engine's chrome.png any more.
+
+^ContentBackground:
+	Image: content-bg.png
+
+background:
+	Inherits: ^ContentBackground
+	PanelRegion: 0, 0, 0, 0, 1024, 480, 0, 0
+	PanelSides: Center
+
+panel-bg:
+	Inherits: dialog
+
+panel-header:
+	Inherits: dialog
+
+panel-thinborder:
+	Inherits: dialog4
+
+panel-thinborder-light:
+	Inherits: dialog4
+
+# The green rows of dialog.png's border-t profile, drawn as a rule.
+panel-rule:
+	Inherits: ^Dialog
+	Regions:
+		border-t: 1, 484, 189, 2
+
+button-highlighted-thin:
+	Inherits: button
+
+button-highlighted-thin-hover:
+	Inherits: button-hover
+
+button-highlighted-thin-pressed:
+	Inherits: button-pressed
+
+button-highlighted-thin-disabled:
+	Inherits: button-disabled
+
+modcontent:
+	Inherits: ^Dialog
+	Regions:
+		cdicon: 989, 419, 20, 20

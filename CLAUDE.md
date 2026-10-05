@@ -13,8 +13,8 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
 - `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 and animated since issue #109 — build-ups, rubble, husks, idle overlays, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/gen_arc_sounds.py` (the two arc-weapon reports, issue #110), `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
-- `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy.
-- `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `LoadScreens/SungridLoadScreen.cs` is the stock logo-stripe load screen wrapped so it sets the window title as soon as the mod's fluent strings exist, instead of the engine's hard-coded "OpenRA" lasting through the whole load (issue #117); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
+- `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy. Since issue #119 it draws on the game's own chrome (`sungrid|chrome.yaml` merged with its small `chrome.yaml`), cursors and `uibits/content-bg.png`; its `content.yaml` and the game's `chrome/lobby.yaml` are copies of the stock layouts with a header added — re-diff them against `engine/mods/common*` whenever `ENGINE_VERSION` moves.
+- `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `LoadScreens/SungridLoadScreen.cs` is the stock logo-stripe load screen wrapped so it sets the window title as soon as the mod's fluent strings exist, instead of the engine's hard-coded "OpenRA" lasting through the whole load (issue #117); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `UtilityCommands/RefreshMapPreviewsCommand.cs` is `./utility.sh --refresh-map-previews <map>...`, which re-saves a map so its `map.png` is rendered from the current tileset colours (issue #119 — previews and the radar minimap come from `tilesets/*.yaml`'s terrain-type `Color:` entries, not the palette; `bits/reskin_tileset_colors.py` keeps those in step with the palette reskin); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling). `packaging/artwork/` (the application icons for all three platform packages and the macOS DMG background) is generated output of `mods/sungrid/uibits/gen_chrome.py`, not hand-edited files, since issue #114 — before that it was still the SDK's "Ex" placeholder icon.
 
 **Design docs:**
@@ -395,6 +395,20 @@ is the regression check.
     must stay pixel-identical across 32 facings can be a 32-gon prism instead of an ellipse (11.25 degrees
     maps it onto itself); the station's collar and the pad's seat both are. Fixed-orientation damage decals
     go through `_mesh_render(..., decals=fn)` so the frame still gets the accent re-stamp.
+21. **Every sheet the engine uploads as a texture must be power-of-two in both dimensions (issue #119).**
+    `Texture.SetData` throws `Non-power-of-two array WxH` otherwise, and a chrome sheet is uploaded whole -
+    a 1024x480 installer background crashed the content installer at its load screen. `dialog.png`
+    1024x512, `sidebar.png` 512x512, `loadscreen.png` 512x256 and `content-bg.png` 1024x512 are all sized
+    for this, with the used region smaller where the stock rect (1024x480) demands it. The content
+    installer *can* be run here: `launch-game.sh Game.Mod=sungrid` under Xvfb with no RA content shows it,
+    and `import -window root` captures it - the one first-run screen that needs no game content.
+22. **Map previews and the radar minimap are drawn from `tilesets/*.yaml`, not from the terrain palette
+    (issue #119).** `Map.SavePreview` / `GetTerrainColorPair` take each cell's colour from its terrain
+    type's `Color:` entry (a tile without `MinColor`/`MaxColor` falls back to it), so the palette reskin
+    never touched them and every preview stayed stock tan. `bits/reskin_tileset_colors.py` applies the
+    palette script's own hue remap to those entries (desert keeps its bright-sand cutoff), and
+    `./utility.sh --refresh-map-previews` re-saves maps so `map.png` follows. A re-save also normalises
+    `map.yaml` and rewrites the whole `.oramap`, so expect a large binary diff and a changed map UID.
 20. **A turret sheet animates within a facing, and a baked idle sweep needs a static `aim` twin (issue
     #113).** `WithSpriteTurret` plays its sequence repeating, so `Facings: 32, Length: N` gives N frames per
     facing, facing-major (the Arc Turret's arc flicker, the Grid Defense Turret's +-15 degree scan). A sweep
@@ -510,7 +524,9 @@ widely, including `.lua`, when removing an actor).
   battle, the glyph atlas, the Grid Reserve HUD's plain boxes, renamed stock units whose cameos still bake the old
   name, the Grid Defense Turret's tank shell, the Phase 7 unit order (MCV/HARV/E1 first), scenery, Scrap readability,
   rubble and bibs for the roster. Four fixes from the same survey already shipped (wordmark in the logo slot, fake
-  arrays on Sungrid art, Hauler spills Scrap, no fireball on the Disruptor Trooper's death).
+  arrays on Sungrid art, Hauler spills Scrap, no fireball on the Disruptor Trooper's death), and issue #119 took
+  the whole first-impression group except the glyph atlas (A4): installer chrome, main menu, a Sungrid shellmap
+  battle, the Grid Reserve HUD chrome, loading tips, previews and titles, lobby header, emblem refinement.
 
 ## Working conventions
 

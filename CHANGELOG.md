@@ -27,7 +27,8 @@ The detailed entries below track every issue through #116; this list maps them o
 
 - **Unreleased** (on `main`): the window title while loading (issue #117); the name on the load screen and main
   menu, fake Solar Arrays on Sungrid art, the Hauler's Scrap spill, no fireball on the Disruptor Trooper, and the
-  visual-work proposals doc (issue #118).
+  visual-work proposals doc (issue #118); the first-impression pass - installer, menu, shellmap, HUD chrome,
+  tips, previews, lobby, emblem (issue #119).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -598,6 +599,25 @@ Nothing in the game changed; this is everything around it that a tester who isn'
 - A new `docs/VISUAL_PROPOSALS.md` lists the next visual work in priority order: the installer's stock look, a
   Sungrid battle behind the main menu, the Grid Reserve HUD's styling, cameos that still show old unit names, the
   Grid Defense Turret's tank shell, the first stock units to redraw, scenery, and more. Nothing in it is scheduled yet.
+
+## The first five minutes look like Sungrid Protocol (issue #119)
+
+- The content installer that greets a clean machine now uses the game's own panels, buttons, cursor and emblem
+  instead of the engine's grey "OpenRA" screen.
+- The main menu's top-right corner is one block: logo, tagline, version. The menu panel's title is set in the
+  game's own title face.
+- The battle behind the main menu is now ours: Arc and Grid Defense Turrets, Solar and Wind arrays, Battery Banks,
+  Drone Bays and Aerial Fabs, Disruptor Troopers probing the line, Strike and Recon Drones overhead, and Hauler
+  Drones driving out to collect the Scrap the fighting leaves behind. No Red Alert tanks, MiGs or Chinooks.
+- The Grid Reserve bar and the observer standings sit on proper panels with a battery glyph. The bar is green while
+  you bank, turns gold and drains while you hold Lockdown, and red while an opponent holds it.
+- Loading tips are about the grid; the deploy/force-fire tooltips name drones instead of Chrono Tanks.
+- Map previews in the chooser and lobby are rendered from the reskinned terrain, so they match what you play on.
+  Seven maps with explicitly Cold-War names were retitled (Chernobyl is Reclaimed Zone, A Nuclear Winter is A Long
+  Winter, Siberian Pass is Northern Pass, and so on). Because every map was re-saved, replays from earlier alphas
+  don't match these maps.
+- The lobby has an emblem-and-title header, and the emblem itself is more drawn than drafted (a designer pass is
+  still wanted).
 
 ## Open / recorded but not implemented
 

@@ -65,19 +65,16 @@ Actors:
 	Actor24: v22
 		Location: 31,52
 		Owner: Neutral
-	Actor78: 2tnk
-		Location: 77,68
-		Owner: Allies
 	Actor23: v23
 		Location: 22,51
 		Owner: Neutral
-	Actor12: oilb
+	Actor12: sgwnd
 		Location: 49,42
 		Owner: Neutral
-	Actor13: oilb
+	Actor13: sgwnd
 		Location: 60,46
 		Owner: Neutral
-	Actor16: oilb
+	Actor16: sgwnd
 		Location: 41,46
 		Owner: Neutral
 	Actor17: brl3
@@ -104,7 +101,7 @@ Actors:
 	Actor22: v29
 		Location: 26,49
 		Owner: Neutral
-	Actor14: oilb
+	Actor14: sgwnd
 		Location: 26,37
 		Owner: Neutral
 	Actor26: barl
@@ -113,9 +110,6 @@ Actors:
 	Actor27: barl
 		Location: 42,45
 		Owner: Neutral
-	Actor333: syrd
-		Location: 67,95
-		Owner: Allies
 	Actor53: brik
 		Location: 70,63
 		Owner: Allies
@@ -128,7 +122,7 @@ Actors:
 	Actor252: fenc
 		Location: 95,97
 		Owner: Allies
-	Actor10: gun
+	Actor10: arct
 		Location: 64,63
 		Owner: Allies
 	Actor153: apwr
@@ -137,10 +131,10 @@ Actors:
 	Actor49: brik
 		Location: 71,63
 		Owner: Allies
-	Actor33: gun
+	Actor33: arct
 		Location: 85,69
 		Owner: Allies
-	Actor40: dome
+	Actor40: sgsns
 		Location: 55,19
 		Owner: Soviets
 	Actor41: brl3
@@ -149,16 +143,16 @@ Actors:
 	Actor71: brik
 		Location: 70,64
 		Owner: Allies
-	Actor325: e3
+	Actor325: disr
 		Location: 76,70
 		Owner: Allies
-	Actor28: gun
+	Actor28: arct
 		Location: 74,67
 		Owner: Allies
 	Actor50: apwr
 		Location: 51,15
 		Owner: Soviets
-	Actor63: tsla
+	Actor63: arct
 		Location: 48,32
 		Owner: Soviets
 	Actor56: v23
@@ -176,16 +170,16 @@ Actors:
 	Actor61: powr
 		Location: 36,19
 		Owner: Soviets
-	Actor60: hpad
+	SovietDroneBay1: sgdrn
 		Location: 46,28
 		Owner: Soviets
-	Actor69: kenn
+	Actor69: sgrel
 		Location: 43,29
 		Owner: Soviets
 	Actor68: arct
 		Location: 34,23
 		Owner: Soviets
-	Actor70: afld
+	Actor70: sgdra
 		Location: 47,24
 		Owner: Soviets
 	Actor81: rock7
@@ -197,7 +191,7 @@ Actors:
 	Actor85: powr
 		Location: 49,14
 		Owner: Soviets
-	Actor83: fcom
+	Actor83: sgdra
 		Location: 42,18
 		Owner: Soviets
 	Actor52: powr
@@ -212,9 +206,6 @@ Actors:
 	Actor65: brik
 		Location: 69,64
 		Owner: Allies
-	Actor303: mrj
-		Location: 61,60
-		Owner: Allies
 	Actor87: tc01
 		Location: 92,50
 		Owner: Neutral
@@ -224,7 +215,7 @@ Actors:
 	Actor163: tran.husk2
 		Location: 14,55
 		Owner: Allies
-	Actor15: oilb
+	Actor15: sgwnd
 		Location: 56,33
 		Owner: Neutral
 	Actor164: flare
@@ -236,9 +227,6 @@ Actors:
 	Actor72: brik
 		Location: 87,70
 		Owner: Allies
-	Actor253: arty
-		Location: 44,68
-		Owner: Allies
 	Actor64: brik
 		Location: 69,63
 		Owner: Allies
@@ -248,14 +236,6 @@ Actors:
 	Actor116: mine
 		Location: 78,21
 		Owner: Neutral
-	Actor93: ca
-		Location: 20,86
-		Owner: Allies
-		Facing: 256
-	Actor94: ca
-		Location: 40,90
-		Owner: Allies
-		Facing: 256
 	Actor95: rock6
 		Location: 10,76
 		Owner: Neutral
@@ -280,10 +260,10 @@ Actors:
 	Actor67: t08
 		Location: 25,44
 		Owner: Neutral
-	Actor109: stek
+	Actor109: sgdai
 		Location: 113,32
 		Owner: Soviets
-	Actor102: proc
+	SovietDepot: rcyd
 		Location: 94,28
 		Owner: Soviets
 	Actor103: apwr
@@ -292,7 +272,7 @@ Actors:
 	Actor101: apwr
 		Location: 115,39
 		Owner: Soviets
-	Actor110: fcom
+	Actor110: sgdra
 		Location: 106,44
 		Owner: Soviets
 	Actor106: fact
@@ -304,7 +284,7 @@ Actors:
 	Actor91: apwr
 		Location: 118,40
 		Owner: Soviets
-	Actor108: tsla
+	Actor108: arct
 		Location: 95,34
 		Owner: Soviets
 	Actor112: arct
@@ -316,29 +296,25 @@ Actors:
 	Actor114: arct
 		Location: 37,28
 		Owner: Soviets
-	Actor115: tsla
+	Actor115: arct
 		Location: 40,25
 		Owner: Soviets
-	Actor117: fix
-		Location: 106,34
+	Actor117: sgshl
+		Location: 107,34
 		Owner: Soviets
-	Actor136: v2rl
-		Location: 91,40
-		Owner: Soviets
-		Facing: 360
-	Actor122: afld
+	Actor122: sgdra
 		Location: 116,49
 		Owner: Soviets
-	Actor107: hpad
+	SovietDroneBay3: sgdrn
 		Location: 112,49
 		Owner: Soviets
-	Actor126: tsla
+	Actor126: arct
 		Location: 110,28
 		Owner: Soviets
-	Actor124: dome
+	Actor124: sgsns
 		Location: 118,46
 		Owner: Soviets
-	Actor125: tsla
+	Actor125: arct
 		Location: 111,44
 		Owner: Soviets
 	Actor127: rock2
@@ -347,7 +323,7 @@ Actors:
 	Actor128: rock6
 		Location: 99,59
 		Owner: Neutral
-	Actor129: hpad
+	SovietDroneBay2: sgdrn
 		Location: 99,28
 		Owner: Soviets
 	Actor130: apwr
@@ -359,46 +335,35 @@ Actors:
 	Actor132: apwr
 		Location: 116,33
 		Owner: Soviets
-	Actor133: oilb
+	Actor133: sgwnd
 		Location: 76,37
 		Owner: Soviets
-	Actor134: e1
+	Actor134: disr
 		Location: 74,37
 		Owner: Soviets
-	Actor135: e1
+	Actor135: disr
 		Location: 77,39
 		Owner: Soviets
 	Actor137: 4tnk
 		Location: 105,33
 		Owner: Soviets
 		Facing: 400
-	Actor123: afld
+	Actor123: sgdra
 		Location: 119,49
 		Owner: Soviets
 	Actor138: 4tnk
 		Location: 112,46
 		Owner: Soviets
-	Actor139: 3tnk
-		Location: 89,32
-		Owner: Soviets
-		Facing: 256
-	Actor140: 3tnk
-		Location: 92,29
-		Owner: Soviets
-		Facing: 80
-	Actor141: 3tnk
-		Location: 36,23
-		Owner: Soviets
-	Actor142: e1
+	Actor142: disr
 		Location: 40,27
 		Owner: Soviets
-	Actor143: e1
+	Actor143: disr
 		Location: 49,17
 		Owner: Soviets
-	Actor144: e1
+	Actor144: disr
 		Location: 113,40
 		Owner: Soviets
-	Actor145: e1
+	Actor145: disr
 		Location: 102,33
 		Owner: Soviets
 	Actor146: rock2
@@ -410,7 +375,7 @@ Actors:
 	Actor167: powr
 		Location: 54,74
 		Owner: Allies
-	Actor39: pbox
+	Actor39: arct
 		Location: 70,89
 		Owner: Allies
 	Actor152: 1tnk
@@ -420,32 +385,28 @@ Actors:
 	Actor150: apwr
 		Location: 94,91
 		Owner: Allies
-	Actor35: pbox
+	Actor35: arct
 		Location: 68,85
 		Owner: Allies
-	Actor178: pbox
+	Actor178: sgtur
 		Location: 77,76
 		Owner: Allies
 	Actor300: brik
 		Location: 48,77
 		Owner: Allies
-	Actor186: 3tnk
-		Location: 107,50
-		Owner: Soviets
-		Facing: 320
 	Actor174: tc01
 		Location: 98,37
 		Owner: Neutral
-	Actor25: fact
+	AlliedConstructionYard: fact
 		Location: 86,84
 		Owner: Allies
 	Actor105: brik
 		Location: 94,70
 		Owner: Allies
-	Actor170: kenn
+	Actor170: sgrel
 		Location: 104,41
 		Owner: Soviets
-	Actor162: e1
+	Actor162: disr
 		Location: 82,74
 		Owner: Allies
 	Actor182: rock6
@@ -454,7 +415,7 @@ Actors:
 	Actor298: brik
 		Location: 48,78
 		Owner: Allies
-	Actor156: pbox
+	Actor156: sgtur
 		Location: 52,71
 		Owner: Allies
 	Actor343: brik
@@ -475,7 +436,7 @@ Actors:
 	Actor188: arct
 		Location: 107,52
 		Owner: Soviets
-	Actor54: agun
+	Actor54: arct
 		Location: 76,93
 		Owner: Allies
 		Facing: 600
@@ -485,21 +446,14 @@ Actors:
 	Actor213: brik
 		Location: 60,80
 		Owner: Allies
-	Actor196: pt
-		Location: 55,92
-		Owner: Allies
-		Facing: 640
 	Actor183: rock2
 		Location: 93,41
 		Owner: Neutral
-	Actor185: 3tnk
-		Location: 105,47
-		Owner: Soviets
 	Actor197: dd
 		Location: 30,88
 		Owner: Allies
 		Facing: 256
-	Actor199: e1
+	Actor199: disr
 		Location: 72,83
 		Owner: Allies
 	Actor89: apwr
@@ -560,35 +514,25 @@ Actors:
 		Location: 39,81
 		Owner: Allies
 		Facing: 256
-	Actor209: e1
+	Actor209: disr
 		Location: 41,79
 		Owner: Allies
-	Actor210: e1
+	Actor210: disr
 		Location: 46,80
 		Owner: Allies
-	Actor211: jeep
-		Location: 41,82
-		Owner: Allies
-		Facing: 360
 	Actor36: brik
 		Location: 72,66
 		Owner: Allies
-	Actor228: mgg
-		Location: 49,63
-		Owner: Allies
-	Actor255: e1
+	Actor255: disr
 		Location: 67,76
 		Owner: Allies
-	Actor77: e1
+	Actor77: disr
 		Location: 78,74
 		Owner: Allies
-	Actor82: 2tnk
-		Location: 82,69
-		Owner: Allies
-	Actor30: pbox
+	Actor30: arct
 		Location: 47,77
 		Owner: Allies
-	Actor29: pbox
+	Actor29: sgtur
 		Location: 42,75
 		Owner: Allies
 	Actor217: sbag
@@ -597,7 +541,7 @@ Actors:
 	Actor158: mine
 		Location: 110,78
 		Owner: Neutral
-	Actor299: e1
+	Actor299: disr
 		Location: 50,70
 		Owner: Allies
 	Actor297: brik
@@ -621,19 +565,12 @@ Actors:
 	Actor302: brik
 		Location: 41,75
 		Owner: Allies
-	Actor295: jeep
-		Location: 37,67
-		Owner: Allies
-		Facing: 256
 	Actor296: 1tnk
 		Location: 58,65
 		Owner: Allies
 		Facing: 768
 	Actor215: brik
 		Location: 58,80
-		Owner: Allies
-	Actor233: 2tnk
-		Location: 66,62
 		Owner: Allies
 	Actor240: sbag
 		Location: 54,62
@@ -653,19 +590,11 @@ Actors:
 	Actor245: sbag
 		Location: 58,63
 		Owner: Allies
-	Actor249: arty
-		Location: 57,63
-		Owner: Allies
-		Facing: 960
-	Actor248: arty
-		Location: 54,63
-		Owner: Allies
-		Facing: 64
 	Actor250: sbag
 		Location: 44,67
 		Owner: Allies
-	Actor66: gap
-		Location: 62,71
+	Actor66: silo
+		Location: 62,72
 		Owner: Allies
 	Actor218: sbag
 		Location: 43,68
@@ -694,7 +623,7 @@ Actors:
 	Actor270: v28
 		Location: 18,49
 		Owner: Neutral
-	Actor271: oilb
+	Actor271: sgwnd
 		Location: 18,59
 		Owner: Neutral
 	Actor272: brl3
@@ -724,25 +653,25 @@ Actors:
 	Actor280: c10
 		Location: 23,55
 		Owner: Neutral
-	Actor282: e1
+	Actor282: disr
 		Location: 42,62
 		Owner: Allies
-	Actor283: e1
+	Actor283: disr
 		Location: 47,63
 		Owner: Allies
-	Actor284: e1
+	Actor284: disr
 		Location: 61,63
 		Owner: Allies
-	Actor285: e1
+	Actor285: disr
 		Location: 67,65
 		Owner: Allies
-	Actor286: e1
+	Actor286: disr
 		Location: 39,67
 		Owner: Allies
 	Actor287: brik
 		Location: 50,62
 		Owner: Allies
-	Actor288: e3
+	Actor288: disr
 		Location: 40,63
 		Owner: Allies
 	Actor289: brik
@@ -754,10 +683,10 @@ Actors:
 	Actor290: brik
 		Location: 60,61
 		Owner: Allies
-	Actor292: e3
+	Actor292: disr
 		Location: 68,64
 		Owner: Allies
-	Actor293: e3
+	Actor293: disr
 		Location: 36,69
 		Owner: Allies
 	Actor219: brik
@@ -766,41 +695,20 @@ Actors:
 	Actor45: brik
 		Location: 73,64
 		Owner: Allies
-	Actor226: 2tnk
-		Location: 62,60
-		Owner: Allies
-		Facing: 960
-	Actor225: 2tnk
-		Location: 47,61
-		Owner: Allies
 	Actor239: 1tnk
 		Location: 44,65
 		Owner: Allies
 		Facing: 120
-	Actor236: jeep
-		Location: 45,62
-		Owner: Allies
-		Facing: 64
-	Actor238: 2tnk
-		Location: 36,65
-		Owner: Allies
-		Facing: 160
-	Actor224: 2tnk
-		Location: 41,62
-		Owner: Allies
-	Actor237: jeep
-		Location: 63,63
-		Owner: Allies
-	Actor304: e1
+	Actor304: disr
 		Location: 57,72
 		Owner: Allies
-	Actor305: e1
+	Actor305: disr
 		Location: 61,70
 		Owner: Allies
 	Actor43: brik
 		Location: 73,65
 		Owner: Allies
-	Actor294: e1
+	Actor294: disr
 		Location: 58,76
 		Owner: Allies
 	Actor34: brik
@@ -842,23 +750,20 @@ Actors:
 	Actor198: brik
 		Location: 68,82
 		Owner: Allies
-	Actor321: e1
+	Actor321: disr
 		Location: 45,76
 		Owner: Allies
 	Actor165: powr
 		Location: 50,74
 		Owner: Allies
-	Actor257: arty
-		Location: 72,68
-		Owner: Allies
-	Actor344: e1
+	Actor344: disr
 		Location: 78,69
 		Owner: Allies
 	Actor301: brik
 		Location: 49,77
 		Owner: Allies
-	Actor256: gap
-		Location: 74,76
+	Actor256: silo
+		Location: 74,77
 		Owner: Allies
 	Actor313: brik
 		Location: 37,70
@@ -875,13 +780,13 @@ Actors:
 	Actor260: rock2
 		Location: 46,85
 		Owner: Neutral
-	Actor32: proc
+	AlliedDepot: rcyd
 		Location: 90,72
 		Owner: Allies
 	Actor168: brik
 		Location: 95,71
 		Owner: Allies
-	Actor322: oilb
+	Actor322: sgwnd
 		Location: 58,78
 		Owner: Allies
 	Actor121: mine
@@ -890,7 +795,7 @@ Actors:
 	Actor329: mine
 		Location: 90,21
 		Owner: Neutral
-	Actor341: dome
+	Actor341: sgsns
 		Location: 63,73
 		Owner: Allies
 	Actor166: wood
@@ -923,7 +828,7 @@ Actors:
 	Actor148: apwr
 		Location: 95,94
 		Owner: Allies
-	Actor324: e3
+	Actor324: disr
 		Location: 73,68
 		Owner: Allies
 	Actor206: brik
@@ -941,19 +846,19 @@ Actors:
 	Actor212: brik
 		Location: 61,80
 		Owner: Allies
-	Actor361: pbox
+	Actor361: sgtur
 		Location: 71,96
 		Owner: Allies
 	Actor221: fenc
 		Location: 92,97
 		Owner: Allies
-	Actor345: e1
+	Actor345: disr
 		Location: 80,69
 		Owner: Allies
-	Actor193: fix
-		Location: 69,70
+	Actor193: sgshl
+		Location: 70,70
 		Owner: Allies
-	Actor42: pbox
+	Actor42: sgtur
 		Location: 67,70
 		Owner: Allies
 	Actor262: fenc
@@ -1064,8 +969,8 @@ Actors:
 	Actor363: brik
 		Location: 81,91
 		Owner: Allies
-	Actor364: gap
-		Location: 77,91
+	Actor364: silo
+		Location: 77,92
 		Owner: Allies
 	Actor366: brik
 		Location: 59,60
@@ -1106,13 +1011,13 @@ Actors:
 	Actor378: brik
 		Location: 49,62
 		Owner: Allies
-	Actor379: gun
+	Actor379: arct
 		Location: 37,68
 		Owner: Allies
-	Actor380: gun
+	Actor380: arct
 		Location: 48,61
 		Owner: Allies
-	Actor381: atek
+	Actor381: sgcry
 		Location: 76,87
 		Owner: Allies
 	Actor194: powr
@@ -1130,17 +1035,17 @@ Actors:
 	Actor177: wood
 		Location: 17,56
 		Owner: Neutral
-	Actor184: pbox
+	Actor184: sgtur
 		Location: 96,79
 		Owner: Allies
-	Actor79: agun
+	Actor79: sgtur
 		Location: 70,66
 		Owner: Allies
-	Actor118: agun
+	Actor118: sgtur
 		Location: 47,70
 		Owner: Allies
 		Facing: 256
-	SovietWarFactory1: weap
+	SovietHydrogenPlant: sghyd
 		Location: 106,29
 		Owner: Soviets
 	SovietBarracks1: barr
@@ -1152,16 +1057,16 @@ Actors:
 	SovietBarracks3: barr
 		Location: 41,27
 		Owner: Soviets
-	IronCurtain: iron
+	SovietShelter: sgshl
 		Location: 110,40
 		Owner: Soviets
 	AlliedTechnologyCenter: miss
 		Location: 56,68
 		Owner: Neutral
-	Chronosphere: pdox
+	AlliedDatacenter: sgdai
 		Location: 78,91
 		Owner: Allies
-	AlliedWarFactory1: weap
+	AlliedHydrogenPlant: sghyd
 		Location: 75,81
 		Owner: Allies
 	AlliedBarracks1: tent
@@ -1170,10 +1075,10 @@ Actors:
 	AlliedBarracks2: tent
 		Location: 50,66
 		Owner: Allies
-	HeliPad1: hpad
+	AlliedDroneBay1: sgdrn
 		Location: 70,76
 		Owner: Allies
-	HeliPad2: hpad
+	AlliedDroneBay2: sgdrn
 		Location: 64,78
 		Owner: Allies
 	Entry1: waypoint
@@ -1263,6 +1168,51 @@ Actors:
 	Mig24: waypoint
 		Location: 1,28
 		Owner: Neutral
+	Actor901: sgrel
+		Location: 56,19
+		Owner: Soviets
+	Actor902: sgrel
+		Location: 119,46
+		Owner: Soviets
+	Actor903: silo
+		Location: 63,72
+		Owner: Allies
+	Actor904: silo
+		Location: 64,72
+		Owner: Allies
+	Actor905: silo
+		Location: 75,77
+		Owner: Allies
+	Actor906: silo
+		Location: 76,77
+		Owner: Allies
+	Actor907: sgrel
+		Location: 64,73
+		Owner: Allies
+	Actor908: silo
+		Location: 78,92
+		Owner: Allies
+	Actor909: silo
+		Location: 79,92
+		Owner: Allies
+	AlliedHauler1: sghau
+		Location: 89,71
+		Owner: Allies
+	AlliedHauler2: sghau
+		Location: 89,72
+		Owner: Allies
+	SovietHauler1: sghau
+		Location: 93,27
+		Owner: Soviets
+	AlliedRecon1: sgdro
+		Location: 69,75
+		Owner: Allies
+	SovietStrike1: sgdrs
+		Location: 45,27
+		Owner: Soviets
+	SovietStrike2: sgdrs
+		Location: 45,28
+		Owner: Soviets
 
 Rules: sungrid|rules/campaign-palettes.yaml, rules.yaml
 

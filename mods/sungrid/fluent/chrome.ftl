@@ -1,10 +1,10 @@
 ## mainmenu.yaml
-label-main-menu-title = Sungrid Protocol
+label-main-menu-title = Main Menu
 label-main-menu-tagline = A solarpunk reinterpretation of the classic RTS formula
 
 ## ingame-observer.yaml
-label-economy-stats-harvesters-header = Harvesters
-label-economy-stats-derricks-header = Oil Derricks
+label-economy-stats-harvesters-header = Collectors
+label-economy-stats-derricks-header = Derricks
 label-grid-reserve-standings-header = Grid Reserve
 
 
@@ -31,8 +31,7 @@ button-command-bar-force-move =
     Selected units will move to the desired location
      - Default activity for the target is suppressed
      - Vehicles will attempt to crush enemies at the target location
-     - Helicopters will land at the target location
-     - Chrono Tanks will teleport towards the target location
+     - Drones and helicopters will land at the target location
 
     Left-click icon then right-click on target.
     Hold <(Alt)> to activate temporarily while commanding units.
@@ -43,8 +42,8 @@ button-command-bar-force-attack =
     Selected units will attack the targeted unit or location
      - Default activity for the target is suppressed
      - Allows targeting of own or ally forces
-     - Long-range artillery units will always target the
-       location, ignoring units and buildings
+     - Long-range artillery and Surge Rocket Launchers will
+       always target the location, ignoring units and buildings
 
     Left-click icon then right-click on target.
     Hold <(Ctrl)> to activate temporarily while commanding units.
@@ -54,11 +53,11 @@ button-command-bar-deploy =
     .tooltipdesc =
     Selected units will perform their default deploy activity
      - MCVs will unpack into a Construction Yard
-     - Construction Yards will re-pack into a MCV
+     - Construction Yards will re-pack into an MCV
      - Transports will unload their passengers
      - Demolition Trucks and Tremor Tanks will self-destruct
      - Minelayers will deploy a mine
-     - Aircraft will return to base
+     - Drones and aircraft will return to their bay or pad
 
     Acts immediately on selected units.
 

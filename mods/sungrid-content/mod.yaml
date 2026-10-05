@@ -9,27 +9,32 @@ FileSystem: DefaultFileSystem
 		^EngineDir|mods/common-content: content
 		^EngineDir|mods/common: common
 		$sungrid-content: sungridcontent
+		# Issue #119: the installer draws on the game's own chrome, cursors and
+		# load image instead of the engine's stock "OpenRA" installer look - it is
+		# the first screen a tester sees on a clean machine (beta gate B6).
+		$sungrid: sungrid
+		sungrid|uibits
+		sungrid|bits
 
 Rules:
 
 Cursors:
-	content|cursors.yaml
+	sungridcontent|cursors.yaml
 
 Chrome:
-	content|chrome.yaml
+	sungrid|chrome.yaml
+	sungridcontent|chrome.yaml
 
 Assemblies: OpenRA.Mods.Common.dll, OpenRA.Mods.Cnc.dll
 
 ChromeLayout:
-	content|content.yaml
+	sungridcontent|content.yaml
 
 Notifications:
 	content|notifications.yaml
 
 LoadScreen: ModContentLoadScreen
-	Image: ^EngineDir|mods/common-content/chrome.png
-	Image2x: ^EngineDir|mods/common-content/chrome-2x.png
-	Image3x: ^EngineDir|mods/common-content/chrome-3x.png
+	Image: sungrid|uibits/content-bg.png
 
 ChromeMetrics:
 	common|metrics.yaml
@@ -58,6 +63,10 @@ Fonts:
 		Font: common|FreeSansBold.ttf
 		Size: 14
 		Ascender: 11
+	TitleSmall:
+		Font: sungrid|ZoodRangmah.ttf
+		Size: 28
+		Ascender: 15
 	MediumBold:
 		Font: common|FreeSansBold.ttf
 		Size: 18

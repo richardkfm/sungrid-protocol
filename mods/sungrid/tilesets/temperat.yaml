@@ -9,7 +9,7 @@ Terrain:
 	TerrainType@Beach:
 		Type: Beach
 		TargetTypes: Ground
-		Color: B09C78
+		Color: 75B087
 	TerrainType@Bridge:
 		Type: Bridge
 		TargetTypes: Ground, Bridge
@@ -31,7 +31,7 @@ Terrain:
 		Type: Ore
 		TargetTypes: Ground
 		AcceptsSmudgeType: Crater, Scorch
-		Color: 948060
+		Color: 5D946E
 		RestrictPlayerColor: true
 	TerrainType@River:
 		Type: River
@@ -41,7 +41,7 @@ Terrain:
 		Type: Road
 		TargetTypes: Ground
 		AcceptsSmudgeType: Crater, Scorch
-		Color: 5E430D
+		Color: 095E23
 	TerrainType@Rock:
 		Type: Rock
 		TargetTypes: Ground
@@ -55,7 +55,7 @@ Terrain:
 		Type: Scrap
 		TargetTypes: Ground
 		AcceptsSmudgeType: Crater, Scorch
-		Color: 705A4A
+		Color: 487054
 		RestrictPlayerColor: true
 	TerrainType@Tree:
 		Type: Tree
@@ -65,7 +65,7 @@ Terrain:
 		Type: Wall
 		TargetTypes: Ground
 		AcceptsSmudgeType: Crater, Scorch
-		Color: D0C0A0
+		Color: 9ED0AD
 	TerrainType@Water:
 		Type: Water
 		TargetTypes: Water

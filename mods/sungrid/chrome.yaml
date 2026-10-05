@@ -622,6 +622,37 @@ loadscreen-stripe:
 	PanelRegion: 258, 0, 0, 0, 253, 256, 0, 0
 	PanelSides: Center
 
+# Issue #119: Grid Reserve HUD chrome, small emblems and the installer's disc
+# icon, all in dialog.png's block at (897,385) - see gen_chrome.py
+# grid_reserve_chrome() for the layout.
+grid-reserve-panel:
+	Inherits: ^Dialog
+	PanelRegion: 897, 385, 6, 6, 52, 52, 6, 6
+
+grid-reserve-bar-bg:
+	Inherits: ^Dialog
+	PanelRegion: 897, 452, 3, 3, 58, 6, 3, 3
+
+grid-reserve-bar-thumb:
+	Inherits: ^Dialog
+	PanelRegion: 897, 465, 3, 3, 58, 6, 3, 3
+
+grid-reserve-bar-lockdown:
+	Inherits: ^Dialog
+	PanelRegion: 897, 478, 3, 3, 58, 6, 3, 3
+
+grid-reserve-bar-enemy:
+	Inherits: ^Dialog
+	PanelRegion: 897, 491, 3, 3, 58, 6, 3, 3
+
+sungrid-marks:
+	Inherits: ^Dialog
+	Regions:
+		battery: 963, 385, 16, 16
+		emblem-24: 963, 403, 24, 24
+		emblem-32: 989, 385, 32, 32
+		cdicon: 989, 419, 20, 20
+
 mainmenu-border:
 	Inherits: ^Dialog
 	PanelRegion: 650, 389, 39, 39, 38, 38, 39, 39

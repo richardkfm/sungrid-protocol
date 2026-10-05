@@ -10,7 +10,7 @@ This replaced the earlier first-pass reskin (`docs/BACKLOG.md` issue #13), which
 the stock RA art in place and so still visually read as recolored OpenRA. That pass's script
 (`reskin_chrome.py`) is deleted; the full redesign is `docs/BACKLOG.md` issue #41.
 
-Status: **good first-pass identity work, still not a human-designer pass.** It's clean
+Status: **good first-pass identity work, still not a human-designer pass.** Issue #119 refined the emblem (a drawn, limb-shaded sun instead of a flat disc, five tapered rays, a filled hexagon, three panel cells on the horizon) and letter-spaced the wordmark, which is as far as a generator should take a brand mark — **a designer should still look over the emblem and wordmark**; `emblem()` in `gen_chrome.py` is the single place a supplied mark drops in. It's clean
 geometric rendering, not hand-crafted art — a real designer pass over the chrome and the
 emblem remains open follow-up, same status as the programmatic sprite set in
 `mods/sungrid/bits/gen_concept_art.py`.
@@ -21,7 +21,8 @@ emblem remains open follow-up, same status as the programmatic sprite set in
 |---|---|
 | `dialog.png` (1024×512) | Dialog background + border strips/corners, every button/checkbox/scrollpanel state block, tooltip panel, black tile, main-menu border frame |
 | `sidebar.png` (512×512) | Command bar, faction moneybin strips, production tab row, sidebar body with icon-slot/support-power recesses, all 13 sidebar button state blocks, both 222×222 radar-placeholder emblem panels |
-| `loadscreen.png` / `-2x` / `-3x` (512×256 / 1024×512 / 2048×1024) | Emblem badge (the `logos` region) + tileable stripe. The "3x" file is actually 4x scale — filename inherited from stock, predates this repo |
+| `loadscreen.png` / `-2x` / `-3x` (512×256 / 1024×512 / 2048×1024) | Wordmark badge (the `logos` region: emblem over SUNGRID / PROTOCOL in ZoodRangmah, issue #118) + tileable stripe. The "3x" file is actually 4x scale — filename inherited from stock, predates this repo |
+| `content-bg.png` (1024×512, top 1024×480 used) | The content installer's full-screen grid-glass tile (`mods/sungrid-content`, issue #119). Power-of-two canvas on purpose: the engine refuses to upload any other texture size |
 | `glyphs.png` / `glyphs-2x.png` / `glyphs-3x.png` | **Stock, patched in place** — bitmap font atlas + small functional glyphs (order/production/stance icons etc.), not thematic art, left alone except for the `allies`/`soviet` faction-flag slots, which `gen_flags()` overwrites with the Citadel Seal / Swarm Rig marks (`docs/BACKLOG.md` issues #56, #57). This is the one function in the script that edits an existing sheet instead of generating one. Redesigning the rest of the atlas is open follow-up |
 | `../icon*.png` (32/64/96) | Window/taskbar/mod-chooser icon — the emblem on transparency |
 | `../../../packaging/artwork/icon_*.png` (16 … 1024) and `macos-background*.png` | **Application** icon for all three platform packages (Windows launcher `.exe`/installer, macOS `.app`/DMG, Linux AppImage/`.desktop`) — the emblem on its own rounded grid-glass tile, a simplified heavier mark below 48px — and the macOS disk-image background. Were the Mod SDK's "Ex" / "OpenRA Example Mod" placeholders until issue #114; `packaging/*/buildpackage.sh` consume them by fixed name and size |

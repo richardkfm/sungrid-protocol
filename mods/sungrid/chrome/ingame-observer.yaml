@@ -1125,23 +1125,30 @@ Container@OBSERVER_WIDGETS:
 			X: 5
 			Y: 250
 			Width: 330
-			Height: 202
+			Height: 216
 			Children:
-				ColorBlock@GRID_RESERVE_STANDINGS_BG:
+				# Issue #119: same chrome as the player HUD's Grid Reserve panel; the
+				# header is the battery glyph plus the title in the mod's Title face.
+				Background@GRID_RESERVE_STANDINGS_BG:
 					Width: PARENT_WIDTH
 					Height: PARENT_HEIGHT
-					Color: 00000090
+					Background: grid-reserve-panel
+				Image@GRID_RESERVE_STANDINGS_ICON:
+					X: 8
+					Y: 8
+					ImageCollection: sungrid-marks
+					ImageName: battery
 				Label@GRID_RESERVE_STANDINGS_HEADER:
-					X: 6
-					Y: 2
-					Width: PARENT_WIDTH - 12
-					Height: 16
-					Font: Bold
+					X: 30
+					Y: 4
+					Width: PARENT_WIDTH - 36
+					Height: 24
+					Font: TitleSmall
 					Shadow: true
 					Text: label-grid-reserve-standings-header
 				Container@ROW_0:
 					X: 4
-					Y: 20
+					Y: 32
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1159,14 +1166,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_1:
 					X: 4
-					Y: 42
+					Y: 54
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1184,14 +1200,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_2:
 					X: 4
-					Y: 64
+					Y: 76
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1209,14 +1234,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_3:
 					X: 4
-					Y: 86
+					Y: 98
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1234,14 +1268,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_4:
 					X: 4
-					Y: 108
+					Y: 120
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1259,14 +1302,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_5:
 					X: 4
-					Y: 130
+					Y: 142
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1284,14 +1336,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_6:
 					X: 4
-					Y: 152
+					Y: 164
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1309,14 +1370,23 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 				Container@ROW_7:
 					X: 4
-					Y: 174
+					Y: 186
 					Width: PARENT_WIDTH - 8
 					Height: 22
 					Children:
@@ -1334,11 +1404,20 @@ Container@OBSERVER_WIDGETS:
 							Shadow: true
 						ProgressBar@BAR:
 							X: 246
-							Y: 4
+							Y: 5
 							Width: 80
-							Height: 14
-							Background: progressbar-bg
-							Bar: progressbar-thumb
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-thumb
+						ProgressBar@BAR_LOCKDOWN:
+							X: 246
+							Y: 5
+							Width: 80
+							Height: 12
+							BarMargin: 2, 2
+							Background: grid-reserve-bar-bg
+							Bar: grid-reserve-bar-lockdown
 		Container@HPF_ROOT:
 			Logic: LoadIngameHierarchicalPathFinderOverlayLogic
 			X: WINDOW_WIDTH - WIDTH - 255
