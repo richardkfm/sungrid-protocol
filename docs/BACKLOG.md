@@ -4042,3 +4042,105 @@ reachable through this environment's proxy).
 
 **Definition of done:** the proposals doc exists and the four fixes pass the utility checks - met. Live look at the
 wordmark in the menu is the next desktop-session check.
+
+### 119. The first-impression pass: installer chrome, main menu, a Sungrid shellmap battle, Grid Reserve HUD chrome, loading tips, map previews and titles, lobby header, emblem refinement
+
+**Raised as:** "implement A1, A2, A3, A5 and A6, A7, A8 and A9" from `docs/VISUAL_PROPOSALS.md` (issue #118). Owner's
+calls, asked before starting: rework the existing desert shellmap in place rather than author a new map; rename only
+the explicitly Cold-War map titles; and for A9 (an artist item) improve the emblem and wordmark by generator as far
+as that goes, keeping it tagged for a designer. Every item is marked `[shipped, issue #119]` in the proposals doc;
+A4 (the glyph atlas) is the one section-A item left.
+
+**A1 - the content installer on Sungrid chrome.** `mods/sungrid-content/mod.yaml` mounts `$sungrid`, `sungrid|uibits`
+and `sungrid|bits`, merges `sungrid|chrome.yaml` with a small `sungridcontent|chrome.yaml` that maps the installer's
+own collection names (`background`, `panel-bg`, `panel-rule`, `panel-thinborder`, `button-highlighted-thin*`,
+`modcontent/cdicon`) onto the game's grid-glass sheets, uses the game's cursor sheets (`cursors.yaml` copied with the
+palette token stripped - the sheets are truecolor and the installer mod has no world rules to provide a palette), and
+a new `uibits/content-bg.png` as `ModContentLoadScreen`'s image. `content.yaml` is a copy of the stock layout with the
+emblem and a `TitleSmall` title on its two main panels. **Live-verified under Xvfb** - the installer is the one first-run
+screen that needs no game content, so `launch-game.sh Game.Mod=sungrid` with an empty `<SupportDir>/Content` shows it
+- and that run caught a real crash: the first `content-bg.png` was 1024x480 and `Texture.SetData` refuses any
+non-power-of-two sheet (`Non-power-of-two array 1024x480`). Now 1024x512 with the top 1024x480 used, like the stock
+1024x1024 `chrome.png`. Recorded as art rule 21 in `CLAUDE.md`.
+
+**A2 - main menu.** The logo slot (the issue #118 wordmark badge), the tagline (now `WordWrap` under the badge) and the
+version label read as one top-right block; the version label no longer overlaps the badge's lower rows. The menu
+panel's title is "Main Menu" in the mod's `Title` face (ZoodRangmah 48 - 160px wide, fits the 200px panel), which no
+Sungrid layout had used; a new `TitleSmall` cut (28px) carries the Grid Reserve briefing title, the lobby header and
+the installer titles, where 48px would overflow the row.
+
+**A3 - the shellmap.** Scott_NZ's desert terrain, camera path and player setup are kept; the roster is swapped by a
+footprint-aware transform (same cell, same or smaller footprint, occupancy-checked where a replacement is wider):
+Tesla Coils, gun turrets and AA guns → Arc Turrets / Grid Defense Turrets (2x1 where the east cell was free),
+pillboxes likewise, oil derricks → Wind Turbines, both Refineries → Recycling Depots, Chronosphere and Soviet Tech
+Center → Datacenters, Allied Tech Center → Cryptominer, Iron Curtain and a Service Depot → Resilience Shelters, War
+Factories → Hydrogen Plants, Helipads → Drone Bays, Airfields and Forward Commands → Aerial Fabs, Radar Domes → Sensor
+Array + Smart Grid Relay, Kennels → Relays, each Gap Generator → a row of three Battery Banks; every stock vehicle and
+ship (tanks, jeeps, artillery, cruisers, PT boat, MRJ, MGG, naval yard) deleted; every rifle/rocket soldier → Disruptor
+Trooper; plus two Hauler Drones beside the Consortium Depot, one beside the Assembly's, a Recon Drone and two Strike
+Drones beside their bays. The Lua is rewritten: barracks and the five Drone Bays produce Disruptor Troopers and drones,
+Assembly waves from the seven entry points are troopers plus a Strike Drone, Recon Drones fly the old MiG paths, Haulers
+`FindResources()` whenever idle (the battle's dead drop Scrap along the defence line, after `SpawnsResourceOnDeath`'s
+30 s hold - so the Haulers end up running to the front, which is the mode), and the Chinook/LST/paradrop/Chronosphere/
+MiG/Halloween-ant machinery is gone with its `rules.yaml` overrides. 389 actors (was 401). `--check-yaml` and `make
+check-scripts` pass; the placement was reviewed on a schematic over the refreshed preview (`issue119-first-impression-
+pass.png`), **not in a live client** - the shellmap needs game content, which is unreachable here.
+
+**A5 - Grid Reserve HUD and standings.** `gen_chrome.py`'s `grid_reserve_chrome()` draws, in `dialog.png`'s free
+126x126 block at (897,385): a 3-slice `grid-reserve-panel`, a 16px battery glyph, 24/32px emblems, the installer's disc
+icon and four 64x12 bars (`grid-reserve-bar-bg` / `-thumb` green / `-lockdown` gold / `-enemy` red); `chrome.yaml` names
+each rect. Both widgets lose their `ColorBlock 00000090` for the panel; the HUD carries three bars in one slot
+(banking progress, the local player's own hold *draining* in gold, an opponent's hold draining in red), the standings
+two per row, and a `TitleSmall` header with the glyph. The C# reads its colours from `metrics.yaml`
+(`GridReserveTextColor`, `GridReserveEligibleColor`, `GridReserveLockdownColor`, `GridReserveEnemyLockdownColor`) via
+`ChromeMetrics.Get<Color>` instead of `Color.LimeGreen`/`OrangeRed`, and `GridReserveController` exposes
+`LockdownDurationTicks` for the draining bars. `dotnet build OpenRA.Mods.Sungrid -c Debug -warnaserror` clean (the
+engine's own Debug assemblies had to be built first - `dotnet build engine/OpenRA.Mods.Common -c Debug` - which `make`
+does not do). Widgets themselves only seen live.
+
+**A6 - fluent.** Loading tips are the grid's now ("Balancing the Grid…", "Composting Scrap…", "Calibrating Arrays…",
+"Routing Surplus…", "Reclaiming Pavement…", "Topping Up the Reserve…", "Waking the Drones…", "Trimming the
+Turbines…"); the command-bar tooltips no longer mention Chrono Tanks and name drones; the observer headers read
+"Collectors" / "Derricks".
+
+**A7 - previews and titles.** The real finding: a map's `map.png` and the radar minimap are drawn from
+`tilesets/*.yaml`'s terrain-type `Color:` entries, not from the palette (`DefaultTerrain` falls a tile back to its
+terrain type's colour), so issue #18's palette reskin never reached them. New `bits/reskin_tileset_colors.py` applies
+the palette script's own `recolor_red_to_green` to those entries (temperate 5, snow 4, desert 2 with the same 0.5
+bright-sand cutoff as the palette pass), and a new utility command `--refresh-map-previews` (`OpenRA.Mods.Sungrid/
+UtilityCommands/RefreshMapPreviewsCommand.cs`) re-saves each map package so `Map.Save` rewrites `map.png`. Run across
+all 75 maps; checked on A Path Beyond (tan 10% → 0%, green 42% → 53% of the preview, water and gems untouched).
+Seven titles renamed, in the packages: Chernobyl → Reclaimed Zone, A Nuclear Winter → A Long Winter, Siberian Pass →
+Northern Pass, Dual Cold Front → Dual Front, Operation: Goldmine → Operation: Salvage, Ore Lord → Grid Lord, Ore
+Gardens → Solar Gardens. Caveat: a re-save rewrites the whole `.oramap` and normalises `map.yaml`, so every map's UID
+changed - old replays and the server's map cache won't match these.
+
+**A8 - lobby.** `sungrid|chrome/lobby.yaml` is the stock layout with the 32px emblem and the server name in
+`TitleSmall` as a header; `metrics.yaml`'s `TextfieldColorHighlight` is living green instead of stock maroon.
+
+**A9 - emblem and wordmark.** `emblem()`: the hexagon is filled panel-dark (so the mark holds on any background) with a
+slightly heavier stroke, the sun is drawn as a limb-darkened disc with the highlight drifting up-left, the three stroked
+rays are five tapered wedges, and three small panel cells sit on the horizon; the `simple` cut keeps dropping the
+sub-pixel parts. The wordmark is letter-spaced with a deeper shadow. Regenerated everywhere the emblem appears (load
+screen badge, mod icons, all nine app icons, the DMG background, the new HUD/lobby emblems); the sidebar's faction
+marks are untouched. **Still tagged for a designer** in `PLACEHOLDER_ART.md`.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps including the rewritten shellmap; `--check-missing-sprites`
+output identical to the post-#118 run apart from the content-missing noise; `make check-scripts` (lua5.1) passes;
+Release and Debug `-warnaserror` builds of `OpenRA.Mods.Sungrid` clean; the content installer screenshotted live under
+Xvfb (both panels); every generator re-run leaves the untouched sheets byte-identical. **Not verified live:** the main
+menu, lobby, HUD and shellmap - all need game content.
+
+**Files:** `mods/sungrid-content/{mod,chrome,cursors,content}.yaml`, `mods/sungrid/uibits/{gen_chrome.py,dialog.png,
+content-bg.png,loadscreen*.png,PLACEHOLDER_ART.md}`, `mods/sungrid/{icon*.png,chrome.yaml,metrics.yaml,
+mod.chrome.yaml}`, `mods/sungrid/chrome/{mainmenu,lobby,ingame-player,ingame-observer}.yaml`,
+`mods/sungrid/fluent/{chrome,mod}.ftl`, `mods/sungrid/tilesets/*.yaml`, `mods/sungrid/bits/reskin_tileset_colors.py`,
+`mods/sungrid/maps/*` (75 packages re-saved; the shellmap's `map.yaml`, `desert-shellmap.lua`, `rules.yaml` rewritten),
+`OpenRA.Mods.Sungrid/GridReserve/{GridReserveController,GridReserveHudLogic,GridReserveStandingsLogic}.cs`,
+`OpenRA.Mods.Sungrid/UtilityCommands/RefreshMapPreviewsCommand.cs`, `packaging/artwork/*`,
+`docs/concept-art/issue119-first-impression-pass.png`, `docs/VISUAL_PROPOSALS.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 6 (UI identity); the shellmap is the first Phase 7-adjacent piece of world content.
+
+**Definition of done:** the eight proposals implemented and checked as above - met, with the live checks of the
+menu/lobby/HUD/shellmap left to the next desktop session.

@@ -44,7 +44,7 @@ Terrain:
 	TerrainType@Rock:
 		Type: Rock
 		TargetTypes: Ground
-		Color: 745A3F
+		Color: 3C744D
 	TerrainType@Rough:
 		Type: Rough
 		TargetTypes: Ground
@@ -54,7 +54,7 @@ Terrain:
 		Type: Scrap
 		TargetTypes: Ground
 		AcceptsSmudgeType: Crater, Scorch
-		Color: 705A4A
+		Color: 487054
 		RestrictPlayerColor: true
 	TerrainType@Tree:
 		Type: Tree

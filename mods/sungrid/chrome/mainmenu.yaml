@@ -15,19 +15,33 @@ Container@MAINMENU:
 			Y: 0 - 15
 			Width: WINDOW_WIDTH + 30
 			Height: WINDOW_HEIGHT + 30
+		# Issue #119: the logo slot (the wordmark badge since issue #118), the tagline and
+		# the version label read as one block in the top-right corner instead of the
+		# tagline floating centred over the menu and the version label overlapping the
+		# badge's lower rows.
 		Image@LOGO:
 			X: WINDOW_WIDTH - 296
 			Y: 30
 			ImageCollection: logos
 			ImageName: logo
+		Label@SUNGRID_TAGLINE:
+			X: WINDOW_WIDTH - 296
+			Y: 292
+			Width: 256
+			Height: 36
+			Align: Center
+			Font: Small
+			Shadow: true
+			WordWrap: true
+			Text: label-main-menu-tagline
 		Label@VERSION_LABEL:
 			Logic: VersionLabelLogic
 			X: WINDOW_WIDTH - 296
-			Y: 296 - 20
-			Width: 296 - 20
+			Y: 332
+			Width: 256
 			Height: 25
 			Align: Center
-			Font: Regular
+			Font: Tiny
 			Shadow: true
 		Container@MENUS:
 			X: 13 + (WINDOW_WIDTH - 522) / 4 - WIDTH / 2
@@ -39,14 +53,17 @@ Container@MAINMENU:
 					Width: PARENT_WIDTH
 					Height: PARENT_HEIGHT
 					Children:
+						# Issue #119: the panel's title is set in the mod's own Title face
+						# (ZoodRangmah), which no Sungrid layout used before; it no longer
+						# duplicates the game's name, which the logo slot now carries.
 						Label@MAINMENU_LABEL_TITLE:
 							X: 0
-							Y: 22
+							Y: 18
 							Width: 200
-							Height: 30
+							Height: 36
 							Text: label-main-menu-title
 							Align: Center
-							Font: Bold
+							Font: Title
 						Button@SINGLEPLAYER_BUTTON:
 							X: PARENT_WIDTH / 2 - WIDTH / 2
 							Y: 60
@@ -248,16 +265,7 @@ Container@MAINMENU:
 		# this widget up with GetOrNull and no-ops the whole fetch/panel when
 		# it's absent (see LoadAndDisplayNews's `newsBG != null` guard), so
 		# dropping the block is a clean removal, not a hidden/zero-size hack.
-		# A static tagline fills the same header slot instead.
-		Label@SUNGRID_TAGLINE:
-			X: (WINDOW_WIDTH - WIDTH) / 2
-			Y: 45
-			Width: 430
-			Height: 25
-			Align: Center
-			Font: Regular
-			Shadow: true
-			Text: label-main-menu-tagline
+		# The tagline that used to fill this slot now sits under the logo (above).
 		Container@UPDATE_NOTICE:
 			X: (WINDOW_WIDTH - WIDTH) / 2
 			Y: 95

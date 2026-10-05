@@ -45,6 +45,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 			var players = world.Players.Where(p => !p.NonCombatant && p.Playable).ToArray();
 
+			// Palette colours from metrics.yaml (issue #119), as in GridReserveHudLogic.
+			var eligibleColor = ChromeMetrics.Get<Color>("GridReserveEligibleColor");
+			var lockdownColor = ChromeMetrics.Get<Color>("GridReserveLockdownColor");
+			int HoldPercent(int remaining) => controller.LockdownDurationTicks > 0
+				? Math.Clamp(remaining * 100 / controller.LockdownDurationTicks, 0, 100)
+				: 0;
+
 			for (var i = 0; i < MaxRows; i++)
 			{
 				var row = widget.GetOrNull<ContainerWidget>("ROW_" + i.ToString(CultureInfo.InvariantCulture));
@@ -77,10 +84,22 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 					return string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}", manager.TotalReserve, manager.Target);
 				};
-				amount.GetColor = () => manager.LockdownEligible ? Color.LimeGreen : player.Color;
+				amount.GetColor = () =>
+				{
+					if (controller.LockdownTicksRemaining(player) >= 0)
+						return lockdownColor;
 
+					return manager.LockdownEligible ? eligibleColor : player.Color;
+				};
+
+				// Banking progress in green until this player is holding Lockdown, then the hold
+				// draining in gold - the same two states the player HUD shows.
 				var bar = row.Get<ProgressBarWidget>("BAR");
+				var lockdownBar = row.Get<ProgressBarWidget>("BAR_LOCKDOWN");
+				bar.IsVisible = () => controller.LockdownTicksRemaining(player) < 0;
 				bar.GetPercentage = () => manager.Target > 0 ? Math.Min(100, manager.TotalReserve * 100 / manager.Target) : 0;
+				lockdownBar.IsVisible = () => controller.LockdownTicksRemaining(player) >= 0;
+				lockdownBar.GetPercentage = () => HoldPercent(controller.LockdownTicksRemaining(player));
 			}
 		}
 

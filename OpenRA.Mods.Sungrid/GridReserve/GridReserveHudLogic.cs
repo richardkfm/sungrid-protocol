@@ -54,10 +54,37 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 			var manager = player.PlayerActor.Trait<GridReserveManager>();
 			var opponents = world.Players.Where(p => p != player && !p.NonCombatant && p.Playable).ToArray();
-			var bar = widget.Get<ProgressBarWidget>("GRID_RESERVE_BAR");
 			var label = widget.Get<LabelWithTooltipWidget>("GRID_RESERVE_LABEL");
 
-			bar.GetPercentage = () => manager.Target > 0 ? Math.Min(100, manager.TotalReserve * 100 / manager.Target) : 0;
+			// Colours come from metrics.yaml (issue #119) so the HUD follows the locked palette
+			// rather than hard-coded Color.LimeGreen / OrangeRed.
+			var textColor = ChromeMetrics.Get<Color>("GridReserveTextColor");
+			var eligibleColor = ChromeMetrics.Get<Color>("GridReserveEligibleColor");
+			var lockdownColor = ChromeMetrics.Get<Color>("GridReserveLockdownColor");
+			var enemyLockdownColor = ChromeMetrics.Get<Color>("GridReserveEnemyLockdownColor");
+
+			// Three bars share one slot: banking progress (green), the local player's own Lockdown
+			// hold draining in gold, and an opponent's hold draining in red. Only one is visible.
+			var bar = widget.Get<ProgressBarWidget>("GRID_RESERVE_BAR");
+			var lockdownBar = widget.Get<ProgressBarWidget>("GRID_RESERVE_BAR_LOCKDOWN");
+			var enemyBar = widget.Get<ProgressBarWidget>("GRID_RESERVE_BAR_ENEMY");
+
+			int ReservePercent() => manager.Target > 0 ? Math.Min(100, manager.TotalReserve * 100 / manager.Target) : 0;
+			int HoldPercent(int remaining) => controller.LockdownDurationTicks > 0
+				? Math.Clamp(remaining * 100 / controller.LockdownDurationTicks, 0, 100)
+				: 0;
+			bool OwnLockdown() => controller.LockdownTicksRemaining(player) >= 0;
+
+			bar.IsVisible = () => !OwnLockdown() && EnemyInLockdown() == null;
+			bar.GetPercentage = ReservePercent;
+			lockdownBar.IsVisible = OwnLockdown;
+			lockdownBar.GetPercentage = () => HoldPercent(controller.LockdownTicksRemaining(player));
+			enemyBar.IsVisible = () => !OwnLockdown() && EnemyInLockdown() != null;
+			enemyBar.GetPercentage = () =>
+			{
+				var enemy = EnemyInLockdown();
+				return enemy == null ? 0 : HoldPercent(controller.LockdownTicksRemaining(enemy));
+			};
 
 			// The soonest-to-complete opponent Lockdown, or null. The one-time start broadcast (see
 			// GridReserveController.Broadcast) already reaches every player regardless of visibility, so
@@ -103,11 +130,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			};
 			label.GetColor = () =>
 			{
+				if (OwnLockdown())
+					return lockdownColor;
 				if (manager.LockdownEligible)
-					return Color.LimeGreen;
+					return eligibleColor;
 				if (EnemyInLockdown() != null)
-					return Color.OrangeRed;
-				return Color.White;
+					return enemyLockdownColor;
+				return textColor;
 			};
 			label.GetTooltipText = () =>
 			{

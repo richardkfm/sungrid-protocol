@@ -30,7 +30,11 @@ facing, or a sprite that describes a mechanic the actor doesn't have.
 
 ---
 
-## Shipped with this survey (issue #118)
+## Shipped with this survey (issue #118) and the first-impression pass (issue #119)
+
+Issue #119 took A1, A2, A3, A5, A6, A7, A8 and A9 from section A below (each is marked
+`[shipped, issue #119]`; the full engineering detail is in `docs/BACKLOG.md`). A4 (the glyph
+atlas) is the one section-A item still open.
 
 - **U1 — The game's name on the load screen and main menu.** The `logo` slot (256×256, drawn centred
   on the load screen and top-right of the main menu) held the bare emblem; neither screen said
@@ -51,7 +55,7 @@ facing, or a sprite that describes a mechanic the actor doesn't have.
 
 What a tester sees in the first five minutes, in the order they see it.
 
-**A1. The content installer is the first screen on a clean machine, and it is stock OpenRA.**
+**A1. [shipped, issue #119] The content installer is the first screen on a clean machine, and it is stock OpenRA.**
 Now: `mods/sungrid-content/mod.yaml` points `Chrome`, `Cursors`, `ChromeLayout` and `LoadScreen` at
 `^EngineDir|mods/common-content` — stock grey chrome, stock cursor, the stock "OpenRA" load image — so
 beta gate B6 (first-run install on a clean machine) opens on a screen that isn't ours.
@@ -61,7 +65,7 @@ Proposal: point the installer's `LoadScreen` images at `sungrid|uibits/loadscree
 Cost: S. Kind: YAML. Verify: `--check-yaml` on the content mod; the installer dialog is the one screen
 `docs/BACKLOG.md` issue #117 did capture under Xvfb, so the recipe for a screenshot exists.
 
-**A2. Main menu layout is the stock 200×320 panel; the Title face is never used in-game.**
+**A2. [shipped, issue #119] Main menu layout is the stock 200×320 panel; the Title face is never used in-game.**
 Now: `chrome/mainmenu.yaml` is stock RA's layout minus the news panel; the menu title label inside the
 panel duplicates the wordmark now in the logo slot; `Font: Title` (ZoodRangmah) is defined in
 `mod.chrome.yaml` but no Sungrid layout uses it.
@@ -71,7 +75,7 @@ Reserve briefing title, and move the tagline directly under the logo slot so log
 read as one block. Cost: S. Kind: YAML + fluent. Verify: `--check-yaml`; an Xvfb screenshot (recipe in
 `docs/PLAYTESTING.md`) for the layout.
 
-**A3. The shellmap behind the menu is a stock Red Alert battle.**
+**A3. [shipped, issue #119] The shellmap behind the menu is a stock Red Alert battle.**
 Now: `maps/desert-shellmap/` is Scott_NZ's RA desert shellmap; its Lua spawns 3TNK/4TNK/V2RL/MiGs and
 the base is Tesla Coils, oil derricks and refineries. Apart from the three ported buildings, nothing on
 the menu's moving background is Sungrid.
@@ -90,7 +94,7 @@ and the red alert icons to the locked amber, redraw the Random "?" plaques on th
 Assembly green plaque style the faction slots already use. Pixel rects unchanged. Cost: S. Kind:
 generator. Verify: `chrome.yaml` regions untouched; diff the atlas (only the intended rows change).
 
-**A5. The Grid Reserve HUD and standings are plain black boxes with hard-coded colours.**
+**A5. [shipped, issue #119] The Grid Reserve HUD and standings are plain black boxes with hard-coded colours.**
 Now: `GRID_RESERVE_HUD` and `GRID_RESERVE_STANDINGS` sit on `ColorBlock 00000090`;
 `GridReserveHudLogic.cs` colours text `Color.LimeGreen` / `OrangeRed` / `White`;
 `GridReserveStandingsLogic.cs` likewise. This is the one piece of UI that is *ours* and it is the
@@ -103,7 +107,7 @@ the colours to `metrics.yaml` constants (`GridReserveBankingColor`, `GridReserve
 C#. Verify: `dotnet build -c Debug -warnaserror` on `OpenRA.Mods.Sungrid`; `--check-yaml`; the widget
 is only seen live.
 
-**A6. Loading tips and tooltips still tell Red Alert jokes.**
+**A6. [shipped, issue #119] Loading tips and tooltips still tell Red Alert jokes.**
 Now: `fluent/mod.ftl`'s `loadscreen-loading` keeps "Reticulating Splines", "Aging Empires",
 "Constructing Pylons", "Splitting Atoms"; `fluent/chrome.ftl`'s command-bar tooltips name Chrono Tanks,
 Demolition Trucks and MCVs; the observer headers say "Harvesters" and "Oil Derricks".
@@ -112,7 +116,7 @@ Proposal: a Sungrid tip list ("Balancing the Grid…", "Composting Scrap…", "C
 observer headers "Collectors" / "Depots". Cost: S. Kind: fluent. Verify: `--check-yaml` (it validates
 `FluentReference`s).
 
-**A7. Map chooser: 75 stock Red Alert titles and stock preview thumbnails.**
+**A7. [shipped, issue #119] Map chooser: 75 stock Red Alert titles and stock preview thumbnails.**
 Now: map titles like "A Nuclear Winter" and "Chernobyl"; each `map.png` preview was rendered on the
 stock tan palette, so the chooser shows the old world even though the game draws the green one.
 Proposal: regenerate every preview from the reskinned terrain palettes — `Map.Save()` rewrites
@@ -122,7 +126,7 @@ path that saves a map without the editor (confirmed on the shellmap: its shipped
 names are explicitly Cold-War (a fluent-only rename, keeping the map ids). Cost: S for previews, S for
 titles. Kind: utility + fluent. Verify: `--check-yaml` across all 75 maps; diff the preview PNGs.
 
-**A8. Lobby, settings and dialogs are stock layouts on Sungrid art.**
+**A8. [shipped, issue #119] Lobby, settings and dialogs are stock layouts on Sungrid art.**
 Now: every `chrome/*.yaml` except five is `common|chrome/*`; they already draw on the grid-glass
 sheets, so they *look* consistent, but the lobby has no Sungrid header, the faction dropdown shows
 real-world flags next to the two plaques, and `TextfieldColorHighlight` in `metrics.yaml` is the stock
@@ -130,7 +134,7 @@ maroon. Proposal: override `lobby.yaml` only to add a header strip (emblem + map
 Reserve checkbox's own icon; set the text-field highlight to living green. Cost: S. Kind: YAML. Low
 priority — these screens already read as ours.
 
-**A9. The emblem and wordmark are first-pass programmatic marks.**
+**A9. [shipped, issue #119] The emblem and wordmark are first-pass programmatic marks.**
 `uibits/PLACEHOLDER_ART.md` says so. Proposal: a designer brief — the emblem's concept (sun over a
 living horizon inside a grid cell) and the locked palette are settled; what a designer adds is
 proportion, a drawn rather than stroked sun, and a wordmark cut for the ZoodRangmah face rather than

@@ -125,7 +125,7 @@ def emblem(size, accent=SUN_GOLD, simple=False):
     lw = max(SS, round(s * 0.014))
     # the hexagon's own stroke: heavier in the small-size cut, while rays and
     # the baseline keep `lw` so they don't weld to it
-    hw = max(SS * 2, round(s * 0.035)) if simple else lw
+    hw = max(SS * 2, round(s * 0.035)) if simple else max(lw, round(s * 0.018))
 
     # outer ring
     if not simple:
@@ -142,6 +142,13 @@ def emblem(size, accent=SUN_GOLD, simple=False):
             ox = cx + r * math.sin(k * math.pi / 3)
             oy = cy - r * math.cos(k * math.pi / 3)
             d.line((px, py, ox, oy), fill=accent + (150,), width=max(SS // 2, lw // 2))
+    # Issue #119 refinement (a designer pass is still pending - see
+    # PLACEHOLDER_ART.md): the hexagon is filled panel-dark so the mark holds
+    # on any background and its stroke is a touch heavier; the sun is *drawn*
+    # (a limb-darkened disc with the highlight drifting up-left) rather than a
+    # flat disc with a lighter disc on it; the rays are five tapered wedges;
+    # and three small panel cells sit on the horizon - the grid the sun feeds.
+    d.polygon(pts, fill=PANEL + (235,))
     d.polygon(pts, outline=accent + (255,), width=hw)
     if not simple:
         nr = s * 0.016
@@ -151,19 +158,27 @@ def emblem(size, accent=SUN_GOLD, simple=False):
     # sun disc, centered so the horizon band overlaps its lower third
     sr = hr * 0.44
     sy = cy - hr * 0.02
-    d.ellipse((cx - sr, sy - sr, cx + sr, sy + sr), fill=accent + (255,))
-    hl = sr * 0.78
-    d.ellipse((cx - hl - sr * 0.12, sy - hl - sr * 0.12,
-               cx + hl - sr * 0.12, sy + hl - sr * 0.12),
-              fill=mix(accent, (255, 255, 255), 0.18) + (255,))
+    rings = 14
+    for i in range(rings):
+        t = i / (rings - 1)  # 0 = outer limb, 1 = core
+        rr = sr * (1 - 0.72 * t)
+        ox, oy = -sr * 0.10 * t, -sr * 0.12 * t
+        col = mix(lift(accent, -14), mix(accent, (255, 255, 255), 0.32), t)
+        d.ellipse((cx + ox - rr, sy + oy - rr, cx + ox + rr, sy + oy + rr), fill=col + (255,))
+    if not simple:
+        d.ellipse((cx - sr * 1.10, sy - sr * 1.10, cx + sr * 1.10, sy + sr * 1.10),
+                  outline=accent + (70,), width=max(SS, lw))
 
-    # three short rays above the sun
-    for ang in (-math.pi / 2, -math.pi / 2 - 0.55, -math.pi / 2 + 0.55):
-        x0 = cx + (sr * 1.22) * math.cos(ang)
-        y0 = sy + (sr * 1.22) * math.sin(ang)
-        x1 = cx + (sr * 1.62) * math.cos(ang)
-        y1 = sy + (sr * 1.62) * math.sin(ang)
-        d.line((x0, y0, x1, y1), fill=accent + (230,), width=lw)
+    # five tapered rays above the sun, the middle one longest
+    rays = ((-0.9, 1.42), (-0.45, 1.55), (0.0, 1.70), (0.45, 1.55), (0.9, 1.42))
+    for off, length in rays:
+        ang = -math.pi / 2 + off
+        x0 = cx + (sr * 1.20) * math.cos(ang)
+        y0 = sy + (sr * 1.20) * math.sin(ang)
+        x1 = cx + (sr * length) * math.cos(ang)
+        y1 = sy + (sr * length) * math.sin(ang)
+        nx, ny = -math.sin(ang) * lw * 0.9, math.cos(ang) * lw * 0.9
+        d.polygon([(x0 + nx, y0 + ny), (x0 - nx, y0 - ny), (x1, y1)], fill=accent + (235,))
 
     # horizon band (two-tone living green), clipped to the hexagon width
     bw = hr * 0.80
@@ -172,6 +187,16 @@ def emblem(size, accent=SUN_GOLD, simple=False):
     d.rectangle((cx - bw, t0, cx + bw, (t0 + t1) / 2), fill=GREEN_MID + (255,))
     d.rectangle((cx - bw, (t0 + t1) / 2, cx + bw, t1), fill=lift(GREEN_MID, -16) + (255,))
     d.line((cx - bw, t0, cx + bw, t0), fill=GREEN_ACCENT + (255,), width=max(SS // 2, lw // 2))
+    if not simple:
+        # three panel cells on the horizon (sub-pixel below 48px, so the
+        # simple cut leaves them out, like the ring and filaments)
+        cw, gap = bw * 0.18, bw * 0.10
+        ya = (t0 + t1) / 2 + (t1 - t0) * 0.08
+        yb = t1 - (t1 - t0) * 0.10
+        for j in (-1, 0, 1):
+            xa = cx + j * (cw + gap) - cw / 2
+            d.rectangle((xa, ya, xa + cw, yb), fill=lift(GREEN_MID, -30) + (255,),
+                        outline=GREEN_ACCENT + (255,), width=max(1, SS // 2))
     # faction accent baseline under the horizon
     d.line((cx - bw, t1 + lw * 1.5, cx + bw, t1 + lw * 1.5), fill=accent + (255,), width=lw)
 
@@ -368,11 +393,16 @@ def wordmark_badge(size, scale=1):
     im.alpha_composite(e, ((size - e.width) // 2, round(size * 0.05)))
     f = ImageFont.truetype(font_path, round(size * 0.215))
     y = round(size * 0.615)
+    sp = round(size * 0.008)  # letter-spacing: ZoodRangmah sets tight (issue #119)
     for t in ("SUNGRID", "PROTOCOL"):
-        # 1px-per-scale shadow so the gold holds its edge over the cell grid
-        d.text((size / 2 + scale, y + scale), t, font=f, fill=PANEL_DEEP, anchor="mt")
-        d.text((size / 2, y), t, font=f, fill=SUN_GOLD, anchor="mt")
-        y = d.textbbox((size / 2, y), t, font=f, anchor="mt")[3] + round(size * 0.025)
+        tw = sum(f.getlength(ch) for ch in t) + sp * (len(t) - 1)
+        x = size / 2 - tw / 2
+        for ch in t:
+            # 1px-per-scale shadow so the gold holds its edge over the cell grid
+            d.text((x + scale, y + scale), ch, font=f, fill=BLACKLINE, anchor="lt")
+            d.text((x, y), ch, font=f, fill=SUN_GOLD, anchor="lt")
+            x += f.getlength(ch) + sp
+        y = d.textbbox((0, y), t, font=f, anchor="lt")[3] + round(size * 0.025)
     ry = size - round(size * 0.055)
     d.line((round(size * 0.2), ry, size - round(size * 0.2), ry),
            fill=GREEN_MID, width=max(1, scale))
@@ -624,8 +654,74 @@ def gen_dialog():
     d.rectangle((x0 + 12, y0 + 12, x0 + mm - 13, y0 + mm - 13), outline=GOLD_DIM, width=1)
     d.rectangle((x0 + 14, y0 + 14, x0 + mm - 15, y0 + mm - 15), outline=BLACKLINE, width=1)
 
+    # Issue #119: the free 126x126 block at (897,385) holds the Grid Reserve HUD
+    # chrome, the small emblems the lobby header and the HUD use, and the content
+    # installer's disc icon. chrome.yaml names each rect; keep them in step.
+    grid_reserve_chrome(im, 897, 385)
+
     im.convert("RGB").save(f"{UIBITS}/dialog.png")
     print("dialog.png", im.size)
+
+
+def grid_reserve_chrome(im, x0, y0):
+    """Grid Reserve HUD panel, bars, battery glyph, small emblems, disc icon.
+
+    grid-reserve-panel  (x0,     y0,     64x64)  PanelRegion 6/52/6: panel blue-black,
+                                                 living-green frame, gold filament on
+                                                 the lit (top/left) edge
+    grid-reserve-icon   (x0+66,  y0,     16x16)  a Battery Bank cell, gold on panel
+    emblem-24           (x0+66,  y0+18,  24x24)  neutral mark, lobby header / HUD
+    emblem-32           (x0+92,  y0,     32x32)  neutral mark, larger
+    cd-icon             (x0+92,  y0+34,  20x20)  the content installer's disc
+    grid-reserve-bar-bg      (x0, y0+67, 64x12)  PanelRegion 3/58/3, recessed slot
+    grid-reserve-bar-thumb   (x0, y0+80, 64x12)  banking: living-green fill
+    grid-reserve-bar-lockdown(x0, y0+93, 64x12)  own Lockdown hold: sun-gold fill
+    grid-reserve-bar-enemy   (x0, y0+106,64x12)  an opponent's hold: amber-red fill
+    """
+    d = ImageDraw.Draw(im)
+    # panel
+    d.rectangle((x0, y0, x0 + 63, y0 + 63), fill=PANEL)
+    pv_grid(im, x0 + 1, y0 + 1, 62, 62, base=PANEL, cell=8, line=-6, alt=2)
+    d.rectangle((x0, y0, x0 + 63, y0 + 63), outline=BLACKLINE, width=1)
+    d.rectangle((x0 + 1, y0 + 1, x0 + 62, y0 + 62), outline=GREEN_MID, width=2)
+    d.line((x0 + 3, y0 + 3, x0 + 60, y0 + 3), fill=GOLD_DIM)
+    d.line((x0 + 3, y0 + 3, x0 + 3, y0 + 60), fill=GOLD_DIM)
+    d.rectangle((x0 + 4, y0 + 4, x0 + 59, y0 + 59), outline=lift(PANEL, -6), width=1)
+
+    # battery glyph 16x16: a cell with a terminal nub, three gold charge bars
+    bx, by = x0 + 66, y0
+    d.rectangle((bx, by, bx + 15, by + 15), fill=PANEL)
+    d.rectangle((bx + 1, by + 3, bx + 12, by + 12), outline=GREEN_ACCENT, width=1)
+    d.rectangle((bx + 13, by + 6, bx + 14, by + 9), fill=GREEN_ACCENT)
+    for i in range(3):
+        d.rectangle((bx + 3 + i * 3, by + 5, bx + 4 + i * 3, by + 10), fill=SUN_GOLD)
+
+    # small emblems on transparency-free panel tiles
+    for size, (ex, ey) in ((24, (x0 + 66, y0 + 18)), (32, (x0 + 92, y0))):
+        d.rectangle((ex, ey, ex + size - 1, ey + size - 1), fill=PANEL)
+        e = emblem(size, SUN_GOLD, simple=size < 48)
+        im.alpha_composite(e, (ex, ey))
+
+    # disc icon 20x20 (content installer: "install from disc")
+    cx, cy = x0 + 92, y0 + 34
+    d.rectangle((cx, cy, cx + 19, cy + 19), fill=PANEL)
+    d.ellipse((cx + 2, cy + 2, cx + 17, cy + 17), fill=mix(PANEL, (255, 255, 255), 0.55), outline=BLACKLINE)
+    d.ellipse((cx + 5, cy + 5, cx + 14, cy + 14), outline=GOLD_DIM, width=1)
+    d.ellipse((cx + 8, cy + 8, cx + 11, cy + 11), fill=PANEL)
+
+    # bars: 64x12, 3px frame + 58x6 body
+    def bar(y, fill):
+        d.rectangle((x0, y, x0 + 63, y + 11), fill=PANEL_DEEP)
+        d.rectangle((x0, y, x0 + 63, y + 11), outline=BLACKLINE, width=1)
+        d.rectangle((x0 + 1, y + 1, x0 + 62, y + 10), outline=lift(PANEL, -4), width=1)
+        if fill is not None:
+            d.rectangle((x0 + 2, y + 2, x0 + 61, y + 9), fill=fill)
+            d.line((x0 + 2, y + 2, x0 + 61, y + 2), fill=mix(fill, (255, 255, 255), 0.25))
+            d.line((x0 + 2, y + 9, x0 + 61, y + 9), fill=lift(fill, -18))
+    bar(y0 + 67, None)
+    bar(y0 + 80, GREEN_MID)
+    bar(y0 + 93, SUN_GOLD)
+    bar(y0 + 106, (0xC7, 0x3B, 0x2E))
 
 
 # --------------------------------------------------------------------------
@@ -755,6 +851,27 @@ def gen_loadscreen():
 
 
 # --------------------------------------------------------------------------
+# content-bg.png (1024x512, of which the top 1024x480 is used): the content
+# installer's full-screen tile (issue #119). ModContentLoadScreen tiles the
+# (0,0,1024,480) rect of its Image across the window and the
+# MODCONTENT_BACKGROUND widget draws the same rect as a centre-tiled panel, so
+# this is a seamless grid-glass texture with no mark on it - the installer's
+# own dialog (sungrid `dialog`) sits on top. 1024 and 480 are both multiples
+# of the 16px cell, so the tile repeats without a seam. The canvas itself is
+# 1024x512 because every sheet the engine uploads as a texture must be
+# power-of-two in both dimensions (Texture.SetData throws "Non-power-of-two
+# array" otherwise - a 1024x480 first draft crashed the installer under Xvfb);
+# the stock chrome.png is 1024x1024 for the same reason.
+
+def gen_content_background():
+    W, H = 1024, 512
+    im = Image.new("RGBA", (W, H), PANEL + (255,))
+    pv_grid(im, 0, 0, W, H, base=PANEL, cell=16, line=-6, alt=2)
+    im.convert("RGB").save(f"{UIBITS}/content-bg.png")
+    print("content-bg.png", im.size)
+
+
+# --------------------------------------------------------------------------
 # mod icons (../icon.png 32, icon-2x.png 64, icon-3x.png 96) — transparent
 # background, emblem only
 
@@ -862,6 +979,7 @@ if __name__ == "__main__":
     gen_dialog()
     gen_sidebar()
     gen_loadscreen()
+    gen_content_background()
     gen_icons()
     gen_flags()
     gen_app_icons()

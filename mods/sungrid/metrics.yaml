@@ -13,7 +13,16 @@ Metrics:
 	FactionSuffix-ukraine: soviet
 	IncompatibleProtectedGameColor: B22222
 	IncompatibleVersionColor: D3D3D3
-	TextfieldColorHighlight: 562020
+	# Living green (docs/ART_DIRECTION.md), was stock RA's maroon. Issue #119.
+	TextfieldColorHighlight: 2E7D46
+	# Grid Reserve HUD / standings text colours (issue #119); read by
+	# GridReserveHudLogic and GridReserveStandingsLogic. Locked palette:
+	# living-green accent for "eligible", sun-gold for an own Lockdown hold,
+	# the cursor set's danger red for an opponent's hold.
+	GridReserveTextColor: FFFFFF
+	GridReserveEligibleColor: 8BC34A
+	GridReserveLockdownColor: E8A93D
+	GridReserveEnemyLockdownColor: C73B2E
 	PlayerJoinedSound: PlayerJoined
 	LobbyOptionChangedSound: LobbyOptionChanged
 	PlayerLeftSound: PlayerLeft
