@@ -26,6 +26,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `docs/BUILDINGS.md` — the building roster (the original ten, plus the three from the energy pass), categorized and staged.
 - `docs/ENERGY_BALANCE.md` — the energy-scarcity rebalance and faction power-identity pass, plus the sub-faction rename history.
 - `docs/ART_DIRECTION.md` — solarpunk tone/visual guardrails and the locked palette. `docs/concept-art/` holds non-canonical HTML sketches (the Phase 5 building dossier, its faux-pixel-art follow-up, the faction-roster dossier) — discussion drafts, not shippable assets — plus per-issue PNG review renders of actual generator output referenced inline from `docs/ART_DIRECTION.md`, and `cameo-sources/` (author-supplied concept renders the photographic cameos are cropped from).
+- `docs/VISUAL_PROPOSALS.md` — the prioritized list of **unscheduled visual work** (UI/menu, units, terrain and world, buildings, engine-patch and artist items) from issue #118's survey; pick from it before inventing a new art pass, and mark an entry with its issue number when it is taken up.
 - `docs/BETA_TESTING.md` — the **tester-facing** guide (issue #116): install and unsigned-app warnings, content install, LAN/VPN + Direct IP hosting, crash/desync/replay file locations, known issues. The packaged crash dialog's "View FAQ" opens it, and the issue forms in `.github/ISSUE_TEMPLATE/` link to it — keep its UI labels and paths in step with the engine.
 - `docs/PLAYTESTING.md` — build/launch/troubleshooting steps for actually running a local match, including the RA content install and the known headless-environment blockers.
 - `docs/CONTRIBUTING.md` — Sungrid-specific workflow (branches, labels, RFCs, PR checklist). Root `CONTRIBUTING.md` is the Mod SDK's own contributing guidelines (still points to OpenRA's coding-standard wiki for engine-level style).
@@ -505,6 +506,11 @@ widely, including `.lua`, when removing an actor).
   units survive.
 - **Issue #31** — drone cost skew and Cryptominer payback, flagged for playtest, no numbers changed.
 - A human-designer pass over all the programmatic art, and a composer pass over the menu sting.
+- Everything in `docs/VISUAL_PROPOSALS.md` (issue #118): the content installer's stock chrome, the stock shellmap
+  battle, the glyph atlas, the Grid Reserve HUD's plain boxes, renamed stock units whose cameos still bake the old
+  name, the Grid Defense Turret's tank shell, the Phase 7 unit order (MCV/HARV/E1 first), scenery, Scrap readability,
+  rubble and bibs for the roster. Four fixes from the same survey already shipped (wordmark in the logo slot, fake
+  arrays on Sungrid art, Hauler spills Scrap, no fireball on the Disruptor Trooper's death).
 
 ## Working conventions
 

@@ -452,7 +452,8 @@ SGHAU:
 		FullnessThreshold: 50
 	FireWarheadsOnDeath:
 		RequiresCondition: !no-scrap
-		Weapon: OreExplosion
+		# Spills the Scrap it was carrying, not Ore (copied from HARV). Issue #118.
+		Weapon: ScrapExplosion
 	WithHarvesterSpriteBody:
 		ImageByFullness: sghauempty, sghauhalf, sghau
 	-WithFacingSpriteBody:

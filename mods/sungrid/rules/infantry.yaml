@@ -258,10 +258,11 @@ DISR:
 		Weapon: Disruptor
 	TakeCover:
 		ProneOffset: 160,0,-288
-	FireWarheadsOnDeath:
-		Weapon: VisualExplode
-		EmptyWeapon: VisualExplode
-		Chance: 50
+	# No FireWarheadsOnDeath here. DISR was written over the stock flamethrower
+	# (E4, issue #14), whose fuel tank had a 50% chance to go up in a napalm
+	# fireball (VisualExplode) when he died. A capacitor pack doesn't burn, and
+	# this mod has no fire weapons at all - it was the last fire effect left in
+	# the roster. Issue #118.
 	WithInfantryBody:
 		DefaultAttackSequence: shoot
 		RequiresCondition: !parachute
