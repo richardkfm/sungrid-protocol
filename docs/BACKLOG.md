@@ -4144,3 +4144,80 @@ mod.chrome.yaml}`, `mods/sungrid/chrome/{mainmenu,lobby,ingame-player,ingame-obs
 
 **Definition of done:** the eight proposals implemented and checked as above - met, with the live checks of the
 menu/lobby/HUD/shellmap left to the next desktop session.
+
+### 120. Section B of the visual proposals, short of the roster: the turret's bolt, drone rockets, uplink pips, drone and Hauler wrecks, the discharge death, and cameos for the renamed stock actors
+
+**Raised as:** "alright now do all B items" from `docs/VISUAL_PROPOSALS.md` (issue #118). Owner's calls, asked before
+starting: cap B7 at its first tier (MCV, HARV, E1 - issue #121, a second PR); the wreckage-fire decision is "electrical
+wrecks don't burn, buildings may"; B2 uses photo crops where the concept scenes have a subject and programmatic cameos
+tagged for a designer where they don't; B2-B6 and B8 land as one PR ahead of B7. Every one of those six is marked
+`[shipped, issue #120]` in the proposals doc.
+
+Everything new is drawn by one new generator, `mods/sungrid/bits/gen_unit_effects.py`, on `gen_concept_art.py`'s
+vocabulary (SD/PC/Mesh, `rotated_frames`, `save_pngsheet`), plus two new sounds in `gen_arc_sounds.py` and four crops
+in `gen_photo_cameos.py`. Effect sheets render on the `effect` palette, which is the same `temperat.pal` file as
+`player` but is not remapped, so they are indexed on the fixed entries only (`fx_index()`, no gold routing, no index
+4); the husks and the smoke overlay render on `player` and go through `to_indexed()` like any unit sheet.
+
+**B3 - Grid Defense Turret.** `GridPulseCannon` still inherited `^Cannon`'s 120mm shell sprite, `small_explosion`
+fireball and `kaboom12.aud`, with `turret1.aud` (the machine-gun turret's) as its report, and its muzzle flash was stock
+`samfire.shp`. Now: `sgpulse.png` (a `Bullet` sheet, 16 facings x 3 shimmer frames, a gold-sheathed green slug with a
+white nose and a short green contrail), `sgturfire.png` (`WithMuzzleOverlay`'s `muzzle`, 8 facings x 3: gold-white
+bloom, green ring, motes), `pulse_hit` in the `explosion` image (`sgpulsehit.png`, 6 frames: flash, spark ring,
+scorch), a `Scorch` smudge, and `sgpulse.wav` / `sgpulsehit.wav` - a capacitor click-and-chirp and an earthing crackle,
+synthesized the way issue #110's two were. `Bullet` takes a facing function, so a facings sheet works for it the same
+way `Missile`'s DRAGON does.
+
+**B4 - drone rockets.** `DroneRocket` / `.Strike` used the stock DRAGON with the `smokey` trail. Now `sgmissile.png`
+(32 facings, a slim white rocket with a dark nose and a green fin band) and `sgexhaust.png` as `TrailImage` (one puff's
+three-frame life: blue-white core, grey ring, motes); `med_explosion` stays.
+
+**B5 - uplink pips.** `GrantConditionOnPowerState` switches the drones' armament through `drone-uplink` /
+`drone-uplink-degraded` with nothing on screen. Three `WithDecoration`s per drone now show a 7px lamp over the
+selection box: green while uplinked, amber while degraded, and red (`!drone-uplink && !drone-uplink-degraded`) for the
+state neither condition covers - power Critical, armament disabled - which is the one a player most needs. Decorations
+are screen-space, so art rule 13's overlay drift across image-plane facings does not apply. Negative control run: an
+ungranted condition name is reported by `--check-yaml`.
+
+**B6 - wrecks.** Both drone husks rendered the live sheet (rotors turning on the way down) and exploded in
+`UnitExplodeHeli`'s napalm; the Hauler husks carried `^Husk`'s burning overlay. Now `sgdrohusk.png` / `sgdrshusk.png`
+(32 facings of one wreck drawing each - rotors stopped, a boom snapped or folded, hull scorched, owner's mark kept;
+`FallsToEarth` spins the facing, which is the tumble), a `DroneCrash` weapon whose effect is `drone_crash`
+(`sgdronecrash.png`, 8 frames of sparks and dust, no flame; stock `kaboom25.aud`), a smoke trail on the Recon Drone's
+husk to match the Strike Drone's, and `sghausmoke.png` as the Hauler husks' `WithIdleOverlay@Burns` (an 8-frame grey
+plume with an ember). The decision is recorded in `docs/ART_DIRECTION.md`: electrical wrecks don't burn; buildings
+keep their fireball (`BuildingExplode` untouched).
+
+**B8 - discharge death.** `sgdischarge.png` (14 frames at the Disruptor Trooper's 20x26: a generic lit figure
+flickering white and green with arcs over it, then collapsing and dissolving into motes over a scorch) replaces
+`electro.tem` in every infantry `die6` - 19 sequence blocks, all the same shape, replaced by one exact-match
+substitution; the SNOW tileset filename goes with it since a PNG is tileset-independent.
+
+**B2 - cameos.** `TENT`/`BARR` crop the hero scene's crew modules (SECTOR 7 / GRID ONLINE), `ATEK`/`STEK` the Novaya
+Zarya tower's glass top and its plinth, labelled BARRACKS / TECH CENTER like the stock cameos they replace (a player
+only ever sees their own faction's, and 8px beats 5px). `V2RL`, `QTNK`, `PROC` are `Mesh` solids at three-quarter
+view through `make_icon` (a launcher with its rail raised, a seismic hammer on a tracked hull, a sawtooth hall with two
+hoppers), labelled SURGE ROCKET / TREMOR TANK / REFINERY. **Those three are tagged for a designer or a fourth source
+render** in the proposals doc and `docs/ART_DIRECTION.md`. The six `icon:` sequences now point at the PNGs.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` names none of the new sheets and
+both negative controls fail as they should (`sgpulse` `Length: 4` -> "does not contain frames: 48..63"; `drone-uplinkx`
+-> "consumes conditions that are not granted"); `make check-scripts` passes; `gen_photo_cameos.py` and
+`gen_arc_sounds.py` re-run leave every previously shipped cameo and both arc sounds byte-identical;
+`docs/concept-art/issue120-unit-effects.png` is the review render. **Not verified live** (no game content here): the
+bolt and bloom in flight, the pips' placement over the selection box, the fall and crash, the discharge at e1's
+frame size next to a 50x39 stock sheet.
+
+**Files:** `mods/sungrid/bits/gen_unit_effects.py` (new), `mods/sungrid/bits/{gen_arc_sounds,gen_photo_cameos}.py`,
+`mods/sungrid/bits/{sgpulse,sgturfire,sgpulsehit,sgmissile,sgexhaust,sgpips,sgdrohusk,sgdrshusk,sgdronecrash,
+sghausmoke,sgdischarge}.png`, `mods/sungrid/bits/{tent,barr,atek,stek,v2rl,qtnk,proc}icon.png`,
+`mods/sungrid/bits/{sgpulse,sgpulsehit}.wav`, `mods/sungrid/sequences/{misc,structures,vehicles,aircraft,infantry}.yaml`,
+`mods/sungrid/weapons/{ballistics,missiles,explosions}.yaml`, `mods/sungrid/rules/{aircraft,husks}.yaml`,
+`docs/concept-art/issue120-unit-effects.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 7 (unit identity), the effects half; the roster itself starts with issue #121.
+
+**Definition of done:** B2, B3, B4, B5, B6 and B8 implemented and checked as above - met, with the live checks left to
+the next desktop session.
+
+---

@@ -71,6 +71,11 @@ SGHAU.FullHusk:
 		IntoActor: sghau
 	RenderSprites:
 		Image: sghauhuskfull
+	# Smoulders rather than burns (issue #120): ^Husk's fire overlay was the one
+	# flame left on a Sungrid unit's wreck; this is its own smoke plume instead.
+	WithIdleOverlay@Burns:
+		Image: sghausmoke
+		Sequence: idle
 
 SGHAU.EmptyHusk:
 	Inherits: ^Husk
@@ -82,6 +87,11 @@ SGHAU.EmptyHusk:
 		IntoActor: sghau
 	RenderSprites:
 		Image: sghauhusk
+	# Smoulders rather than burns (issue #120): ^Husk's fire overlay was the one
+	# flame left on a Sungrid unit's wreck; this is its own smoke plume instead.
+	WithIdleOverlay@Burns:
+		Image: sghausmoke
+		Sequence: idle
 
 MCV.Husk:
 	Inherits: ^Husk
@@ -137,9 +147,11 @@ TRAN.Husk:
 # Drone wrecks (docs/BACKLOG.md issue #74). Both drones used to spawn a stock
 # transport husk on death -- SGDRO a Chinook, SGDRS a Black Hawk -- so a 32x30
 # quadcopter left a twin-rotor airframe several times its size spiralling down.
-# Each now falls in its own sprite, which is the stock helicopter-husk
-# convention (TRAN.Husk/MH60.Husk render the intact image too; the wreck is the
-# spin-down and the ground explosion, not a separate burnt sheet).
+# Each falls as its own wreck (issue #120): sgdrohusk/sgdrshusk are the
+# airframe with the rotors stopped and a boom gone, drawn by
+# bits/gen_unit_effects.py, and the ground impact is DroneCrash -- sparks and
+# dust, not UnitExplodeHeli's napalm. (Until then both fell as their intact
+# sprite, which is the stock helicopter-husk convention, and burned.)
 SGDRO.Husk:
 	Inherits: ^HelicopterHusk
 	Tooltip:
@@ -147,8 +159,16 @@ SGDRO.Husk:
 	Aircraft:
 		TurnSpeed: 24
 		Speed: 170
-	# Rotor overlays dropped with the live drone's (see rules/aircraft.yaml):
-	# the husk renders the intact sgdro image, whose own rotors are baked in.
+	FallsToEarth:
+		Explosion: DroneCrash
+	LeavesTrails:
+		Offsets: 0,0,0
+		Image: smokey
+		MovingInterval: 4
+		SpawnAtLastPosition: False
+		Type: CenterPosition
+		TrailWhileStationary: True
+		StationaryInterval: 4
 	RevealsShroud:
 		MinRange: 6c0
 		Range: 8c0
@@ -158,7 +178,7 @@ SGDRO.Husk:
 		Range: 6c0
 		Type: GroundPosition
 	RenderSprites:
-		Image: sgdro
+		Image: sgdrohusk
 
 SGDRS.Husk:
 	Inherits: ^HelicopterHusk
@@ -167,6 +187,8 @@ SGDRS.Husk:
 	Aircraft:
 		TurnSpeed: 20
 		Speed: 150
+	FallsToEarth:
+		Explosion: DroneCrash
 	LeavesTrails:
 		Offsets: -427,0,0
 		Image: smokey
@@ -184,7 +206,7 @@ SGDRS.Husk:
 		Range: 6c0
 		Type: GroundPosition
 	RenderSprites:
-		Image: sgdrs
+		Image: sgdrshusk
 
 TRAN.Husk1:
 	Inherits: ^Husk

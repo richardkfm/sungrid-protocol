@@ -315,6 +315,28 @@ SGDRO:
 	GrantConditionOnPowerState@STRAINED:
 		Condition: drone-uplink-degraded
 		ValidPowerStates: Low
+	# Uplink state on the airframe (issue #120): the two power conditions above
+	# switch the armament with no visible cue. Screen-space decorations rather than
+	# an overlay, so nothing goes through the body orientation that would drift an
+	# overlay across the image-plane facings (CLAUDE.md art rule 13).
+	WithDecoration@UPLINK:
+		Image: sgpips
+		Sequence: uplink
+		Position: Top
+		Margin: 0, 2
+		RequiresCondition: drone-uplink
+	WithDecoration@UPLINK_DEGRADED:
+		Image: sgpips
+		Sequence: degraded
+		Position: Top
+		Margin: 0, 2
+		RequiresCondition: drone-uplink-degraded
+	WithDecoration@UPLINK_OFFLINE:
+		Image: sgpips
+		Sequence: offline
+		Position: Top
+		Margin: 0, 2
+		RequiresCondition: !drone-uplink && !drone-uplink-degraded
 	Armament:
 		Weapon: DroneRocket
 		LocalOffset: 0,0,-85
@@ -659,6 +681,28 @@ SGDRS:
 	GrantConditionOnPowerState@STRAINED:
 		Condition: drone-uplink-degraded
 		ValidPowerStates: Low
+	# Uplink state on the airframe (issue #120): the two power conditions above
+	# switch the armament with no visible cue. Screen-space decorations rather than
+	# an overlay, so nothing goes through the body orientation that would drift an
+	# overlay across the image-plane facings (CLAUDE.md art rule 13).
+	WithDecoration@UPLINK:
+		Image: sgpips
+		Sequence: uplink
+		Position: Top
+		Margin: 0, 2
+		RequiresCondition: drone-uplink
+	WithDecoration@UPLINK_DEGRADED:
+		Image: sgpips
+		Sequence: degraded
+		Position: Top
+		Margin: 0, 2
+		RequiresCondition: drone-uplink-degraded
+	WithDecoration@UPLINK_OFFLINE:
+		Image: sgpips
+		Sequence: offline
+		Position: Top
+		Margin: 0, 2
+		RequiresCondition: !drone-uplink && !drone-uplink-degraded
 	Armament:
 		Weapon: DroneRocket.Strike
 		LocalOffset: 0,0,-85

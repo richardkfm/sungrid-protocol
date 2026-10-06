@@ -28,7 +28,9 @@ The detailed entries below track every issue through #116; this list maps them o
 - **Unreleased** (on `main`): the window title while loading (issue #117); the name on the load screen and main
   menu, fake Solar Arrays on Sungrid art, the Hauler's Scrap spill, no fireball on the Disruptor Trooper, and the
   visual-work proposals doc (issue #118); the first-impression pass - installer, menu, shellmap, HUD chrome,
-  tips, previews, lobby, emblem (issue #119).
+  tips, previews, lobby, emblem (issue #119); the Grid Defense Turret's own bolt and sound, drone rockets,
+  uplink lamps on the drones, drone and Hauler wrecks that smoulder instead of burning, the discharge death, and
+  cameos for the renamed stock units (issue #120).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -130,7 +132,15 @@ per-version record.
 ## Phase 7 — Unit & audio identity (first wave only)
 
 - Renamed three faction-general units away from 90s C&C vocabulary: V2 Rocket Launcher → **Surge Rocket Launcher**, MAD Tank → **Tremor Tank**, Spy Plane → **Recon Plane** (issue #27). Deliberately capped as a first wave; sub-faction special units were left alone as a larger creative decision.
-- The rest of Phase 7 — core unit/vehicle sprites, voices, announcer, in-game music — is **not started**.
+- The effects half of the unit pass (issue #120): the Grid Defense Turret fires a green-gold bolt with its own
+  report, bloom and scorching impact instead of a tank shell; drone rockets are a slim white rocket with a cold
+  exhaust; each drone shows a lamp for its uplink state (green / amber / red for no power); shot-down drones fall as
+  wrecks with the rotors stopped and hit the ground in sparks and dust, the Hauler's wreck smoulders instead of
+  burning (electrical wrecks don't burn; buildings still do); soldiers killed by an arc weapon die in a white-green
+  discharge; and the Surge Rocket Launcher, Tremor Tank, Materials Refinery, both Barracks and both Tech Centers
+  have build-menu cameos that no longer say V2 ROCKET, MAD TANK, ORE REFINERY or the Allied/Soviet names.
+- The rest of Phase 7 — core unit/vehicle sprites (MCV, Harvester and rifleman are next, issue #121), voices,
+  announcer, in-game music — is **not started**.
 
 ## Art passes over the Sungrid-original roster
 

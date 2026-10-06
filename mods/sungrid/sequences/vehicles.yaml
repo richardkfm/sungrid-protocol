@@ -241,7 +241,7 @@ v2rl:
 		Facings: 32
 		UseClassicFacings: True
 	icon:
-		Filename: v2rlicon.shp
+		Filename: v2rlicon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
 
 arty:
 	idle:
@@ -397,7 +397,7 @@ qtnk:
 		Facings: 8
 		Length: 8
 	icon:
-		Filename: qtnkicon.shp
+		Filename: qtnkicon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
 
 stnk:
 	Defaults:

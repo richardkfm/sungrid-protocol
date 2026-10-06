@@ -81,7 +81,12 @@ DroneRocket:
 	Burst: 2
 	BurstDelays: 5
 	Projectile: Missile
-		TrailImage: smokey
+		# Its own rocket and exhaust since issue #120 (was the stock DRAGON with the
+		# smokey trail); the impact stays med_explosion.
+		Image: sgmissile
+		TrailImage: sgexhaust
+		TrailInterval: 2
+		ContrailLength: 6
 	Warhead@1Dam: SpreadDamage
 		Damage: 700
 
