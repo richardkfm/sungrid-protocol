@@ -35,8 +35,9 @@ facing, or a sprite that describes a mechanic the actor doesn't have.
 Issue #119 took A1, A2, A3, A5, A6, A7, A8 and A9 from section A below (each is marked
 `[shipped, issue #119]`; the full engineering detail is in `docs/BACKLOG.md`). A4 (the glyph
 atlas) is the one section-A item still open. Issue #120 took B2, B3, B4, B5, B6 and B8 from
-section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV, HARV, E1) as
-issue #121, the owner's call.
+section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV, HARV, E1), the
+owner's call, and that tier shipped as issue #121 - the later tiers (the tanks, then the raiders)
+stay open.
 
 - **U1 — The game's name on the load screen and main menu.** The `logo` slot (256×256, drawn centred
   on the load screen and top-right of the main menu) held the bare emblem; neither screen said
@@ -207,7 +208,7 @@ Shipped: the decision (owner's call) is **electrical wrecks don't burn, building
 tumble: `FallsToEarth` spins the facing on the way down, which is the tumble. The Hauler husk's `fire`
 overlay is its own smoke plume now; `BuildingExplode` is untouched.
 
-**B7. [tier 1 taken up as issue #121] The core roster is still stock Red Alert sprites — the Phase 7 unit pass, scoped.**
+**B7. [tier 1 shipped, issue #121; tiers 2–3 open] The core roster is still stock Red Alert sprites — the Phase 7 unit pass, scoped.**
 Now: every buildable infantry, vehicle, aircraft and ship except the drones, the Hauler and the
 Disruptor Trooper is a stock `.shp`. Proposal: do not start with "all units"; start with the three
 actors on screen in every match of either faction, then the tanks, then stop and playtest:
@@ -227,6 +228,11 @@ frame order the way `heli.shp` was decoded for the drones) and write them into `
 drawing the second unit. Cost: L (S–M per unit). Kind: generator, with an artist pass as the
 alternative for the infantry. Verify: `--check-missing-sprites` with the negative control, composited
 sheets, and the first live match with the new MCV.
+Shipped (tier 1): `gen_core_units.py` renders the MCV and the Ore Truck as `Mesh` solids at 32 genuine
+yaws (plus the Truck's harvest/dock/dock-loop frames and all three fullness images, and both units'
+husks and cameos) and draws the rifleman on the Disruptor Trooper's native-pixel figure, on the stock
+sheets' exact frame layouts so only Filenames changed. The conventions are in `CLAUDE.md` art rule 24.
+Not seen live. Tier 2 (1TNK–4TNK) and tier 3 (JEEP, APC, ARTY/V2RL) are the next picks.
 
 **B8. [shipped, issue #120] Infantry death and crush effects.**
 Now: `DISR` (and every stock soldier) use `electro.tem` for the electric death, `corpse1.tem` when

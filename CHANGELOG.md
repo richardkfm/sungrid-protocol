@@ -30,7 +30,8 @@ The detailed entries below track every issue through #116; this list maps them o
   visual-work proposals doc (issue #118); the first-impression pass - installer, menu, shellmap, HUD chrome,
   tips, previews, lobby, emblem (issue #119); the Grid Defense Turret's own bolt and sound, drone rockets,
   uplink lamps on the drones, drone and Hauler wrecks that smoulder instead of burning, the discharge death, and
-  cameos for the renamed stock units (issue #120).
+  cameos for the renamed stock units (issue #120); the first three units of the core roster as Sungrid art - the
+  MCV, the Ore Truck and the rifleman (issue #121).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -139,8 +140,10 @@ per-version record.
   burning (electrical wrecks don't burn; buildings still do); soldiers killed by an arc weapon die in a white-green
   discharge; and the Surge Rocket Launcher, Tremor Tank, Materials Refinery, both Barracks and both Tech Centers
   have build-menu cameos that no longer say V2 ROCKET, MAD TANK, ORE REFINERY or the Allied/Soviet names.
-- The rest of Phase 7 — core unit/vehicle sprites (MCV, Harvester and rifleman are next, issue #121), voices,
-  announcer, in-game music — is **not started**.
+- The core roster, tier 1 (issue #121): the MCV (a flatbed carrying the folded Construction Yard), the Ore Truck
+  (a tracked collector whose hopper heap shows how full it is, with harvest, dock and unload animations) and the
+  rifleman (on the Disruptor Trooper's figure, with a carbine) are Sungrid art, with their wrecks and cameos. The
+  tanks, Jeep, APC and artillery are next; voices, announcer and in-game music are **not started**.
 
 ## Art passes over the Sungrid-original roster
 

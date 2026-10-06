@@ -4221,3 +4221,60 @@ sghausmoke,sgdischarge}.png`, `mods/sungrid/bits/{tent,barr,atek,stek,v2rl,qtnk,
 the next desktop session.
 
 ---
+
+### 121. The core roster, tier 1: the MCV, the Ore Truck and the rifleman as Sungrid art
+
+**Raised as:** the B7 half of "alright now do all B items" (`docs/VISUAL_PROPOSALS.md`), capped at its first tier by the
+owner's call before issue #120 started: MCV, HARV and E1 - the three stock sprites on screen in every match of either
+faction - then stop and playtest. Shipped as its own PR behind #120 so the unit-sprite review stays separate from the
+effects and YAML changes.
+
+**What ships.** One new generator, `mods/sungrid/bits/gen_core_units.py`, on `gen_concept_art.py`'s vocabulary:
+
+- **MCV** - `mcv.png` (32 facings, 48x40), `mcvhusk.png` (32), `mcvicon.png`. A six-wheel flatbed (track pods with a hub
+  plate per axle) carrying the folded Construction Yard: crane mast along the bed on two cradles, a hook block aft,
+  two array crates with panel-blue tops, a pale-steel cab with a dark windscreen band and an amber beacon, tail lamps,
+  and the roster's gold conduit band along both flanks as the team-colour mark. The husk is the same model scorched,
+  cab roof caved, mast thrown off and lying beside it, crates burnt down to one, with fixed-orientation decals.
+- **HARV** - `harv.png` / `harvhalf.png` / `harvempty.png` (111 frames each: idle 32, harvest 8 facings x 8, dock 8,
+  dock-loop 7 - the stock `harv.shp` layout, so `WithHarvesterSpriteBody`'s three images and every Start offset are
+  unchanged), `hhusk.png` / `hhusk2.png` (laden / empty wreck, 32 each), `harvicon.png`. A tracked collector with an
+  intake drum across the front, a covered conveyor up into an open rear hopper, an unmanned sensor cab with a beacon.
+  The heap in the hopper is the fullness (none / low / mounded, in a rust-brown deliberately far from the gold ramp);
+  the harvest frames cycle the drum's teeth and throw material up the conveyor mouth; the dock frames swing the
+  tailgate open about its hinge and the dock-loop pours a stream out behind the truck. Dock frames are drawn at yaw 90
+  (west) because that is the Refinery's `DockAngle: 256` and a single-facing animation is shown at the facing the
+  engine will put the unit at.
+- **E1** - `e1.png` (378 frames, 20x26, `e1.shp`'s exact layout: stand/stand2, run 8x6, shoot 8x8, liedown, prone-run,
+  standup, prone-shoot, idle1/idle2, die1-5, 35 unreferenced blanks, parachute at 377), `e1icon.png`. Built from the
+  Disruptor Trooper's own part drawers (`_disr_shadow`, `_disr_legs`, `_disr_torso`) so the two infantrymen are one
+  army, plus a plain helmet with a dark visor (no gold - the trooper's visor is his), no discharge cell, and a carbine
+  on the trooper's per-facing weapon tables with a white-gold two-pixel muzzle flash on shoot phases 1-2. Deaths are
+  the articulated collapse without the electrocution flicker (that is `die6`, issue #120's discharge sheet).
+
+**The conventions this locks (CLAUDE.md art rule 24).** Vehicles: `Mesh` solids at 32 genuine yaws, frame 0 north
+(+y in model space, where the turret's gun points), yaw advancing counter-clockwise by 360/32 - the engine's own
+sense (`WVec.Yaw`: 0 north, 256 west); ground origin at the frame centre plus a few rows; cast shadow from the mesh's
+`draw_shadow` through `render_shadow_mask` into `indexed_strip`'s stencil, like the pedestals; no outline (rule 19);
+team colour as `accent=True` faces; sub-animations facing-major; a single-facing animation drawn at the facing the
+engine shows it at. Infantry: the `PC` track at 20x26, boots on the centre row, eight viewpoints, body on the remap
+ramp, sharing the trooper's parts. Sheets mirror the stock `.shp` layouts frame for frame so sequences change by
+Filename only.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` names none of the eleven sheets, and
+the negative control (dock-loop `Length: 8`) reports `harv.png does not contain frames: 111`;
+`docs/concept-art/issue121-core-units.png` is the review render. **Not verified live** - the first live match with
+the new MCV is the proposal's own verification step and the next desktop session's first job: check the MCV's
+deploy into `sgfact` doesn't pop in size, the Truck's dock lines up with the Refinery, and that the rifleman reads at
+RTS zoom next to the stock E2/E3 sheets it now stands beside.
+
+**Files:** `mods/sungrid/bits/gen_core_units.py` (new), `mods/sungrid/bits/{mcv,mcvhusk,mcvicon,harv,harvhalf,
+harvempty,hhusk,hhusk2,harvicon,e1,e1icon}.png`, `mods/sungrid/sequences/{vehicles,infantry}.yaml` (Filenames only),
+`docs/concept-art/issue121-core-units.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 7 (unit identity) - the roster proper, started.
+
+**Definition of done:** the three units drawn on locked conventions and checked as above - met; the playtest the
+proposal asks for before tier 2 is the open half.
+
+---
