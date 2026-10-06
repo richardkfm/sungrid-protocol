@@ -153,6 +153,12 @@ actor-v01-name = Church
 actor-v19-name = Oil Pump
 actor-v19-husk-name = Husk (Oil Pump)
 actor-barl-name = Explosive Barrel
+actor-sgpan-name = Ground Array
+actor-sgslv-name = Salvage Pile
+actor-sgpyl-name = Pylon Stump
+actor-sgtnk-name = Rain Tank
+actor-sgrak-name = Bike Shelter
+actor-sgpln-name = Planter
 actor-brl3-name = Explosive Barrel
 actor-v25-name = Church
 actor-lhus-name = Lighthouse
@@ -945,7 +951,7 @@ actor-stnk =
 
 ## Civilian Tech
 actor-hosp =
-    .name = Hospital
+    .name = Field Clinic
     .captured-desc = Provides infantry with self-healing.
     .capturable-desc = Capture to enable self-healing for infantry.
 
@@ -960,13 +966,13 @@ actor-miss =
     .capturable-desc = Capture to give visual range.
 
 actor-bio =
-    .name = Containment Ruins
-    .captured-desc = A leaking containment site. Provides prerequisite for grid-mutated fauna.
+    .name = Seed Vault
+    .captured-desc = A sealed seed and specimen vault, its stock long since grid-mutated. Provides prerequisite for grid-mutated fauna.
     .capturable-desc = Capture to produce grid-mutated fauna.
 
 actor-oilb =
-    .name = Oil Derrick
-    .captured-desc = Provides additional funds.
+    .name = Legacy Derrick
+    .captured-desc = An old-world pump, still producing. Provides additional funds.
     .capturable-desc =  Capture to receive additional funds.
 
 ## misc.yaml

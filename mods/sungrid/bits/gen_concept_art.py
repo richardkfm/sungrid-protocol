@@ -3689,37 +3689,54 @@ SCRAP_W, SCRAP_H = 24, 24
 def _scrap_plate(sd, x, y, pw, ph, tone):
     """A single bent sheet-metal fragment: flat top-down rectangle with a lit
     top edge and a dim underside crease -- no rotation, since a rectangle
-    already reads as a plate lying flat from directly above."""
+    already reads as a plate lying flat from directly above. The lit edge is
+    the brightest mark on the tile (issue #122): on the reskinned temperate
+    ground a plain grey plate vanished."""
     sd.rect([x, y, x + pw, y + ph], fill=tone)
-    sd.line([(x, y), (x + pw, y)], fill=lit(tone, 0.3), width=0.6)
+    sd.line([(x, y), (x + pw, y)], fill=lit(tone, 0.55), width=0.8)
     sd.line([(x, y + ph), (x + pw, y + ph)], fill=dim(tone, 0.35), width=0.5)
+
+
+# Plate scatter shared by the four tiers (issue #122): tier n draws the first
+# SCRAP_PLATES[n] of these, so a denser cell is the same cell with more in it
+# -- the way gold01..04 grow -- and the whole 24x24 tile fills up rather than
+# one corner. (x, y, w, h, tone).
+_SCRAP_PLATES = (
+    (9, 10, 5, 3, LEGACY_GRAY), (4, 14, 4.5, 2.5, "rust"), (14, 6, 4, 2.5, LEGACY_GRAY),
+    (15, 15, 5, 3, "rust"), (3, 5, 4, 2.5, LEGACY_GRAY), (8, 18, 5, 2.5, "mix"),
+    (18, 10, 3.5, 2.5, LEGACY_GRAY), (6, 1, 4, 2.5, "mix"), (12, 2, 4, 2, LEGACY_GRAY),
+    (1, 10, 3, 2.5, "rust"), (17, 19, 4, 2.5, "mix"),
+)
+SCRAP_PLATES = {1: 3, 2: 5, 3: 8, 4: 11}
 
 
 def scrap_pile_draw(sd, w, h, stage):
     cx, cy = w / 2, h / 2
-
-    # Stage 1 (sparsest): a single plate and a bolt -- just enough to read as
-    # "something metal", not yet a pile.
-    _scrap_plate(sd, cx - 3, cy - 1.5, 5, 3, LEGACY_GRAY)
-    sd.ellipse([cx + 2.5, cy + 0.5, cx + 4, cy + 2], fill=LEGACY_GRAY_DARK)
+    tones = {"rust": mix(LEGACY_GRAY, RUST, 0.5), "mix": mix(LEGACY_GRAY, RUST, 0.25)}
+    for x, y, pw, ph, tone in _SCRAP_PLATES[:SCRAP_PLATES[stage]]:
+        _scrap_plate(sd, x, y, pw, ph, tones.get(tone, tone))
+    # A severed cable in its green jacket on every tier: the one tell that
+    # this is grid salvage and not a rock, and a hue the ground never has.
+    sd.line([(cx - 5, cy + 4), (cx - 1, cy + 6.5)], fill=GREEN_ACCENT, width=1.0)
+    sd.px(cx - 5.5, cy + 3.5, lit(GREEN_ACCENT, 0.3))
 
     if stage >= 2:
-        # A second plate at an offset (still flat/top-down) and a pipe stub.
-        _scrap_plate(sd, cx - 6, cy + 1, 4.5, 2.5, mix(LEGACY_GRAY, RUST, 0.35))
-        sd.rect([cx + 1, cy - 4, cx + 6, cy - 2.3], fill=LEGACY_GRAY_DARK)
-        sd.line([(cx + 1, cy - 4), (cx + 6, cy - 4)], fill=lit(LEGACY_GRAY_DARK, 0.35), width=0.5)
+        # A pipe stub and a second cable end.
+        sd.rect([cx + 1, cy - 4, cx + 6, cy - 2.3], fill=dim(LEGACY_GRAY, 0.2))
+        sd.line([(cx + 1, cy - 4), (cx + 6, cy - 4)], fill=lit(LEGACY_GRAY, 0.45), width=0.6)
+        sd.line([(cx + 7, cy + 1), (cx + 10, cy + 2.5)], fill=GREEN_ACCENT, width=1.0)
 
     if stage >= 3:
-        # A gear (a distinct silhouette element, not just more plates) and a
-        # rust-streaked plate.
-        gx, gy, gr = cx - 1, cy + 4, 3
-        sd.ellipse([gx - gr, gy - gr, gx + gr, gy + gr], fill=LEGACY_GRAY_DARK)
-        sd.ellipse([gx - gr * 0.45, gy - gr * 0.45, gx + gr * 0.45, gy + gr * 0.45], fill=PANEL_BLUEBLACK)
+        # A gear (a distinct silhouette element, not just more plates), mid
+        # grey with a dark hub so it reads as a disc rather than a hole.
+        gx, gy, gr = cx - 1, cy + 3, 3
+        sd.ellipse([gx - gr, gy - gr, gx + gr, gy + gr], fill=LEGACY_GRAY)
+        sd.arc([gx - gr, gy - gr, gx + gr, gy + gr], 190, 320, fill=lit(LEGACY_GRAY, 0.5), width=0.8)
+        sd.ellipse([gx - gr * 0.45, gy - gr * 0.45, gx + gr * 0.45, gy + gr * 0.45], fill=LEGACY_GRAY_DARK)
         for a in range(0, 360, 60):
             rad = math.radians(a)
             tx, ty = gx + math.cos(rad) * gr * 1.15, gy + math.sin(rad) * gr * 1.15
-            sd.rect([tx - 0.6, ty - 0.6, tx + 0.6, ty + 0.6], fill=LEGACY_GRAY_DARK)
-        _scrap_plate(sd, cx + 3, cy - 6, 5, 2.5, mix(LEGACY_GRAY, RUST, 0.5))
+            sd.rect([tx - 0.6, ty - 0.6, tx + 0.6, ty + 0.6], fill=LEGACY_GRAY)
         sd.px(cx + 5, cy - 5, lit(RUST, 0.3))
 
     if stage >= 4:
@@ -3730,7 +3747,8 @@ def scrap_pile_draw(sd, w, h, stage):
         for i in range(3):
             r = 2.2 - i * 0.6
             sd.ellipse([cx - 7 - r, cy - 6 - r, cx - 7 + r, cy - 6 + r],
-                       outline=dim(LEGACY_GRAY, 0.2), width=0.5)
+                       outline=lit(LEGACY_GRAY, 0.2), width=0.5)
+        sd.line([(cx - 9, cy - 1), (cx - 6, cy + 1)], fill=GREEN_ACCENT, width=1.0)
 
 
 def main():

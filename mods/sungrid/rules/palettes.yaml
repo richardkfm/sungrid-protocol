@@ -41,6 +41,12 @@
 		Name: effect
 		Filename: temperat.pal
 		ShadowIndex: 4
+	# The Legacy Derrick's palette (issue #122): temperat.pal pulled toward rust
+	# by bits/gen_world_scenery.py, remap ramp untouched so capture still shows.
+	PaletteFromFile@legacy:
+		Name: legacy
+		Filename: sungrid-legacy.pal
+		ShadowIndex: 4
 	ColorPickerPalette@colorpicker:
 		Name: colorpicker
 		BasePalette: player
@@ -73,6 +79,10 @@
 	PlayerColorPalette@NOSHADOW:
 		BaseName: player-noshadow
 		BasePalette: player-noshadow
+		RemapIndex: 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95
+	PlayerColorPalette@LEGACY:
+		BaseName: legacy
+		BasePalette: legacy
 		RemapIndex: 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95
 	MenuPostProcessEffect:
 		FadeInLength: 4

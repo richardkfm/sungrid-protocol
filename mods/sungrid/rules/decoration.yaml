@@ -382,3 +382,70 @@ TANKTRAP2:
 		Name: actor-tanktrap2-name
 	MapEditorData:
 		RequireTilesets: TEMPERAT, SNOW, DESERT, INTERIOR
+
+# Sungrid scenery (docs/BACKLOG.md issue #122): six neutral decorations drawn
+# by bits/gen_world_scenery.py on the roster's Mesh vocabulary, placed by hand
+# on the shellmap, Crossfire and Doubles. They render through the player
+# palette like ^Box (the same stock temperat.pal on every tileset, so a rust
+# plate stays rust on snow), and anything that crushes a wall rolls over them.
+# Only the Salvage Pile feeds the economy: crushing or shooting it leaves the
+# Scrap it was made of (the owner's call, same trait as a wreck's drop).
+^SungridScenery:
+	Inherits: ^Box
+	Health:
+		HP: 20000
+	Crushable:
+		CrushClasses: wall
+	MapEditorData:
+		Categories: Sungrid scenery
+
+SGPAN:
+	Inherits: ^SungridScenery
+	Tooltip:
+		Name: actor-sgpan-name
+	# Glass and aluminium: nothing on it burns.
+	-WithDamageOverlay@SmallBurn:
+	-WithDamageOverlay@MediumBurn:
+	-WithDamageOverlay@LargeBurn:
+
+SGSLV:
+	Inherits: ^SungridScenery
+	Tooltip:
+		Name: actor-sgslv-name
+	Health:
+		HP: 10000
+	SpawnsResourceOnDeath:
+		ResourceType: Scrap
+		Amount: 3
+		SpawnDelay: 0
+	-WithDamageOverlay@SmallBurn:
+	-WithDamageOverlay@MediumBurn:
+	-WithDamageOverlay@LargeBurn:
+
+SGPYL:
+	Inherits: ^SungridScenery
+	Tooltip:
+		Name: actor-sgpyl-name
+	Health:
+		HP: 40000
+
+SGTNK:
+	Inherits: ^SungridScenery
+	Tooltip:
+		Name: actor-sgtnk-name
+	-WithDamageOverlay@SmallBurn:
+	-WithDamageOverlay@MediumBurn:
+	-WithDamageOverlay@LargeBurn:
+
+SGRAK:
+	Inherits: ^SungridScenery
+	Tooltip:
+		Name: actor-sgrak-name
+	-WithDamageOverlay@SmallBurn:
+	-WithDamageOverlay@MediumBurn:
+	-WithDamageOverlay@LargeBurn:
+
+SGPLN:
+	Inherits: ^SungridScenery
+	Tooltip:
+		Name: actor-sgpln-name

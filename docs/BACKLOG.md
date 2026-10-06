@@ -4278,3 +4278,86 @@ harvempty,hhusk,hhusk2,harvicon,e1,e1icon}.png`, `mods/sungrid/sequences/{vehicl
 proposal asks for before tier 2 is the open half.
 
 ---
+
+### 122. Section C of the visual proposals: scenery on three maps, the Scrap retune and a painted field, the civilian tech buildings
+
+**Raised as:** "now do all C items" from `docs/VISUAL_PROPOSALS.md` (issue #118). Owner's calls, asked before
+starting: the three maps are the desert shellmap, Crossfire (4p temperate) and Doubles (4p snow), one per tileset;
+the civilian names are Legacy Derrick / Field Clinic / Seed Vault; only the Salvage Pile feeds the economy; all of
+section C ships as one PR. C2, C3 and C4 are marked `[shipped, issue #122]` in the proposals doc, C5
+`[checked, issue #122]`; C6 was A7.
+
+Everything new is drawn by one new generator, `mods/sungrid/bits/gen_world_scenery.py`, on `gen_concept_art.py`'s
+`Mesh`/greenery vocabulary; the Scrap retune is in `gen_concept_art.py` itself.
+
+**C2 - Scrap.** The composite of the four tiers on the three reskinned ground colours
+(`docs/concept-art/issue122-terrain-and-world.png`) showed the proposal's fear was right: tiers 1-2 were one small
+grey plate that disappeared on the temperate ground, and the gear that carried tiers 3-4 was `LEGACY_GRAY_DARK`, a
+near-black blob. `scrap_pile_draw` is rebuilt around a shared eleven-plate scatter (`_SCRAP_PLATES`) of which tier n
+draws the first 3/5/8/11 - so a denser cell is the same cell with more in it, the way `gold01-04` grow, and the whole
+24x24 tile fills rather than one corner - with a brighter lit edge on every plate (`lit(tone, 0.55)`), a mid-grey gear
+with a dark hub, and a severed cable in its green jacket on every tier: a hue no ground has, and the one tell that
+this is grid salvage rather than a rock. The shellmap carries the first hand-placed Scrap field (issue #5 asked for
+one): 34 cells of `ResourceIndex 3` around (90,64), the nearest all-Clear 7x7 to the eastern Recycling Depot, density
+falling off outward, so the menu's Haulers collect something before the first wreck. Regenerating `gen_concept_art.py`
+then `gen_photo_cameos.py` changes `scrap01-04.png` and nothing else.
+
+**C3 - scenery.** Six neutral 1x1 decorations in `rules/decoration.yaml`, on a `^SungridScenery` template that
+inherits `^Box` (player palette, Decoration category) and adds `Crushable: CrushClasses: wall` - so anything that
+crushes a sandbag rolls over them - and `Health 20000`: `SGPAN` Ground Array (three collectors on a gravel strip),
+`SGSLV` Salvage Pile (`HP 10000`, `SpawnsResourceOnDeath: Scrap, Amount 3, SpawnDelay 0`, so crushing it leaves the
+Scrap it was made of, immediately - the wreck timer in issue #97 is about not luring a Hauler into a fight, which a
+pile in the open is not), `SGPYL` Pylon Stump (`HP 40000`, ivy up the lit leg), `SGTNK` Rain Tank, `SGRAK` Bike Shelter
+(PV canopy, four hoops, a bench, one bike), `SGPLN` Planter (groundcover, shrub, sapling, ivy). The four metal ones
+drop `^Tree`'s three burn overlays; the stump and the planter keep them. Each is idle + damaged (two frames), at the
+1x1 roster frame and origin, no plinth and no conduit band because nothing here is grid-connected, stencil shadow
+via `silhouette_shadow`. They render through `player`, not the reskinned `terrain` palette a stock tree uses: `player`
+is the same stock `temperat.pal` on every tileset, so a rust plate stays rust on snow instead of being hue-shifted
+with the ground (and nothing on a neutral actor is gold, so the remap ramp is never involved). Placement is by a
+deterministic script (hash-ordered scan over Clear cells whose whole 3x3 ring is Clear, empty and resource-free,
+seven cells from any spawn, five to seven from each other, inside the shellmap's camera oval): 14 on the shellmap,
+18 on Crossfire, 12 on Doubles, as `ScnNN` actors owned by Neutral. The three maps were then re-saved with
+`--refresh-map-previews` so the previews carry the new tree-coloured dots and the Scrap.
+
+**C4 - civilian tech.** `OILB` is the Legacy Derrick: stock `oilb.shp` on purpose (old-world tech under the rust
+guardrail) through `RenderSprites: PlayerPalette: legacy`, where `PaletteFromFile@legacy` loads
+`bits/sungrid-legacy.pal` - every entry but 0, 4 and the remap ramp pulled 45% toward a rust hue at its own
+luminance - and `PlayerColorPalette@LEGACY` remaps 80-95, so a captured derrick still shows its captor. `HOSP` is the
+Field Clinic (a ward hall under a sedum roof, glazed entrance under a canvas awning, a green plus on the lit wall, a
+mast lamp that blinks across the four idle frames, a collector and a rain tank in the yard) and `BIO` the Seed Vault
+(a half-buried vault under a meadow roof with two vent stacks, a steel-rimmed vault door in an entrance portal, a
+cold-storage plant), both 2x2 roster solids on the plinth without the band, each with a damaged state (awning down /
+door blown, scorch decals through `_mesh_render(decals=)`) and a `_rubble_diamond` dead frame, on stock `hosp.shp`'s
+layout (idle 0-3, damaged-idle 4-7, dead 8) and `bio.shp`'s (0, 1, 2), so `sequences/structures.yaml` changed by
+Filename only; `hospmake`/`biomake` are `make_frames` build-ups for completeness. Fluent: the three names and the
+derrick's and vault's descriptions; the vault still gates the same two units (`~bio` on the Blighted and the
+Swarmling). The village houses stay stock, as the proposal said.
+
+**C5 - Ore and Gems.** Established, not just assumed: `ResourceRenderer` draws both through `Palette: player`, the
+stock `temperat.pal` on every tileset, so the terrain reskin never touched them (that is why Ore "kept its glint").
+The Gem composite needs `gem01-04.tem` from the game content; the environment's network policy denies
+`www.openra.net`, so it is a one-look desktop item, recorded in the proposals doc.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps after the re-save; `--check-missing-sprites` names none of
+the twelve new sheets, and the negative controls fire (`sgpln` `damaged-idle: Start: 2` reports
+`sgpln.png does not contain frames: 2`; `PlayerPalette: legacyx` reports `Undefined player palette reference`);
+`--check-yaml` also caught a round-trip mismatch in the first cut of `sequences/decorations.yaml` (a doubled
+trailing newline, `CheckRunningUpdateRule`) - the lint reads files with whitespace. Regenerating both generators
+leaves every other sheet byte-identical. `docs/concept-art/issue122-terrain-and-world.png` is the review render.
+**Not verified live:** a crush actually dropping Scrap, the derrick under its palette, the clinic lamp's blink, and
+how the scenery sits on the real tiles rather than the flat ground swatches used here.
+
+**Files:** `mods/sungrid/bits/gen_world_scenery.py` (new), `mods/sungrid/bits/{sgpan,sgslv,sgpyl,sgtnk,sgrak,sgpln,
+hosp,hospmake,bio,biomake}.png`, `mods/sungrid/bits/sungrid-legacy.pal`, `mods/sungrid/bits/gen_concept_art.py` and
+`scrap01-04.png`, `mods/sungrid/rules/{decoration,civilian,palettes}.yaml`, `mods/sungrid/sequences/{decorations,
+structures}.yaml`, `mods/sungrid/fluent/rules.ftl`, `mods/sungrid/maps/desert-shellmap/`, `crossfire.oramap`,
+`doubles.oramap`, `docs/concept-art/issue122-terrain-and-world.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION,
+ROADMAP}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 6 (world identity) - the scenery remainder, on the three maps testers will play; the other 72 maps are a
+map-by-map placement job, not a pass.
+
+**Definition of done:** C2-C4 shipped and checked as above - met; C5's Gem look and the live checks are the next
+desktop session's.
+
+---

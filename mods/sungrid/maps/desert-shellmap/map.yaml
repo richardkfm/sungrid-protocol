@@ -1213,6 +1213,48 @@ Actors:
 	SovietStrike2: sgdrs
 		Location: 45,28
 		Owner: Soviets
+	Scn01: sgpan
+		Location: 76,47
+		Owner: Neutral
+	Scn02: sgslv
+		Location: 77,60
+		Owner: Neutral
+	Scn03: sgpyl
+		Location: 77,54
+		Owner: Neutral
+	Scn04: sgtnk
+		Location: 69,48
+		Owner: Neutral
+	Scn05: sgrak
+		Location: 83,47
+		Owner: Neutral
+	Scn06: sgpln
+		Location: 47,46
+		Owner: Neutral
+	Scn07: sgpan
+		Location: 82,81
+		Owner: Neutral
+	Scn08: sgslv
+		Location: 74,74
+		Owner: Neutral
+	Scn09: sgpyl
+		Location: 55,48
+		Owner: Neutral
+	Scn10: sgtnk
+		Location: 58,55
+		Owner: Neutral
+	Scn11: sgrak
+		Location: 68,59
+		Owner: Neutral
+	Scn12: sgpln
+		Location: 63,67
+		Owner: Neutral
+	Scn13: sgpan
+		Location: 64,48
+		Owner: Neutral
+	Scn14: sgslv
+		Location: 47,57
+		Owner: Neutral
 
 Rules: sungrid|rules/campaign-palettes.yaml, rules.yaml
 
