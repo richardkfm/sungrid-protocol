@@ -1112,6 +1112,7 @@ FAM = {
     "2x2": (SGSHL_W, SGSHL_H, 18),
     "1x1": (SG1x1_W, SG1x1_H, 13),
     "fact": (72, 72, 25),
+    "proc": (90, 72, 27),       # Materials Refinery: a 3x3 plinth under a 3x4-dimension footprint (issue #126)
 }
 
 
@@ -1810,6 +1811,80 @@ def rcyd_mesh(damaged=False, charge=RCYD_STAGES - 1):
     return m
 
 
+def sgproc_mesh(damaged=False, belt=0):
+    """Materials Refinery (issue #126, proposal D5): the stock Ore Refinery's
+    job on the roster's vocabulary. A processing hall under a sawtooth PV
+    roof along the left flank, a sorting tower on the top cell (the
+    footprint's lone `X`) with a short stack, an open intake hopper on the
+    near edge where the Ore Truck docks (DockOffset one cell south, pouring
+    east, so the hopper sits right of the bottom corner), a covered conveyor
+    climbing from the hopper to the tower, and two storage silos at the right
+    corner. `belt` (0-7) advances the conveyor's cleats for the idle
+    animation; damaged, the conveyor is broken, a roof tooth is burnt through,
+    the stack is down and a silo has lost its dome."""
+    m = Mesh()
+    plinth(m, 27, live=not damaged)
+    hall = PALE_STEEL if not damaged else mix(PALE_STEEL, DAMAGE_SCORCH, 0.2)
+    frame_ = STEEL if not damaged else mix(STEEL, DAMAGE_SCORCH, 0.3)
+    gold = SUN_GOLD if not damaged else RUST
+    # Processing hall along the left flank, three PV teeth on its roof.
+    m.box(-25, -2, 2.2, -5, 25, 15, hall, top=lit(hall, 0.1))
+    for i in range(3):
+        y0 = -1 + i * 8.6
+        y1 = y0 + 8.6
+        pv = PANEL_BLUEBLACK if not (damaged and i == 1) else DAMAGE_SCORCH
+        m.quad((-24.5, y0, 15), (-5.5, y0, 15), (-5.5, y1 - 0.6, 19.5), (-24.5, y1 - 0.6, 19.5), pv, order=1)
+        m.box(-24.5, y1 - 0.6, 15, -5.5, y1, 19.5, dim(hall, 0.2), top=lit(hall, 0.15), shadow=False)
+    # Loading door on the hall's near end, framed in the team colour.
+    m.box(-17, -2.5, 2.2, -9, -1.9, 8.5, dim(frame_, 0.4), top_face=False, shadow=False, order=1)
+    for x0 in (-17.8, -9):
+        m.box(x0, -2.6, 2.2, x0 + 0.8, -1.9, 9.0, gold, top=lit(gold, 0.2), order=2, shadow=False, accent=not damaged)
+    # Sorting tower on the top cell, a PV cap, a team band at mid height, the stack.
+    m.box(8, 8, 2.2, 24, 24, 26, frame_, top=lit(frame_, 0.2))
+    # A box band with no top face can take an order override safely (rule 15's
+    # disc problem is a prism's cap); at order 0 the tower's walls sorted over it.
+    m.box(7.4, 7.4, 13.5, 24.6, 24.6, 15.0, gold, order=1, shadow=False, top_face=False, accent=not damaged)
+    m.box(9, 9, 26, 23, 23, 27.2, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.3), shadow=False)
+    stack_h = 35 if not damaged else 29
+    m.prism(20, 20, 27.2, stack_h, 1.7, dim(frame_, 0.25), sides=6, top=dim(frame_, 0.5), shadow=False)
+    if damaged:
+        m.box(10, 9, 27.2, 14, 13, 28.2, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=1, shadow=False)
+    # Intake hopper on the near edge: dark open top, a pale rim.
+    m.box(-6, -26, 2.2, 8, -13, 9, dim(hall, 0.25), top=dim(LEGACY_GRAY_DARK, 0.2))
+    for x0, y0, x1, y1 in ((-6.6, -26.6, 8.6, -25.6), (-6.6, -13.4, 8.6, -12.4), (-6.6, -26.6, -5.6, -12.4), (7.6, -26.6, 8.6, -12.4)):
+        m.box(x0, y0, 9, x1, y1, 10, hall, top=lit(hall, 0.2), order=1, shadow=False)
+    # Conveyor from the hopper up to the tower, cleats climbing it.
+    a, b = (1.0, -14.0, 9.5), (14.0, 9.0, 21.0)
+    if damaged:
+        b = (6.5, -4.5, 14.0)
+    m.strut(a, b, 1.6, frame_, cap=lit(frame_, 0.2))
+    if not damaged:
+        for k in range(6):
+            t = ((k + belt / 8.0) % 6) / 6.0
+            cx, cy, cz = (a[i] + (b[i] - a[i]) * t for i in range(3))
+            m.box(cx - 1.0, cy - 1.0, cz + 1.6, cx + 1.0, cy + 1.0, cz + 2.3, lit(PALE_STEEL, 0.15),
+                  top=lit(PALE_STEEL, 0.3), order=1, shadow=False)
+    else:
+        m.box(8, -3, 2.2, 13, 2, 3.6, dim(frame_, 0.3), top=DAMAGE_SCORCH, order=1, shadow=False)
+    # Two storage silos at the right corner, hooped in the team colour.
+    for k, (cx, cy) in enumerate(((17, -11), (23, -20))):
+        m.prism(cx, cy, 2.2, 16, 4.6, hall, sides=10, top=lit(hall, 0.1))
+        m.prism(cx, cy, 10.0, 11.1, 5.0, gold, sides=10, top=lit(gold, 0.2), shadow=False, accent=not damaged)
+        if damaged and k == 0:
+            m.prism(cx, cy, 16, 16.8, 3.8, dim(hall, 0.45), sides=10, top=DAMAGE_SCORCH, shadow=False)
+        else:
+            dome(m, cx, cy, 16, 4.6, hall, steps=3)
+    m.strut((17, -11, 13), (10, -1, 13), 0.8, frame_)
+    # Planting: a bed and a tree in the near-left quadrant, clear of the PV roof (issue #108).
+    bed(m, -24, -24, -10, -6, 2.2, lowcap=1.2, salt=15)
+    tree(m, -21, -19, 2.2, h=8.0, r=4.2)
+    shrub(m, -12, -22, 2.2, r=2.2)
+    tuft(m, -24, -10, 2.2)
+    tuft(m, 25, -4, 2.2)
+    shrub(m, 25.5, 2, 2.2, r=1.8)
+    return m
+
+
 def sgfact_mesh(damaged=False, build=None, beacon=True):
     """Construction Yard: a vaulted space-frame fabrication hall with a PV
     field on its sunward flank, a team-colour door frame, and an open assembly
@@ -1940,7 +2015,7 @@ MESHES = {
     "sgdai": ("2x3", sgdai_mesh), "sgdrn": ("2x3", sgdrn_mesh), "sgdra": ("2x3", sgdra_mesh),
     "sgshl": ("2x2", sgshl_mesh), "sgsns": ("1x1", sgsns_mesh), "sgrel": ("1x1", sgrel_mesh),
     "sgwnd": ("1x1", sgwnd_mesh), "sghyd": ("3x3", sghyd_mesh), "sgvlt": ("1x1", sgvlt_mesh),
-    "rcyd": ("1x1", rcyd_mesh), "sgfact": ("fact", sgfact_mesh),
+    "rcyd": ("1x1", rcyd_mesh), "sgfact": ("fact", sgfact_mesh), "sgproc": ("proc", sgproc_mesh),
 }
 
 
@@ -2029,6 +2104,9 @@ ANIM = {
     "sgcry": ([dict(flicker=i) for i in range(8)], [dict(damaged=True)]),
     # The arc between the terminals flickers, Tick 120.
     "sgrel": ([dict(arc=i) for i in range(6)], [dict(damaged=True)]),
+    # The intake conveyor's cleats climb to the sorting tower, Tick 100 (issue #126);
+    # the damaged conveyor is broken and still.
+    "sgproc": ([dict(belt=i) for i in range(8)], [dict(damaged=True)]),
 }
 
 
@@ -2222,7 +2300,7 @@ def building_wreck(name, seed):
 # own origin and yaw 0, like its idle frame). Seeds are arbitrary but fixed.
 WRECKS = {
     "sgcry": 31, "sgdai": 32, "sgdrn": 33, "sgdra": 34, "sgrel": 35, "sgshl": 36,
-    "sgsns": 37, "sgwnd": 38, "sgvlt": 39, "rcyd": 40,
+    "sgsns": 37, "sgwnd": 38, "sgvlt": 39, "rcyd": 40, "sgproc": 43,
 }
 
 
@@ -3582,6 +3660,7 @@ ICON_LABELS = {
     "sghyd": "Hydrogen Plant",
     "sgvlt": "Battery Bank",
     "rcyd": "Recycling Depot",
+    "sgproc": "Materials Refinery",
     "arct": "Arc Turret",
     "sgtur": "Grid Defense Turret",
     "sgdro": "Recon Drone",
@@ -3758,6 +3837,58 @@ def make_icon_from_motif(big, label=None):
 # one -- and the stock art agrees: powrdead.shp is 789 opaque pixels with 77
 # of them ShadowIndex, hhusk2.shp bakes one per facing.
 # ---------------------------------------------------------------------------
+
+# --- Scene cameo (issue #123, moved here from gen_core_units.py in #126) -------
+# Full-panel cameo: sky ramp into a warm haze, a lit verge, a green ground
+# plane with a hard-standing, the model at three-quarter view with its cast
+# shadow, under the same border and label strip as every other cameo. The
+# photographic cameos' tonal range without pretending to be a photograph.
+
+SKY_TOP = dim(PANEL_BLUEBLACK, 0.2)
+SKY_HAZE = (0xB4, 0xBE, 0xA6)                 # warm grey-green haze at the horizon
+GROUND_FAR = (0x4A, 0x6A, 0x42)
+GROUND_NEAR = (0x2C, 0x46, 0x2C)
+VERGE = (0x7C, 0x96, 0x58)
+
+
+def scene_cameo(mesh, label, yaw=30.0, lift=0.0, scale=1.75, canvas=(56, 44)):
+    """Full-panel cameo: the scene fills the icon under the border and label.
+    `canvas` is the native-pixel size the model is rendered on before the
+    crop and `scale`: a vehicle fits 56x44 at 1.75x, a building needs more
+    room and less magnification."""
+    W, H = ICON_W, ICON_H
+    big = Image.new("RGBA", (W * SS, H * SS), SKY_TOP + (255,))
+    d = ImageDraw.Draw(big)
+    horizon = int(H * SS * 0.40)
+    for y in range(horizon):
+        t = y / max(1, horizon - 1)
+        d.line([(0, y), (W * SS, y)], fill=mix(SKY_TOP, SKY_HAZE, t * t) + (255,))
+    for y in range(horizon, H * SS):
+        t = (y - horizon) / max(1, H * SS - horizon)
+        d.line([(0, y), (W * SS, y)], fill=mix(GROUND_FAR, GROUND_NEAR, t) + (255,))
+    # A lit verge across the middle distance, and the hard-standing the vehicle sits on.
+    d.rectangle([0, horizon, W * SS, horizon + 3 * SS], fill=VERGE + (255,))
+    d.polygon([(W * SS * 0.12, H * SS * 0.86), (W * SS * 0.42, H * SS * 0.60), (W * SS * 0.92, H * SS * 0.64),
+               (W * SS * 0.70, H * SS * 0.95)], fill=mix(GROUND_NEAR, PAD_TOP, 0.55) + (255,))
+    # The vehicle, rendered on its own canvas and scaled up, shadow first.
+    cw, ch = canvas
+    car = Image.new("RGBA", (cw * SS, ch * SS), (0, 0, 0, 0))
+    sd = SD(car)
+    mesh.draw_shadow(sd, cw / 2, ch * 0.66 + lift, yaw, color=(0, 0, 0, 110))
+    mesh.draw(sd, cw / 2, ch * 0.66 + lift, yaw)
+    bbox = car.getbbox()
+    car = car.crop(bbox)
+    car = car.resize((max(1, round(car.width * scale)), max(1, round(car.height * scale))), Image.LANCZOS)
+    big.alpha_composite(car, ((W * SS - car.width) // 2, int(H * SS * 0.84) - car.height))
+    icon = big.resize((W, H), Image.LANCZOS)
+    d = ImageDraw.Draw(icon)
+    d.rectangle([0, 0, W - 1, H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
+    d.line([(1, 1), (W - 2, 1)], fill=lit(LEGACY_GRAY, 0.05))
+    if label:
+        draw_icon_label(icon, label)
+        d.rectangle([0, 0, W - 1, H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
+    return icon
+
 
 MAKE_FRAMES = 9   # matches stock fcommake.shp's 9; gapmake.shp runs 13
 
@@ -4038,8 +4169,13 @@ def main():
         w, h, _half = FAM[fam]
         sheet, frames = building_sheet(name)
         save_pngsheet(sheet, f"{name}.png", w, h, len(frames), indexed=True)
-        save_pngsheet(make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name)),
-                      f"{name}icon.png", ICON_W, ICON_H, 1)
+        if name == "sgproc":
+            # No photographic source for the Refinery: a scene render, like
+            # the two vehicle cameos (issue #123), not the flat panel.
+            icon = scene_cameo(sgproc_mesh(), ICON_LABELS[name], yaw=BUILDING_YAW, lift=6.0, scale=0.8, canvas=(110, 90))
+        else:
+            icon = make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name))
+        save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
         idle = frames[0]
         mk = make_frames(mesh_draw_fn(name), w, h, final=idle)
         save_pngsheet(indexed_strip(mk, [None] * (len(mk) - 1) + [silhouette_shadow(idle, 2, 2)], w, h),

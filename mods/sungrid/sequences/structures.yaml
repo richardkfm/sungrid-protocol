@@ -229,6 +229,33 @@ proc:
 	icon:
 		Filename: procicon.shp
 
+sgproc:
+	Defaults:
+		Filename: sgproc.png
+	# Materials Refinery (docs/BACKLOG.md issue #126): the mod's own PROC art.
+	# The intake conveyor's cleats climb while idle (8 frames, Tick 100); the
+	# damaged frame is a single still. Frame counts match ANIM in
+	# bits/gen_concept_art.py.
+	idle:
+		Length: 8
+		Tick: 100
+	damaged-idle:
+		Start: 8
+	make:
+		Filename: sgprocmake.png
+		Length: *
+	dead:
+		Filename: sgprocdead.png
+		Tick: 800
+	bib:
+		Filename: sgbib2.png
+		TilesetFilenames:
+			SNOW: sgbib2-snow.png
+			DESERT: sgbib2-desert.png
+		Length: *
+	icon:
+		Filename: sgprocicon.png
+
 silo:
 	idle:
 		Filename: silo2.shp

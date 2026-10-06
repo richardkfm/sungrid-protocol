@@ -4533,3 +4533,55 @@ verified live:** any of it - a death, a bib under a placed building, a productio
 **Definition of done:** D2 (defences), D3, D4 and D6 as proposed - met. D5 is issue #126.
 
 ---
+
+### 126. D5, first building: the Materials Refinery as Sungrid art
+
+**Raised as:** the D5 half of "alright implement all the Ds too", on the recommendation put to the owner with the
+D proposals: the Refinery alone first (in every base, already renamed, the Depot beside it is a Sungrid solid),
+then a live look before the War Factory, the two barracks and the Tesla Coil.
+
+**The building.** `sgproc_mesh()` in `gen_concept_art.py`, a new `"proc"` frame family (90x72, plinth half 27: a
+3x3 plinth under `PROC`'s 3x4-dimension footprint `_X_ xxx X== ===`, one row taller than the Hydrogen Plant's
+frame so the tower has headroom). A processing hall under a sawtooth PV roof along the left flank with a loading
+door framed in the team colour; a sorting tower on the top cell (the footprint's lone `X`) with a PV cap, a team
+band and a short stack; an open intake hopper on the near edge, right of the bottom corner, which is where the
+Ore Truck docks (`DockOffset` one cell south, `DockAngle` 256, pouring east - the geometry was read off the
+rules, not guessed); a conveyor climbing from the hopper to the tower whose cleats move in the idle animation
+(8 frames, Tick 100, `ANIM`); two storage silos hooped in the team colour at the right corner; a bed, a tree
+and shrubs in the near-left quadrant, clear of the PV roof. Damaged: the conveyor broken, a roof tooth burnt
+through, the stack down, a silo's dome gone, the team parts rust. The wreck is `wreck_mesh()`'s (issue #125),
+the build-up `make_frames()`'s, the apron `sgbib2`. `PROC` now carries `RenderSprites: Image: sgproc` (the
+`FACT` -> `sgfact` pattern) and loses its `WithIdleOverlay@TOP`: the stock `proctop` was the refinery's own
+motion, and here the motion is in the body. The stock `proc:` sequence block stays, unreferenced, like `fact:`.
+
+**The cameo.** No photographic source holds a refinery, and issue #123 found a flat panel beside the photographic
+set reads as unfinished, so the cameo is a `scene_cameo()` render like the MCV's and the Ore Truck's. That
+function and its five sky and ground constants moved from `gen_core_units.py` into `gen_concept_art.py` (which
+`gen_core_units.py` already imports from) with a `canvas` parameter: a vehicle fits 56x44 at 1.75x, a building
+needs 110x90 at 0.8x. `mcvicon.png` and `harvicon.png` are byte-identical after the move.
+
+**One rendering rule confirmed the other way round.** Art rule 15 says a band *prism* must stay at `order=0`
+because its top cap is a full disc; the tower's band is a *box* with `top_face=False`, and at order 0 the tower's
+own walls sorted over it and it vanished. A box band with no top face takes an `order` override safely, and
+needs one.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` is clean and the negative
+control (`damaged-idle` lengthened to 2) fails naming `sgproc.png`; all three generators are byte-identical on
+a second run, and the first run changed only the four `sgproc*` sheets. `docs/concept-art/issue126-refinery.png`:
+two idle frames, damaged, the wreck, two build-up frames, the Hydrogen Plant for scale, the cameo. **Not verified
+live:** the sprite over its footprint and hit shapes, the Ore Truck docking against the hopper, the cameo.
+
+**Still open in D5:** `WEAP`, `BARR`/`TENT`, `TSLA` (as an Arc Pylon), in that order, each its own pass after the
+owner's look at this one.
+
+**Files:** `mods/sungrid/bits/{gen_concept_art,gen_core_units}.py`, new
+`mods/sungrid/bits/{sgproc,sgprocmake,sgprocdead,sgprocicon}.png`, `mods/sungrid/sequences/structures.yaml`,
+`mods/sungrid/rules/structures.yaml`, `docs/concept-art/issue126-refinery.png`,
+`docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 6 (world identity): the first stock building replaced since the roster itself.
+
+**Definition of done:** the Refinery as above, on the roster's conventions, with wreck, build-up, apron and
+cameo - met.
+
+---
