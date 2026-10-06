@@ -965,3 +965,46 @@ windmill:
 		Start: 8
 		Length: 8
 		Tick: 80
+
+# Sungrid scenery (issue #122), drawn by bits/gen_world_scenery.py: idle, then damaged.
+sgpan:
+	Defaults:
+		Filename: sgpan.png
+	idle:
+	damaged-idle:
+		Start: 1
+
+sgslv:
+	Defaults:
+		Filename: sgslv.png
+	idle:
+	damaged-idle:
+		Start: 1
+
+sgpyl:
+	Defaults:
+		Filename: sgpyl.png
+	idle:
+	damaged-idle:
+		Start: 1
+
+sgtnk:
+	Defaults:
+		Filename: sgtnk.png
+	idle:
+	damaged-idle:
+		Start: 1
+
+sgrak:
+	Defaults:
+		Filename: sgrak.png
+	idle:
+	damaged-idle:
+		Start: 1
+
+sgpln:
+	Defaults:
+		Filename: sgpln.png
+	idle:
+	damaged-idle:
+		Start: 1

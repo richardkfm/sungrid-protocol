@@ -173,6 +173,9 @@ FCOM:
 	GpsDot:
 		String: Forward
 
+# The Field Clinic and the Seed Vault (issue #122) are Mesh solids drawn by
+# bits/gen_world_scenery.py on stock hosp.shp's and bio.shp's frame layouts;
+# only their sequence Filenames and fluent names changed.
 HOSP:
 	Inherits: ^TechBuilding
 	Inherits@shape: ^2x2Shape
@@ -518,6 +521,13 @@ BIO:
 OILB:
 	Inherits: ^TechBuilding
 	Inherits@shape: ^2x2Shape
+	# The Legacy Derrick (issue #122): stock oilb.shp, deliberately -- old-world
+	# tech under docs/ART_DIRECTION.md's rust guardrail -- through a rust-shifted
+	# copy of the player palette (bits/sungrid-legacy.pal, PlayerColorPalette@LEGACY
+	# in rules/palettes.yaml) so it reads as iron beside the roster and still
+	# takes its captor's colour.
+	RenderSprites:
+		PlayerPalette: legacy
 	HitShape:
 		UseTargetableCellsOffsets: false
 		TargetableOffsets: 0,0,0, 630,-300,0, 420,512,0, -420,-512,0, -630,300,0

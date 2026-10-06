@@ -14,9 +14,9 @@ fcom:
 			DESERT: bib3.des
 		Length: *
 
-hosp:
+hosp: # Sungrid art (issue #122) on the stock frame layout; bits/gen_world_scenery.py.
 	Defaults:
-		Filename: hosp.shp
+		Filename: hosp.png
 	idle:
 		Length: 4
 	damaged-idle:
@@ -26,7 +26,7 @@ hosp:
 		Start: 8
 		Tick: 800
 	make:
-		Filename: hospmake.shp
+		Filename: hospmake.png
 		Length: *
 	bib:
 		TilesetFilenames:
@@ -39,9 +39,9 @@ hosp:
 	icon:
 		Filename: hospicon.shp
 
-bio:
+bio: # Sungrid art (issue #122) on the stock frame layout; bits/gen_world_scenery.py.
 	Defaults:
-		Filename: bio.shp
+		Filename: bio.png
 	idle:
 	damaged-idle:
 		Start: 1
@@ -49,7 +49,7 @@ bio:
 		Start: 2
 		Tick: 800
 	make:
-		Filename: biomake.shp
+		Filename: biomake.png
 		Length: *
 
 oilb:

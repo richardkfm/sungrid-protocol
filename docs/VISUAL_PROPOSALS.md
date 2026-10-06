@@ -37,7 +37,8 @@ Issue #119 took A1, A2, A3, A5, A6, A7, A8 and A9 from section A below (each is 
 atlas) is the one section-A item still open. Issue #120 took B2, B3, B4, B5, B6 and B8 from
 section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV, HARV, E1), the
 owner's call, and that tier shipped as issue #121 - the later tiers (the tanks, then the raiders)
-stay open.
+stay open. Issue #122 took section C: C2, C3 and C4 are marked `[shipped, issue #122]`, C5 is
+marked `[checked, issue #122]` with the half that needs game content still noted, and C6 was A7.
 
 - **U1 — The game's name on the load screen and main menu.** The `logo` slot (256×256, drawn centred
   on the load screen and top-right of the main menu) held the bare emblem; neither screen said
@@ -244,15 +245,20 @@ infantryman's `die6` (19 sequence blocks, the Disruptor Trooper's included); `di
 
 ## C. Terrain and world
 
-**C2. Scrap has never been seen on a map by a player — check it reads as Scrap, not Ore.**
+**C2. [shipped, issue #122] Scrap has never been seen on a map by a player — check it reads as Scrap, not Ore.**
 Now: `scrap01–04.png` ship (issue #91) and only the Hauler's death drop (issues #86/#97, and W1 above)
 puts them on the ground. Proposal: a composited render of the four Scrap sequences on all three
 reskinned terrain palettes next to the Ore and Gem sprites, and if the grey-rust piles vanish against
 the green ground, a brighter lit edge and a green-accent cable on each pile. Also place a hand-painted
 Scrap field on one map (issue #5 asked for this) so the resource exists before the first wreck. Cost: S.
 Kind: generator + map. Verify: the composite; `--check-yaml` on the edited map.
+Shipped: the composite (`docs/concept-art/issue122-terrain-and-world.png`) showed tiers 1-2 as one grey plate that
+vanished on the temperate ground and tiers 3-4 as a near-black gear; the four tiers are now a growing scatter of
+lit-edged plates over the whole tile with a green cable on every tier, and the shellmap carries a 34-cell Scrap field
+beside its eastern Recycling Depot, so the Haulers on the menu background have something to collect before the
+first wreck.
 
-**C3. Terrain scenery — the Phase 6 remainder.**
+**C3. [shipped, issue #122] Terrain scenery — the Phase 6 remainder.**
 Now: the three tilesets are palette-reskinned (issue #18) and nothing else in the world is Sungrid:
 trees, rocks and the civilian villages are stock. Proposal: six neutral decoration actors drawn with
 the roster's `Mesh` vocabulary on the terrain palette — a ground-mounted panel row, a salvage pile
@@ -261,18 +267,30 @@ pylon stump, a rain tank, a bus-shelter bike rack, a rewilded planter — regist
 `rules/civilian.yaml`, then placed by hand on the three maps testers will actually play (the shellmap,
 and two 3–4-player maps), not scripted across all 75. Cost: M. Kind: generator + map. Verify:
 `--check-yaml` on the three maps; a composite on each tileset.
+Shipped: `SGPAN` Ground Array, `SGSLV` Salvage Pile (crushable, drops Scrap), `SGPYL` Pylon Stump, `SGTNK` Rain
+Tank, `SGRAK` Bike Shelter, `SGPLN` Planter, all 1x1 in `rules/decoration.yaml` on `^Box`'s template, drawn by
+`bits/gen_world_scenery.py`; 14 on the shellmap, 18 on Crossfire, 12 on Doubles. Only the pile feeds the economy
+(the owner's call).
 
-**C4. Civilian and tech structures are stock and still read as Cold War.**
+**C4. [shipped, issue #122] Civilian and tech structures are stock and still read as Cold War.**
 Now: `OILB` oil derricks (eight on the shellmap), `HOSP`, `BIO` ("Containment Ruins"), `MISS`, the
 `V01–V37` village houses. Proposal: treat the derricks as deliberate "old world tech" under
 `docs/ART_DIRECTION.md`'s rust guardrail (rename "Legacy Derrick", rust palette shift only), and
 rebuild only the two tech buildings that grant something — `HOSP` as a Field Clinic, `BIO` as a
 Seed Vault — as `Mesh` solids. Cost: M. Kind: generator + fluent.
+Shipped: the Legacy Derrick keeps `oilb.shp` and renders through `PlayerColorPalette@LEGACY`, a rust-shifted copy
+of the player palette (`bits/sungrid-legacy.pal`); the Field Clinic and the Seed Vault are solids on the stock
+frame layouts, so their sequences changed by Filename only. The village houses stay stock.
 
-**C5. Ore and Gem fields against green ground.**
+**C5. [checked, issue #122] Ore and Gem fields against green ground.**
 Now: Ore kept its gold glint in the palette reskin (issue #18) and reads well; Gems were not checked.
 Proposal: one composited readability check of Ore/Gem density stages on all three palettes, filed with
 the issue #40 terrain-readability sheet. Cost: S. Kind: check only.
+Checked as far as the build environment allows: both resources render through the `player` palette
+(`ResourceRenderer ... Palette: player`), which is the stock `temperat.pal` on every tileset, so the palette reskin
+never touched them and Ore's glint is the stock one over green ground. The Gem composite itself needs
+`gem01-04.tem` from the game content, which the cloud environment cannot download - one desktop-session look at a
+Gem field on Crossfire closes it.
 
 **C6. Map previews** — see A7; it is a world item too.
 

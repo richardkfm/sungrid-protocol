@@ -12,7 +12,7 @@ Scope control is the whole game here. Each phase must ship something playable or
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` | Done — shipped, and on by default |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` | Substantially done — AI plays Grid Reserve, CI green, all three platforms package. Open: structured external multiplayer playtests |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` | Done |
-| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done except terrain **scenery** (palette reskins shipped for all three tilesets) |
+| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done: palette reskins for all three tilesets, and scenery on the three maps testers play (issue #122); the other maps get scenery map by map |
 | 7 | Unit & audio identity pass (vehicle/infantry sprites, voice, music) | `P7: Unit & Audio Identity` | Barely started — three unit renames only |
 | 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` | Deferred by design |
 
@@ -163,7 +163,7 @@ Recorded so the bar cannot quietly drift upward. None of these keep the project 
 
 - **Phase 7 in full** — unit and vehicle sprites, voice sets, the announcer, in-game music. This includes
   the drone/Hauler voiceset that issues #102 left deliberately silent.
-- **Terrain scenery** — the Phase 6 remainder (solar-farm fixtures, salvage piles, reclaiming greenery).
+- **Terrain scenery on the other 72 maps** — issue #122 drew the six pieces (solar-farm fixture, salvage pile, pylon stump, rain tank, bike shelter, planter) and placed them on the shellmap, Crossfire and Doubles; the rest is placement, map by map.
   Palette reskins for all three tilesets are done, which is what B-level visual identity needs.
 - **Issue #60** — consolidating the European sub-factions into an EU faction. A design question, not a defect.
 - **Issue #31** — drone cost skew and Cryptominer payback. Balance tuning flagged for playtest; B7 is where

@@ -31,7 +31,9 @@ The detailed entries below track every issue through #116; this list maps them o
   tips, previews, lobby, emblem (issue #119); the Grid Defense Turret's own bolt and sound, drone rockets,
   uplink lamps on the drones, drone and Hauler wrecks that smoulder instead of burning, the discharge death, and
   cameos for the renamed stock units (issue #120); the first three units of the core roster as Sungrid art - the
-  MCV, the Ore Truck and the rifleman (issue #121).
+  MCV, the Ore Truck and the rifleman (issue #121); scenery on the shellmap, Crossfire and Doubles, Scrap piles
+  that read on every ground plus a Scrap field on the shellmap, and the Legacy Derrick, Field Clinic and Seed Vault
+  (issue #122).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -129,6 +131,13 @@ per-version record.
 - **Sidebar polish:** removed a decorative rectangle baked into the money-bin art that rendered as a stray gold box next to the live cash readout (issue #50), and softened the hard-edged panel borders that made existing stock RA panel-width differences read as a glitch (issues #51, #53).
 - **Build-menu cameos.** Sungrid-original cameos got baked-in name labels to match the ported stock ones (issue #44), were replaced with photographic "real-style" crops from concept renders (issue #45), had their labels harmonized to single-line white to match the stock cameos beside them (issue #46), and picked up the Recycling Depot cameo the pass had missed (issue #47).
 - **Fixed:** the chrome redesign initially emptied the build menu — an opaque overlay hid every production icon (issue #42) — and cameos were variously hidden, crowded, or shifted up by leftover fixes and a world-sprite offset leaking into the icon sequence (issues #61, #62, #63).
+- Terrain scenery (issue #122): six Sungrid decorations - a ground-mounted solar array, a salvage pile (drive a
+  tank over it and it leaves Scrap), a vine-grown pylon stump, a rain tank, a bike shelter and a rewilded planter -
+  placed by hand on the Desert Shellmap, Crossfire and Doubles. Scrap piles were redrawn so they read on green, snow
+  and sand alike (lit plates spread over the tile, a green cable on every pile), and the shellmap has the first
+  painted Scrap field, next to its eastern Recycling Depot. The Oil Derrick is the **Legacy Derrick** (same
+  structure, rust-shifted colours), the Hospital is the **Field Clinic** and the Containment Ruins are the **Seed
+  Vault**, both with new art; what they do is unchanged.
 
 ## Phase 7 — Unit & audio identity (first wave only)
 
