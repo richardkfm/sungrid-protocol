@@ -111,12 +111,20 @@ rcyd:
 		Filename: rcydmake.png
 		Length: *
 	bib:
+		Filename: sgmbib1.png
 		TilesetFilenames:
-			SNOW: mbSILO.sno
-			INTERIOR: mbSILO.int
-			TEMPERAT: mbSILO.tem
-			DESERT: mbSILO.des
+			SNOW: sgmbib1-snow.png
+			DESERT: sgmbib1-desert.png
 		Length: *
+	dead:
+		Filename: rcyddead.png
+		Tick: 800
+	# Docking cue (issue #125): scrap plates tipping into the bay while a
+	# Hauler is unloading (WithDockedOverlay).
+	docking-overlay:
+		Filename: rcyddock.png
+		Length: 6
+		Tick: 90
 	icon:
 		Filename: rcydicon.png
 
@@ -179,10 +187,10 @@ sgfact:
 		Filename: sgfactdead.png
 		Tick: 800
 	bib:
-		Filename: bib2.tem
+		Filename: sgbib2.png
 		TilesetFilenames:
-			SNOW: bib2.sno
-			DESERT: bib2.des
+			SNOW: sgbib2-snow.png
+			DESERT: sgbib2-desert.png
 		Length: *
 	icon:
 		# Stock cameo, deliberately (docs/BACKLOG.md issue #107): the owner wants
@@ -318,10 +326,10 @@ sgpwr:
 		Filename: sgpwrdead.png
 		Tick: 800
 	bib:
-		Filename: bib3.tem
+		Filename: sgbib3.png
 		TilesetFilenames:
-			SNOW: bib3.sno
-			DESERT: bib3.des
+			SNOW: sgbib3-snow.png
+			DESERT: sgbib3-desert.png
 		Length: *
 	icon:
 		Filename: sgpwricon.png
@@ -344,10 +352,10 @@ sgapwr:
 		Filename: sgapwrdead.png
 		Tick: 800
 	bib:
-		Filename: bib2.tem
+		Filename: sgbib2.png
 		TilesetFilenames:
-			SNOW: bib2.sno
-			DESERT: bib2.des
+			SNOW: sgbib2-snow.png
+			DESERT: sgbib2-desert.png
 		Length: *
 	icon:
 		Filename: sgapwricon.png
@@ -389,11 +397,14 @@ sgcry:
 		Filename: sgcrymake.png
 		Length: *
 	bib:
-		Filename: bib3.tem
+		Filename: sgbib3.png
 		TilesetFilenames:
-			SNOW: bib3.sno
-			DESERT: bib3.des
+			SNOW: sgbib3-snow.png
+			DESERT: sgbib3-desert.png
 		Length: *
+	dead:
+		Filename: sgcrydead.png
+		Tick: 800
 	icon:
 		Filename: sgcryicon.png
 
@@ -418,11 +429,14 @@ sgdai:
 		Filename: sgdaimake.png
 		Length: *
 	bib:
-		Filename: bib3.tem
+		Filename: sgbib3.png
 		TilesetFilenames:
-			SNOW: bib3.sno
-			DESERT: bib3.des
+			SNOW: sgbib3-snow.png
+			DESERT: sgbib3-desert.png
 		Length: *
+	dead:
+		Filename: sgdaidead.png
+		Tick: 800
 	icon:
 		Filename: sgdaiicon.png
 
@@ -439,11 +453,20 @@ sgdrn:
 		Filename: sgdrnmake.png
 		Length: *
 	bib:
-		Filename: bib3.tem
+		Filename: sgbib3.png
 		TilesetFilenames:
-			SNOW: bib3.sno
-			DESERT: bib3.des
+			SNOW: sgbib3-snow.png
+			DESERT: sgbib3-desert.png
 		Length: *
+	dead:
+		Filename: sgdrndead.png
+		Tick: 800
+	# Production cue (issue #125): the work lights, over the body while a
+	# queue is building (WithProductionOverlay).
+	production-overlay:
+		Filename: sgdrnprod.png
+		Length: 8
+		Tick: 70
 	icon:
 		Filename: sgdrnicon.png
 
@@ -456,6 +479,15 @@ sgdra:
 	make:
 		Filename: sgdramake.png
 		Length: *
+	dead:
+		Filename: sgdradead.png
+		Tick: 800
+	# Production cue (issue #125): the work lights, over the body while a
+	# queue is building (WithProductionOverlay).
+	production-overlay:
+		Filename: sgdraprod.png
+		Length: 8
+		Tick: 70
 	icon:
 		Filename: sgdraicon.png
 
@@ -500,12 +532,14 @@ sgtur: # WithSpriteBody draws the fixed emplacement pad; the weapon station on t
 		Facings: 8
 		Offset: -1,6
 	bib:
+		Filename: sgmbib2.png
 		TilesetFilenames:
-			SNOW: mbSAM.sno
-			INTERIOR: mbSAM.int
-			TEMPERAT: mbSAM.tem
-			DESERT: mbSAM.des
+			SNOW: sgmbib2-snow.png
+			DESERT: sgmbib2-desert.png
 		Length: *
+	dead:
+		Filename: sgturdead.png
+		Tick: 800
 	icon:
 		Filename: sgturicon.png
 
@@ -522,12 +556,14 @@ sgrel:
 		Filename: sgrelmake.png
 		Length: *
 	bib:
+		Filename: sgmbib1.png
 		TilesetFilenames:
-			SNOW: mbGAP.sno
-			INTERIOR: mbGAP.int
-			TEMPERAT: mbGAP.tem
-			DESERT: mbGAP.des
+			SNOW: sgmbib1-snow.png
+			DESERT: sgmbib1-desert.png
 		Length: *
+	dead:
+		Filename: sgreldead.png
+		Tick: 800
 	icon:
 		Filename: sgrelicon.png
 
@@ -544,13 +580,15 @@ sgshl:
 		Filename: sgshlmake.png
 		Length: *
 	bib:
+		Filename: sgmbib2.png
 		TilesetFilenames:
-			SNOW: mbIRON.sno
-			INTERIOR: mbIRON.int
-			TEMPERAT: mbIRON.tem
-			DESERT: mbIRON.des
+			SNOW: sgmbib2-snow.png
+			DESERT: sgmbib2-desert.png
 		Length: *
 		Offset: 0,-2
+	dead:
+		Filename: sgshldead.png
+		Tick: 800
 	icon:
 		Filename: sgshlicon.png
 
@@ -568,12 +606,14 @@ sgsns:
 		Filename: sgsnsmake.png
 		Length: *
 	bib:
+		Filename: sgmbib1.png
 		TilesetFilenames:
-			SNOW: mbSILO.sno
-			INTERIOR: mbSILO.int
-			TEMPERAT: mbSILO.tem
-			DESERT: mbSILO.des
+			SNOW: sgmbib1-snow.png
+			DESERT: sgmbib1-desert.png
 		Length: *
+	dead:
+		Filename: sgsnsdead.png
+		Tick: 800
 	icon:
 		Filename: sgsnsicon.png
 
@@ -595,15 +635,18 @@ sgwnd:
 		Filename: sgwndmake.png
 		Length: *
 	# Minibib: the turbine occupies one cell (docs/BACKLOG.md issue #100), so
-	# the 2-cell-wide bib3 apron it used to stand on would have spilled onto
-	# ground the building no longer owns. mbSILO is the minibib the mod's other
-	# 1x1 buildings use (sgvlt, sgsns, rcyd).
+	# the 2-cell-wide apron it used to stand on would have spilled onto ground
+	# the building no longer owns. sgmbib1 is the one-cell paver apron the
+	# mod's other 1x1 buildings use (issue #125).
 	bib:
+		Filename: sgmbib1.png
 		TilesetFilenames:
-			SNOW: mbSILO.sno
-			INTERIOR: mbSILO.int
-			TEMPERAT: mbSILO.tem
-			DESERT: mbSILO.des
+			SNOW: sgmbib1-snow.png
+			DESERT: sgmbib1-desert.png
+		Length: *
+	dead:
+		Filename: sgwnddead.png
+		Tick: 800
 	icon:
 		Filename: sgwndicon.png
 
@@ -620,10 +663,10 @@ sghyd:
 		Filename: sghyddead.png
 		Tick: 800
 	bib:
-		Filename: bib2.tem
+		Filename: sgbib2.png
 		TilesetFilenames:
-			SNOW: bib2.sno
-			DESERT: bib2.des
+			SNOW: sgbib2-snow.png
+			DESERT: sgbib2-desert.png
 		Length: *
 	icon:
 		Filename: sghydicon.png
@@ -656,12 +699,14 @@ sgvlt:
 		Filename: sgvltmake.png
 		Length: *
 	bib:
+		Filename: sgmbib1.png
 		TilesetFilenames:
-			SNOW: mbSILO.sno
-			INTERIOR: mbSILO.int
-			TEMPERAT: mbSILO.tem
-			DESERT: mbSILO.des
+			SNOW: sgmbib1-snow.png
+			DESERT: sgmbib1-desert.png
 		Length: *
+	dead:
+		Filename: sgvltdead.png
+		Tick: 800
 	icon:
 		Filename: sgvlticon.png
 
@@ -1067,12 +1112,14 @@ arct: # Body sheet is the fixed pedestal only; the emitter head rotates as a
 		Facings: 32
 		UseClassicFacings: True
 	bib:
+		Filename: sgmbib1.png
 		TilesetFilenames:
-			SNOW: mbFTUR.sno
-			INTERIOR: mbFTUR.int
-			TEMPERAT: mbFTUR.tem
-			DESERT: mbFTUR.des
+			SNOW: sgmbib1-snow.png
+			DESERT: sgmbib1-desert.png
 		Length: *
+	dead:
+		Filename: arctdead.png
+		Tick: 800
 	icon:
 		Filename: arcticon.png
 

@@ -4463,3 +4463,73 @@ after strip at all three scales. **Not verified live:** the atlas in the sidebar
 **Definition of done:** A4 as proposed, minus the alert reds - met.
 
 ---
+
+### 125. Section D of the visual proposals, short of the stock buildings: team rings on the defences, derived rubble for twelve actors, paver aprons, production and docking cues
+
+**Raised as:** "alright implement all the Ds too", after the proposals for D2-D6 were put to the owner with a
+recommendation per item (D2 narrowed to the defences; D5 as its own pass, Refinery first). Shipped here: D2, D3,
+D4 and D6. D5 follows as issue #126.
+
+**D2 - team colour on the defences (narrowed).** The survey counted raw remap pixels, which penalises small
+sprites for being small; as a share of the sprite, the Sensor Array, Wind Turbine and Relay sit at 13-20%, above
+the Construction Yard, and issue #108's plinth band carries every roster building's owner at half zoom
+(`docs/concept-art/issue125-buildings-finish.png`'s predecessor composite, reviewed before this pass). The two
+real gaps were the defence pedestals, which have no plinth: ~5% on the Arc Turret, with the feed lug its only
+tell. Now the Arc Turret's chamfer step between drum and race and the Grid Defense Turret pad's outer race ring
+are `accent=True` faces - a full ring, visible around the head at every facing (the Arc Turret's remap share
+goes 5% -> 16%, the pad's 7% -> 19%). Nothing else in D2 was done; the roster did not need it.
+
+**D3 - rubble, derived.** `dead:` existed only on the two arrays, the Hydrogen Plant and the Yard; ten roster
+buildings and both defences popped out of existence. Rather than twelve more hand-drawn piles, `wreck_mesh()`
+derives the wreck from the building's own damaged mesh the way `make_frames()` derives the build-up: every face
+flattened to about a fifth of its height (varied per face), charred toward `DAMAGE_SCORCH`, nudged apart so the
+solids crack open; most of the plinth band's accent faces are dropped (an intact band read as an undamaged
+plinth) and the survivors are the conduit stubs that say whose wreck it was. `wreck_frame()` composes that over
+`_rubble_diamond()` with slabs, chips, a conduit stub and embers placed by `_scatter()`, then the usual stencil
+shadow. The two pedestals go through the same path at their own origins and yaw 0, with a smaller pile. Twelve
+`*dead.png` sheets, `WithDeathAnimation: DeathSequence: dead` on each actor (the Battery Bank is `SILO`), `Tick:
+800` like the existing four. Every wreck keeps 60-190 remap pixels.
+
+**D4 - paver aprons.** Every Sungrid building stood on stock `bib2.tem` / `bib3.tem` / `mb*.tem`: tan Red Alert
+concrete, per tileset. `WithBuildingBib` (the Cnc trait the mod uses) lays `Dimensions.X` x 2 one-cell frames
+over the bottom two rows of the building's dimensions, row-major, or one row for `HasMinibib`, through the
+*terrain* palette. `bib_tile()` draws one 24x24 cell of a continuous paver grid at native resolution - three
+pavers per cell, grass joints on the foliage ramp, a dark kerb and a ragged, hash-thinned rim on the three outer
+edges - and four sheets cover every Sungrid footprint: `sgbib2` (3x2), `sgbib3` (2x2), `sgmbib1` (1x1),
+`sgmbib2` (2x1). **The finding that cost a render:** the desert terrain palette is a different palette, not a hue
+shift of the temperate one - the same index that is concrete grey on temperate is red on desert, so one sheet
+came out red and teal there. Each sheet is therefore indexed once per tileset against that tileset's own
+`sungrid-*-terrain.pal` (never index 0, never the ShadowIndex 3-4) and the sequences list `-snow` / `-desert`
+variants exactly as the stock bibs did; interior gets the temperate sheet by default. Fourteen `bib:` nodes
+changed; `arct`'s and `sgshl`'s offsets are kept.
+
+**D6 - production and docking cues.** The Drone Bays had `Production` but no `WithProductionOverlay`; the Depot
+had a `DockHost` but no `WithDockedOverlay`. Both engine traits exist in the pinned build and both are plain
+overlays at the body's frame size: `sgdrnprod.png` runs a fast two-light chase over the Drone Bay's eight pad
+markers (the same boxes at the same positions, so the overlay replaces the idle ring's slow blink while a queue
+builds), `sgdraprod.png` adds a row of work lights under the Aerial Fab's front eave that the body does not have,
+and `rcyddock.png` arcs three scrap plates from the bay's near edge into the heap while a Hauler unloads. All
+three sheets are asserted to carry zero remap-ramp pixels (`overlay_sheet()`), the production overlays are gated
+`!build-incomplete`, and the dock overlay loops through the engine's `PlayThen` while docked.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` is clean and each of four
+negative controls fails by name (a `dead` block lengthened to 2, `production-overlay` to 9, `docking-overlay` to
+7, a bib's `Length: *` set to 7 - the last reported on the `-snow` variant first, which shows the per-tileset
+sheets are read); `make check-scripts` passes; re-running `gen_concept_art.py` then `gen_photo_cameos.py` a second
+time leaves every sheet byte-identical, and the first run changed only the four D2 sheets plus the new files.
+`docs/concept-art/issue125-buildings-finish.png` is the composite: each wreck beside its building, the aprons on
+all three terrain palettes with a building standing on each size, the overlay frames over their bodies. **Not
+verified live:** any of it - a death, a bib under a placed building, a production run, a docking.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/{arct,arctmake,sgturpad,sgturmake}.png`
+(regenerated), new `mods/sungrid/bits/{sgcry,sgdai,sgdrn,sgdra,sgrel,sgshl,sgsns,sgwnd,sgvlt,rcyd,arct,sgtur}dead.png`,
+`{sgbib2,sgbib3,sgmbib1,sgmbib2}{,-snow,-desert}.png`, `{sgdrnprod,sgdraprod,rcyddock}.png`,
+`mods/sungrid/sequences/structures.yaml`, `mods/sungrid/rules/structures.yaml`,
+`docs/concept-art/issue125-buildings-finish.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`,
+`CHANGELOG.md`.
+
+**Phase:** 6 (world identity) - the roster's finish.
+
+**Definition of done:** D2 (defences), D3, D4 and D6 as proposed - met. D5 is issue #126.
+
+---

@@ -942,12 +942,15 @@ def arct_pedestal_mesh(damaged=False, lamp=True):
     exactly as before; only the elevation gained volume."""
     con = CONCRETE if not damaged else mix(CONCRETE, DAMAGE_SCORCH, 0.3)
     base = LEGACY_GRAY_DARK if not damaged else mix(LEGACY_GRAY_DARK, DAMAGE_SCORCH, 0.5)
-    accent = SUN_GOLD if not damaged else RUST
+    accent = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4)
     ph = math.pi / 16
     m = Mesh()
     m.prism(0, 0, 0.0, 1.0, 12.5, dim(con, 0.28), sides=16, top=dim(con, 0.08), phase=ph)
     m.prism(0, 0, 1.0, 3.4, 10.2, con, sides=16, top=lit(con, 0.28), phase=ph)
-    m.prism(0, 0, 3.4, 4.1, 8.8, dim(con, 0.08), sides=16, top=lit(con, 0.14), phase=ph)
+    # The chamfer step between drum and race is the team-colour ring (issue
+    # #125, proposal D2): the pedestal has no plinth band, and at half zoom
+    # the feed lug alone was the only owner tell on a 5%-remap sprite.
+    m.prism(0, 0, 3.4, 4.1, 8.8, accent, sides=16, top=lit(accent, 0.14), phase=ph, accent=True)
     m.prism(0, 0, 4.1, ARCT_RACE_TOP, 7.8, base, sides=16, top=lit(base, 0.22), phase=ph)
     for i in range(8):
         if damaged and i in (2, 5):
@@ -2140,6 +2143,257 @@ def sgfact_dead_draw(sd, w=72, h=72):
     _embers(sd, [(ox - 10, oy - 2), (ox + 4, oy + 6), (ox + 20, oy + 2), (ox - 20, oy + 5), (ox + 2, oy - 10)])
 
 
+# --- Buildings finish (issue #125): derived wrecks, pavers, production cues ---
+#
+# D3. Rubble for the twelve actors that popped out of existence. Not twelve
+# more hand-drawn piles: the wreck is *derived* from the building's own
+# damaged mesh the way make_frames() derives the build-up -- every face
+# flattened to a fraction of its height, charred, and nudged apart so the
+# solids crack open -- over the same rubble diamond and slab/ember grammar the
+# four hand-drawn wrecks use. The plinth band's accent faces survive the
+# flattening, so the wreck still carries the owner's colour the way stock
+# powrdead.shp does, and the greenery burns down to dark stubble.
+
+WRECK_KZ = 0.2          # a wreck stands at a fifth of the building's height
+WRECK_CHAR = 0.34       # how far a face is pulled toward DAMAGE_SCORCH (scaled per face)
+WRECK_BAND_KEEP = 0.45  # share of the plinth band's faces that survive, as conduit stubs
+
+
+def wreck_mesh(src, seed):
+    """Flatten `src` (a finished building mesh) into its own wreck. Accent
+    (team-colour) faces mostly go -- a plinth band that survived intact read
+    as an undamaged plinth -- and the ones kept become the conduit stubs that
+    say whose wreck this was."""
+    m = Mesh()
+    for i, (verts, color, order, accent) in enumerate(src.faces):
+        j = _scatter(i, seed, salt=7)
+        if accent and _scatter(i, seed, salt=10) > WRECK_BAND_KEEP:
+            continue
+        kz = WRECK_KZ * (0.5 + 1.0 * j)
+        dx = (_scatter(i, seed, salt=8) - 0.5) * 1.6
+        dy = (_scatter(i, seed, salt=9) - 0.5) * 1.6
+        col = color if accent else mix(color, DAMAGE_SCORCH, WRECK_CHAR * (0.4 + 1.2 * j))
+        m.faces.append(([(x + dx, y + dy, z * kz) for x, y, z in verts], col, order, accent))
+    m.solids = [[(x, y, z * WRECK_KZ) for x, y, z in solid] for solid in src.solids]
+    return m
+
+
+def _wreck_decals(ox, oy, half, seed):
+    """Two slabs, a conduit stub and embers placed by the scatter hash inside
+    the footprint diamond -- the hand-drawn wrecks' grammar, automated."""
+    def decals(sd, w, h):
+        for k in range(2):
+            ang = _scatter(k, seed, salt=21) * 2 * math.pi
+            x, y = _diamond_pt(ox, oy, half, ang, 0.35 + 0.3 * _scatter(k, seed, salt=22))
+            wid = half * (0.6 + 0.4 * _scatter(k, seed, salt=23))
+            col = (dim(PALE_STEEL, 0.4), dim(PANEL_BLUEBLACK, 0.1))[k]
+            _slab(sd, x, y, wid, 4 + half * 0.08, col, lean=(k - 0.5) * 3.0)
+        # Loose chips of the pile over the flattened mass, so the surface is
+        # broken material rather than one flat tone.
+        tones = (LEGACY_GRAY_DARK, lit(CONCRETE, 0.12), DAMAGE_SCORCH, dim(CONCRETE, 0.42), lit(CONCRETE, 0.3))
+        for k in range(half):
+            x, y = _diamond_pt(ox, oy, half, _scatter(k, seed, salt=26) * 2 * math.pi,
+                               0.1 + 0.75 * _scatter(k, seed, salt=27))
+            bw = 1.5 + 2 * _scatter(k, seed, salt=28)
+            sd.rect([x, y, x + bw, y + 1], fill=tones[(k + seed) % 5])
+        cx = ox - half * 0.6
+        _conduit_stub(sd, cx, cx + half * 0.7, oy + half * 0.25)
+        _embers(sd, [_diamond_pt(ox, oy, half, _scatter(k, seed, salt=24) * 2 * math.pi,
+                                 0.2 + 0.6 * _scatter(k, seed, salt=25)) for k in range(5)])
+    return decals
+
+
+def wreck_frame(mesh, w, h, ox, oy, half, yaw, seed):
+    """One wreck frame: the rubble diamond, the flattened mesh with its accent
+    faces re-stamped onto the remap ramp, then the slab and ember decals."""
+    pile = render(lambda sd, w_, h_: _rubble_diamond(sd, ox, oy, half, seed), w, h)
+    body = _mesh_render(wreck_mesh(mesh, seed), w, h, ox, oy, yaw,
+                        decals=_wreck_decals(ox, oy, half, seed))
+    return Image.alpha_composite(pile, body)
+
+
+def building_wreck(name, seed):
+    fam, fn = MESHES[name]
+    w, h, half = FAM[fam]
+    return wreck_frame(fn(damaged=True), w, h, w // 2, _oy(h, half), half, BUILDING_YAW, seed)
+
+
+# The twelve: ten roster buildings and the two defence pedestals (each at its
+# own origin and yaw 0, like its idle frame). Seeds are arbitrary but fixed.
+WRECKS = {
+    "sgcry": 31, "sgdai": 32, "sgdrn": 33, "sgdra": 34, "sgrel": 35, "sgshl": 36,
+    "sgsns": 37, "sgwnd": 38, "sgvlt": 39, "rcyd": 40,
+}
+
+
+def arct_wreck():
+    ox, oy = SG1x1_W // 2, SG1x1_H / 2 + ARCT_GROUND_DY
+    return wreck_frame(arct_pedestal_mesh(damaged=True, lamp=False), SG1x1_W, SG1x1_H, ox, oy, 11, 0.0, 41)
+
+
+def sgtur_wreck():
+    ox, oy = _sgtur_pad_origin(SGTUR_W, SGTUR_H)
+    return wreck_frame(sgtur_pad_mesh(lamp=False), SGTUR_W, SGTUR_H, ox, oy, 12, 0.0, 42)
+
+
+# D4. Permeable pavers with grass joints, replacing the stock tan concrete
+# bibs (bib2.tem / bib3.tem / mb*.tem) under every Sungrid building. One
+# 24x24 tile per footprint cell, drawn at native resolution (a tiling pattern
+# would only blur under the 4x downscale) and indexed on the fixed palette
+# entries only: WithBuildingBib renders through the per-tileset *terrain*
+# palette, where the remap ramp is not a team colour, so a bib must never
+# touch indices 80-95. Four sheets cover every Sungrid footprint: two rows of
+# three (sgbib2), two of two (sgbib3), one of one and one of two (the
+# minibibs). Pavers are grey so the per-tileset hue shift of the terrain
+# palette leaves them concrete on every map; the joints are the foliage ramp.
+
+BIB_CELL = 24
+BIB_PITCH = 8                                   # paver pitch, px: three per cell
+PAVER = lit(CONCRETE, 0.5)
+PAVER_LIT = lit(CONCRETE, 0.7)
+PAVER_DIM = lit(CONCRETE, 0.3)
+KERB = dim(CONCRETE, 0.1)
+
+
+def _load_pal(name):
+    raw = open(os.path.join(HERE, name), "rb").read()
+    return [(raw[i * 3] << 2, raw[i * 3 + 1] << 2, raw[i * 3 + 2] << 2) for i in range(256)]
+
+
+# The terrain palette is a different file per tileset, and the desert one is
+# a different *palette*, not a hue shift of the temperate one: an index that
+# is concrete grey on temperate is red on desert. So a bib is indexed once per
+# tileset against that tileset's own terrain palette, and the sequence lists
+# the per-tileset sheets exactly as the stock bibs did (bib3.tem / .sno / .des).
+# Indices 0 (transparent) and 3-4 (the terrain palettes' ShadowIndex) are
+# never chosen; the remap ramp is excluded too, by habit.
+BIB_TILESETS = {
+    "": "sungrid-temperat-terrain.pal",          # the default sheet
+    "-snow": "sungrid-snow-terrain.pal",
+    "-desert": "sungrid-desert-terrain.pal",
+}
+_BIB_TERRAIN_IDX = [i for i in _BODY_IDX if i != 3]
+
+
+def _nearest_in(pal, rgb, _cache={}):
+    key = (id(pal), rgb)
+    hit = _cache.get(key)
+    if hit is None:
+        hit = _cache[key] = min(_BIB_TERRAIN_IDX, key=lambda i: _d2(rgb, pal[i]))
+    return hit
+
+
+def bib_tile(col, row, cols, rows, salt, pal):
+    """One cell of a `cols` x `rows` apron as a PC frame on `pal`. The paver
+    grid runs continuously across cells; the three outer edges (not the top,
+    which is under the building) end in a dark kerb with a ragged,
+    scatter-hashed rim so the apron sits in the ground rather than on it."""
+    f = PC(BIB_CELL, BIB_CELL)
+    for y in range(BIB_CELL):
+        gy = row * BIB_CELL + y
+        for x in range(BIB_CELL):
+            gx = col * BIB_CELL + x
+            on_edge = ((col == 0 and x == 0) or (col == cols - 1 and x == BIB_CELL - 1)
+                       or (row == rows - 1 and y == BIB_CELL - 1))
+            near_edge = ((col == 0 and x == 1) or (col == cols - 1 and x == BIB_CELL - 2)
+                         or (row == rows - 1 and y == BIB_CELL - 2))
+            if on_edge:
+                if _scatter(gx, gy, salt) < 0.45:
+                    continue                         # ragged rim: terrain shows through
+                rgb = KERB
+            elif near_edge:
+                rgb = KERB if _scatter(gx, gy, salt + 1) < 0.7 else PAVER_DIM
+            elif gx % BIB_PITCH == 0 or gy % BIB_PITCH == 0:
+                rgb = LEAF_MID if _scatter(gx, gy, salt + 2) < 0.6 else LEAF_DARK   # grass joint
+            else:
+                px_, py_ = gx // BIB_PITCH, gy // BIB_PITCH
+                tone = _scatter(px_, py_, salt + 3)
+                base = PAVER if tone < 0.6 else (PAVER_LIT if tone < 0.8 else PAVER_DIM)
+                if gx % BIB_PITCH == 1 or gy % BIB_PITCH == 1:
+                    rgb = lit(base, 0.12)             # lit upper-left edge of each paver
+                elif gx % BIB_PITCH == BIB_PITCH - 1 or gy % BIB_PITCH == BIB_PITCH - 1:
+                    rgb = dim(base, 0.12)             # shaded lower-right edge
+                else:
+                    rgb = base
+            f.px[y][x] = _nearest_in(pal, rgb)
+    return f
+
+
+def bib_frames(cols, rows, salt, pal):
+    """Frames in WithBuildingBib's order: row-major over the `rows` x `cols`
+    cells under the footprint (frame i -> cell (i % cols, i // cols))."""
+    return [bib_tile(i % cols, i // cols, cols, rows, salt, pal) for i in range(cols * rows)]
+
+
+BIBS = {                     # sheet -> (columns, rows, salt)
+    "sgbib2": (3, 2, 51),    # 3-wide buildings: sgapwr, sghyd, sgfact
+    "sgbib3": (2, 2, 52),    # 2-wide: sgpwr, sgcry, sgdai, sgdrn
+    "sgmbib1": (1, 1, 53),   # 1x1 minibibs: rcyd, sgsns, sgwnd, sgvlt, sgrel, arct
+    "sgmbib2": (2, 1, 54),   # 2-wide minibibs: sgshl, sgtur
+}
+
+
+# D6. Production and docking cues on the Sungrid producers, as overlays at the
+# body's own frame size, gated by the engine's own traits (WithProductionOverlay
+# while a queue is building, WithDockedOverlay while a Hauler is unloading).
+# Overlay sheets carry zero remap-ramp pixels (rule 16): fixed greens and
+# greys only, nothing that shades toward the gold radius.
+
+PROD_FRAMES = 8
+DOCK_FRAMES = 6
+WORK_LIGHT = (0xDC, 0xF0, 0xC8)            # cool white-green work light; palette-exact after indexing
+
+
+def sgdrn_prod_mesh(phase=0):
+    """Drone Bay producing: the eight pad markers run a fast two-light chase
+    over the idle ring's slow opposite-pair blink. Same boxes as the body's
+    markers, at the same positions, so the overlay simply replaces them."""
+    m = Mesh()
+    for i in range(8):
+        a = i * math.pi / 4 + math.pi / 8
+        px, py = 1 + 15.5 * math.cos(a), -3 + 15.5 * math.sin(a)
+        lit_ = (i - phase) % 8 in (0, 1)
+        marker = WORK_LIGHT if lit_ else dim(GREEN_ACCENT, 0.35)
+        m.box(px - 0.7, py - 0.7, 4.7, px + 0.7, py + 0.7, 6.0, LEGACY_GRAY_DARK, top=marker, order=3, shadow=False)
+    return m
+
+
+def sgdra_prod_mesh(phase=0):
+    """Aerial Fabrication Bay producing: a row of work lights under the front
+    eave, stepping along the truss. The body has no lamps there, so the
+    overlay adds them only while the bay is building."""
+    m = Mesh()
+    for i in range(6):
+        x = -20 + (i + 0.5) * 6.6
+        on = (i + phase) % 3 == 0
+        col = WORK_LIGHT if on else LAMP_OFF
+        m.box(x - 0.6, -19.3, 9.3, x + 0.6, -18.4, 10.2, col, top=col, order=3, shadow=False)
+    return m
+
+
+def rcyd_dock_mesh(phase=0):
+    """Recycling Depot with a Hauler docked: scrap plates arc from the bay's
+    near edge into the heap, three in flight at staggered ages."""
+    m = Mesh()
+    for k in range(3):
+        t = ((phase + k * DOCK_FRAMES / 3) % DOCK_FRAMES) / DOCK_FRAMES
+        x = -11 + 7 * t
+        y = -12 + 9 * t
+        z = 5.5 + 2.5 * t + 6.0 * t * (1 - t)
+        r = 1.6 - 0.3 * k
+        col = (lit(LEGACY_GRAY, 0.28), RUST, lit(LEGACY_GRAY, 0.45))[k]
+        m.prism(x, y, z, z + 0.7, r, col, sides=5, top=lit(col, 0.3), phase=t * 3.0, shadow=False)
+    return m
+
+
+def overlay_sheet(frames, w, h, name):
+    """Index an overlay strip and prove it carries no remap-ramp pixels."""
+    sheet = indexed_strip(frames, None, w, h)
+    ramp = sum(1 for v in sheet.getdata() if REMAP_LO <= v <= REMAP_HI)
+    assert ramp == 0, f"{name}: {ramp} remap-ramp pixels in an overlay sheet"
+    return sheet
+
+
 # ---------------------------------------------------------------------------
 # Image-plane rotation, for genuinely top-down radially symmetric hardware
 # only: the two drone bodies and the Hauler Drone (32 facings, no damaged
@@ -2365,7 +2619,11 @@ def sgtur_pad_mesh(lamp=True):
     # Turntable seat: a dark race ring with a lighter bearing plate inside it
     # (its top is SGTUR_SEAT_TOP, where the station's collar sits). 32-gons,
     # the same count as the station's collar.
-    m.prism(0, 0, SGTUR_PAD_H, SGTUR_PAD_H + 1.0, 11.0, base, sides=32, top=lit(base, 0.3), shadow=False)
+    # The outer race ring is the team-colour ring (issue #125, proposal D2):
+    # it stays visible around the station's collar at every facing, where the
+    # cable trench alone was the pad's only owner tell.
+    m.prism(0, 0, SGTUR_PAD_H, SGTUR_PAD_H + 1.0, 11.0, SUN_GOLD, sides=32, top=lit(SUN_GOLD, 0.3),
+            shadow=False, accent=True)
     m.prism(0, 0, SGTUR_PAD_H + 1.0, SGTUR_SEAT_TOP, 9.4, dim(con, 0.05), sides=32,
             top=lit(con, 0.16), shadow=False)
     for i in range(4):
@@ -3909,6 +4167,33 @@ def main():
         wreck = render(dead_fn, w, h)
         save_pngsheet(indexed_strip([wreck], [silhouette_shadow(wreck, 2, 2)], w, h),
                       f"{name}.png", w, h, 1, indexed=True)
+
+    # Buildings finish (issue #125). D3: derived wrecks for the ten roster
+    # buildings that had none, and the two defence pedestals.
+    for name, seed in WRECKS.items():
+        fam, _ = MESHES[name]
+        w, h, _half = FAM[fam]
+        wreck = building_wreck(name, seed)
+        save_pngsheet(indexed_strip([wreck], [silhouette_shadow(wreck, 2, 2)], w, h),
+                      f"{name}dead.png", w, h, 1, indexed=True)
+    for name, wreck, w, h in (("arct", arct_wreck(), SG1x1_W, SG1x1_H),
+                              ("sgtur", sgtur_wreck(), SGTUR_W, SGTUR_H)):
+        save_pngsheet(indexed_strip([wreck], [silhouette_shadow(wreck, 2, 2)], w, h),
+                      f"{name}dead.png", w, h, 1, indexed=True)
+    # D4: the paver aprons, one frame per footprint cell in WithBuildingBib's order.
+    for suffix, palfile in BIB_TILESETS.items():
+        pal = _load_pal(palfile)
+        for name, (cols, rows, salt) in BIBS.items():
+            fr = bib_frames(cols, rows, salt, pal)
+            save_pngsheet(sheet_of_indexed(fr, BIB_CELL, BIB_CELL), f"{name}{suffix}.png",
+                          BIB_CELL, BIB_CELL, len(fr), indexed=True)
+    # D6: production and docking overlays, at the body's frame size.
+    prod = [_mesh_frame("2x3", sgdrn_prod_mesh, phase=i) for i in range(PROD_FRAMES)]
+    save_pngsheet(overlay_sheet(prod, FAM23_W, FAM23_H, "sgdrnprod"), "sgdrnprod.png", FAM23_W, FAM23_H, len(prod), indexed=True)
+    prod = [_mesh_frame("2x3", sgdra_prod_mesh, phase=i) for i in range(PROD_FRAMES)]
+    save_pngsheet(overlay_sheet(prod, FAM23_W, FAM23_H, "sgdraprod"), "sgdraprod.png", FAM23_W, FAM23_H, len(prod), indexed=True)
+    dock = [_mesh_frame("1x1", rcyd_dock_mesh, phase=i) for i in range(DOCK_FRAMES)]
+    save_pngsheet(overlay_sheet(dock, SG1x1_W, SG1x1_H, "rcyddock"), "rcyddock.png", SG1x1_W, SG1x1_H, len(dock), indexed=True)
 
     # Drones: 32 facings x DRONE_SPIN_FRAMES rotor-spin frames, facing-major, no
     # damaged state (matching tran/mh60/heli). The spin lives in the body sheet

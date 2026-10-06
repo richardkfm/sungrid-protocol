@@ -886,6 +886,9 @@ GUN:
 ARCT:
 	Inherits: ^Defense
 	Inherits@AUTOTARGET: ^AutoTargetGround
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 60
@@ -1359,6 +1362,9 @@ PROC:
 
 SILO:
 	Inherits: ^Building
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgvlt
 	Selectable:
@@ -1418,6 +1424,12 @@ RCYD:
 	Inherits: ^Building
 	# Stack puffs (docs/BACKLOG.md issue #109). An overlay, not body frames:
 	# the body is WithResourceLevelSpriteBody's fill-level strip.
+	# Scrap tipping into the bay while a Hauler is docked (docs/BACKLOG.md issue #125).
+	WithDockedOverlay:
+		Sequence: docking-overlay
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	WithIdleOverlay@SMOKE:
 		Sequence: smoke
 		RequiresCondition: !build-incomplete
@@ -1819,6 +1831,9 @@ SGWND:
 	Inherits: ^Building
 	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
 	Inherits@shape: ^1x1Shape
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgwnd
 	# A single mast on a single cell (docs/BACKLOG.md issue #100). The tower is
@@ -2392,6 +2407,9 @@ SGCRY:
 	Inherits@shape: ^2x2Shape
 	# grid-strained is visible now (docs/BACKLOG.md issue #109): the status
 	# pips go dark with a red fault blink while the grid is short.
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	WithIdleOverlay@STRAINED:
 		Sequence: strained
 		RequiresCondition: grid-strained && !build-incomplete
@@ -2463,6 +2481,9 @@ SGDAI:
 	Inherits@shape: ^2x2Shape
 	# grid-strained is visible now (docs/BACKLOG.md issue #109): the data
 	# line and the mast beacon go amber while the grid is short.
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	WithIdleOverlay@STRAINED:
 		Sequence: strained
 		RequiresCondition: grid-strained && !build-incomplete
@@ -2537,6 +2558,13 @@ SGDRN:
 	# BARR, KENN, TENT); both Drone Bays shipped without it, so a player with two
 	# of them had no way to choose which one produced.
 	Inherits@PRIMARY: ^PrimaryBuilding
+	# Work lights while a queue is building (docs/BACKLOG.md issue #125).
+	WithProductionOverlay:
+		Sequence: production-overlay
+		RequiresCondition: !build-incomplete
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgdrn
 	Selectable:
@@ -2600,6 +2628,13 @@ SGDRA:
 	Inherits@shape: ^2x2Shape
 	# See SGDRN above.
 	Inherits@PRIMARY: ^PrimaryBuilding
+	# Work lights while a queue is building (docs/BACKLOG.md issue #125).
+	WithProductionOverlay:
+		Sequence: production-overlay
+		RequiresCondition: !build-incomplete
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgdra
 	Selectable:
@@ -2663,6 +2698,9 @@ SGTUR:
 	Inherits@shape: ^2x1Shape
 	# grid-strained is visible now (docs/BACKLOG.md issue #109): an amber
 	# fault lamp blinks on the pad rim while the grid is short.
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	WithIdleOverlay@STRAINED:
 		Sequence: strained
 		RequiresCondition: grid-strained && !build-incomplete
@@ -2745,6 +2783,9 @@ SGTUR:
 
 SGREL:
 	Inherits: ^Building
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgrel
 	Selectable:
@@ -2799,6 +2840,9 @@ SGSHL:
 	Inherits: ^ScienceBuilding
 	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDown
 	Inherits@shape: ^2x2Shape
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgshl
 	Selectable:
@@ -2855,6 +2899,9 @@ SGSHL:
 SGSNS:
 	Inherits: ^Building
 	Inherits@shape: ^1x1Shape
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	RenderSprites:
 		Image: sgsns
 	Selectable:

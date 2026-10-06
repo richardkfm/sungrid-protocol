@@ -38,7 +38,8 @@ atlas) shipped as issue #124, so section A is closed. Issue #120 took B2, B3, B4
 section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV, HARV, E1), the
 owner's call, and that tier shipped as issue #121 - the later tiers (the tanks, then the raiders)
 stay open. Issue #122 took section C: C2, C3 and C4 are marked `[shipped, issue #122]`, C5 is
-marked `[checked, issue #122]` with the half that needs game content still noted, and C6 was A7.
+marked `[checked, issue #122]` with the half that needs game content still noted, and C6 was A7. Issue #125
+took section D short of the stock buildings: D2 (narrowed to the defences), D3, D4 and D6; D5 is issue #126.
 
 - **U1 — The game's name on the load screen and main menu.** The `logo` slot (256×256, drawn centred
   on the load screen and top-right of the main menu) held the bare emblem; neither screen said
@@ -313,29 +314,37 @@ Gem field on Crossfire closes it.
 
 The roster is in good shape; these are the gaps the survey found, smallest first.
 
-**D2. Small buildings carry very little team colour.**
+**D2. [shipped narrowed, issue #125] Small buildings carry very little team colour.**
 Now: issue #108's roster sheet labels count remap pixels per sprite: `sgsns` 203, `sgwnd` 204, `sgrel`
 249, `sgpwr` 332, against `sgfact` 20268. At zoomed-out magnification the owner of a Sensor Array or
 Wind Turbine is a guess. Proposal: a generator-side check — each building's idle frame must put at
 least ~6% of its opaque pixels on indices 80–95 — and for the three that fail, a team-coloured mast
 band / roof panel / cabinet door flagged `accent=True` so the re-stamp keeps it on the ramp. Cost: S–M.
 Kind: generator. Verify: the count is printed by the sheet render; a composite at 50% zoom.
+Shipped (narrowed): the premise was off - as a *share* of the sprite the small buildings are at 13-20%, and
+issue #108's plinth band carries every roster building's owner at half zoom. The two real gaps were the
+defence pedestals (no plinth, ~5%), which now carry a full team ring each. Nothing else was changed.
 
-**D3. Rubble exists for four buildings; the other eleven vanish after the explosion.**
+**D3. [shipped, issue #125] Rubble exists for four buildings; the other eleven vanish after the explosion.**
 Now: `dead:` sequences only on `sgpwr`, `sgapwr`, `sghyd`, `sgfact`. Stock RA is the same for most
 buildings, but the halls (`sgdra`, `sgshl`, `sgcry`, `sgdai`) popping out of existence reads cheap at
 their size. Proposal: derive rubble the way build-ups are derived (`make_frames()`): flatten the mesh to
 ~20% height, grey-rust tint, scatter a few slab fragments with `_scatter()`, `Tick: 800` like the
 existing four. One function, eleven sheets. Cost: S–M. Kind: generator.
+Shipped: twelve (the count was ten roster buildings plus both defence pedestals), all derived from each
+building's own damaged mesh by `wreck_mesh()`. Not seen live.
 
-**D4. The concrete aprons under every building are stock RA bibs.**
+**D4. [shipped, issue #125] The concrete aprons under every building are stock RA bibs.**
 Now: `bib2.tem`/`bib3.tem`/`mb*` under every Sungrid building — tan Red Alert concrete under solarpunk
 buildings, on every tileset. Proposal: `sgbib2.png`/`sgbib3.png` on the terrain palette: permeable
 pavers with grass joints, drawn once per size with `_scatter()` for the joints, referenced from each
 building's `bib:` sequence (`TilesetFilenames` can stay a single sheet since the terrain palettes are
 all reskinned toward the same green). Cost: S–M. Kind: generator + sequence YAML.
+Shipped, with one correction to the proposal: the desert terrain palette is a different palette, not a hue
+shift, so a single sheet came out red there - each apron is indexed per tileset and the sequences carry
+`-snow` / `-desert` variants like the stock bibs. Four sheets cover every Sungrid footprint. Not seen live.
 
-**D5. Stock buildings still in the tree, ordered by screen time.**
+**D5. [taken up as issue #126, Refinery first] Stock buildings still in the tree, ordered by screen time.**
 Now: `PROC`, `WEAP`, `BARR`/`TENT`, `DOME`, `FIX`, `HPAD`, `AFLD`, `ATEK`/`STEK`, `SPEN`/`SYRD`, the stock
 defences (`PBOX`, `HBOX`, `GUN`, `AGUN`, `SAM`, `TSLA`, `GAP`), the superweapons. Proposal: `PROC`
 first (in every base, already renamed Materials Refinery, and the Depot beside it is a Sungrid solid),
@@ -343,11 +352,13 @@ then `WEAP` and the two barracks, then `TSLA` (the strongest remaining Red Alert
 Arc Pylon in the Arc Turret's vocabulary), then stop. Cost: M each. Kind: generator (one `*_mesh()`
 each, with build-up and rubble derived). Verify: as for every roster pass since issue #106.
 
-**D6. Production and docking have no animation on the Sungrid producers.**
+**D6. [shipped, issue #125] Production and docking have no animation on the Sungrid producers.**
 Now: `SGDRN`/`SGDRA` have no `WithProductionOverlay`; `RCYD` has no dock overlay (stock `PROC` has
 `proctop`). Proposal: a pad-light chase on the Drone Bay while producing (its idle chase already exists
 — gate a brighter variant on the production condition), and a Depot conveyor overlay while a Hauler is
 docked. Cost: S each. Kind: generator + YAML. Verify: condition wiring via `--check-yaml`.
+Shipped: `WithProductionOverlay` on both Drone Bays (a fast marker chase on the Drone Bay, work lights under
+the Aerial Fab's eave) and `WithDockedOverlay` on the Depot (scrap plates arcing into the heap). Not seen live.
 
 **D7. Cameo drift** (issue #107): the Advanced Solar Array's photo still shows the concentrator dish
 the sprite lost. Owner's decision is to keep the photographic set; a re-crop is recorded there, not
