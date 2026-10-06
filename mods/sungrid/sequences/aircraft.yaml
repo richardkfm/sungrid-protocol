@@ -155,3 +155,19 @@ sgdrs:
 		UseClassicFacings: True
 	icon:
 		Filename: sgdrsicon.png
+
+# Shot-down drones (issue #120): the wreck each husk renders instead of the
+# intact airframe it used to fall as -- rotors stopped, a boom gone or bent,
+# scorched, the owner's mark still on it. 32 facings, one frame each; the
+# engine spins the facing as FallsToEarth brings it down.
+sgdrohusk:
+	idle:
+		Filename: sgdrohusk.png
+		Facings: 32
+		UseClassicFacings: True
+
+sgdrshusk:
+	idle:
+		Filename: sgdrshusk.png
+		Facings: 32
+		UseClassicFacings: True

@@ -70,11 +70,9 @@ e1:
 		Start: 324
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -171,11 +169,9 @@ e3:
 		Start: 340
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -267,11 +263,9 @@ disr:
 		Start: 418
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -329,11 +323,9 @@ e6:
 		Start: 182
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -401,11 +393,9 @@ medi:
 		Start: 229
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -469,11 +459,9 @@ mech:
 		Start: 229
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -542,11 +530,9 @@ e2:
 		Start: 452
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -687,11 +673,9 @@ spy:
 		Start: 324
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -755,11 +739,9 @@ thf:
 		Start: 175
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -875,11 +857,9 @@ e7:
 		Start: 298
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -969,11 +949,9 @@ gnrl:
 		Start: 246
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1056,11 +1034,9 @@ shok:
 		Start: 452
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1116,11 +1092,9 @@ c1:
 		Start: 180
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1179,11 +1153,9 @@ c2:
 		Start: 180
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1242,11 +1214,9 @@ c11:
 		Start: 180
 		Length: 18
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1302,11 +1272,9 @@ einstein:
 		Start: 148
 		Length: 17
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1361,11 +1329,9 @@ delphi:
 		Start: 357
 		Length: 17
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1416,11 +1382,9 @@ chan:
 		Start: 148
 		Length: 17
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:
@@ -1472,11 +1436,9 @@ zombie:
 		Start: 114
 		Length: 19
 		Tick: 80
-	die6:
-		Filename: electro.tem
-		TilesetFilenames:
-			SNOW: electro.sno
-		Frames: 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	die6: # Sungrid discharge death (issue #120), replacing the Tesla-blue electro.tem skeleton.
+		Filename: sgdischarge.png
+		Frames: 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 		Length: *
 		Tick: 80
 	die-crushed:

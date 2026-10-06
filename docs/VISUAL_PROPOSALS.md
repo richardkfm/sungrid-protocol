@@ -34,7 +34,9 @@ facing, or a sprite that describes a mechanic the actor doesn't have.
 
 Issue #119 took A1, A2, A3, A5, A6, A7, A8 and A9 from section A below (each is marked
 `[shipped, issue #119]`; the full engineering detail is in `docs/BACKLOG.md`). A4 (the glyph
-atlas) is the one section-A item still open.
+atlas) is the one section-A item still open. Issue #120 took B2, B3, B4, B5, B6 and B8 from
+section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV, HARV, E1) as
+issue #121, the owner's call.
 
 - **U1 — The game's name on the load screen and main menu.** The `logo` slot (256×256, drawn centred
   on the load screen and top-right of the main menu) held the bare emblem; neither screen said
@@ -146,7 +148,7 @@ set in it. Cost: artist. Kind: artist. Everything in `gen_chrome.py` consumes th
 Phase 7 is the largest item in the roadmap and has no natural stopping point (`docs/ROADMAP.md`). These
 are ordered by **screen time**: how many seconds of every match a tester spends looking at the thing.
 
-**B2. Build-menu cameos of renamed stock units still say the old name.**
+**B2. [shipped, issue #120] Build-menu cameos of renamed stock units still say the old name.**
 Now: stock RA cameos bake the actor name into the pixels (issue #44). `V2RL` is "Surge Rocket
 Launcher" but its cameo (`v2rlicon.shp`) reads V2 ROCKET; `QTNK` "Tremor Tank" reads MAD TANK; `PROC`
 "Materials Refinery" reads ORE REFINERY; `TENT`/`BARR` "Consortium/Assembly Barracks", `ATEK`/`STEK`
@@ -157,8 +159,12 @@ Proposal: photographic cameos for the renamed actors via `gen_photo_cameos.py`'s
 source render the owner supplies; programmatic fallback (`make_icon_from_motif`) where no photo fits.
 Cost: S per actor, ~7 actors. Kind: generator. Verify: `--check-missing-sprites`; the issue #107
 contact-sheet script.
+Shipped: `TENT`/`BARR`/`ATEK`/`STEK` are photo crops of the hero scene's crew modules and the Novaya
+Zarya tower, labelled BARRACKS / TECH CENTER like the stock cameos (a player only sees their own
+faction's); `V2RL`/`QTNK`/`PROC` are programmatic `Mesh` solids in `gen_unit_effects.py`, **tagged for
+a designer or a fourth source render** - the scenes hold no rocket launcher, seismic tank or refinery.
 
-**B3. The Grid Defense Turret fires a 120mm tank shell with a tank's report.**
+**B3. [shipped, issue #120] The Grid Defense Turret fires a 120mm tank shell with a tank's report.**
 Now: `GridPulseCannon` inherits `^Cannon` (`120MM` shell sprite, `small_explosion`, `turret1.aud`);
 its muzzle flash is stock `samfire.shp`. The station was rebuilt twice (issues #112/#113) and still
 sounds and shoots like a Soviet turret.
@@ -168,22 +174,27 @@ replacing `samfire`), an electrical-scorch impact effect instead of `small_explo
 synthesized by `gen_arc_sounds.py`'s method (issue #110's two reports are the reference). Cost: S–M.
 Kind: generator + YAML. Verify: `--check-missing-sprites`; the sheet layout rule for effects is in
 `CLAUDE.md` art rule 17.
+Shipped as proposed, with a three-frame bloom rather than two and a short green contrail on the bolt;
+`sgpulse.wav` / `sgpulsehit.wav` from `gen_arc_sounds.py`, the impact leaves a Scorch smudge.
 
-**B4. Drone rockets are the stock `DRAGON` missile with a stock smoke trail.**
+**B4. [shipped, issue #120] Drone rockets are the stock `DRAGON` missile with a stock smoke trail.**
 Now: `DroneRocket`/`.Strike` in `weapons/missiles.yaml` use the stock missile sprite, `smokey` trail,
 `med_explosion`, `missile6.aud`. Proposal: a slimmer `sgmissile.png` (8 facings, white body, green
 fin band), a short blue-white exhaust via `TrailImage` on a 2-frame sheet, keep `med_explosion`.
-Cost: S. Kind: generator + YAML.
+Cost: S. Kind: generator + YAML. Shipped with 32 facings rather than 8 (the stock DRAGON's count;
+`rotated_frames` makes the extra facings free).
 
-**B5. `drone-uplink` / `drone-uplink-degraded` change the drones' output with no visual cue.**
+**B5. [shipped, issue #120] `drone-uplink` / `drone-uplink-degraded` change the drones' output with no visual cue.**
 Now: the conditions switch `Armament`s in `aircraft.yaml`; nothing on screen changes. The body sheets
 are `rotated_frames()` output, so an overlay would drift across facings (`CLAUDE.md` art rule 13).
 Proposal: a `WithDecoration` status pip (selection-independent, 5×5, green = uplinked, amber =
 degraded) anchored `Top`, drawn from a new `sgpips.png`; decorations are screen-space and don't go
 through `BodyOrientation`, so rule 13 doesn't bite. Cost: S. Kind: generator + YAML. Verify:
 `--check-yaml`'s condition-wiring report (negative control: name an ungranted condition).
+Shipped with a third, red `offline` pip for the state neither condition covers (power Critical, the
+armament disabled) - that is the one a player most needs to see.
 
-**B6. Shot-down drones fall as their intact sprite and burn.**
+**B6. [shipped, issue #120] Shot-down drones fall as their intact sprite and burn.**
 Now: `SGDRO.Husk`/`SGDRS.Husk` render the live sheets; `UnitExplodeHeli` is a napalm effect; `SGHAU`'s
 husks carry `^Husk`'s `fire` overlay. Proposal: a 4-frame tumbling husk per drone (rotors stopped,
 one arm bent — `rotated_frames` of a single damaged drawing is correct here because a falling airframe
@@ -191,8 +202,12 @@ one arm bent — `rotated_frames` of a single damaged drawing is correct here be
 `docs/ART_DIRECTION.md` on whether *wreckage* may burn in a mod with no fire weapons (the Hauler husk
 and `BuildingExplode`'s `building_napalm` are the same question). Cost: S–M. Kind: generator + YAML +
 a one-line design decision.
+Shipped: the decision (owner's call) is **electrical wrecks don't burn, buildings may** - see
+`docs/ART_DIRECTION.md`. The husks are 32-facing sheets of one damaged drawing rather than a 4-frame
+tumble: `FallsToEarth` spins the facing on the way down, which is the tumble. The Hauler husk's `fire`
+overlay is its own smoke plume now; `BuildingExplode` is untouched.
 
-**B7. The core roster is still stock Red Alert sprites — the Phase 7 unit pass, scoped.**
+**B7. [tier 1 taken up as issue #121] The core roster is still stock Red Alert sprites — the Phase 7 unit pass, scoped.**
 Now: every buildable infantry, vehicle, aircraft and ship except the drones, the Hauler and the
 Disruptor Trooper is a stock `.shp`. Proposal: do not start with "all units"; start with the three
 actors on screen in every match of either faction, then the tanks, then stop and playtest:
@@ -213,11 +228,13 @@ drawing the second unit. Cost: L (S–M per unit). Kind: generator, with an arti
 alternative for the infantry. Verify: `--check-missing-sprites` with the negative control, composited
 sheets, and the first live match with the new MCV.
 
-**B8. Infantry death and crush effects.**
+**B8. [shipped, issue #120] Infantry death and crush effects.**
 Now: `DISR` (and every stock soldier) use `electro.tem` for the electric death, `corpse1.tem` when
 crushed, stock parachute. Fine for now; a Sungrid "discharge" death for units killed by arc weapons
 (a 6-frame white-green flicker rather than the Tesla-blue skeleton) is the one worth doing once B3 and
 B7 exist. Cost: S. Kind: generator.
+Shipped: `sgdischarge.png`, 6 flicker frames played twice and 8 collapse-and-dissolve frames, in every
+infantryman's `die6` (19 sequence blocks, the Disruptor Trooper's included); `die-crushed` stays stock.
 
 ## C. Terrain and world
 

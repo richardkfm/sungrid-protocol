@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Original weapon sounds for the two arc-discharge weapons (docs/BACKLOG.md
 issue #110): `arcfire.wav` for the Arc Turret's ArcDischarge and `disrfire.wav`
-for the Disruptor Trooper's Disruptor.
+for the Disruptor Trooper's Disruptor -- and, since issue #120, `sgpulse.wav` /
+`sgpulsehit.wav` for the Grid Defense Turret's GridPulseCannon report and impact.
 
 Why these exist: issue #14 turned the Flame Tower / Flame Infantry into the
 Arc Turret / Disruptor Trooper by swapping the weapons, but the stock flame
@@ -207,6 +208,58 @@ def disruptor_fire():
     return fade_ends(normalise(mix, 0.8))
 
 
+def grid_pulse_fire():
+    """GridPulseCannon (issue #120): the Grid Defense Turret's report, ~0.3 s.
+    A capacitor bank dumping into the emitter: an instantaneous click, a short
+    falling chirp (the coil ringing down), a brief crackle, a low thump for
+    weight. Shorter and cleaner than the Arc Turret's crack -- the station
+    fires every 30 ticks, so the sound has to be out of the way before the
+    next one."""
+    rng = np.random.default_rng(120)
+    n = int(0.3 * SR)
+    t = np.arange(n) / SR
+
+    click_n = int(0.0025 * SR)
+    click = np.zeros(n)
+    click[:click_n] = rng.normal(0, 1, click_n) * np.linspace(1, 0.2, click_n)
+    click = bandpass(click, 800, 11000)
+
+    # Chirp: 1900 -> 420 Hz over 70 ms, with a second harmonic, then gone.
+    chirp_n = int(0.07 * SR)
+    f = np.geomspace(1900, 420, chirp_n)
+    phase = 2 * np.pi * np.cumsum(f) / SR
+    chirp = np.zeros(n)
+    chirp[:chirp_n] = (np.sin(phase) + 0.35 * np.sin(2 * phase)) * np.linspace(1, 0.15, chirp_n)
+
+    fry = bandpass(crackle(rng, n, rate_start=1800, rate_end=150), 1500, 8000) * exp_decay(n, 0.06)
+    hum = bandpass(buzz(n, 160, 110, harmonics=8, jitter=0.02, rng=rng), 80, 2000) * exp_decay(n, 0.05)
+    thump = np.sin(2 * np.pi * 66 * t) * exp_decay(n, 0.035)
+
+    mix = click * 0.8 + chirp * 0.7 + fry * 0.5 + hum * 0.35 + thump * 0.55
+    return normalise(fade_ends(mix), 0.85)
+
+
+def grid_pulse_hit():
+    """GridPulseCannon's impact (issue #120), ~0.22 s: the charge earthing on
+    whatever it hit -- a dense crackle burst with a dull thud under it and a
+    hiss that is gone almost at once. Replaces ^Cannon's kaboom12.aud, which
+    is a shell detonation."""
+    rng = np.random.default_rng(1201)
+    n = int(0.22 * SR)
+    t = np.arange(n) / SR
+
+    burst = bandpass(crackle(rng, n, rate_start=3200, rate_end=200, grain_ms=(1.0, 4.0)),
+                     1400, 9000) * exp_decay(n, 0.045)
+    hiss = bandpass(rng.normal(0, 1, n), 3000, 10000) * exp_decay(n, 0.03)
+    hum = bandpass(buzz(n, 190, 120, harmonics=6, jitter=0.03, rng=rng), 90, 1500) * exp_decay(n, 0.06)
+    thud = np.sin(2 * np.pi * 84 * t) * exp_decay(n, 0.03)
+
+    mix = burst * 0.8 + hiss * 0.3 + hum * 0.3 + thud * 0.5
+    return normalise(fade_ends(mix), 0.8)
+
+
 if __name__ == "__main__":
     save_wav(arc_turret_fire(), os.path.join(HERE, "arcfire.wav"))
     save_wav(disruptor_fire(), os.path.join(HERE, "disrfire.wav"))
+    save_wav(grid_pulse_fire(), os.path.join(HERE, "sgpulse.wav"))
+    save_wav(grid_pulse_hit(), os.path.join(HERE, "sgpulsehit.wav"))

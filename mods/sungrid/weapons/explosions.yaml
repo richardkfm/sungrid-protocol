@@ -69,6 +69,15 @@ UnitExplodeHeli:
 	Warhead@2Eff: CreateEffect
 		Explosions: napalm
 
+# A shot-down drone hitting the ground (issue #120): the same damage as any
+# falling aircraft, but sparks and dust rather than UnitExplodeHeli's napalm --
+# an electric airframe does not burn (docs/ART_DIRECTION.md, "Wreckage").
+DroneCrash:
+	Inherits: UnitExplode
+	Warhead@2Eff: CreateEffect
+		Explosions: drone_crash
+		ImpactSounds: kaboom25.aud
+
 VisualExplode:
 	Inherits: ^Explosion
 	-Warhead@1Dam:
