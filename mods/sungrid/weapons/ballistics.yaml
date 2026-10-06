@@ -92,22 +92,10 @@ GridPulseCannon:
 	Inherits: ^Cannon
 	ReloadDelay: 30
 	Range: 6c512
-	# Its own bolt, report, muzzle bloom and impact since issue #120: it used to
-	# fire ^Cannon's 120mm shell with turret1.aud (the machine-gun turret's) and
-	# leave a vehicle-hit fireball. Sounds come from bits/gen_arc_sounds.py.
-	Report: sgpulse.wav
-	Projectile: Bullet
-		Image: sgpulse
-		Shadow: False
-		ContrailLength: 4
-		ContrailStartWidth: 40
-		ContrailStartColor: 8BC34A
-		ContrailStartColorAlpha: 160
-	Warhead@2Smu: LeaveSmudge
-		SmudgeType: Scorch
-	Warhead@3Eff: CreateEffect
-		Explosions: pulse_hit
-		ImpactSounds: sgpulsehit.wav
+	# ^Cannon's 120mm shell, fireball and crater, with turret1.aud: issue #120
+	# gave it a bolt, bloom and electrical impact of its own, and issue #123 took
+	# them back -- the owner wants it to read as a heavy anti-tank gun.
+	Report: turret1.aud
 	Warhead@1Dam: SpreadDamage
 		Damage: 6000
 		Versus:

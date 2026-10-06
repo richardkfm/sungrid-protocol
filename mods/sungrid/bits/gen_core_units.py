@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The core roster, tier 1 (docs/BACKLOG.md issue #121, proposal B7 of
-docs/VISUAL_PROPOSALS.md): the three stock Red Alert sprites on screen in every
+docs/VISUAL_PROPOSALS.md): the stock Red Alert vehicles on screen in every
 match of either faction, replaced with Sungrid art on the conventions this
 file locks for every unit that follows.
 
@@ -9,7 +9,12 @@ file locks for every unit that follows.
         harvhalf.png / harvempty.png  the same 111-frame layout per fullness
         hhusk.png / hhusk2.png  laden / empty wreck, 32 facings each
         harvicon.png
-  E1    e1.png        the stock e1.shp layout, 378 frames (+ e1icon.png)
+
+The rifleman this file also drew (e1.png on e1.shp's 378-frame layout, on
+the Disruptor Trooper's figure) went back to the stock sprite in issue #123
+at the owner's call; the drawing is in git history at the #121/#122 commits
+if a later tier wants to pick it up again. The two cameos are scene renders
+(scene_cameo, issue #123), not the flat panel make_icon() gives a building.
 
 Every sheet mirrors the stock .shp's frame order and count exactly, so the
 sequence YAML changes by Filename only - the same rule the Hauler Drone's
@@ -47,22 +52,16 @@ Writes the sheets next to this file (mods/sungrid/bits/).
 import math
 import os
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from gen_concept_art import (
-    SS, SD, PC, Mesh,
-    GREEN_PRIMARY, GREEN_ACCENT, PANEL_BLUEBLACK, SUN_GOLD,
-    LEGACY_GRAY, LEGACY_GRAY_DARK, RUST, DAMAGE_SCORCH, POLE_DARK, CONCRETE,
-    PALE_STEEL, STEEL, AMBER, LAMP_OFF,
-    lit, dim, mix,
-    _mesh_render, render_shadow_mask, indexed_strip, sheet_of_indexed,
-    save_pngsheet, make_icon, make_icon_from_motif, indexed_to_rgba,
+    SS, SD, Mesh,
+    GREEN_PRIMARY, PANEL_BLUEBLACK, SUN_GOLD,
+    LEGACY_GRAY, LEGACY_GRAY_DARK, RUST, DAMAGE_SCORCH, CONCRETE, PAD_TOP,
+    PALE_STEEL, STEEL, AMBER, lit, dim, mix,
+    _mesh_render, render_shadow_mask, indexed_strip,
+    save_pngsheet, draw_icon_label,
     ICON_W, ICON_H,
-    DISR_W, DISR_H, DISR_CX, DISR_GROUND, DISR_TORSO_TOP, DISR_TORSO_BOT, DISR_HEAD_TOP, DISR_HIP,
-    DISR_AIM, DISR_ROD_READY, DISR_ROD_REST,
-    _disr_shadow, _disr_legs, _disr_torso,
-    A_LIT, A_MID, A_SHD, A_DRK, A_DEEP, H_LIT, H_MID, H_SHD, RIM, BOOT, GOLD, GOLD_LIT, GOLD_DRK,
-    SHADOW_IDX,
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -181,12 +180,6 @@ def _mcv_decals(sd, w, h):
     sd.rect([ox - 4.6, oy - 1.0, ox - 3.9, oy + 2.5], fill=RUST + (220,))
 
 
-def mcv_icon_draw(sd, w, h):
-    m = mcv_mesh()
-    m.draw_shadow(sd, w / 2, h * 0.66, 30.0, color=(0, 0, 0, 70))
-    m.draw(sd, w / 2, h * 0.66, 30.0)
-
-
 # ---------------------------------------------------------------------------
 # HARV: the Ore Truck - a tracked collector with a front intake drum, a
 # covered conveyor and an open rear hopper whose heap is the fullness.
@@ -298,205 +291,56 @@ def harv_sheet(fullness):
     return bodies, shadows
 
 
-def harv_icon_draw(sd, w, h):
-    m = harv_mesh("full")
-    m.draw_shadow(sd, w / 2, h * 0.66, 35.0, color=(0, 0, 0, 70))
-    m.draw(sd, w / 2, h * 0.66, 35.0)
-
-
 # ---------------------------------------------------------------------------
-# E1: the rifleman, on the Disruptor Trooper's figure.
+# Cameos (issue #123): the vehicle at three-quarter view in a scene -- a sky
+# ramp over a horizon haze, a ground plane in the terrain green with a lit
+# verge and its cast shadow -- instead of on the bare blue-black panel the
+# make_icon() fallback gives a building. The owner read that panel as bland
+# beside the photographic cameos; this is the same tonal range those have
+# (dark sky, lit subject, dark foot) without pretending to be a photograph.
 # ---------------------------------------------------------------------------
 
-E1_W, E1_H = DISR_W, DISR_H
-E1_SHOOT_FRAMES = 8
-E1_BLANK = 35               # frames 342-376 of e1.shp are not referenced by any sequence
+SKY_TOP = dim(PANEL_BLUEBLACK, 0.2)
+SKY_HAZE = (0xB4, 0xBE, 0xA6)                 # warm grey-green haze at the horizon
+GROUND_FAR = (0x4A, 0x6A, 0x42)
+GROUND_NEAR = (0x2C, 0x46, 0x2C)
+VERGE = (0x7C, 0x96, 0x58)
 
 
-def _e1_head(c, facing, cx=DISR_CX, top=DISR_HEAD_TOP, turn=0.0):
-    """Plain helmet: lit crown, a dark visor strip on the facings that show
-    the face, no gold - the trooper's visor is his, not the army's."""
-    hx = cx + turn
-    c.hline(hx - 1, hx + 1, top, H_LIT)
-    c.set(hx + 1, top, H_MID)
-    c.hline(hx - 1, hx + 1, top + 1, H_MID)
-    c.set(hx + 1, top + 1, H_SHD)
-    c.hline(hx - 1, hx + 1, top + 2, H_SHD)
-    c.set(hx, top + 2, H_MID)
-    if facing in (3, 4, 5):
-        c.hline(hx - 1, hx, top + 1, RIM)
-    elif facing == 2:
-        c.set(hx - 1, top + 1, RIM)
-    elif facing == 6:
-        c.set(hx + 1, top + 1, RIM)
-    else:
-        c.set(hx, top + 1, H_LIT)
-
-
-def _e1_rifle(c, facing, pose, cx, torso_top, flash=0):
-    """A carbine on the trooper's per-facing weapon geometry: dark barrel,
-    lit top edge at the grip, a white-gold muzzle flash when firing."""
-    x0, y0, x1, y1 = (DISR_ROD_READY if pose in ("ready", "fire") else DISR_ROD_REST)[facing]
-    gx, gy = cx + x0, torso_top + y0
-    bx, by = cx + x1, torso_top + y1
-    c.ray(gx, gy, bx, by, H_SHD)
-    c.set(gx, gy, H_MID)
-    c.set(bx, by, H_LIT)
-    if flash:
-        ang = math.atan2(by - gy, bx - gx)
-        fx, fy = bx + round(math.cos(ang)), by + round(math.sin(ang))
-        c.set(fx, fy, 15)
-        if flash > 1:
-            c.set(fx + round(math.cos(ang)), fy + round(math.sin(ang)), GOLD_LIT)
-            c.set(fx - round(math.sin(ang)), fy + round(math.cos(ang)), GOLD)
-
-
-def e1_upright(facing, pose="rest", phase=None, flash=0, turn=0.0, dy=0, ground=DISR_GROUND, shadow=True):
-    c = PC(E1_W, E1_H)
-    cx = DISR_CX
-    if shadow:
-        _disr_shadow(c, cx, ground)
-    torso_top, torso_bot, head_top = DISR_TORSO_TOP + dy, DISR_TORSO_BOT + dy, DISR_HEAD_TOP + dy
-    away = facing in (0, 1, 7)
-    arm_swing = 0 if phase is None else (1 if math.sin(phase * 2 * math.pi) > 0 else -1)
-    if away:
-        _e1_rifle(c, facing, pose, cx, torso_top, flash)
-    _disr_legs(c, facing, phase, cx, ground)
-    _disr_torso(c, facing, cx, torso_top, torso_bot, 3, arm_swing)   # pulse 3: pips dark
-    _e1_head(c, facing, cx, head_top, turn)
-    if not away:
-        _e1_rifle(c, facing, pose, cx, torso_top, flash)
-    return c
-
-
-def e1_prone(facing, phase=None, shoot=None):
-    c = PC(E1_W, E1_H)
-    cx, ground = DISR_CX, DISR_GROUND
-    _disr_shadow(c, cx, ground + 1, flat=True)
-    ax, ay = DISR_AIM[facing]
-    ox, oy = cx, ground - 1
-    crawl = 0.0 if phase is None else math.sin(phase * 2 * math.pi)
-
-    def at(t, lateral=0.0):
-        return (ox + ax * t - ay * lateral * 1.2, oy + ay * t * 0.55 + ax * lateral * 0.6)
-
-    for s in (-1, 1):
-        lx, ly = at(-3.4 - 0.6 * s * crawl, 0.8 * s)
-        c.blob(lx, ly, 1.1, 1.0, A_SHD if s < 0 else A_DRK)
-        c.set(lx, ly + 1, BOOT)
-    for t, r, idx in ((-1.9, 1.4, A_SHD), (-0.2, 1.8, A_MID), (1.5, 1.5, A_LIT)):
-        bx, by = at(t)
-        c.blob(bx, by, r, r * 0.85, idx)
-    hx, hy = at(3.2)
-    c.blob(hx, hy, 1.5, 1.3, H_MID)
-    c.set(hx - 1, hy - 1, H_LIT)
-    c.set(hx + 1, hy + 1, H_SHD)
-    gx, gy = at(2.0, 1.0)
-    tx, ty = at(5.2, 0.8)
-    c.ray(gx, gy, tx, ty, H_SHD)
-    c.set(tx, ty, H_LIT)
-    if shoot is not None and shoot in (1, 2):
-        fx, fy = at(6.3, 0.8)
-        c.set(round(fx), round(fy), 15)
-        if shoot == 1:
-            fx2, fy2 = at(7.2, 0.8)
-            c.set(round(fx2), round(fy2), GOLD_LIT)
-    return c
-
-
-def _e1_dying(t, dir_sign, keep=1.0):
-    c = PC(E1_W, E1_H)
-    cx, ground = DISR_CX, DISR_GROUND
-    ease = t * t * (3 - 2 * t)
-    _disr_shadow(c, cx, ground, wide=round(3 * ease * max(0.0, keep * 2 - 1)), flat=ease > 0.65 and keep > 0.5)
-    theta = math.radians(90 * (1 - ease))
-    hip_x = cx + dir_sign * 2.6 * ease
-    hip_y = ground - 3.0 * (1 - ease) - 0.5
-    dx, dy = dir_sign * math.cos(theta), -math.sin(theta)
-    for s in (-1, 1):
-        lx = hip_x - dir_sign * 2.0 * ease + s * 1.1
-        ly = min(ground - 0.5, hip_y + 2.6 * (1 - ease) + 1.2 * ease)
-        c.blob(lx, ly, 1.1, 1.0, A_SHD)
-        c.set(lx, min(ground, ly + 1.2), BOOT)
-    for d, r, idx in ((2.0, 1.6, A_MID), (4.0, 1.5, A_MID), (5.6, 1.3, A_LIT)):
-        c.blob(hip_x + dx * d, hip_y + dy * d, r, r * 0.85, idx)
-    hx, hy = hip_x + dx * 7.3, hip_y + dy * 7.3
-    c.blob(hx, hy, 1.5, 1.3, H_MID)
-    c.set(hx - 1, hy - 1, H_LIT)
-    c.set(hx + 1, hy + 1, H_SHD)
-    if ease < 0.5:
-        c.ray(hip_x + dx * 4, hip_y + dy * 4 + 1, hip_x + dir_sign * 5, ground - 1, H_SHD)
-    else:
-        c.hline(hip_x + dir_sign * 3, hip_x + dir_sign * 6, ground - 1, H_SHD)
-    if keep < 1.0:
-        c.dissolve(keep)
-    return c
-
-
-def _e1_die_frames(n, dir_sign, dissolve_from=None):
-    out = []
-    for i in range(n):
-        t = i / max(1, n - 1)
-        keep = 1.0
-        if dissolve_from is not None and t > dissolve_from:
-            keep = 1.0 - (t - dissolve_from) / (1.0 - dissolve_from)
-        out.append(_e1_dying(t, dir_sign, keep=keep))
-    return out
-
-
-def e1_parachute():
-    ground = 21
-    c = e1_upright(4, "rest", dy=8, ground=ground, shadow=False)
-    cx = DISR_CX
-    c.hline(cx - 3, cx + 3, 1, H_LIT)
-    c.hline(cx - 5, cx + 5, 2, H_MID)
-    c.hline(cx - 6, cx + 6, 3, H_SHD)
-    c.set(cx - 5, 2, H_LIT)
-    c.set(cx - 6, 4, H_SHD)
-    c.set(cx + 6, 4, H_SHD)
-    c.ray(cx - 5, 4, cx - 1, 8, H_MID)
-    c.ray(cx + 5, 4, cx + 1, 8, H_MID)
-    return c
-
-
-def _e1_shoot(facing, p):
-    flash = 2 if p == 1 else 1 if p == 2 else 0
-    return e1_upright(facing, "fire", flash=flash, dy=-1 if p == 1 else 0)
-
-
-def e1_frames():
-    """The stock e1.shp layout, frame for frame (378 frames)."""
-    frames = []
-    for pose in ("rest", "ready"):                                   # 0-15 stand, stand2
-        frames += [e1_upright(f, pose) for f in range(8)]
-    for f in range(8):                                               # 16-63 run
-        for p in range(6):
-            frames.append(e1_upright(f, "ready", phase=p / 6, dy=-1 if p % 3 == 1 else 0))
-    for f in range(8):                                               # 64-127 shoot
-        frames += [_e1_shoot(f, p) for p in range(E1_SHOOT_FRAMES)]
-    for f in range(8):                                               # 128-143 liedown
-        frames += [e1_upright(f, "ready", dy=2), e1_prone(f)]
-    for f in range(8):                                               # 144-175 prone-run
-        frames += [e1_prone(f, phase=p / 4) for p in range(4)]
-    for f in range(8):                                               # 176-191 standup
-        frames += [e1_prone(f), e1_upright(f, "ready", dy=2)]
-    for f in range(8):                                               # 192-255 prone-shoot
-        frames += [e1_prone(f, shoot=p) for p in range(8)]
-    # 256-271 idle1: a look left and right; 272-287 idle2: the rifle checked.
-    for i in range(16):
-        turn = (0, 0, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0)[i]
-        frames.append(e1_upright(3 if turn < 0 else 5 if turn > 0 else 4, "rest"))
-    for i in range(16):
-        frames.append(e1_upright(4, "ready" if 3 <= i < 13 else "rest"))
-    frames += _e1_die_frames(8, 1)                                   # 288 die1
-    frames += _e1_die_frames(8, -1)                                  # 296 die2
-    frames += _e1_die_frames(8, 1, dissolve_from=0.6)                # 304 die3
-    frames += _e1_die_frames(12, -1, dissolve_from=0.5)              # 312 die4
-    frames += _e1_die_frames(18, 1, dissolve_from=0.45)              # 324 die5
-    frames += [PC(E1_W, E1_H) for _ in range(E1_BLANK)]              # 342-376 unused
-    frames.append(e1_parachute())                                    # 377
-    assert len(frames) == 378, len(frames)
-    return frames
+def scene_cameo(mesh, label, yaw=30.0, lift=0.0, scale=1.75):
+    """Full-panel cameo: the scene fills the icon under the border and label."""
+    W, H = ICON_W, ICON_H
+    big = Image.new("RGBA", (W * SS, H * SS), SKY_TOP + (255,))
+    d = ImageDraw.Draw(big)
+    horizon = int(H * SS * 0.40)
+    for y in range(horizon):
+        t = y / max(1, horizon - 1)
+        d.line([(0, y), (W * SS, y)], fill=mix(SKY_TOP, SKY_HAZE, t * t) + (255,))
+    for y in range(horizon, H * SS):
+        t = (y - horizon) / max(1, H * SS - horizon)
+        d.line([(0, y), (W * SS, y)], fill=mix(GROUND_FAR, GROUND_NEAR, t) + (255,))
+    # A lit verge across the middle distance, and the hard-standing the vehicle sits on.
+    d.rectangle([0, horizon, W * SS, horizon + 3 * SS], fill=VERGE + (255,))
+    d.polygon([(W * SS * 0.12, H * SS * 0.86), (W * SS * 0.42, H * SS * 0.60), (W * SS * 0.92, H * SS * 0.64),
+               (W * SS * 0.70, H * SS * 0.95)], fill=mix(GROUND_NEAR, PAD_TOP, 0.55) + (255,))
+    # The vehicle, rendered on its own canvas and scaled up, shadow first.
+    cw, ch = 56, 44
+    car = Image.new("RGBA", (cw * SS, ch * SS), (0, 0, 0, 0))
+    sd = SD(car)
+    mesh.draw_shadow(sd, cw / 2, ch * 0.66 + lift, yaw, color=(0, 0, 0, 110))
+    mesh.draw(sd, cw / 2, ch * 0.66 + lift, yaw)
+    bbox = car.getbbox()
+    car = car.crop(bbox)
+    car = car.resize((max(1, round(car.width * scale)), max(1, round(car.height * scale))), Image.LANCZOS)
+    big.alpha_composite(car, ((W * SS - car.width) // 2, int(H * SS * 0.84) - car.height))
+    icon = big.resize((W, H), Image.LANCZOS)
+    d = ImageDraw.Draw(icon)
+    d.rectangle([0, 0, W - 1, H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
+    d.line([(1, 1), (W - 2, 1)], fill=lit(LEGACY_GRAY, 0.05))
+    if label:
+        draw_icon_label(icon, label)
+        d.rectangle([0, 0, W - 1, H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
+    return icon
 
 
 # ---------------------------------------------------------------------------
@@ -507,7 +351,7 @@ def main():
     save_pngsheet(indexed_strip(bodies, shadows, MCV_W, MCV_H), "mcv.png", MCV_W, MCV_H, len(bodies), indexed=True)
     bodies, shadows = facing_frames(mcv_mesh, MCV_W, MCV_H, MCV_OY, decals=_mcv_decals, damaged=True)
     save_pngsheet(indexed_strip(bodies, shadows, MCV_W, MCV_H), "mcvhusk.png", MCV_W, MCV_H, len(bodies), indexed=True)
-    save_pngsheet(make_icon(mcv_icon_draw, 56, 44, label="MCV"), "mcvicon.png", ICON_W, ICON_H, 1)
+    save_pngsheet(scene_cameo(mcv_mesh(), "MCV", yaw=30.0, lift=1.0), "mcvicon.png", ICON_W, ICON_H, 1)
 
     # HARV: three fullness images on one layout, two husks, cameo.
     for fullness, filename in (("full", "harv.png"), ("half", "harvhalf.png"), ("empty", "harvempty.png")):
@@ -517,16 +361,8 @@ def main():
         bodies, shadows = facing_frames(harv_mesh, HARV_W, HARV_H, HARV_OY, decals=_harv_decals,
                                         fullness=fullness, damaged=True)
         save_pngsheet(indexed_strip(bodies, shadows, HARV_W, HARV_H), filename, HARV_W, HARV_H, len(bodies), indexed=True)
-    save_pngsheet(make_icon(harv_icon_draw, 56, 44, label="Ore Truck"), "harvicon.png", ICON_W, ICON_H, 1)
+    save_pngsheet(scene_cameo(harv_mesh("full"), "Ore Truck", yaw=35.0, lift=2.0), "harvicon.png", ICON_W, ICON_H, 1)
 
-    # E1: one self-contained sheet on the stock layout, cameo from the
-    # three-quarter ready frame like the Disruptor's.
-    frames = e1_frames()
-    save_pngsheet(sheet_of_indexed(frames, E1_W, E1_H), "e1.png", E1_W, E1_H, len(frames), indexed=True)
-    motif = indexed_to_rgba(e1_upright(5, "ready"))
-    motif = motif.crop(motif.getbbox())
-    motif = motif.resize((motif.width * SS, motif.height * SS), Image.NEAREST)
-    save_pngsheet(make_icon_from_motif(motif, label="Rifle Infantry"), "e1icon.png", ICON_W, ICON_H, 1)
     print("done")
 
 

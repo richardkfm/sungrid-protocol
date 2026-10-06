@@ -150,7 +150,7 @@ set in it. Cost: artist. Kind: artist. Everything in `gen_chrome.py` consumes th
 Phase 7 is the largest item in the roadmap and has no natural stopping point (`docs/ROADMAP.md`). These
 are ordered by **screen time**: how many seconds of every match a tester spends looking at the thing.
 
-**B2. [shipped, issue #120] Build-menu cameos of renamed stock units still say the old name.**
+**B2. [shipped, issue #120; withdrawn, issue #123] Build-menu cameos of renamed stock units still say the old name.**
 Now: stock RA cameos bake the actor name into the pixels (issue #44). `V2RL` is "Surge Rocket
 Launcher" but its cameo (`v2rlicon.shp`) reads V2 ROCKET; `QTNK` "Tremor Tank" reads MAD TANK; `PROC`
 "Materials Refinery" reads ORE REFINERY; `TENT`/`BARR` "Consortium/Assembly Barracks", `ATEK`/`STEK`
@@ -165,8 +165,11 @@ Shipped: `TENT`/`BARR`/`ATEK`/`STEK` are photo crops of the hero scene's crew mo
 Zarya tower, labelled BARRACKS / TECH CENTER like the stock cameos (a player only sees their own
 faction's); `V2RL`/`QTNK`/`PROC` are programmatic `Mesh` solids in `gen_unit_effects.py`, **tagged for
 a designer or a fourth source render** - the scenes hold no rocket launcher, seismic tank or refinery.
+Withdrawn (issue #123): the owner's rule is that a cameo changes only when its actor's in-world art does,
+so all seven are back on their stock `.shp` cameos, old names included. This entry reopens with the
+actor: when a renamed stock unit or building gets Sungrid art, its cameo comes with it.
 
-**B3. [shipped, issue #120] The Grid Defense Turret fires a 120mm tank shell with a tank's report.**
+**B3. [shipped, issue #120; withdrawn, issue #123] The Grid Defense Turret fires a 120mm tank shell with a tank's report.**
 Now: `GridPulseCannon` inherits `^Cannon` (`120MM` shell sprite, `small_explosion`, `turret1.aud`);
 its muzzle flash is stock `samfire.shp`. The station was rebuilt twice (issues #112/#113) and still
 sounds and shoots like a Soviet turret.
@@ -178,6 +181,9 @@ Kind: generator + YAML. Verify: `--check-missing-sprites`; the sheet layout rule
 `CLAUDE.md` art rule 17.
 Shipped as proposed, with a three-frame bloom rather than two and a short green contrail on the bolt;
 `sgpulse.wav` / `sgpulsehit.wav` from `gen_arc_sounds.py`, the impact leaves a Scorch smudge.
+Withdrawn (issue #123): the owner found the turret read better as a heavy anti-tank gun with the shell, the
+fireball and the cannon report, so all of it is back to stock; the numbers never changed either way. The art
+(`issue120-unit-effects.png`) stays in the review render for the record.
 
 **B4. [shipped, issue #120] Drone rockets are the stock `DRAGON` missile with a stock smoke trail.**
 Now: `DroneRocket`/`.Strike` in `weapons/missiles.yaml` use the stock missile sprite, `smokey` trail,
@@ -209,7 +215,7 @@ Shipped: the decision (owner's call) is **electrical wrecks don't burn, building
 tumble: `FallsToEarth` spins the facing on the way down, which is the tumble. The Hauler husk's `fire`
 overlay is its own smoke plume now; `BuildingExplode` is untouched.
 
-**B7. [tier 1 shipped, issue #121; tiers 2–3 open] The core roster is still stock Red Alert sprites — the Phase 7 unit pass, scoped.**
+**B7. [tier 1 shipped, issue #121, rifleman withdrawn in #123; tiers 2–3 open] The core roster is still stock Red Alert sprites — the Phase 7 unit pass, scoped.**
 Now: every buildable infantry, vehicle, aircraft and ship except the drones, the Hauler and the
 Disruptor Trooper is a stock `.shp`. Proposal: do not start with "all units"; start with the three
 actors on screen in every match of either faction, then the tanks, then stop and playtest:
@@ -234,6 +240,9 @@ yaws (plus the Truck's harvest/dock/dock-loop frames and all three fullness imag
 husks and cameos) and draws the rifleman on the Disruptor Trooper's native-pixel figure, on the stock
 sheets' exact frame layouts so only Filenames changed. The conventions are in `CLAUDE.md` art rule 24.
 Not seen live. Tier 2 (1TNK–4TNK) and tier 3 (JEEP, APC, ARTY/V2RL) are the next picks.
+Issue #123: the rifleman went back to stock `e1.shp` at the owner's call after a live look (the drawing
+stays in git history at the #121 commit); the MCV and the Ore Truck stay, and their cameos are now scene
+renders (`scene_cameo`: sky, horizon, ground plane, cast shadow) instead of the flat panel.
 
 **B8. [shipped, issue #120] Infantry death and crush effects.**
 Now: `DISR` (and every stock soldier) use `electro.tem` for the electric death, `corpse1.tem` when
@@ -281,6 +290,8 @@ Seed Vault — as `Mesh` solids. Cost: M. Kind: generator + fluent.
 Shipped: the Legacy Derrick keeps `oilb.shp` and renders through `PlayerColorPalette@LEGACY`, a rust-shifted copy
 of the player palette (`bits/sungrid-legacy.pal`); the Field Clinic and the Seed Vault are solids on the stock
 frame layouts, so their sequences changed by Filename only. The village houses stay stock.
+Issue #123 dropped the derrick's palette again: in a live temperate match it read as the desert derrick, not
+as old iron. The Legacy Derrick keeps its name on the stock colours.
 
 **C5. [checked, issue #122] Ore and Gem fields against green ground.**
 Now: Ore kept its gold glint in the palette reskin (issue #18) and reads well; Gems were not checked.

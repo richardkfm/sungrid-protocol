@@ -4361,3 +4361,62 @@ map-by-map placement job, not a pass.
 desktop session's.
 
 ---
+
+### 123. Four reversals after a live look: the rifleman, the renamed-actor cameos and the turret's shell back to stock, the derrick palette dropped; scene cameos for the MCV and the Ore Truck
+
+**Raised as:** "please bring back the original infantry unit sprites", "the barracks cameo should only be changed
+when the actual building is also changed", "ore miner cameo: background looks bland. leave it original or come up
+with a rendering", and a screenshot of a temperate match where the derricks "seem to be the desert version".
+Owner's calls, asked before starting: the rifleman only (the Disruptor Trooper has no stock original and the
+discharge death stays); all seven of issue #120's renamed-actor cameos, not just the Barracks; a scene render for
+both #121 vehicle cameos rather than the stock `.shp`.
+
+**Rifleman.** `sequences/infantry.yaml`'s `e1` is back on `e1.shp`; `e1.png` and the unwired `e1icon.png` are
+deleted and the whole E1 section (figure, rifle, shoot, prone, die, parachute, the 378-frame sheet) is removed
+from `gen_core_units.py`, so regenerating cannot bring the file back. The drawing is in git history at the #121
+commit for a later tier. Art rule 24's infantry half is now a recorded convention without a shipped instance.
+
+**Cameos.** The rule the owner stated - *a cameo changes only when its actor's in-world art does* - is now art
+rule 1's last sentence. `TENT`/`BARR`/`ATEK`/`STEK`/`V2RL`/`QTNK` point back at their stock `.shp` cameos (`PROC`'s
+`procicon.png` was never wired; deleted with the rest), the four crops are gone from `gen_photo_cameos.py`'s
+`CROPS` and the three meshes and `mesh_cameo` from `gen_unit_effects.py`. Proposal B2 is marked withdrawn and
+reopens with each actor's own art pass.
+
+**Ore Truck and MCV cameos.** `scene_cameo()` in `gen_core_units.py` replaces the `make_icon` panel for the two
+vehicles: a sky ramp into a warm haze at the horizon, a lit verge, a ground plane in the terrain green with a
+hard-standing under the vehicle, the mesh at three-quarter view scaled 1.75x with its cast shadow, under the
+same border and label strip as every other cameo. It is the photographic cameos' tonal range (dark sky, lit
+subject, dark foot) without pretending to be a photograph.
+
+**Grid Defense Turret.** A fourth call in the same session: "the grid turret was better before as a heavy anti
+tank defense". Its numbers never changed in #120 (6000 damage, 30-tick reload, the same armour table); the shell,
+fireball and cannon report became a bolt, a flash-ring and a capacitor chirp, and that read as a lighter weapon.
+All of B3 is back to stock: `GridPulseCannon` is `^Cannon`'s 120mm shell with `turret1.aud`, `sgtur`'s `muzzle`
+is `samfire.shp` again, the `sgpulse` image and the `pulse_hit` explosion are gone from `sequences/misc.yaml`,
+the three sheets and two sounds are deleted and their drawers removed from `gen_unit_effects.py` and
+`gen_arc_sounds.py` (`arcfire.wav` / `disrfire.wav` are byte-identical after the re-run).
+
+**Derrick.** The screenshot showed what the `--check-yaml` pass could not: the 45% rust pull on every palette
+entry turned the whole `oilb.shp` tan, i.e. the desert tileset's look, on temperate ground. Rather than tune a
+palette blind, `RenderSprites: PlayerPalette: legacy` is gone from `OILB`, `PaletteFromFile@legacy` and
+`PlayerColorPalette@LEGACY` from `rules/palettes.yaml`, `sungrid-legacy.pal` and its writer from
+`gen_world_scenery.py`. The Legacy Derrick keeps its name on the stock colours. If a rust look is wanted later,
+the fix is a shift on the derrick's own grey/brown entries only, checked live, not a whole-palette pull.
+
+**Verified:** `--check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` reports nothing new (its
+remaining lines are stock content files absent in this environment); `make check-scripts` passes; re-running all
+six generators changes only `harvicon.png` and `mcvicon.png`. `docs/concept-art/issue123-cameos.png` shows the
+two new cameos beside photographic ones. **Not verified live:** the cameos in the sidebar.
+
+**Files:** `mods/sungrid/bits/{gen_core_units,gen_unit_effects,gen_photo_cameos,gen_world_scenery,gen_arc_sounds}.py`,
+`mods/sungrid/bits/{harvicon,mcvicon}.png` (regenerated), deleted `mods/sungrid/bits/{e1,e1icon,tenticon,barricon,
+atekicon,stekicon,v2rlicon,qtnkicon,procicon,sgpulse,sgturfire,sgpulsehit}.png`, `{sgpulse,sgpulsehit}.wav` and
+`sungrid-legacy.pal`, `mods/sungrid/sequences/{infantry,structures,vehicles,misc}.yaml`,
+`mods/sungrid/weapons/ballistics.yaml`, `mods/sungrid/rules/{civilian,palettes}.yaml`, `docs/concept-art/issue123-cameos.png`,
+`docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 7 (unit identity) and 6 (world) - corrections from the first live look at #120-#122.
+
+**Definition of done:** the four reversals and the two cameos as above - met.
+
+---

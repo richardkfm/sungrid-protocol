@@ -65,10 +65,6 @@ CROPS = {
     #     (docs/BACKLOG.md issue #120, proposal B2): the two Barracks and the
     #     two Tech Centers have subjects in the hero scene; V2RL/QTNK/PROC do
     #     not and get programmatic cameos from gen_unit_effects.py instead.
-    "tent":   ("grid-scene.png", (195, 735, 475, 905)),    # Consortium Barracks: the SECTOR 7 crew modules
-    "barr":   ("grid-scene.png", (440, 768, 760, 930)),    # Assembly Barracks: the GRID ONLINE module
-    "atek":   ("grid-scene.png", (590, 150, 880, 560)),    # Consortium Tech Center: the Novaya Zarya tower
-    "stek":   ("grid-scene.png", (540, 520, 920, 780)),    # Assembly Tech Center: the tower's plinth
 }
 
 # Shorter baked cameo labels where the full in-game name (ICON_LABELS, mirroring
@@ -88,10 +84,6 @@ LABEL_OVERRIDES = {
     # The renamed stock actors keep the stock cameos' generic wording: a player
     # only ever sees their own faction's Barracks / Tech Center in the build
     # menu, and "BARRACKS" at 8px beats "CONSORTIUM BARRACKS" at 5px.
-    "tent": "Barracks",
-    "barr": "Barracks",
-    "atek": "Tech Center",
-    "stek": "Tech Center",
 }
 
 

@@ -33,7 +33,9 @@ The detailed entries below track every issue through #116; this list maps them o
   cameos for the renamed stock units (issue #120); the first three units of the core roster as Sungrid art - the
   MCV, the Ore Truck and the rifleman (issue #121); scenery on the shellmap, Crossfire and Doubles, Scrap piles
   that read on every ground plus a Scrap field on the shellmap, and the Legacy Derrick, Field Clinic and Seed Vault
-  (issue #122).
+  (issue #122); after a first live look, the rifleman and the seven renamed-actor cameos back to stock, the
+  derrick back on stock colours, the Grid Defense Turret back on its tank shell, and scene cameos for the MCV
+  and the Ore Truck (issue #123).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -136,23 +138,29 @@ per-version record.
   placed by hand on the Desert Shellmap, Crossfire and Doubles. Scrap piles were redrawn so they read on green, snow
   and sand alike (lit plates spread over the tile, a green cable on every pile), and the shellmap has the first
   painted Scrap field, next to its eastern Recycling Depot. The Oil Derrick is the **Legacy Derrick** (same
-  structure, rust-shifted colours), the Hospital is the **Field Clinic** and the Containment Ruins are the **Seed
-  Vault**, both with new art; what they do is unchanged.
+  structure; its rust-shifted colours were dropped again in issue #123 after a live look showed them reading as
+  the desert derrick), the Hospital is the **Field Clinic** and the Containment Ruins are the **Seed Vault**, both
+  with new art; what they do is unchanged.
 
 ## Phase 7 — Unit & audio identity (first wave only)
 
 - Renamed three faction-general units away from 90s C&C vocabulary: V2 Rocket Launcher → **Surge Rocket Launcher**, MAD Tank → **Tremor Tank**, Spy Plane → **Recon Plane** (issue #27). Deliberately capped as a first wave; sub-faction special units were left alone as a larger creative decision.
 - The effects half of the unit pass (issue #120): the Grid Defense Turret fires a green-gold bolt with its own
-  report, bloom and scorching impact instead of a tank shell; drone rockets are a slim white rocket with a cold
+  report, bloom and scorching impact instead of a tank shell (**reversed in issue #123** - it reads better as a
+  heavy anti-tank gun, so the shell, fireball and cannon report are back; its stats never changed); drone rockets are a slim white rocket with a cold
   exhaust; each drone shows a lamp for its uplink state (green / amber / red for no power); shot-down drones fall as
   wrecks with the rotors stopped and hit the ground in sparks and dust, the Hauler's wreck smoulders instead of
   burning (electrical wrecks don't burn; buildings still do); soldiers killed by an arc weapon die in a white-green
   discharge; and the Surge Rocket Launcher, Tremor Tank, Materials Refinery, both Barracks and both Tech Centers
   have build-menu cameos that no longer say V2 ROCKET, MAD TANK, ORE REFINERY or the Allied/Soviet names.
+  **Reversed in issue #123:** those seven cameos are stock again - a cameo changes only when the unit or
+  building itself does, so they will follow their actors' own art passes.
 - The core roster, tier 1 (issue #121): the MCV (a flatbed carrying the folded Construction Yard), the Ore Truck
   (a tracked collector whose hopper heap shows how full it is, with harvest, dock and unload animations) and the
   rifleman (on the Disruptor Trooper's figure, with a carbine) are Sungrid art, with their wrecks and cameos. The
   tanks, Jeep, APC and artillery are next; voices, announcer and in-game music are **not started**.
+  **Issue #123:** the rifleman is back on the stock sprite; the MCV and Ore Truck stay, and their cameos now
+  show the vehicle in a scene (sky, ground, shadow) instead of on a flat panel.
 
 ## Art passes over the Sungrid-original roster
 

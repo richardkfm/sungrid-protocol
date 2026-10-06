@@ -494,10 +494,11 @@ sgtur: # WithSpriteBody draws the fixed emplacement pad; the weapon station on t
 		Filename: sgturstrained.png
 		Length: 4
 		Tick: 250
-	muzzle: # Bloom at the emitter (issue #120), replacing stock samfire.shp: 8 facings x 3.
-		Filename: sgturfire.png
-		Length: 3
+	muzzle:
+		Filename: samfire.shp
+		Length: 18
 		Facings: 8
+		Offset: -1,6
 	bib:
 		TilesetFilenames:
 			SNOW: mbSAM.sno
@@ -685,7 +686,7 @@ barr:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: barricon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: barricon.shp
 
 tent:
 	Defaults:
@@ -711,7 +712,7 @@ tent:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: tenticon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: tenticon.shp
 		TilesetFilenames:
 	fake-icon:
 		Filename: tenficon.shp
@@ -779,7 +780,7 @@ atek:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: atekicon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: atekicon.shp
 	fake-icon:
 		Filename: ateficon.shp
 
@@ -799,7 +800,7 @@ stek:
 			DESERT: bib2.des
 		Length: *
 	icon:
-		Filename: stekicon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: stekicon.shp
 
 weap:
 	Defaults:
