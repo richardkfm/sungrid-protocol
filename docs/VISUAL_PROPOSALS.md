@@ -34,7 +34,7 @@ facing, or a sprite that describes a mechanic the actor doesn't have.
 
 Issue #119 took A1, A2, A3, A5, A6, A7, A8 and A9 from section A below (each is marked
 `[shipped, issue #119]`; the full engineering detail is in `docs/BACKLOG.md`). A4 (the glyph
-atlas) is the one section-A item still open. Issue #120 took B2, B3, B4, B5, B6 and B8 from
+atlas) shipped as issue #124, so section A is closed. Issue #120 took B2, B3, B4, B5, B6 and B8 from
 section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV, HARV, E1), the
 owner's call, and that tier shipped as issue #121 - the later tiers (the tanks, then the raiders)
 stay open. Issue #122 took section C: C2, C3 and C4 are marked `[shipped, issue #122]`, C5 is
@@ -89,7 +89,7 @@ line being probed by Disruptor Troopers, the `CameraOvalMover` path over it. Kee
 of frame until B-series below replaces them. Cost: M. Kind: map + Lua. Verify: `--check-yaml` loads
 the map; `--check-scripts`; a screenshot under Xvfb (the shellmap renders there, issue #33).
 
-**A4. The glyph atlas is still stock RA pixel art.**
+**A4. [shipped, issue #124] The glyph atlas is still stock RA pixel art.**
 Now: `uibits/glyphs*.png` is the stock sheet except the two faction-flag plaques `gen_flags()` patches
 in: production/order/stance icons in stock grey with stock-yellow highlights, red cash/power/clock
 tooltip icons, the three Random "?" flags on stock blue/red/grey.
@@ -97,6 +97,10 @@ Proposal: extend `gen_flags()` into `gen_glyphs()`: remap the stock-yellow highl
 and the red alert icons to the locked amber, redraw the Random "?" plaques on the Consortium gold /
 Assembly green plaque style the faction slots already use. Pixel rects unchanged. Cost: S. Kind:
 generator. Verify: `chrome.yaml` regions untouched; diff the atlas (only the intended rows change).
+Shipped: `gen_glyphs()` recolours the stock yellow to sun gold (alert row, selected stance, admin crowns) and
+redraws the three Random plaques; the red cash / power / clock icons stay stock red, because
+`docs/ART_DIRECTION.md` keeps the alert colour language unchanged from stock - the guardrail wins over this
+proposal. Not seen live.
 
 **A5. [shipped, issue #119] The Grid Reserve HUD and standings are plain black boxes with hard-coded colours.**
 Now: `GRID_RESERVE_HUD` and `GRID_RESERVE_STANDINGS` sit on `ColorBlock 00000090`;

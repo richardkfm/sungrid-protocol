@@ -215,7 +215,7 @@ def emblem_consortium(size, accent=SUN_GOLD):
     Redone bolder than the first pass (docs/BACKLOG.md issue #52): the
     original thin-line wall + 16-tick metering ring turned to mush below
     ~32px, and this mark now also has to read at lobby-flag scale (15px
-    tall, see gen_flags below). Line weights are proportional with much
+    tall, see gen_glyphs below). Line weights are proportional with much
     higher floors, the wall is a solid filled band, and fine detail
     (metering ticks, the inner vault wall) only draws at sizes with the
     pixels to resolve it."""
@@ -284,7 +284,7 @@ def emblem_assembly(size, accent=GREEN_ACCENT):
 
     Redone bolder than the first pass (docs/BACKLOG.md issue #52): thin
     struts and dim node fills disappeared below ~32px, and this mark now
-    also has to read at lobby-flag scale (15px tall, see gen_flags below).
+    also has to read at lobby-flag scale (15px tall, see gen_glyphs below).
     Node fills are brighter, outlines/struts much heavier, and the weld
     rivet dots only draw at sizes that can resolve them."""
     s = size * SS
@@ -410,29 +410,50 @@ def wordmark_badge(size, scale=1):
 
 
 # --------------------------------------------------------------------------
-# glyphs.png faction-flag patch: the lobby/observer `flags` collection
-# (chrome.yaml) still ships the stock RA sheet, so The Consortium's logo slot
-# carried the stock Allied eagle and The Assembly's the Soviet
-# hammer-and-sickle — literal Cold War heraldry contradicting both factions'
-# documented identities (docs/BUILDINGS.md's infrastructure-philosophy axis,
-# docs/ART_DIRECTION.md). Replaced with plaques carrying the two faction
-# marks above (Citadel Seal / Swarm Rig), so the logo a player picks a side
-# by matches the badge their sidebar then shows.
+# glyphs.png patch: the glyph atlas (chrome.yaml `^Glyphs`: production,
+# order, stance and command icons, the cash/power/clock tooltip icons,
+# checkmarks, lobby bits, the `flags` collection) is the stock RA sheet,
+# patched in place by gen_glyphs() below rather than regenerated. Three
+# things are ours on it:
 #
-# Unlike everything else in this file, this PATCHES the existing glyphs
-# sheets in place rather than regenerating them: glyphs.png is otherwise
-# still stock content (cash/power icons, checkboxes, sub-faction flags...)
-# that is NOT being replaced here. Idempotent for the two regions it owns —
-# their pixels depend only on this script. Sub-faction slots are handled
-# below (FLAG_BORDER_SOVIET notes): western nation flags stay stock by
-# direct request, and the three slots whose displayed sub-faction no longer
-# matches the stock art (Greece / China / Iran) get corrected art.
+#  - The faction-logo slots. The Consortium's carried the stock Allied eagle
+#    and The Assembly's the Soviet hammer-and-sickle — literal Cold War
+#    heraldry contradicting both factions' documented identities
+#    (docs/BUILDINGS.md's infrastructure-philosophy axis,
+#    docs/ART_DIRECTION.md). Replaced with plaques carrying the two faction
+#    marks above (Citadel Seal / Swarm Rig), so the logo a player picks a
+#    side by matches the badge their sidebar then shows. The three Random
+#    slots (issue #124) are the same plaque with a question mark, on the
+#    faction accent for RandomAllies / RandomSoviet and a neutral grey for
+#    Random, instead of stock's blue / red / grey boxes.
+#  - The stock-yellow highlights (issue #124): the production tabs' alert
+#    row, the selected-stance row and the admin crowns are RA's brand yellow
+#    (255,192,0); they go to the locked SUN_GOLD. The red cash / power /
+#    clock "critical" icons stay stock red on purpose — docs/ART_DIRECTION.md
+#    keeps the RTS alert colour language unchanged.
+#  - Sub-faction slots (FLAG_BORDER_SOVIET notes below): western nation
+#    flags stay stock by direct request, and the slots whose displayed
+#    sub-faction no longer matches the stock art (Greece / China / Iran /
+#    USA) get corrected art.
+#
+# Idempotent for everything it owns: the plaque pixels depend only on this
+# script, the greece source region is never written, and the yellow remap
+# matches the stock hue at full saturation, which SUN_GOLD (s = 0.74) is
+# not, so a second run finds nothing to recolour. Every other glyph is
+# stock content that is NOT being replaced here.
 
 FLAG_W, FLAG_H = 30, 15
+NEUTRAL_ACCENT = (0x9A, 0xA6, 0xAE)   # the "either side" Random plaque's frame
 FLAG_REGIONS = {          # chrome.yaml `flags:` region origins, 1x units
     "allies": (226, 177, "consortium", SUN_GOLD),
     "soviet": (226, 193, "assembly", GREEN_ACCENT),
+    "RandomSoviet": (226, 209, "random", GREEN_ACCENT),
+    "RandomAllies": (226, 225, "random", SUN_GOLD),
+    "Random": (226, 241, "random", NEUTRAL_ACCENT),
 }
+GLYPH_ICON_W = 226        # the icon area; the flag column starts here, and its
+                          # flags have yellows of their own (Spain, China)
+STOCK_YELLOW_G = 192      # (255, 192, 0): the sheet's own highlight yellow
 
 # Sub-faction flag corrections. The western nation flags stay exactly as
 # stock (direct request), but three slots no longer match the sub-faction
@@ -528,6 +549,44 @@ def usa_flag(scale):
     return _framed_flag(scale, draw, FLAG_BORDER_ALLIED)
 
 
+def question_mark(size, accent, ss=4):
+    """The Random plaques' mark: a white question mark `size` px tall (hook,
+    stem, dot), supersampled like the emblems. `accent` is the plaque frame's
+    colour; the mark itself stays white, as stock's does, for legibility at
+    the 1x lobby size."""
+    S = size * ss
+    im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    w = max(ss, round(S * 0.2))             # stroke
+    cx = S * 0.5
+    r = S * 0.27                            # hook radius
+    cy = S * 0.07 + r
+    white = (255, 255, 255, 255)
+    d.arc((cx - r, cy - r, cx + r, cy + r), start=200, end=90, fill=white, width=w)
+    d.line((cx, cy + r - w / 2, cx, S * 0.66), fill=white, width=w)
+    dr = w * 0.62
+    d.ellipse((cx - dr, S * 0.86 - dr, cx + dr, S * 0.86 + dr), fill=white)
+    return im.resize((size, size), Image.LANCZOS)
+
+
+def regold_icons(sheet, scale):
+    """Recolour the stock-yellow highlights in the icon area to SUN_GOLD, in
+    place. Stock draws them in one hue at full saturation ((255, 192, 0) plus
+    a couple of lighter variants and anti-aliased edges that keep the hue at
+    partial alpha); each pixel keeps its alpha and its lightness offset from
+    the base yellow. The flag column is left alone."""
+    px = sheet.load()
+    n = 0
+    for y in range(sheet.height):
+        for x in range(GLYPH_ICON_W * scale):
+            r, g, b, a = px[x, y]
+            if a == 0 or r < 250 or b > 8 or g < 180 or g > 215:
+                continue
+            px[x, y] = lift(SUN_GOLD, g - STOCK_YELLOW_G) + (a,)
+            n += 1
+    return n
+
+
 def flag_plaque(scale, kind, accent):
     """One faction-logo plaque at FLAG_W x FLAG_H times `scale`: panel
     surface, soft accent frame, the faction mark centered."""
@@ -539,19 +598,24 @@ def flag_plaque(scale, kind, accent):
         d.line((0, y, w - 1, y), fill=mix(lift(PANEL, 6), lift(PANEL, -6), y / (h - 1)))
     d.rounded_rectangle((0, 0, w - 1, h - 1), radius=2 * scale,
                         outline=mix(accent, PANEL, 0.35), width=scale)
-    mark_fn = {"consortium": emblem_consortium, "assembly": emblem_assembly}[kind]
+    mark_fn = {"consortium": emblem_consortium, "assembly": emblem_assembly,
+               "random": question_mark}[kind]
     m = mark_fn((FLAG_H - 2) * scale, accent)
     im.alpha_composite(m, ((w - m.width) // 2, (h - m.height) // 2))
     return im
 
 
-def gen_flags():
+def gen_glyphs():
     # NB: glyphs-3x.png is a genuine 3x layout on an oversized 1024px canvas
     # (content occupies the 768px top-left; the rest is padding) — verified
-    # against the stock sheet's own flag positions, so patch at scale 3.
+    # against the stock sheet's own flag positions, so patch at scale 3. The
+    # 2x and 3x sheets are stock's own redrawn (anti-aliased) art, not
+    # upscales of the 1x one, which is why the recolour is a hue match per
+    # pixel rather than a lookup of exact stock colours.
     for name, scale in (("glyphs.png", 1), ("glyphs-2x.png", 2), ("glyphs-3x.png", 3)):
         path = f"{UIBITS}/{name}"
         sheet = Image.open(path).convert("RGBA")
+        regolded = regold_icons(sheet, scale)
         for x, y, kind, accent in FLAG_REGIONS.values():
             plaque = flag_plaque(scale, kind, accent)
             sheet.paste(plaque, (x * scale, y * scale))
@@ -569,7 +633,7 @@ def gen_flags():
         sheet.paste(iran_flag(scale), (226 * scale, 145 * scale))    # ukraine slot
         sheet.paste(usa_flag(scale), (226 * scale, 81 * scale))      # france slot
         sheet.save(path)
-        print(name, "flags patched", sheet.size)
+        print(name, "glyphs patched", sheet.size, f"{regolded} px regolded")
 
 
 # --------------------------------------------------------------------------
@@ -981,6 +1045,6 @@ if __name__ == "__main__":
     gen_loadscreen()
     gen_content_background()
     gen_icons()
-    gen_flags()
+    gen_glyphs()
     gen_app_icons()
     gen_macos_background()

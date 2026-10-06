@@ -35,7 +35,8 @@ The detailed entries below track every issue through #116; this list maps them o
   that read on every ground plus a Scrap field on the shellmap, and the Legacy Derrick, Field Clinic and Seed Vault
   (issue #122); after a first live look, the rifleman and the seven renamed-actor cameos back to stock, the
   derrick back on stock colours, the Grid Defense Turret back on its tank shell, and scene cameos for the MCV
-  and the Ore Truck (issue #123).
+  and the Ore Truck (issue #123); the sidebar's highlight icons in sun gold and the lobby's Random plaques in the
+  faction plaque style (issue #124).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
