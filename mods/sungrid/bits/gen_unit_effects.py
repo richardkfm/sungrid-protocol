@@ -30,10 +30,9 @@ What it writes, by proposal:
   B8  sgdischarge.png the discharge death every infantryman plays when an
                       arc weapon kills him, 14 frames, 20x26 (replaces the
                       Tesla-blue electro.tem skeleton in `die6`).
-  B2  v2rlicon.png, qtnkicon.png, procicon.png -- programmatic cameos for the
-                      three renamed stock actors the concept scenes have no
-                      subject for (the four that do are photographic, in
-                      gen_photo_cameos.py).
+  (B2's cameos for the renamed stock actors were withdrawn in issue #123:
+   a cameo changes only when its actor's in-world art does, so those seven
+   are back on their stock .shp cameos.)
 
 Palette notes. Projectiles, muzzle flashes and explosions render on the
 `effect` palette; it is the same temperat.pal file as `player` but is not
@@ -54,16 +53,14 @@ import os
 from PIL import Image
 
 from gen_concept_art import (
-    SS, SD, PC, Mesh,
-    PLAYER_PAL, _BODY_IDX, _d2, TRANSPARENT_IDX, SHADOW_IDX,
+    SS, SD, PC, PLAYER_PAL, _BODY_IDX, _d2, TRANSPARENT_IDX, SHADOW_IDX,
     GREEN_PRIMARY, GREEN_ACCENT, PANEL_BLUEBLACK, SUN_GOLD,
     LEGACY_GRAY, LEGACY_GRAY_DARK, RUST, DAMAGE_SCORCH, POLE_DARK, CONCRETE,
     PALE_STEEL, STEEL, AMBER,
     lit, dim, mix, sphere,
     rotated_frames, rotated_anim_frames, sheet_of, sheet_of_indexed, indexed_strip,
-    silhouette_shadow, save_pngsheet, make_icon, canvas,
+    silhouette_shadow, save_pngsheet, canvas,
     _drone_boom, DRONE_SPIN_FRAMES,
-    ICON_W, ICON_H,
     DISR_W, DISR_H, DISR_CX, DISR_GROUND,
 )
 
@@ -640,90 +637,6 @@ def discharge_frame(k):
 
 
 # ---------------------------------------------------------------------------
-# B2. Programmatic cameos for the renamed stock actors with no photo subject
-# ---------------------------------------------------------------------------
-
-CAMEO_W, CAMEO_H = 56, 44
-CAMEO_YAW = 30.0
-_TRACK = mix(LEGACY_GRAY_DARK, PANEL_BLUEBLACK, 0.4)
-_HULL = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.3)
-
-
-def v2rl_mesh():
-    """Surge Rocket Launcher: a six-wheel chassis with a cab, a launch rail
-    raised to forty degrees and one white rocket with a green band on it."""
-    m = Mesh()
-    m.box(-9, -5, 0, 9, 5, 3.2, _HULL, top=lit(_HULL, 0.2))
-    for x in (-6.5, 0.0, 6.5):
-        for y in (-5.8, 5.8):
-            m.prism(x, y, 0, 3.0, 1.9, _TRACK, sides=8)
-    m.box(5, -4.2, 3.2, 9, 4.2, 7.0, PALE_STEEL, top=lit(PALE_STEEL, 0.15))
-    m.box(5.2, -3.6, 5.4, 9.2, 3.6, 6.6, PANEL_BLUEBLACK, order=1, shadow=False)
-    # Rail pivot and the rail itself, rising toward the rear.
-    m.box(-4, -2, 3.2, -1, 2, 5.5, STEEL)
-    rail_a, rail_b = (-2.5, 0.0, 5.5), (-11.5, 0.0, 13.0)
-    m.strut(rail_a, rail_b, 0.55, STEEL)
-    # Rocket on the rail: white body, dark nose, green fin band.
-    m.strut((-3.0, 0.0, 6.9), (-11.0, 0.0, 13.7), 1.3, lit(PALE_STEEL, 0.2), cap=LEGACY_GRAY_DARK)
-    m.strut((-5.4, 0.0, 8.9), (-7.4, 0.0, 10.6), 1.45, GREEN_ACCENT, cap=GREEN_ACCENT)
-    # Owner band along the hull side.
-    m.box(-8.5, -5.1, 1.2, -2.5, -4.9, 2.2, SUN_GOLD, order=1, shadow=False, accent=True)
-    return m
-
-
-def qtnk_mesh():
-    """Tremor Tank: a low, wide tracked hull carrying a seismic hammer -- a
-    thick piston column on a crown bearing, with a broad foot plate hanging
-    just clear of the ground. No turret, no gun."""
-    m = Mesh()
-    for y in (-7.5, 7.5):
-        m.box(-10, y - 2.6, 0, 10, y + 2.6, 4.0, _TRACK, top=dim(_TRACK, 0.1))
-    m.box(-9, -5, 1.5, 9, 5, 6.5, _HULL, top=lit(_HULL, 0.18))
-    m.box(-9.2, -4.8, 4.2, -5.0, 4.8, 5.4, SUN_GOLD, order=1, shadow=False, accent=True)
-    m.prism(2.0, 0.0, 6.5, 8.0, 4.6, STEEL, sides=12, top=lit(STEEL, 0.2))
-    m.prism(2.0, 0.0, 8.0, 15.0, 2.6, PALE_STEEL, sides=10, top=lit(PALE_STEEL, 0.2))
-    m.prism(2.0, 0.0, 14.2, 16.2, 3.4, STEEL, sides=10)
-    # Foot plate, hung forward of the hull.
-    m.prism(2.0, -9.5, 1.0, 2.4, 4.0, STEEL, sides=10, top=lit(STEEL, 0.15))
-    m.strut((2.0, -3.0, 9.0), (2.0, -9.5, 2.4), 1.0, PALE_STEEL)
-    return m
-
-
-def proc_mesh():
-    """Materials Refinery: a sawtooth-roofed processing hall, two hopper
-    silos beside it and a conveyor ramp climbing into the hall -- what the
-    stock Ore Refinery became once the economy was recycling, not ore."""
-    m = Mesh()
-    m.box(-12, -8, 0, 4, 8, 7.0, mix(CONCRETE, PALE_STEEL, 0.35), top=lit(CONCRETE, 0.3))
-    for i in range(3):
-        x0 = -12 + i * 5.3
-        m.box(x0, -8, 7.0, x0 + 3.2, 8, 10.4, PALE_STEEL, top=lit(PALE_STEEL, 0.15), shadow=False)
-        m.box(x0 + 3.2, -8, 7.0, x0 + 5.3, 8, 8.4, GREEN_PRIMARY, top=lit(GREEN_PRIMARY, 0.15), shadow=False)
-    for y in (-4.5, 4.5):
-        m.prism(9.5, y, 0, 11.0, 3.4, STEEL, sides=12, top=lit(STEEL, 0.2))
-        m.prism(9.5, y, 11.0, 12.6, 2.2, LEGACY_GRAY_DARK, sides=12)
-    m.strut((-15.0, 10.0, 0.5), (-4.0, 9.0, 8.5), 1.2, STEEL)
-    m.box(-12, -8.2, 2.0, 4, -7.9, 3.0, SUN_GOLD, order=1, shadow=False, accent=True)
-    return m
-
-
-def mesh_cameo(mesh, label, yaw=CAMEO_YAW, lift=0.0):
-    """A solid rendered at three-quarter view, cropped tight and set on the
-    cameo panel with the baked label, like make_icon does for a drawing."""
-    def draw(sd, w, h):
-        mesh.draw_shadow(sd, w / 2, h * 0.68 + lift, yaw, color=(0, 0, 0, 70))
-        mesh.draw(sd, w / 2, h * 0.68 + lift, yaw)
-    return make_icon(draw, CAMEO_W, CAMEO_H, label=label)
-
-
-STOCK_CAMEOS = (
-    ("v2rl", v2rl_mesh, "Surge Rocket", 30.0, 2.0),
-    ("qtnk", qtnk_mesh, "Tremor Tank", 35.0, 1.0),
-    ("proc", proc_mesh, "Refinery", 45.0, 0.0),
-)
-
-
-# ---------------------------------------------------------------------------
 
 def main():
     # B3
@@ -753,9 +666,6 @@ def main():
     # B8
     dis = [discharge_frame(k) for k in range(DIS_FRAMES)]
     save_pngsheet(sheet_of_indexed(dis, DISR_W, DISR_H), "sgdischarge.png", DISR_W, DISR_H, len(dis), indexed=True)
-    # B2
-    for name, mesh_fn, label, yaw, lift in STOCK_CAMEOS:
-        save_pngsheet(mesh_cameo(mesh_fn(), label, yaw=yaw, lift=lift), f"{name}icon.png", ICON_W, ICON_H, 1)
     print("done")
 
 

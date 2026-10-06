@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Terrain and world pass (docs/BACKLOG.md issue #122): the six neutral
-scenery actors, the two civilian tech buildings rebuilt as solids, and the
-Legacy Derrick's palette.
+scenery actors and the two civilian tech buildings rebuilt as solids.
 
 Everything here is drawn with gen_concept_art.py's vocabulary -- the `Mesh`
 axonometric renderer at BUILDING_YAW, the greenery (`bed`, `shrub`, `tuft`,
@@ -26,17 +25,17 @@ nodes change by Filename only. Both are 2x2 and use the roster's 2x2 family.
 Outputs (all into this directory):
   sgpan.png sgslv.png sgpyl.png sgtnk.png sgrak.png sgpln.png   scenery
   hosp.png hospmake.png bio.png biomake.png                     civilian tech
-  sungrid-legacy.pal                                            Legacy Derrick
+
+(The Legacy Derrick's rust-shifted palette this file also wrote was dropped in
+issue #123: in a live temperate match it read as the desert variant of the
+derrick, not as old iron. The derrick keeps its name and the stock colours.)
 
 Re-running is byte-identical: every scatter position is a pure integer hash.
 """
-import os
-
 from PIL import Image
 
 from gen_concept_art import (
-    BARK, BUILDING_YAW, CONCRETE, DAMAGE_SCORCH, DIRT, FAM, GREEN_ACCENT, GREEN_PRIMARY, HERE,
-    LAMP_OFF, LEAF_DARK, LEAF_DEEP, LEAF_MID, LEAF_PALE, LEGACY_GRAY, LEGACY_GRAY_DARK, Mesh,
+    BARK, BUILDING_YAW, CONCRETE, DAMAGE_SCORCH, DIRT, FAM, GREEN_ACCENT, GREEN_PRIMARY, LAMP_OFF, LEAF_DARK, LEAF_DEEP, LEAF_MID, LEAF_PALE, LEGACY_GRAY, LEGACY_GRAY_DARK, Mesh,
     PAD_TOP, PALE_STEEL, PANEL_BLUEBLACK, POLE_DARK, RUST, SG1x1_H, SG1x1_W, STEEL, _dead_origin,
     _embers, _mesh_render, _oy, _rubble_diamond, _scatter, _scrap_tone, _slab, bed, dim, dome,
     green_roof, indexed_strip, lit, make_frames, mix, plinth, pv_panel, render, save_pngsheet,
@@ -389,40 +388,6 @@ def bio_dead_draw(sd, w=CIV_W, h=CIV_H):
     _embers(sd, [(ox - 8, oy - 1), (ox + 4, oy + 5), (ox + 14, oy), (ox - 3, oy + 2)])
 
 
-# ---------------------------------------------------------------------------
-# Legacy Derrick: the stock oilb.shp through a rust-shifted copy of the player
-# palette. Every entry but transparent (0), the shadow stencil (4) and the
-# player-remap ramp (80-95) is pulled toward a rust hue at its own luminance
-# and slightly desaturated, so the derrick reads as old-world iron next to the
-# Sungrid roster without touching the sprite -- the "rust guardrail" in
-# docs/ART_DIRECTION.md. PlayerColorPalette@LEGACY still remaps 80-95, so a
-# captured derrick keeps its owner's colour.
-# ---------------------------------------------------------------------------
-
-LEGACY_SHIFT = 0.45
-LEGACY_HUE = (0x9A, 0x4E, 0x30)
-REMAP = range(80, 96)
-
-
-def legacy_palette(pal):
-    out = []
-    lum_hue = 0.30 * LEGACY_HUE[0] + 0.59 * LEGACY_HUE[1] + 0.11 * LEGACY_HUE[2]
-    for i, c in enumerate(pal):
-        if i in (0, 4) or i in REMAP:
-            out.append(c)
-            continue
-        lum = 0.30 * c[0] + 0.59 * c[1] + 0.11 * c[2]
-        rust = tuple(min(255, round(ch * lum / lum_hue)) for ch in LEGACY_HUE)
-        out.append(tuple(round(c[k] * (1 - LEGACY_SHIFT) + rust[k] * LEGACY_SHIFT) for k in range(3)))
-    return out
-
-
-def write_pal(pal, name):
-    with open(os.path.join(HERE, name), "wb") as f:
-        for c in pal:
-            f.write(bytes(ch >> 2 for ch in c))
-
-
 def main():
     for name in SCENERY:
         sheet, frames = scenery_sheet(name)
@@ -447,9 +412,6 @@ def main():
     mk = make_frames(civ_draw_fn(bio_mesh), CIV_W, CIV_H, final=bio[0])
     save_pngsheet(indexed_strip(mk, [None] * (len(mk) - 1) + [silhouette_shadow(bio[0], 2, 2)], CIV_W, CIV_H),
                   "biomake.png", CIV_W, CIV_H, len(mk), indexed=True)
-
-    from gen_concept_art import PLAYER_PAL
-    write_pal(legacy_palette(PLAYER_PAL), "sungrid-legacy.pal")
     print("done")
 
 

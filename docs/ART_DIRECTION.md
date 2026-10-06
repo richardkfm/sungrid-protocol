@@ -183,6 +183,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 122 review render: the six scenery pieces idle and damaged on temperate, snow and desert ground; the Field Clinic's nine frames and the Seed Vault's three; the Scrap tiers before and after on all three grounds; the Legacy Derrick's palette against the stock one; the three placement maps.](concept-art/issue122-terrain-and-world.png)
 
+**Follow-up: the first live look at issues #120–#122, and what it took back (`docs/BACKLOG.md` issue #123).** Three corrections from the owner's first match on the new art, and one rule. The rifleman goes back to the stock sprite (the Disruptor Trooper keeps his; the drawing stays in history for a later tier). The seven cameos drawn for renamed stock actors go back to stock, old names and all, under a rule this document now carries: **a cameo changes only when its actor's in-world art does** — the build menu must not promise a unit the battlefield doesn't show. The Legacy Derrick's rust palette is dropped: a whole-palette pull toward rust turned the stock derrick tan, which on temperate ground reads as the desert tileset's derrick rather than old iron; it keeps its name on the stock colours. And the two vehicle cameos that stay (MCV, Ore Truck) are now scene renders — sky, horizon haze, a green ground plane, the cast shadow — in the photographic cameos' tonal range, because a flat blue-black panel beside those photographs read as unfinished.
+
+![Issue 123 review render: the Ore Truck and MCV scene cameos beside the Solar Array, Hauler Drone and Disruptor Trooper cameos.](concept-art/issue123-cameos.png)
+
 The turbine and the dish at their real per-frame timing: [`issue109-sgwnd.gif`](concept-art/issue109-sgwnd.gif), [`issue109-sgsns.gif`](concept-art/issue109-sgsns.gif).
 
 Every other Phase 2 building (the original economy/production roster ported from `mods/ra`) still ships with placeholder/reused stock art.

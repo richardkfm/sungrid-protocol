@@ -685,7 +685,7 @@ barr:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: barricon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: barricon.shp
 
 tent:
 	Defaults:
@@ -711,7 +711,7 @@ tent:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: tenticon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: tenticon.shp
 		TilesetFilenames:
 	fake-icon:
 		Filename: tenficon.shp
@@ -779,7 +779,7 @@ atek:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: atekicon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: atekicon.shp
 	fake-icon:
 		Filename: ateficon.shp
 
@@ -799,7 +799,7 @@ stek:
 			DESERT: bib2.des
 		Length: *
 	icon:
-		Filename: stekicon.png # Sungrid cameo (issue #120); the stock one bakes the old name.
+		Filename: stekicon.shp
 
 weap:
 	Defaults:

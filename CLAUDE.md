@@ -12,7 +12,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - `engine/` — downloaded/built by `fetch-engine.sh` (or `make`), pinned via `mod.config`'s `ENGINE_VERSION`. Contains `OpenRA.Game`, `OpenRA.Mods.Common`, stock mods (`mods/ra`, `mods/cnc`, `mods/d2k`, `mods/ts`), etc. Gitignored — if a friction point genuinely needs an engine-level change, it usually does **not** need a separate personal fork repo: this repo's own pre-Phase-0 history already contains the full engine tree, so a fix can be pinned via an `engine-patch/*` branch built on the currently-pinned commit — see "Engine version pinning" below before touching `ENGINE_VERSION` or any `engine-patch/*` branch. Only reach for an actual personal fork of `OpenRA/OpenRA` if the needed base commit genuinely isn't already reachable in this repo's own history (see `docs/ARCHITECTURE.md`).
 
 **Mod/content territory — where Sungrid Protocol work actually happens:**
-- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 and animated since issue #109 — build-ups, rubble, husks, idle overlays, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/gen_arc_sounds.py` (the two arc-weapon reports, issue #110, and the Grid Defense Turret's report and impact, issue #120), `bits/gen_unit_effects.py` (issue #120 — projectiles, muzzle bloom and impact effects, the drone uplink pips, the drone and Hauler wrecks and smoke, the discharge death, and the programmatic cameos for the three renamed stock units no concept scene holds), `bits/gen_core_units.py` (issue #121 — the MCV, the Ore Truck and the rifleman: `Mesh` vehicles at 32 yaws on the stock frame layouts, infantry on the Disruptor's native-pixel track), `bits/gen_world_scenery.py` (issue #122 — the six neutral scenery pieces, the Field Clinic and the Seed Vault on the stock frame layouts, and the Legacy Derrick's rust-shifted palette), `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
+- `mods/sungrid/` — **the Sungrid Protocol mod content**: real Red Alert-derived gameplay (rules/YAML, sequences, 75 maps, chrome layouts, fluent strings) plus all Sungrid-original content on top of it. Art generators live beside their output: `bits/gen_concept_art.py` (in-world sprites — every building as a `Mesh` solid since issue #106, including the Sungrid Construction Yard `sgfact` that `FACT` renders, each planting its own plot since issue #108 and animated since issue #109 — build-ups, rubble, husks, idle overlays, programmatic cameos), `bits/gen_photo_cameos.py` (the shipped photographic cameos), `bits/gen_cursor_art.py`, `bits/gen_intro_music.py`, `bits/gen_arc_sounds.py` (the two arc-weapon reports, issue #110, and the Grid Defense Turret's report and impact, issue #120), `bits/gen_unit_effects.py` (issue #120 — projectiles, muzzle bloom and impact effects, the drone uplink pips, the drone and Hauler wrecks and smoke, the discharge death), `bits/gen_core_units.py` (issue #121 — the MCV and the Ore Truck: `Mesh` vehicles at 32 yaws on the stock frame layouts, with scene cameos since issue #123; its rifleman was withdrawn in #123), `bits/gen_world_scenery.py` (issue #122 — the six neutral scenery pieces, the Field Clinic and the Seed Vault on the stock frame layouts), `bits/reskin_terrain_palette.py`, `uibits/gen_chrome.py` (dialog/sidebar/loadscreens/mod icons/faction flags). Regenerating is always safe — output depends only on the script.
 - `mods/sungrid-content/` — the content-installer mod. Sungrid Protocol reads Red Alert asset `.mix` files from `<SupportDir>/Content/ra/v2/`; this is the first-launch flow that fetches the official freeware package or extracts from a disc/Steam/Origin copy. Since issue #119 it draws on the game's own chrome (`sungrid|chrome.yaml` merged with its small `chrome.yaml`), cursors and `uibits/content-bg.png`; its `content.yaml` and the game's `chrome/lobby.yaml` are copies of the stock layouts with a header added — re-diff them against `engine/mods/common*` whenever `ENGINE_VERSION` moves.
 - `OpenRA.Mods.Sungrid/` — mod-specific C# project. `GridReserve/` holds the whole economic-victory mode (`GridReserveVault`, `GridReserveManager`, `GridReserveController`, `GridReserveBotModule`, and the HUD/briefing/standings logic); `LoadScreens/SungridLoadScreen.cs` is the stock logo-stripe load screen wrapped so it sets the window title as soon as the mod's fluent strings exist, instead of the engine's hard-coded "OpenRA" lasting through the whole load (issue #117); `Rendering/` still holds the SDK's two renamed example traits (`ColorPickerColorShift`, `PlayerColorShift`); `UtilityCommands/RefreshMapPreviewsCommand.cs` is `./utility.sh --refresh-map-previews <map>...`, which re-saves a map so its `map.png` is rendered from the current tileset colours (issue #119 — previews and the radar minimap come from `tilesets/*.yaml`'s terrain-type `Color:` entries, not the palette; `bits/reskin_tileset_colors.py` keeps those in step with the palette reskin); `Economy/` holds `SpawnsResourceOnDeath` (issue #86 — drops a small amount of a resource at an actor's death cell for a Harvester-type unit to auto-collect) and `ResourceDecayManager` (a World-actor `ITick` trait owning both of that drop's timers: issue #87's decay, which expires an uncollected drop so battlefield wreckage stays temporary, and issue #97's `SpawnDelay`, which holds the drop back for 30s before it appears at all); both unverified, no engine build available in this environment to compile against.
 - `mod.config`, `fetch-engine.sh`/`.cmd`, `Makefile`/`make.cmd`/`make.ps1`, `launch-game.*`, `launch-dedicated.*`, `utility.*`, `Sungrid.sln`, `packaging/` — SDK scaffolding, all mod-scale (not the engine's own build/packaging tooling). `packaging/artwork/` (the application icons for all three platform packages and the macOS DMG background) is generated output of `mods/sungrid/uibits/gen_chrome.py`, not hand-edited files, since issue #114 — before that it was still the SDK's "Ex" placeholder icon.
@@ -65,7 +65,7 @@ what is true now, and the hard-won rules that are expensive to rediscover.
 | 0 Bootstrap, 1 Baseline shell, 2 First content layer, 3 Grid Reserve MVP, 5 Expanded roster | Complete, playable |
 | 4 Balance / AI / CI / packaging | Substantially done (AI plays Grid Reserve, CI green, all three platforms package). Not done: structured external multiplayer playtests |
 | 6 World & UI identity | Complete: palette reskins for all three tilesets, and issue #122's scenery (six neutral pieces hand-placed on the shellmap, Crossfire and Doubles, the Scrap retune and the first painted Scrap field, the civilian tech buildings). Scenery on the other 72 maps is placement, map by map |
-| 7 Unit & audio identity | Started on the effects side — three unit renames (issue #27), the Arc Turret / Disruptor Trooper's arc projectile plus original discharge sounds (issue #110), and issue #120's pass: the Grid Defense Turret's bolt/bloom/impact/report, drone rockets, uplink pips, drone and Hauler wrecks, the discharge death, cameos for the renamed stock units. The roster itself started with issue #121 (MCV, Ore Truck, rifleman, with husks and cameos, on locked sheet conventions — art rule 24); every other inherited unit sprite, voices, announcer, and in-game music are still stock |
+| 7 Unit & audio identity | Started on the effects side — three unit renames (issue #27), the Arc Turret / Disruptor Trooper's arc projectile plus original discharge sounds (issue #110), and issue #120's pass: the Grid Defense Turret's bolt/bloom/impact/report, drone rockets, uplink pips, drone and Hauler wrecks, the discharge death, cameos for the renamed stock units. The roster itself started with issue #121 (MCV, Ore Truck, with husks and cameos, on locked sheet conventions — art rule 24; its rifleman went back to stock in issue #123 after the first live look, as did issue #120's seven cameos for renamed stock actors); every other inherited unit sprite, voices, announcer, and in-game music are still stock |
 | 8+ Diplomacy / shared resources | Deferred by design |
 
 **"Beta ready" is now defined** — see the **Beta gate** section in `docs/ROADMAP.md` (issue #104), which sits
@@ -269,7 +269,10 @@ is the regression check.
    (issue #45) would not survive palettization. The photographic set is the owner's preference even where a
    cameo's subject drifted from the rebuilt sprite (issue #107 assessed all thirteen and kept them; do not
    replace one with a mesh render without asking). `FACT` keeps stock `facticon.shp`; there is no
-   `sgfacticon.png`.
+   `sgfacticon.png`. **A cameo changes only when its actor's in-world art does** (issue #123, the owner's rule):
+   issue #120's seven cameos for renamed-but-stock actors were withdrawn for it, old baked names and all, so
+   don't re-skin a cameo ahead of its sprite. The two Sungrid vehicle cameos are `scene_cameo()` renders (sky,
+   ground plane, shadow); the flat `make_icon` panel beside the photographic set read as unfinished.
 2. **Indexed alpha is 1-bit — translucency is silently deleted.** This has bitten repeatedly: swept
    rotor discs vanished leaving a body ringed by holes, discharge arcs and motion streaks disappeared,
    an alpha death-fade did nothing. Draw it opaque, or dither it.
@@ -429,9 +432,11 @@ is the regression check.
     `accent=True` faces (`flank_band()`), re-stamped by `_mesh_render`. Sub-animations are facing-major (`Facings` x
     `Length`), and a single-facing animation (the Harvester's dock) is drawn at the facing the engine will show it at.
     Infantry stays on the `PC` track at 20x26 with the boots on the centre row and eight genuine viewpoints, and a new
-    infantryman reuses the Disruptor's part drawers so the army stays one army. Keeping the stock frame order and
-    count (111 for `harv`, 378 for `e1`, unreferenced frames left blank) means the sequence YAML changes by Filename
-    only, and `--check-missing-sprites`'s negative control is to lengthen the sheet's *last* block by one.
+    infantryman reuses the Disruptor's part drawers so the army stays one army (the rifleman drawn that way was
+    withdrawn in issue #123 after the first live look; the convention stands, the drawing is in history at the #121
+    commit). Keeping the stock frame order and count (111 for `harv`, 378 for `e1`, unreferenced frames left blank)
+    means the sequence YAML changes by Filename only, and `--check-missing-sprites`'s negative control is to lengthen
+    the sheet's *last* block by one.
 20. **A turret sheet animates within a facing, and a baked idle sweep needs a static `aim` twin (issue
     #113).** `WithSpriteTurret` plays its sequence repeating, so `Facings: 32, Length: N` gives N frames per
     facing, facing-major (the Arc Turret's arc flicker, the Grid Defense Turret's +-15 degree scan). A sweep
@@ -451,7 +456,9 @@ is the regression check.
     `gold01-04` do - a growing scatter, not one object in a corner - and needs one hue the ground never has (the green
     cable) or it vanishes on the darkest tileset. Two lint facts: `CheckRunningUpdateRule` round-trips every YAML file
     through the writer and fails on a doubled trailing newline, and a bad `PlayerPalette` name is caught
-    (`Undefined player palette reference`), so a new palette can be negative-controlled. Hand placement on a map is a
+    (`Undefined player palette reference`), so a new palette can be negative-controlled - but a palette's *look* only
+    shows live: the derrick's whole-palette rust pull passed every check and read as the desert tileset's derrick on
+    temperate ground (dropped in issue #123; shift an actor's own entries, never all 256). Hand placement on a map is a
     script over `map.bin` (format 2: 17-byte header, tiles `u16 type, u8 index`, resources `u8 type, u8 index`,
     i-major) and `map.yaml`'s `Actors:`; re-save with `--refresh-map-previews <absolute path>` (the utility `cd`s into
     `engine/`) so the preview follows, and expect `.oramap` to re-zip whole.
@@ -564,9 +571,11 @@ widely, including `.lua`, when removing an actor).
   the whole first-impression group except the glyph atlas (A4): installer chrome, main menu, a Sungrid shellmap
   battle, the Grid Reserve HUD chrome, loading tips, previews and titles, lobby header, emblem refinement.
   Issue #120 took section B except the roster itself: the turret's shell, the drone rockets, the uplink cue, the
-  burning wrecks, the electric death and the stale cameos are done; issue #121 shipped B7's first tier (MCV, Ore
-  Truck, rifleman); issue #122 took section C (scenery on three maps, the Scrap retune and field, the Legacy Derrick /
-  Field Clinic / Seed Vault; C5's Gem look needs game content). Still open from the survey: A4, B7's later tiers, and
+  burning wrecks and the electric death are done (the stale cameos were withdrawn again in issue #123 - a cameo
+  follows its actor's art); issue #121 shipped B7's first tier (MCV, Ore Truck; the rifleman was withdrawn in #123);
+  issue #122 took section C (scenery on three maps, the Scrap retune and field, the Legacy Derrick / Field Clinic /
+  Seed Vault; the derrick's palette was dropped in #123; C5's Gem look needs game content). Still open from the
+  survey: A4, B7's later tiers, and
   sections D–F.
 
 ## Working conventions
