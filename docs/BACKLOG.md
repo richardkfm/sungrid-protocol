@@ -4420,3 +4420,46 @@ atekicon,stekicon,v2rlicon,qtnkicon,procicon,sgpulse,sgturfire,sgpulsehit}.png`,
 **Definition of done:** the four reversals and the two cameos as above - met.
 
 ---
+
+### 124. The glyph atlas: stock-yellow highlights to sun gold, Random lobby plaques in the faction plaque style
+
+**Raised as:** "alright do the glyph atlas too" - proposal A4 of `docs/VISUAL_PROPOSALS.md`, the one section-A item
+issue #119 left open.
+
+**What the atlas is.** `uibits/glyphs*.png` is the sheet every `^Glyphs` collection in `chrome.yaml` draws from:
+the production tab icons and their disabled / alert rows, the order and stance buttons, the command bar, the cash /
+power / clock tooltip icons, checkmarks, the lobby bits and the `flags` column. All of it was still the stock Red
+Alert sheet except the two faction-logo plaques `gen_flags()` patched in (issue #41) and the sub-faction flag
+corrections. The 2x and 3x sheets are stock's own redrawn, anti-aliased art, not upscales of the 1x one.
+
+**Fix.** `gen_flags()` is now `gen_glyphs()` in `uibits/gen_chrome.py`, still a patch over the stock sheet rather
+than a regeneration (the rest of the atlas is stock content that is not being replaced), with two additions:
+
+- `regold_icons()` recolours RA's brand yellow (255,192,0) wherever it appears in the icon area - the production
+  tabs' alert row, the selected-stance row and the two admin crowns - to the locked `SUN_GOLD`, per pixel, keeping
+  the alpha and the lightness offset of stock's lighter variants. It matches the stock hue at full saturation, which
+  `SUN_GOLD` (s = 0.74) is not, so a second run finds nothing: the three sheets are byte-identical across re-runs.
+  The flag column is excluded (Spain and China have yellows of their own).
+- The three Random plaques (`RandomSoviet`, `RandomAllies`, `Random`) are `flag_plaque()` with a new `question_mark()`
+  mark - a white hook, stem and dot drawn supersampled like the emblems, since the mod's Title face renders a "?"
+  too small at 15px - framed in the Assembly green, the Consortium gold and a neutral grey, instead of stock's red,
+  blue and grey boxes.
+
+**Deliberately not done: the red cash / power / clock "critical" icons stay stock red.** A4 proposed moving them
+to amber, but `docs/ART_DIRECTION.md`'s guardrail and its palette table keep the RTS alert colour language
+unchanged from stock, and a red low-cash icon is that language. The locked doc wins over the survey.
+
+**Verified:** only the intended cells changed - a per-cell diff of the 1x sheet against the committed one lists
+exactly the twenty cells that held stock yellow and the three Random rows, nothing else; `chrome.yaml` is untouched;
+re-running `gen_chrome.py` changes only the three glyph sheets, and running it twice leaves them byte-identical;
+`./utility.sh --check-yaml` exits 0 across all 75 maps. `docs/concept-art/issue124-glyphs.png` is the before /
+after strip at all three scales. **Not verified live:** the atlas in the sidebar and the lobby dropdown.
+
+**Files:** `mods/sungrid/uibits/gen_chrome.py`, `mods/sungrid/uibits/glyphs{,-2x,-3x}.png` (regenerated),
+`docs/concept-art/issue124-glyphs.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 6 (UI identity) - the last section-A item of the visual survey.
+
+**Definition of done:** A4 as proposed, minus the alert reds - met.
+
+---
