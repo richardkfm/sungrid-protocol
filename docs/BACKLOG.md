@@ -4362,7 +4362,7 @@ desktop session's.
 
 ---
 
-### 123. Three reversals after a live look: the rifleman back to stock, the renamed-actor cameos back to stock, the derrick palette dropped; scene cameos for the MCV and the Ore Truck
+### 123. Four reversals after a live look: the rifleman, the renamed-actor cameos and the turret's shell back to stock, the derrick palette dropped; scene cameos for the MCV and the Ore Truck
 
 **Raised as:** "please bring back the original infantry unit sprites", "the barracks cameo should only be changed
 when the actual building is also changed", "ore miner cameo: background looks bland. leave it original or come up
@@ -4388,6 +4388,14 @@ hard-standing under the vehicle, the mesh at three-quarter view scaled 1.75x wit
 same border and label strip as every other cameo. It is the photographic cameos' tonal range (dark sky, lit
 subject, dark foot) without pretending to be a photograph.
 
+**Grid Defense Turret.** A fourth call in the same session: "the grid turret was better before as a heavy anti
+tank defense". Its numbers never changed in #120 (6000 damage, 30-tick reload, the same armour table); the shell,
+fireball and cannon report became a bolt, a flash-ring and a capacitor chirp, and that read as a lighter weapon.
+All of B3 is back to stock: `GridPulseCannon` is `^Cannon`'s 120mm shell with `turret1.aud`, `sgtur`'s `muzzle`
+is `samfire.shp` again, the `sgpulse` image and the `pulse_hit` explosion are gone from `sequences/misc.yaml`,
+the three sheets and two sounds are deleted and their drawers removed from `gen_unit_effects.py` and
+`gen_arc_sounds.py` (`arcfire.wav` / `disrfire.wav` are byte-identical after the re-run).
+
 **Derrick.** The screenshot showed what the `--check-yaml` pass could not: the 45% rust pull on every palette
 entry turned the whole `oilb.shp` tan, i.e. the desert tileset's look, on temperate ground. Rather than tune a
 palette blind, `RenderSprites: PlayerPalette: legacy` is gone from `OILB`, `PaletteFromFile@legacy` and
@@ -4397,17 +4405,18 @@ the fix is a shift on the derrick's own grey/brown entries only, checked live, n
 
 **Verified:** `--check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` reports nothing new (its
 remaining lines are stock content files absent in this environment); `make check-scripts` passes; re-running all
-five generators changes only `harvicon.png` and `mcvicon.png`. `docs/concept-art/issue123-cameos.png` shows the
+six generators changes only `harvicon.png` and `mcvicon.png`. `docs/concept-art/issue123-cameos.png` shows the
 two new cameos beside photographic ones. **Not verified live:** the cameos in the sidebar.
 
-**Files:** `mods/sungrid/bits/{gen_core_units,gen_unit_effects,gen_photo_cameos,gen_world_scenery}.py`,
+**Files:** `mods/sungrid/bits/{gen_core_units,gen_unit_effects,gen_photo_cameos,gen_world_scenery,gen_arc_sounds}.py`,
 `mods/sungrid/bits/{harvicon,mcvicon}.png` (regenerated), deleted `mods/sungrid/bits/{e1,e1icon,tenticon,barricon,
-atekicon,stekicon,v2rlicon,qtnkicon,procicon}.png` and `sungrid-legacy.pal`, `mods/sungrid/sequences/{infantry,
-structures,vehicles}.yaml`, `mods/sungrid/rules/{civilian,palettes}.yaml`, `docs/concept-art/issue123-cameos.png`,
+atekicon,stekicon,v2rlicon,qtnkicon,procicon,sgpulse,sgturfire,sgpulsehit}.png`, `{sgpulse,sgpulsehit}.wav` and
+`sungrid-legacy.pal`, `mods/sungrid/sequences/{infantry,structures,vehicles,misc}.yaml`,
+`mods/sungrid/weapons/ballistics.yaml`, `mods/sungrid/rules/{civilian,palettes}.yaml`, `docs/concept-art/issue123-cameos.png`,
 `docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
 
 **Phase:** 7 (unit identity) and 6 (world) - corrections from the first live look at #120-#122.
 
-**Definition of done:** the three reversals and the two cameos as above - met.
+**Definition of done:** the four reversals and the two cameos as above - met.
 
 ---

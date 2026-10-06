@@ -34,7 +34,8 @@ The detailed entries below track every issue through #116; this list maps them o
   MCV, the Ore Truck and the rifleman (issue #121); scenery on the shellmap, Crossfire and Doubles, Scrap piles
   that read on every ground plus a Scrap field on the shellmap, and the Legacy Derrick, Field Clinic and Seed Vault
   (issue #122); after a first live look, the rifleman and the seven renamed-actor cameos back to stock, the
-  derrick back on stock colours, and scene cameos for the MCV and the Ore Truck (issue #123).
+  derrick back on stock colours, the Grid Defense Turret back on its tank shell, and scene cameos for the MCV
+  and the Ore Truck (issue #123).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -145,7 +146,8 @@ per-version record.
 
 - Renamed three faction-general units away from 90s C&C vocabulary: V2 Rocket Launcher → **Surge Rocket Launcher**, MAD Tank → **Tremor Tank**, Spy Plane → **Recon Plane** (issue #27). Deliberately capped as a first wave; sub-faction special units were left alone as a larger creative decision.
 - The effects half of the unit pass (issue #120): the Grid Defense Turret fires a green-gold bolt with its own
-  report, bloom and scorching impact instead of a tank shell; drone rockets are a slim white rocket with a cold
+  report, bloom and scorching impact instead of a tank shell (**reversed in issue #123** - it reads better as a
+  heavy anti-tank gun, so the shell, fireball and cannon report are back; its stats never changed); drone rockets are a slim white rocket with a cold
   exhaust; each drone shows a lamp for its uplink state (green / amber / red for no power); shot-down drones fall as
   wrecks with the rotors stopped and hit the ground in sparks and dust, the Hauler's wreck smoulders instead of
   burning (electrical wrecks don't burn; buildings still do); soldiers killed by an arc weapon die in a white-green

@@ -23,8 +23,6 @@ explosion:
 	Defaults:
 		Length: *
 		ZOffset: 2047
-	pulse_hit: # Grid Defense Turret impact (issue #120): flash, spark ring, scorch -- no fireball.
-		Filename: sgpulsehit.png
 	drone_crash: # A shot-down drone hitting the ground (issue #120): sparks and dust, no fire.
 		Filename: sgdronecrash.png
 	piff:
@@ -1123,14 +1121,6 @@ twinkle:
 
 # Unit effects (docs/BACKLOG.md issue #120), all drawn by bits/gen_unit_effects.py
 # on the `effect` palette (fixed entries only -- it is not remapped).
-sgpulse: # Grid Defense Turret bolt, GridPulseCannon's Bullet. 16 facings x 3 shimmer
-	idle: # frames, facing-major: the engine reads Facings x Length frames (issue #35).
-		Filename: sgpulse.png
-		Facings: 16
-		Length: 3
-		Tick: 40
-		ZOffset: 1023
-
 sgmissile: # Drone rocket, DroneRocket's Missile; was the stock DRAGON.
 	idle:
 		Filename: sgmissile.png

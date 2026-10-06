@@ -169,7 +169,7 @@ Withdrawn (issue #123): the owner's rule is that a cameo changes only when its a
 so all seven are back on their stock `.shp` cameos, old names included. This entry reopens with the
 actor: when a renamed stock unit or building gets Sungrid art, its cameo comes with it.
 
-**B3. [shipped, issue #120] The Grid Defense Turret fires a 120mm tank shell with a tank's report.**
+**B3. [shipped, issue #120; withdrawn, issue #123] The Grid Defense Turret fires a 120mm tank shell with a tank's report.**
 Now: `GridPulseCannon` inherits `^Cannon` (`120MM` shell sprite, `small_explosion`, `turret1.aud`);
 its muzzle flash is stock `samfire.shp`. The station was rebuilt twice (issues #112/#113) and still
 sounds and shoots like a Soviet turret.
@@ -181,6 +181,9 @@ Kind: generator + YAML. Verify: `--check-missing-sprites`; the sheet layout rule
 `CLAUDE.md` art rule 17.
 Shipped as proposed, with a three-frame bloom rather than two and a short green contrail on the bolt;
 `sgpulse.wav` / `sgpulsehit.wav` from `gen_arc_sounds.py`, the impact leaves a Scorch smudge.
+Withdrawn (issue #123): the owner found the turret read better as a heavy anti-tank gun with the shell, the
+fireball and the cannon report, so all of it is back to stock; the numbers never changed either way. The art
+(`issue120-unit-effects.png`) stays in the review render for the record.
 
 **B4. [shipped, issue #120] Drone rockets are the stock `DRAGON` missile with a stock smoke trail.**
 Now: `DroneRocket`/`.Strike` in `weapons/missiles.yaml` use the stock missile sprite, `smokey` trail,

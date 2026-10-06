@@ -11,12 +11,9 @@ and re-running this script must leave every other sheet byte-identical.
 
 What it writes, by proposal:
 
-  B3  sgpulse.png     Grid Defense Turret bolt: 16 facings x 3 frames, 12x12,
-                      `effect` palette (Bullet projectile, replaces 120mm.shp).
-      sgturfire.png   its muzzle bloom: 8 facings x 3 frames, 16x16
-                      (WithMuzzleOverlay, replaces samfire.shp).
-      sgpulsehit.png  electrical-scorch impact, 6 frames, 20x20 (the
-                      `pulse_hit` entry of the `explosion` image).
+  (B3's bolt, bloom and impact for the Grid Defense Turret were withdrawn
+   in issue #123: the owner preferred it as a heavy gun, so GridPulseCannon
+   is back on ^Cannon's 120mm shell, fireball and the turret1.aud report.)
   B4  sgmissile.png   drone rocket: 32 facings, 12x12 (replaces DRAGON).
       sgexhaust.png   its exhaust puff, 3 frames, 8x8 (Missile TrailImage).
   B5  sgpips.png      drone uplink status pips: uplink / degraded / offline,
@@ -58,7 +55,7 @@ from gen_concept_art import (
     LEGACY_GRAY, LEGACY_GRAY_DARK, RUST, DAMAGE_SCORCH, POLE_DARK, CONCRETE,
     PALE_STEEL, STEEL, AMBER,
     lit, dim, mix, sphere,
-    rotated_frames, rotated_anim_frames, sheet_of, sheet_of_indexed, indexed_strip,
+    rotated_frames, sheet_of, sheet_of_indexed, indexed_strip,
     silhouette_shadow, save_pngsheet, canvas,
     _drone_boom, DRONE_SPIN_FRAMES,
     DISR_W, DISR_H, DISR_CX, DISR_GROUND,
@@ -143,135 +140,11 @@ C_SOOT = PLAYER_PAL[FX_SOOT]
 
 
 # ---------------------------------------------------------------------------
-# B3. Grid Defense Turret: bolt, muzzle bloom, impact
+# Shared scatter hash (deterministic, so regeneration is byte-identical).
 # ---------------------------------------------------------------------------
-
-PULSE_W, PULSE_H = 12, 12
-PULSE_FACINGS = 16
-PULSE_FRAMES = 3       # `Length:` on sgpulse's idle sequence
-
-
-def pulse_draw(sd, w, h, spin=0.0):
-    """One north-facing bolt: a short gold-white slug with a green core and
-    a trailing green tail. `spin` is rotated_anim_frames' phase (0/120/240
-    degrees); here it picks which of three brightness states the bolt is in,
-    so the projectile shimmers in flight instead of sliding as a fixed stamp."""
-    k = int(round(spin / 120.0)) % PULSE_FRAMES
-    cx, cy = w / 2, h / 2
-    # Outer gold sheath: a pointed slug 3px wide, 7px long, nose up.
-    sheath = C_GOLD if k != 1 else C_GOLD_LIT
-    sd.poly([(cx, cy - 3.6), (cx + 1.5, cy - 1.6), (cx + 1.5, cy + 2.4),
-             (cx, cy + 3.4), (cx - 1.5, cy + 2.4), (cx - 1.5, cy - 1.6)], fill=sheath)
-    # Green core, brighter at the nose.
-    core = C_GREEN if k != 2 else C_ARC
-    sd.poly([(cx, cy - 2.8), (cx + 0.7, cy - 1.4), (cx + 0.7, cy + 1.8),
-             (cx - 0.7, cy + 1.8), (cx - 0.7, cy - 1.4)], fill=core)
-    sd.rect([cx - 0.5, cy - 2.4, cx + 0.5, cy - 0.6], fill=C_WHITE)
-    # Tail: two green motes behind the slug, alternating frame to frame.
-    for i in range(2):
-        ty = cy + 3.8 + i * 1.1
-        if (i + k) % 2 == 0:
-            sd.px(cx - 0.5, ty, C_GREEN_MID)
-    sd.px(cx - 0.5 + (1 if k == 1 else -1), cy + 4.2, C_GREEN)
-
-
-def pulse_frames():
-    frames = rotated_anim_frames(pulse_draw, PULSE_W, PULSE_H, n=PULSE_FACINGS,
-                                 length=PULSE_FRAMES, outlined=False)
-    assert len(frames) == PULSE_FACINGS * PULSE_FRAMES
-    return frames
-
-
-TURFIRE_W, TURFIRE_H = 16, 16
-TURFIRE_FACINGS = 8
-TURFIRE_FRAMES = 3     # `Length:` on sgtur's muzzle sequence
-
-
-def turfire_draw(sd, w, h, spin=0.0):
-    """Muzzle bloom at the emitter, nose up: a white-gold flash collapsing to
-    a green ring and a few motes over three frames. Drawn around the frame
-    centre, which WithMuzzleOverlay puts at the armament's muzzle offset."""
-    k = int(round(spin / 120.0)) % TURFIRE_FRAMES
-    cx, cy = w / 2, h / 2
-    if k == 0:
-        # Full bloom: gold disc, white heart, two green prongs forward.
-        sd.ellipse([cx - 3.2, cy - 3.2, cx + 3.2, cy + 3.2], fill=C_GOLD)
-        sd.ellipse([cx - 1.8, cy - 1.8, cx + 1.8, cy + 1.8], fill=C_WHITE)
-        for dx in (-1.6, 1.6):
-            sd.line([(cx + dx, cy - 2.0), (cx + dx * 1.6, cy - 6.4)], fill=C_ARC, width=1.0)
-        sd.line([(cx, cy - 3.0), (cx, cy - 7.2)], fill=C_WHITE, width=1.1)
-    elif k == 1:
-        # Collapsing: green ring with a gold rim, white fading at the centre.
-        sd.ellipse([cx - 3.6, cy - 3.6, cx + 3.6, cy + 3.6], outline=C_GOLD, width=1.0)
-        sd.ellipse([cx - 2.2, cy - 2.2, cx + 2.2, cy + 2.2], outline=C_ARC, width=1.0)
-        sd.px(cx - 0.5, cy - 0.5, C_WHITE)
-        sd.line([(cx, cy - 4.4), (cx, cy - 6.6)], fill=C_GREEN, width=1.0)
-    else:
-        # Afterglow: scattered green motes and one gold ember.
-        for dx, dy, col in ((-3, -3, C_GREEN), (3, -2, C_GREEN_MID), (-1, -6, C_ARC),
-                            (2, -5, C_GREEN), (0, 2, C_GOLD_DRK), (-3, 1, C_GREEN_MID)):
-            sd.px(cx + dx - 0.5, cy + dy - 0.5, col)
-
-
-def turfire_frames():
-    frames = rotated_anim_frames(turfire_draw, TURFIRE_W, TURFIRE_H, n=TURFIRE_FACINGS,
-                                 length=TURFIRE_FRAMES, outlined=False)
-    assert len(frames) == TURFIRE_FACINGS * TURFIRE_FRAMES
-    return frames
-
-
-HIT_W, HIT_H = 20, 20
-HIT_FRAMES = 6
-
 
 def _hash(x, y, salt=0):
     return ((x * 73856093) ^ (y * 19349663) ^ (salt * 83492791)) & 0xFFFF
-
-
-def pulsehit_draw(sd, w, h, k=0):
-    """Impact: a white-green flash, a ring of sparks flung outward, a dark
-    scorch left behind. No fireball -- the station fires a charge, not a shell."""
-    cx, cy = w / 2, h / 2
-    t = k / (HIT_FRAMES - 1)
-    # Scorch: appears from frame 1, a dark ellipse that stays to the end.
-    if k >= 1:
-        rs = 2.2 + 1.4 * min(1.0, k / 2)
-        sd.ellipse([cx - rs, cy - rs * 0.6, cx + rs, cy + rs * 0.6], fill=C_SOOT)
-        sd.ellipse([cx - rs * 0.55, cy - rs * 0.3, cx + rs * 0.55, cy + rs * 0.3],
-                   fill=PLAYER_PAL[FX_BLACK])
-    # Flash: frames 0-2, shrinking.
-    if k <= 2:
-        rf = (3.4, 2.6, 1.4)[k]
-        sd.ellipse([cx - rf, cy - rf, cx + rf, cy + rf], fill=C_ARC if k else C_WHITE)
-        if k == 0:
-            sd.ellipse([cx - 1.6, cy - 1.6, cx + 1.6, cy + 1.6], fill=C_WHITE)
-            for a in range(0, 360, 60):
-                ra = math.radians(a + 15)
-                sd.line([(cx, cy), (cx + 5.2 * math.cos(ra), cy + 5.2 * math.sin(ra) * 0.7)],
-                        fill=C_GOLD_LIT, width=0.9)
-    # Ring: expanding gold-green ring, frames 1-3.
-    if 1 <= k <= 3:
-        rr = 2.6 + 2.0 * (k - 1)
-        sd.ellipse([cx - rr, cy - rr * 0.7, cx + rr, cy + rr * 0.7],
-                   outline=C_GOLD if k < 3 else C_GREEN_MID, width=1.0)
-    # Sparks: thrown outward and up, thinning out.
-    n = (0, 8, 10, 8, 5, 2)[k]
-    for i in range(n):
-        ang = math.radians(i * 360 / max(1, n) + 23 * k)
-        d = 2.0 + 1.3 * k + (_hash(i, k) % 3) * 0.5
-        sx = cx + d * math.cos(ang)
-        sy = cy + d * math.sin(ang) * 0.6 - 0.8 * k
-        col = (C_ARC, C_GREEN, C_GOLD_LIT, C_WHITE)[_hash(i, k, 1) % 4]
-        sd.px(sx - 0.5, sy - 0.5, col)
-
-
-def pulsehit_frames():
-    out = []
-    for k in range(HIT_FRAMES):
-        img = Image.new("RGBA", (HIT_W * SS, HIT_H * SS), (0, 0, 0, 0))
-        pulsehit_draw(SD(img), HIT_W, HIT_H, k=k)
-        out.append(img.resize((HIT_W, HIT_H), Image.LANCZOS))
-    return out
 
 
 # ---------------------------------------------------------------------------
@@ -639,13 +512,6 @@ def discharge_frame(k):
 # ---------------------------------------------------------------------------
 
 def main():
-    # B3
-    pulse = pulse_frames()
-    fx_save(fx_strip(pulse, PULSE_W, PULSE_H), "sgpulse.png", PULSE_W, PULSE_H, len(pulse))
-    flash = turfire_frames()
-    fx_save(fx_strip(flash, TURFIRE_W, TURFIRE_H), "sgturfire.png", TURFIRE_W, TURFIRE_H, len(flash))
-    hit = pulsehit_frames()
-    fx_save(fx_strip(hit, HIT_W, HIT_H), "sgpulsehit.png", HIT_W, HIT_H, len(hit))
     # B4
     missile = missile_frames()
     fx_save(fx_strip(missile, MISSILE_W, MISSILE_H), "sgmissile.png", MISSILE_W, MISSILE_H, len(missile))
