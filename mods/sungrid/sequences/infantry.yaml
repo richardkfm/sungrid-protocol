@@ -1,6 +1,6 @@
-e1:
+e1: # Sungrid rifleman since issue #121 (bits/gen_core_units.py), on e1.shp's exact 378-frame layout.
 	Defaults:
-		Filename: e1.shp
+		Filename: e1.png
 	stand:
 		Facings: 8
 	stand2:

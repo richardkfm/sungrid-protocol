@@ -1,14 +1,17 @@
+# Sungrid MCV, Ore Truck and their husks since issue #121: bits/gen_core_units.py
+# renders each as a Mesh solid at 32 genuine yaws on the stock sheets' own frame
+# layouts, so only the Filenames changed here.
 mcv:
 	idle:
-		Filename: mcv.shp
+		Filename: mcv.png
 		Facings: 32
 		UseClassicFacings: True
 	icon:
-		Filename: mcvicon.shp
+		Filename: mcvicon.png
 
 mcvhusk:
 	idle:
-		Filename: mcvhusk.shp
+		Filename: mcvhusk.png
 		Facings: 32
 		UseClassicFacings: True
 		ZOffset: -1023
@@ -23,7 +26,7 @@ truk:
 
 harv:
 	Defaults:
-		Filename: harv.shp
+		Filename: harv.png
 	idle:
 		Facings: 32
 		UseClassicFacings: True
@@ -32,26 +35,26 @@ harv:
 		Length: 8
 		Facings: 8
 	dock:
-		Filename: harv.shp
+		Filename: harv.png
 		Start: 96
 		Length: 8
 	dock-loop:
-		Filename: harv.shp
+		Filename: harv.png
 		Start: 104
 		Length: 7
 	icon:
-		Filename: harvicon.shp
+		Filename: harvicon.png
 		Start: 0
 
 harvempty:
 	Inherits: harv
 	Defaults:
-		Filename: harvempty.shp
+		Filename: harvempty.png
 
 harvhalf:
 	Inherits: harv
 	Defaults:
-		Filename: harvhalf.shp
+		Filename: harvhalf.png
 
 sghau:
 	Defaults:
@@ -102,14 +105,14 @@ sghauempty:
 
 hhusk:
 	idle:
-		Filename: hhusk.shp
+		Filename: hhusk.png
 		Facings: 32
 		UseClassicFacings: True
 		ZOffset: -1023
 
 hhusk2:
 	idle:
-		Filename: hhusk2.shp
+		Filename: hhusk2.png
 		Facings: 32
 		UseClassicFacings: True
 		ZOffset: -1023
