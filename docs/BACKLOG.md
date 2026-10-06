@@ -4625,3 +4625,55 @@ screenshot is the before; the after is the stock look every pre-#125 build alrea
 validation as above - met.
 
 ---
+
+### 128. The Construction Yard and the Materials Refinery off white: stock-concrete grey, with surface detail
+
+**Type:** art / live-look correction · **Phase:** 6 · **Status:** done
+
+**Why.** The owner's first live look at a base (the same screenshot as issue #127): the Construction Yard (`sgfact`)
+and the Materials Refinery (`sgproc`) were `PALE_STEEL` white and did not sit with the stock buildings next to them,
+nor with the roster's own buildings. Both halls were the concept renders' hangar white; on the ground, next to a stock
+barracks and a Solar Array, the two largest buildings in the base read as a different mod. A second note from the
+same look: both wanted a little more detail.
+
+**What changed.**
+
+1. **Material.** Four candidates were rendered through the real pipeline (`to_indexed`, the player palette, a
+   team colour) in a row beside the shipped Hydrogen Plant, Drone Bay, Cryptominer and Solar Array on the
+   screenshot's ground colour: the current `PALE_STEEL`, `LEGACY_GRAY` (stock Red Alert's concrete value, the
+   Cryptominer's body), `dim(PALE_STEEL, 0.4)` and `STEEL` (the Drone Bay's body). The owner chose `LEGACY_GRAY`
+   for the two buildings only; the Hydrogen Plant's tanks, the Aerial Fab Bay, the Wind Turbine, the Sensor Array
+   and the Relay keep pale steel until seen live. In `sgfact_mesh()` and `sgproc_mesh()` every `PALE_STEEL` is
+   `LEGACY_GRAY` (the hall, the hopper, the silos, the conveyor cleats, the Yard's unlit beacon); the darker
+   `STEEL` frame members, the PV roofs and the gold accents are unchanged.
+2. **Detail, Refinery.** A ribbon window with a sill along the hall's left flank, a louvre set left of the door,
+   a seam at sill height; on the tower a walkway band at mid height, a window band under the PV cap and a ladder
+   up its near face; the process pipe from the hall to the tower with a riser; a two-bar grate across the hopper
+   mouth; a control cabin with a window beside the hopper; a catwalk between the two silos.
+3. **Detail, Yard.** A window strip with a sill left of the door and a louvre set right of it, a seam at sill
+   height along the near wall, a hexagonal vent stack on the vault's right shoulder, a parts stack (steel crate,
+   rust crate) and two drums in the yard, a work light on each front gantry post (`WORK_LIGHT`, the fixed tone
+   from the production overlays, so nothing new goes near the gold radius).
+4. Every mark is a `top_face=False` box at `order=1`/`2` on a wall the camera sees (the -x and -y faces at
+   `BUILDING_YAW`), at least 0.6-0.9 units thick so it survives the 4x downscale (rule 10), on `dim(hall, ...)`,
+   `PANEL_BLUEBLACK` or `WORK_LIGHT` so none of it lands on the remap ramp. Regenerated: `sgfact.png`,
+   `sgfactmake.png`, `sgproc.png`, `sgprocmake.png`, `sgprocdead.png` (the derived wreck follows its mesh) and
+   `sgprocicon.png` (the scene cameo follows the actor's art, rule 1); `sgfactdead.png` is not derived and is
+   unchanged, as is `FACT`'s stock cameo. Frame sizes and counts are unchanged, so no sequence YAML moves.
+
+**Verification.** Remap-ramp count of frame 0: `sgfact` 389 before and after, `sgproc` 311 to 305 (the new pipe
+occludes six pixels of the tower band) - the grey never routes onto the ramp. `./utility.sh --check-yaml` exits 0
+across all 75 maps; `--check-missing-sprites` reports exactly the same set as the issue #127 run; `make
+check-scripts` passes; the three generators are byte-identical on a second run and the first run changed only the
+six sheets above. `docs/concept-art/issue128-yard-refinery.png`: both buildings on `main` beside the Hydrogen Plant
+and the Cryptominer, then the new idle and damaged frames, at 3x. **Not verified live:** the marks at 1x on the
+battlefield; the owner's look is the test, as it was for the material.
+
+**Files:** `mods/sungrid/bits/gen_concept_art.py`, `mods/sungrid/bits/{sgfact,sgfactmake,sgproc,sgprocmake,sgprocdead,sgprocicon}.png`,
+`docs/concept-art/issue128-yard-refinery.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`,
+`CHANGELOG.md`.
+
+**Definition of done:** both buildings on the chosen grey with the detail above, the rest of the roster untouched,
+validation as above - met.
+
+---

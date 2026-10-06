@@ -1821,10 +1821,13 @@ def sgproc_mesh(damaged=False, belt=0):
     climbing from the hopper to the tower, and two storage silos at the right
     corner. `belt` (0-7) advances the conveyor's cleats for the idle
     animation; damaged, the conveyor is broken, a roof tooth is burnt through,
-    the stack is down and a silo has lost its dome."""
+    the stack is down and a silo has lost its dome. The hall, hopper and
+    silos are LEGACY_GRAY, stock Red Alert's concrete value, since issue #128:
+    the PALE_STEEL first draft read as a white building on the ground beside
+    the stock ones and the rest of the roster."""
     m = Mesh()
     plinth(m, 27, live=not damaged)
-    hall = PALE_STEEL if not damaged else mix(PALE_STEEL, DAMAGE_SCORCH, 0.2)
+    hall = LEGACY_GRAY if not damaged else mix(LEGACY_GRAY, DAMAGE_SCORCH, 0.2)
     frame_ = STEEL if not damaged else mix(STEEL, DAMAGE_SCORCH, 0.3)
     gold = SUN_GOLD if not damaged else RUST
     # Processing hall along the left flank, three PV teeth on its roof.
@@ -1835,6 +1838,13 @@ def sgproc_mesh(damaged=False, belt=0):
         pv = PANEL_BLUEBLACK if not (damaged and i == 1) else DAMAGE_SCORCH
         m.quad((-24.5, y0, 15), (-5.5, y0, 15), (-5.5, y1 - 0.6, 19.5), (-24.5, y1 - 0.6, 19.5), pv, order=1)
         m.box(-24.5, y1 - 0.6, 15, -5.5, y1, 19.5, dim(hall, 0.2), top=lit(hall, 0.15), shadow=False)
+    # Surface detail (issue #128): a ribbon window along the hall's left
+    # flank, a louvre set left of the door, and a seam line at sill height.
+    m.box(-25.6, 4, 9.0, -24.9, 22, 11.2, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+    m.box(-25.6, 4, 8.6, -24.9, 22, 9.0, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    for z in (10.0, 11.6, 13.2):
+        m.box(-24, -2.6, z, -19, -1.9, z + 0.8, dim(hall, 0.45), order=1, shadow=False, top_face=False)
+    m.box(-25.6, -2.6, 5.8, -5, -1.9, 6.4, dim(hall, 0.3), order=1, shadow=False, top_face=False)
     # Loading door on the hall's near end, framed in the team colour.
     m.box(-17, -2.5, 2.2, -9, -1.9, 8.5, dim(frame_, 0.4), top_face=False, shadow=False, order=1)
     for x0 in (-17.8, -9):
@@ -1845,6 +1855,16 @@ def sgproc_mesh(damaged=False, belt=0):
     # disc problem is a prism's cap); at order 0 the tower's walls sorted over it.
     m.box(7.4, 7.4, 13.5, 24.6, 24.6, 15.0, gold, order=1, shadow=False, top_face=False, accent=not damaged)
     m.box(9, 9, 26, 23, 23, 27.2, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.3), shadow=False)
+    # Tower detail (issue #128): a walkway band, a window band under the cap,
+    # a ladder up the near face, and the process pipe from the hall.
+    m.box(7.2, 7.2, 17.6, 24.8, 24.8, 18.4, lit(frame_, 0.3), order=1, shadow=False, top_face=False)
+    m.box(7.6, 7.6, 21.0, 24.4, 24.4, 22.6, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+    for x0 in (20.0, 22.2):
+        m.box(x0, 7.3, 3.0, x0 + 0.9, 7.9, 24.0, dim(frame_, 0.5), order=2, shadow=False, top_face=False)
+    for k in range(7):
+        m.box(20.0, 7.2, 4.5 + k * 2.8, 23.1, 7.9, 5.2 + k * 2.8, lit(frame_, 0.4), order=2, shadow=False, top_face=False)
+    m.strut((-5.5, 12, 12.0), (8.5, 12, 12.0), 0.9, frame_, cap=lit(frame_, 0.2), shadow=False)
+    m.strut((-5.5, 12, 9.0), (-5.5, 12, 12.0), 0.9, frame_, shadow=False)
     stack_h = 35 if not damaged else 29
     m.prism(20, 20, 27.2, stack_h, 1.7, dim(frame_, 0.25), sides=6, top=dim(frame_, 0.5), shadow=False)
     if damaged:
@@ -1853,6 +1873,12 @@ def sgproc_mesh(damaged=False, belt=0):
     m.box(-6, -26, 2.2, 8, -13, 9, dim(hall, 0.25), top=dim(LEGACY_GRAY_DARK, 0.2))
     for x0, y0, x1, y1 in ((-6.6, -26.6, 8.6, -25.6), (-6.6, -13.4, 8.6, -12.4), (-6.6, -26.6, -5.6, -12.4), (7.6, -26.6, 8.6, -12.4)):
         m.box(x0, y0, 9, x1, y1, 10, hall, top=lit(hall, 0.2), order=1, shadow=False)
+    # A grate across the hopper mouth (issue #128).
+    m.box(-6, -20.2, 8.6, 8, -19.2, 9.1, dim(hall, 0.5), top=dim(hall, 0.35), order=1, shadow=False)
+    m.box(0.5, -26, 8.6, 1.5, -13, 9.1, dim(hall, 0.5), top=dim(hall, 0.35), order=1, shadow=False)
+    # Control cabin beside the hopper, a window on its near face (issue #128).
+    m.box(11, -25, 2.2, 18, -19.5, 7.0, hall, top=dim(hall, 0.15))
+    m.box(12, -25.5, 4.2, 17, -24.9, 5.8, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
     # Conveyor from the hopper up to the tower, cleats climbing it.
     a, b = (1.0, -14.0, 9.5), (14.0, 9.0, 21.0)
     if damaged:
@@ -1862,8 +1888,8 @@ def sgproc_mesh(damaged=False, belt=0):
         for k in range(6):
             t = ((k + belt / 8.0) % 6) / 6.0
             cx, cy, cz = (a[i] + (b[i] - a[i]) * t for i in range(3))
-            m.box(cx - 1.0, cy - 1.0, cz + 1.6, cx + 1.0, cy + 1.0, cz + 2.3, lit(PALE_STEEL, 0.15),
-                  top=lit(PALE_STEEL, 0.3), order=1, shadow=False)
+            m.box(cx - 1.0, cy - 1.0, cz + 1.6, cx + 1.0, cy + 1.0, cz + 2.3, lit(LEGACY_GRAY, 0.15),
+                  top=lit(LEGACY_GRAY, 0.3), order=1, shadow=False)
     else:
         m.box(8, -3, 2.2, 13, 2, 3.6, dim(frame_, 0.3), top=DAMAGE_SCORCH, order=1, shadow=False)
     # Two storage silos at the right corner, hooped in the team colour.
@@ -1875,6 +1901,8 @@ def sgproc_mesh(damaged=False, belt=0):
         else:
             dome(m, cx, cy, 16, 4.6, hall, steps=3)
     m.strut((17, -11, 13), (10, -1, 13), 0.8, frame_)
+    # Catwalk between the silos (issue #128).
+    m.strut((17, -11, 14.2), (23, -20, 14.2), 0.9, lit(frame_, 0.3), shadow=False)
     # Planting: a bed and a tree in the near-left quadrant, clear of the PV roof (issue #108).
     bed(m, -24, -24, -10, -6, 2.2, lowcap=1.2, salt=15)
     tree(m, -21, -19, 2.2, h=8.0, r=4.2)
@@ -1890,10 +1918,12 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
     field on its sunward flank, a team-colour door frame, and an open assembly
     yard under a gantry crane. `build` (0..1) moves the crane trolley along
     the beam for the 25-frame placed-building animation; `beacon=False` is
-    the mast light's off frame in the idle animation (issue #109)."""
+    the mast light's off frame in the idle animation (issue #109). The hall is
+    LEGACY_GRAY since issue #128 (see sgproc_mesh), the PV field and the gold
+    door frame carry the silhouette."""
     m = Mesh()
     plinth(m, 25, z=2.0, live=not damaged)
-    hall = PALE_STEEL if not damaged else mix(PALE_STEEL, DAMAGE_SCORCH, 0.15)
+    hall = LEGACY_GRAY if not damaged else mix(LEGACY_GRAY, DAMAGE_SCORCH, 0.15)
     m.box(-24, 0, 2, 24, 24, 17, hall, top=lit(hall, 0.1))
     n = 6
     for i in range(n):
@@ -1912,6 +1942,14 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
     m.box(9, -1.2, 2, 11, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
     m.box(-11, -1.2, 16, 11, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
     m.box(-24.6, 6, 9, -23.8, 20, 12, PANEL_BLUEBLACK, top=PANEL_BLUEBLACK, order=1, shadow=False)
+    # Surface detail (issue #128): windows left of the door, louvres right of
+    # it, a seam at sill height, a vent stack on the vault's right shoulder.
+    m.box(-22, -0.7, 9.5, -13, 0.1, 12.0, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+    m.box(-22, -0.7, 9.0, -13, 0.1, 9.5, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    for z in (10.0, 11.6, 13.2):
+        m.box(14, -0.7, z, 21, 0.1, z + 0.8, dim(hall, 0.45), order=1, shadow=False, top_face=False)
+    m.box(-24, -0.7, 5.6, 24, 0.1, 6.2, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    m.prism(18, 19, 21.5, 26.5, 1.3, STEEL, sides=6, top=dim(STEEL, 0.4), shadow=False)
     vines(m, -24, 1, 23, 2.0, 8.5, salt=4, dark=True)
     for y in (-6, -18):
         m.strut((-20, y, 2), (-20, y, 17), 1.2, STEEL, cap=lit(STEEL, 0.3))
@@ -1929,6 +1967,14 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
         drop = 4 + 6 * math.sin(math.pi * build)
         m.strut((tx, -12, 16.2), (tx, -12, 16.2 - drop), 0.3, POLE_DARK, shadow=False)
     m.box(-6, -15, 2, 6, -8, 6, dim(GREEN_PRIMARY, 0.1), top=lit(GREEN_PRIMARY, 0.2))
+    # Yard clutter (issue #128): a parts stack and two drums by the right post,
+    # work lights on the front gantry posts.
+    m.box(-17, -12, 2, -12, -8, 5, STEEL, top=lit(STEEL, 0.3))
+    m.box(-16, -12, 5, -13, -9, 7.5, RUST, top=lit(RUST, 0.25))
+    m.prism(14.5, -14, 2, 5.5, 1.4, STEEL, sides=8, top=lit(STEEL, 0.35), shadow=False)
+    m.prism(16.5, -10.5, 2, 5.5, 1.4, RUST, sides=8, top=lit(RUST, 0.3), shadow=False)
+    for x in (-20, 20):
+        m.box(x - 0.9, -18.9, 17.2, x + 0.9, -17.1, 18.4, WORK_LIGHT, top=WORK_LIGHT, order=2, shadow=False)
     # Planted near-left corner of the yard, shrubs and grasses along its front
     # edge, a tree at the near-right corner (issue #108).
     bed(m, -22.5, -22.5, -12, -19.0, 2.0, lowcap=1.4, salt=7, step=3.0)
@@ -1941,7 +1987,7 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
     if not damaged and beacon:
         m.box(20.2, 20.2, 32, 21.8, 21.8, 33.4, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
     elif not damaged:
-        m.box(20.2, 20.2, 32, 21.8, 21.8, 33.4, dim(PALE_STEEL, 0.45), top=dim(PALE_STEEL, 0.3), order=4, shadow=False)
+        m.box(20.2, 20.2, 32, 21.8, 21.8, 33.4, dim(LEGACY_GRAY, 0.45), top=dim(LEGACY_GRAY, 0.3), order=4, shadow=False)
     if damaged:
         m.box(-22, -0.5, 4, -14, 0.2, 12, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
         m.box(6, -20, 2, 14, -13, 4, mix(STEEL, DAMAGE_SCORCH, 0.5), top=DAMAGE_SCORCH)
