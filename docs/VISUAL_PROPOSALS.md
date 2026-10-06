@@ -39,7 +39,8 @@ section B (marked `[shipped, issue #120]`); B7 is capped at its first tier (MCV,
 owner's call, and that tier shipped as issue #121 - the later tiers (the tanks, then the raiders)
 stay open. Issue #122 took section C: C2, C3 and C4 are marked `[shipped, issue #122]`, C5 is
 marked `[checked, issue #122]` with the half that needs game content still noted, and C6 was A7. Issue #125
-took section D short of the stock buildings: D2 (narrowed to the defences), D3, D4 and D6; D5 is issue #126.
+took section D short of the stock buildings: D2 (narrowed to the defences), D3, D4 and D6; issue #126 took the
+first building of D5, the Materials Refinery - the War Factory, the barracks and the Tesla Coil are still open.
 
 - **U1 — The game's name on the load screen and main menu.** The `logo` slot (256×256, drawn centred
   on the load screen and top-right of the main menu) held the bare emblem; neither screen said
@@ -344,13 +345,16 @@ Shipped, with one correction to the proposal: the desert terrain palette is a di
 shift, so a single sheet came out red there - each apron is indexed per tileset and the sequences carry
 `-snow` / `-desert` variants like the stock bibs. Four sheets cover every Sungrid footprint. Not seen live.
 
-**D5. [taken up as issue #126, Refinery first] Stock buildings still in the tree, ordered by screen time.**
+**D5. [Refinery shipped, issue #126; WEAP, the barracks and TSLA open] Stock buildings still in the tree, ordered by screen time.**
 Now: `PROC`, `WEAP`, `BARR`/`TENT`, `DOME`, `FIX`, `HPAD`, `AFLD`, `ATEK`/`STEK`, `SPEN`/`SYRD`, the stock
 defences (`PBOX`, `HBOX`, `GUN`, `AGUN`, `SAM`, `TSLA`, `GAP`), the superweapons. Proposal: `PROC`
 first (in every base, already renamed Materials Refinery, and the Depot beside it is a Sungrid solid),
 then `WEAP` and the two barracks, then `TSLA` (the strongest remaining Red Alert signature — make it an
 Arc Pylon in the Arc Turret's vocabulary), then stop. Cost: M each. Kind: generator (one `*_mesh()`
 each, with build-up and rubble derived). Verify: as for every roster pass since issue #106.
+Shipped (first of four): the Materials Refinery, `sgproc_mesh()` on a new 90x72 frame family, conveyor
+animated in the body (the stock `proctop` overlay goes), wreck and build-up derived, apron from D4, scene cameo.
+Not seen live; the War Factory, the two barracks and the Tesla Coil wait on that look.
 
 **D6. [shipped, issue #125] Production and docking have no animation on the Sungrid producers.**
 Now: `SGDRN`/`SGDRA` have no `WithProductionOverlay`; `RCYD` has no dock overlay (stock `PROC` has

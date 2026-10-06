@@ -60,7 +60,7 @@ from gen_concept_art import (
     LEGACY_GRAY, LEGACY_GRAY_DARK, RUST, DAMAGE_SCORCH, CONCRETE, PAD_TOP,
     PALE_STEEL, STEEL, AMBER, lit, dim, mix,
     _mesh_render, render_shadow_mask, indexed_strip,
-    save_pngsheet, draw_icon_label,
+    save_pngsheet, draw_icon_label, scene_cameo,
     ICON_W, ICON_H,
 )
 
@@ -300,47 +300,8 @@ def harv_sheet(fullness):
 # (dark sky, lit subject, dark foot) without pretending to be a photograph.
 # ---------------------------------------------------------------------------
 
-SKY_TOP = dim(PANEL_BLUEBLACK, 0.2)
-SKY_HAZE = (0xB4, 0xBE, 0xA6)                 # warm grey-green haze at the horizon
-GROUND_FAR = (0x4A, 0x6A, 0x42)
-GROUND_NEAR = (0x2C, 0x46, 0x2C)
-VERGE = (0x7C, 0x96, 0x58)
-
-
-def scene_cameo(mesh, label, yaw=30.0, lift=0.0, scale=1.75):
-    """Full-panel cameo: the scene fills the icon under the border and label."""
-    W, H = ICON_W, ICON_H
-    big = Image.new("RGBA", (W * SS, H * SS), SKY_TOP + (255,))
-    d = ImageDraw.Draw(big)
-    horizon = int(H * SS * 0.40)
-    for y in range(horizon):
-        t = y / max(1, horizon - 1)
-        d.line([(0, y), (W * SS, y)], fill=mix(SKY_TOP, SKY_HAZE, t * t) + (255,))
-    for y in range(horizon, H * SS):
-        t = (y - horizon) / max(1, H * SS - horizon)
-        d.line([(0, y), (W * SS, y)], fill=mix(GROUND_FAR, GROUND_NEAR, t) + (255,))
-    # A lit verge across the middle distance, and the hard-standing the vehicle sits on.
-    d.rectangle([0, horizon, W * SS, horizon + 3 * SS], fill=VERGE + (255,))
-    d.polygon([(W * SS * 0.12, H * SS * 0.86), (W * SS * 0.42, H * SS * 0.60), (W * SS * 0.92, H * SS * 0.64),
-               (W * SS * 0.70, H * SS * 0.95)], fill=mix(GROUND_NEAR, PAD_TOP, 0.55) + (255,))
-    # The vehicle, rendered on its own canvas and scaled up, shadow first.
-    cw, ch = 56, 44
-    car = Image.new("RGBA", (cw * SS, ch * SS), (0, 0, 0, 0))
-    sd = SD(car)
-    mesh.draw_shadow(sd, cw / 2, ch * 0.66 + lift, yaw, color=(0, 0, 0, 110))
-    mesh.draw(sd, cw / 2, ch * 0.66 + lift, yaw)
-    bbox = car.getbbox()
-    car = car.crop(bbox)
-    car = car.resize((max(1, round(car.width * scale)), max(1, round(car.height * scale))), Image.LANCZOS)
-    big.alpha_composite(car, ((W * SS - car.width) // 2, int(H * SS * 0.84) - car.height))
-    icon = big.resize((W, H), Image.LANCZOS)
-    d = ImageDraw.Draw(icon)
-    d.rectangle([0, 0, W - 1, H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
-    d.line([(1, 1), (W - 2, 1)], fill=lit(LEGACY_GRAY, 0.05))
-    if label:
-        draw_icon_label(icon, label)
-        d.rectangle([0, 0, W - 1, H - 1], outline=dim(LEGACY_GRAY_DARK, 0.3))
-    return icon
+# scene_cameo() moved to gen_concept_art.py in issue #126 so the Materials
+# Refinery's cameo can share it; imported above.
 
 
 # ---------------------------------------------------------------------------
