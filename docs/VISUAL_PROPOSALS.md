@@ -335,7 +335,7 @@ existing four. One function, eleven sheets. Cost: S–M. Kind: generator.
 Shipped: twelve (the count was ten roster buildings plus both defence pedestals), all derived from each
 building's own damaged mesh by `wreck_mesh()`. Not seen live.
 
-**D4. [shipped, issue #125] The concrete aprons under every building are stock RA bibs.**
+**D4. [shipped in issue #125, withdrawn in issue #127] The concrete aprons under every building are stock RA bibs.**
 Now: `bib2.tem`/`bib3.tem`/`mb*` under every Sungrid building — tan Red Alert concrete under solarpunk
 buildings, on every tileset. Proposal: `sgbib2.png`/`sgbib3.png` on the terrain palette: permeable
 pavers with grass joints, drawn once per size with `_scatter()` for the joints, referenced from each
@@ -343,7 +343,10 @@ building's `bib:` sequence (`TilesetFilenames` can stay a single sheet since the
 all reskinned toward the same green). Cost: S–M. Kind: generator + sequence YAML.
 Shipped, with one correction to the proposal: the desert terrain palette is a different palette, not a hue
 shift, so a single sheet came out red there - each apron is indexed per tileset and the sequences carry
-`-snow` / `-desert` variants like the stock bibs. Four sheets cover every Sungrid footprint. Not seen live.
+`-snow` / `-desert` variants like the stock bibs. Four sheets cover every Sungrid footprint. Seen live in
+issue #127 and taken back: the owner's verdict was that the grey paver grid looked wrong under the buildings
+(a tiled floor rather than ground), and every Sungrid building stands on the stock bibs again. Closed; do
+not re-propose without a different approach to the ground plane.
 
 **D5. [Refinery shipped, issue #126; WEAP, the barracks and TSLA open] Stock buildings still in the tree, ordered by screen time.**
 Now: `PROC`, `WEAP`, `BARR`/`TENT`, `DOME`, `FIX`, `HPAD`, `AFLD`, `ATEK`/`STEK`, `SPEN`/`SYRD`, the stock

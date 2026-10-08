@@ -2314,103 +2314,6 @@ def sgtur_wreck():
     return wreck_frame(sgtur_pad_mesh(lamp=False), SGTUR_W, SGTUR_H, ox, oy, 12, 0.0, 42)
 
 
-# D4. Permeable pavers with grass joints, replacing the stock tan concrete
-# bibs (bib2.tem / bib3.tem / mb*.tem) under every Sungrid building. One
-# 24x24 tile per footprint cell, drawn at native resolution (a tiling pattern
-# would only blur under the 4x downscale) and indexed on the fixed palette
-# entries only: WithBuildingBib renders through the per-tileset *terrain*
-# palette, where the remap ramp is not a team colour, so a bib must never
-# touch indices 80-95. Four sheets cover every Sungrid footprint: two rows of
-# three (sgbib2), two of two (sgbib3), one of one and one of two (the
-# minibibs). Pavers are grey so the per-tileset hue shift of the terrain
-# palette leaves them concrete on every map; the joints are the foliage ramp.
-
-BIB_CELL = 24
-BIB_PITCH = 8                                   # paver pitch, px: three per cell
-PAVER = lit(CONCRETE, 0.5)
-PAVER_LIT = lit(CONCRETE, 0.7)
-PAVER_DIM = lit(CONCRETE, 0.3)
-KERB = dim(CONCRETE, 0.1)
-
-
-def _load_pal(name):
-    raw = open(os.path.join(HERE, name), "rb").read()
-    return [(raw[i * 3] << 2, raw[i * 3 + 1] << 2, raw[i * 3 + 2] << 2) for i in range(256)]
-
-
-# The terrain palette is a different file per tileset, and the desert one is
-# a different *palette*, not a hue shift of the temperate one: an index that
-# is concrete grey on temperate is red on desert. So a bib is indexed once per
-# tileset against that tileset's own terrain palette, and the sequence lists
-# the per-tileset sheets exactly as the stock bibs did (bib3.tem / .sno / .des).
-# Indices 0 (transparent) and 3-4 (the terrain palettes' ShadowIndex) are
-# never chosen; the remap ramp is excluded too, by habit.
-BIB_TILESETS = {
-    "": "sungrid-temperat-terrain.pal",          # the default sheet
-    "-snow": "sungrid-snow-terrain.pal",
-    "-desert": "sungrid-desert-terrain.pal",
-}
-_BIB_TERRAIN_IDX = [i for i in _BODY_IDX if i != 3]
-
-
-def _nearest_in(pal, rgb, _cache={}):
-    key = (id(pal), rgb)
-    hit = _cache.get(key)
-    if hit is None:
-        hit = _cache[key] = min(_BIB_TERRAIN_IDX, key=lambda i: _d2(rgb, pal[i]))
-    return hit
-
-
-def bib_tile(col, row, cols, rows, salt, pal):
-    """One cell of a `cols` x `rows` apron as a PC frame on `pal`. The paver
-    grid runs continuously across cells; the three outer edges (not the top,
-    which is under the building) end in a dark kerb with a ragged,
-    scatter-hashed rim so the apron sits in the ground rather than on it."""
-    f = PC(BIB_CELL, BIB_CELL)
-    for y in range(BIB_CELL):
-        gy = row * BIB_CELL + y
-        for x in range(BIB_CELL):
-            gx = col * BIB_CELL + x
-            on_edge = ((col == 0 and x == 0) or (col == cols - 1 and x == BIB_CELL - 1)
-                       or (row == rows - 1 and y == BIB_CELL - 1))
-            near_edge = ((col == 0 and x == 1) or (col == cols - 1 and x == BIB_CELL - 2)
-                         or (row == rows - 1 and y == BIB_CELL - 2))
-            if on_edge:
-                if _scatter(gx, gy, salt) < 0.45:
-                    continue                         # ragged rim: terrain shows through
-                rgb = KERB
-            elif near_edge:
-                rgb = KERB if _scatter(gx, gy, salt + 1) < 0.7 else PAVER_DIM
-            elif gx % BIB_PITCH == 0 or gy % BIB_PITCH == 0:
-                rgb = LEAF_MID if _scatter(gx, gy, salt + 2) < 0.6 else LEAF_DARK   # grass joint
-            else:
-                px_, py_ = gx // BIB_PITCH, gy // BIB_PITCH
-                tone = _scatter(px_, py_, salt + 3)
-                base = PAVER if tone < 0.6 else (PAVER_LIT if tone < 0.8 else PAVER_DIM)
-                if gx % BIB_PITCH == 1 or gy % BIB_PITCH == 1:
-                    rgb = lit(base, 0.12)             # lit upper-left edge of each paver
-                elif gx % BIB_PITCH == BIB_PITCH - 1 or gy % BIB_PITCH == BIB_PITCH - 1:
-                    rgb = dim(base, 0.12)             # shaded lower-right edge
-                else:
-                    rgb = base
-            f.px[y][x] = _nearest_in(pal, rgb)
-    return f
-
-
-def bib_frames(cols, rows, salt, pal):
-    """Frames in WithBuildingBib's order: row-major over the `rows` x `cols`
-    cells under the footprint (frame i -> cell (i % cols, i // cols))."""
-    return [bib_tile(i % cols, i // cols, cols, rows, salt, pal) for i in range(cols * rows)]
-
-
-BIBS = {                     # sheet -> (columns, rows, salt)
-    "sgbib2": (3, 2, 51),    # 3-wide buildings: sgapwr, sghyd, sgfact
-    "sgbib3": (2, 2, 52),    # 2-wide: sgpwr, sgcry, sgdai, sgdrn
-    "sgmbib1": (1, 1, 53),   # 1x1 minibibs: rcyd, sgsns, sgwnd, sgvlt, sgrel, arct
-    "sgmbib2": (2, 1, 54),   # 2-wide minibibs: sgshl, sgtur
-}
-
-
 # D6. Production and docking cues on the Sungrid producers, as overlays at the
 # body's own frame size, gated by the engine's own traits (WithProductionOverlay
 # while a queue is building, WithDockedOverlay while a Hauler is unloading).
@@ -4316,13 +4219,6 @@ def main():
                               ("sgtur", sgtur_wreck(), SGTUR_W, SGTUR_H)):
         save_pngsheet(indexed_strip([wreck], [silhouette_shadow(wreck, 2, 2)], w, h),
                       f"{name}dead.png", w, h, 1, indexed=True)
-    # D4: the paver aprons, one frame per footprint cell in WithBuildingBib's order.
-    for suffix, palfile in BIB_TILESETS.items():
-        pal = _load_pal(palfile)
-        for name, (cols, rows, salt) in BIBS.items():
-            fr = bib_frames(cols, rows, salt, pal)
-            save_pngsheet(sheet_of_indexed(fr, BIB_CELL, BIB_CELL), f"{name}{suffix}.png",
-                          BIB_CELL, BIB_CELL, len(fr), indexed=True)
     # D6: production and docking overlays, at the body's frame size.
     prod = [_mesh_frame("2x3", sgdrn_prod_mesh, phase=i) for i in range(PROD_FRAMES)]
     save_pngsheet(overlay_sheet(prod, FAM23_W, FAM23_H, "sgdrnprod"), "sgdrnprod.png", FAM23_W, FAM23_H, len(prod), indexed=True)

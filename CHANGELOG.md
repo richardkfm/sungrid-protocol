@@ -37,7 +37,8 @@ The detailed entries below track every issue through #116; this list maps them o
   derrick back on stock colours, the Grid Defense Turret back on its tank shell, and scene cameos for the MCV
   and the Ore Truck (issue #123); the sidebar's highlight icons in sun gold and the lobby's Random plaques in the
   faction plaque style (issue #124); team-colour rings on both defence pedestals, rubble for the twelve buildings
-  and defences that used to vanish when destroyed, paver aprons with grass joints under every Sungrid building,
+  and defences that used to vanish when destroyed, paver aprons with grass joints under every Sungrid building (taken back to the stock concrete bibs in
+  issue #127 after the first live look),
   and work lights on the Drone Bays and a scrap cascade at the Depot while they work (issue #125); the Materials
   Refinery as Sungrid art, with a running intake conveyor, its own wreck and a scene cameo (issue #126).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"

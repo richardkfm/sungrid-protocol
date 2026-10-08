@@ -4585,3 +4585,43 @@ owner's look at this one.
 cameo - met.
 
 ---
+
+### 127. D4 taken back: the paver aprons withdrawn, stock bibs under every Sungrid building again
+
+**Type:** art / live-look correction · **Phase:** 6 · **Status:** done
+
+**Why.** The first live look at issue #125's pass. The owner's screenshot (temperate, an early Assembly base: the
+Construction Yard, a Solar Array, the Drone Bay and a barracks) showed every Sungrid building standing on a grey
+grid of pavers that read as tiled flooring laid under the base rather than as ground, and the verdict was "go back
+to stock OpenRA / RA". Same posture as issue #123: a live look wins over a composite, and the correction is
+total, not a retune — the pattern, pitch and tones are not the problem, the second ground texture is.
+
+**What changed.**
+
+1. `mods/sungrid/sequences/structures.yaml`: all sixteen `bib:` nodes that pointed at `sgbib2` / `sgbib3` /
+   `sgmbib1` / `sgmbib2` are back on the stock bibs they carried before issue #125, node for node: `bib2.tem`
+   (`.sno` / `.des`) under the 3-wide buildings, `bib3.tem` under the 2-wide ones, `mbSILO` / `mbSAM` / `mbGAP` /
+   `mbIRON` / `mbFTUR` minibibs on the 1x1 and 2x1 actors — the Wind Turbine keeps `mbSILO` from issue #100. The
+   Materials Refinery (`sgproc`, issue #126, which never had a stock node) takes stock `proc:`'s `bib2`.
+2. `mods/sungrid/bits/gen_concept_art.py`: the D4 section (`bib_tile()`, `bib_frames()`, `BIBS`, `BIB_TILESETS`,
+   `_load_pal()`, `_nearest_in()`, the paver tones) and its twelve-sheet write loop are removed, so the generator
+   writes exactly the sheets the mod ships. The twelve `sgbib*` / `sgmbib*` sheets are deleted.
+3. Nothing else from issue #125 moves: the defence rings (D2), the twelve wrecks (D3) and the production and
+   docking overlays (D6) stand, and so does the per-tileset terrain-palette finding (CLAUDE.md art rule 26) — it
+   is still true for the next thing rendered through `terrain`, there just is no such thing shipped now.
+
+**Verification.** `./utility.sh --check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` reports exactly
+32 more misses than `main` does in this container, all of them `bib2`/`bib3` `.tem`/`.sno`/`.des` — the RA
+content is not installed here, so every stock sprite is "not found", the same way `bib3.sno` already was for
+the three stock-bib actors on `main`; every mod PNG resolves; `make check-scripts` passes; `gen_concept_art.py` then `gen_photo_cameos.py` then `gen_core_units.py`
+leave every committed sheet byte-identical and write no `sgbib*` file. Not verified live: the owner's own
+screenshot is the before; the after is the stock look every pre-#125 build already had.
+
+**Files:** `mods/sungrid/sequences/structures.yaml`, `mods/sungrid/bits/gen_concept_art.py`, twelve deleted
+`mods/sungrid/bits/{sgbib2,sgbib3,sgmbib1,sgmbib2}{,-snow,-desert}.png`,
+`docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Definition of done:** every Sungrid building on the stock bibs again, no apron sheet or generator code left,
+validation as above - met.
+
+---
