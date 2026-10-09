@@ -348,7 +348,7 @@ issue #127 and taken back: the owner's verdict was that the grey paver grid look
 (a tiled floor rather than ground), and every Sungrid building stands on the stock bibs again. Closed; do
 not re-propose without a different approach to the ground plane.
 
-**D5. [Refinery shipped, issue #126; WEAP, the barracks and TSLA open] Stock buildings still in the tree, ordered by screen time.**
+**D5. [Refinery shipped, issue #126, re-toned in #128; WEAP, the barracks and TSLA open] Stock buildings still in the tree, ordered by screen time.**
 Now: `PROC`, `WEAP`, `BARR`/`TENT`, `DOME`, `FIX`, `HPAD`, `AFLD`, `ATEK`/`STEK`, `SPEN`/`SYRD`, the stock
 defences (`PBOX`, `HBOX`, `GUN`, `AGUN`, `SAM`, `TSLA`, `GAP`), the superweapons. Proposal: `PROC`
 first (in every base, already renamed Materials Refinery, and the Depot beside it is a Sungrid solid),
@@ -357,6 +357,8 @@ Arc Pylon in the Arc Turret's vocabulary), then stop. Cost: M each. Kind: genera
 each, with build-up and rubble derived). Verify: as for every roster pass since issue #106.
 Shipped (first of four): the Materials Refinery, `sgproc_mesh()` on a new 90x72 frame family, conveyor
 animated in the body (the stock `proctop` overlay goes), wreck and build-up derived, apron from D4, scene cameo.
+Seen live in issue #128: the white hall read as a foreign building beside the stock ones; it and the Yard are
+stock-concrete grey now, with surface detail. The next D5 building starts from that material, not from pale steel.
 Not seen live; the War Factory, the two barracks and the Tesla Coil wait on that look.
 
 **D6. [shipped, issue #125] Production and docking have no animation on the Sungrid producers.**

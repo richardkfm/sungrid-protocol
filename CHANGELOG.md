@@ -40,7 +40,9 @@ The detailed entries below track every issue through #116; this list maps them o
   and defences that used to vanish when destroyed, paver aprons with grass joints under every Sungrid building (taken back to the stock concrete bibs in
   issue #127 after the first live look),
   and work lights on the Drone Bays and a scrap cascade at the Depot while they work (issue #125); the Materials
-  Refinery as Sungrid art, with a running intake conveyor, its own wreck and a scene cameo (issue #126).
+  Refinery as Sungrid art, with a running intake conveyor, its own wreck and a scene cameo (issue #126); the
+  Construction Yard and the Refinery on stock-concrete grey instead of white, with windows, louvres, pipes, a
+  ladder, a hopper grate and yard clutter (issue #128).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
