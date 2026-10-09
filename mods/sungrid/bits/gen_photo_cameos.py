@@ -61,6 +61,18 @@ CROPS = {
     "rcyd":   ("desert-base.png",  (250, 556, 398, 668)),   # bin of reclaimed scrap metal
     # --- grid-scene.png (the NOVAYA ZARYA hero scene) ---
     "disr":   ("grid-scene.png", (470, 880, 640, 1080)),   # the two engineers
+    # --- ideogram-base-1..4.jpg (issue #129): the owner's Ideogram spec-sheet
+    #     renders of the seven actors that had no photographic subject. The
+    #     owner chose the crop per subject from a four-render contact sheet;
+    #     the four stock buildings get these ahead of their own sprites, the
+    #     owner's call (it supersedes issue #123's rule for these four).
+    "sgproc": ("ideogram-base-4.jpg", (240, 230, 640, 520)),    # hopper, conveyor, sorting tower, silos
+    "mcv":    ("ideogram-base-1.jpg", (240, 470, 540, 640)),    # six-wheel truck with folded crane
+    "harv":   ("ideogram-base-1.jpg", (880, 630, 1240, 850)),   # six-wheel hauler, tipping bed full of ore
+    "weap":   ("ideogram-base-3.jpg", (770, 280, 1350, 620)),   # PV-roofed hangar with tanks inside
+    "barr":   ("ideogram-base-1.jpg", (1270, 290, 1600, 470)),  # hardened block, sandbags, red flag
+    "tent":   ("ideogram-base-1.jpg", (1580, 400, 1950, 610)),  # container modules, solar canopy, gold flag
+    "tsla":   ("ideogram-base-2.jpg", (1640, 150, 1900, 345)),  # lattice pylon, electrode ring, discharge
     # --- renamed stock actors whose stock cameo still bakes the old name
     #     (docs/BACKLOG.md issue #120, proposal B2): the two Barracks and the
     #     two Tech Centers have subjects in the hero scene; V2RL/QTNK/PROC do
@@ -71,6 +83,13 @@ CROPS = {
 # rules.ftl) is too long to read cleanly at 64px. Cameo-only cosmetic text; the
 # hover tooltip still shows the full name.
 LABEL_OVERRIDES = {
+    "sgproc": "Materials Ref",
+    "mcv": "MCV",
+    "harv": "Ore Truck",
+    "weap": "War Factory",
+    "barr": "Asm Barracks",
+    "tent": "Con Barracks",
+    "tsla": "Tesla Coil",
     "sgdai": "AI Datacenter",
     "sgdra": "Aerial Fab",
     "sgapwr": "Adv Solar Arr",
@@ -93,7 +112,7 @@ LABEL_OVERRIDES = {
 # Sungrid arrays, so their cameos are the arrays' own photos with the same
 # FAKE stamp convention stock RA's fake cameos use, so the owner can still
 # tell decoy from real in the build menu at a glance.
-FAKES = ("sgpwr", "sgapwr")
+FAKES = ("sgpwr", "sgapwr", "weap", "tent")
 STAMP = (0xE8, 0xA9, 0x3D)  # sun-gold (docs/ART_DIRECTION.md locked palette)
 
 

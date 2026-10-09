@@ -42,7 +42,9 @@ The detailed entries below track every issue through #116; this list maps them o
   and work lights on the Drone Bays and a scrap cascade at the Depot while they work (issue #125); the Materials
   Refinery as Sungrid art, with a running intake conveyor, its own wreck and a scene cameo (issue #126); the
   Construction Yard and the Refinery on stock-concrete grey instead of white, with windows, louvres, pipes, a
-  ladder, a hopper grate and yard clutter (issue #128).
+  ladder, a hopper grate and yard clutter (issue #128); photographic build-menu cameos for the Mobile Construction
+  Vehicle, the Ore Truck, the Materials Refinery, the War Factory, both barracks and the Tesla Coil, cut from the
+  owner's own renders (issue #129).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,

@@ -4,17 +4,17 @@ docs/VISUAL_PROPOSALS.md): the stock Red Alert vehicles on screen in every
 match of either faction, replaced with Sungrid art on the conventions this
 file locks for every unit that follows.
 
-  MCV   mcv.png       32 facings (+ mcvicon.png, mcvhusk.png 32 facings)
+  MCV   mcv.png       32 facings (+ mcvhusk.png 32 facings)
   HARV  harv.png      idle 32 + harvest 8 facings x 8 + dock 8 + dock-loop 7
         harvhalf.png / harvempty.png  the same 111-frame layout per fullness
         hhusk.png / hhusk2.png  laden / empty wreck, 32 facings each
-        harvicon.png
 
 The rifleman this file also drew (e1.png on e1.shp's 378-frame layout, on
 the Disruptor Trooper's figure) went back to the stock sprite in issue #123
 at the owner's call; the drawing is in git history at the #121/#122 commits
-if a later tier wants to pick it up again. The two cameos are scene renders
-(scene_cameo, issue #123), not the flat panel make_icon() gives a building.
+if a later tier wants to pick it up again. The two cameos were scene renders
+(scene_cameo, issue #123) until issue #129; they are photographic crops from
+the owner's renders now, written by gen_photo_cameos.py, not by this file.
 
 Every sheet mirrors the stock .shp's frame order and count exactly, so the
 sequence YAML changes by Filename only - the same rule the Hauler Drone's
@@ -60,7 +60,7 @@ from gen_concept_art import (
     LEGACY_GRAY, LEGACY_GRAY_DARK, RUST, DAMAGE_SCORCH, CONCRETE, PAD_TOP,
     PALE_STEEL, STEEL, AMBER, lit, dim, mix,
     _mesh_render, render_shadow_mask, indexed_strip,
-    save_pngsheet, draw_icon_label, scene_cameo,
+    save_pngsheet, draw_icon_label,
     ICON_W, ICON_H,
 )
 
@@ -300,8 +300,9 @@ def harv_sheet(fullness):
 # (dark sky, lit subject, dark foot) without pretending to be a photograph.
 # ---------------------------------------------------------------------------
 
-# scene_cameo() moved to gen_concept_art.py in issue #126 so the Materials
-# Refinery's cameo can share it; imported above.
+# scene_cameo() moved to gen_concept_art.py in issue #126 and is unused since
+# issue #129 (every cameo it drew is photographic now); it stays there for a
+# future actor with no photographic subject.
 
 
 # ---------------------------------------------------------------------------
@@ -312,7 +313,7 @@ def main():
     save_pngsheet(indexed_strip(bodies, shadows, MCV_W, MCV_H), "mcv.png", MCV_W, MCV_H, len(bodies), indexed=True)
     bodies, shadows = facing_frames(mcv_mesh, MCV_W, MCV_H, MCV_OY, decals=_mcv_decals, damaged=True)
     save_pngsheet(indexed_strip(bodies, shadows, MCV_W, MCV_H), "mcvhusk.png", MCV_W, MCV_H, len(bodies), indexed=True)
-    save_pngsheet(scene_cameo(mcv_mesh(), "MCV", yaw=30.0, lift=1.0), "mcvicon.png", ICON_W, ICON_H, 1)
+    # mcvicon.png is a photographic cameo since issue #129 (gen_photo_cameos.py).
 
     # HARV: three fullness images on one layout, two husks, cameo.
     for fullness, filename in (("full", "harv.png"), ("half", "harvhalf.png"), ("empty", "harvempty.png")):
@@ -322,7 +323,7 @@ def main():
         bodies, shadows = facing_frames(harv_mesh, HARV_W, HARV_H, HARV_OY, decals=_harv_decals,
                                         fullness=fullness, damaged=True)
         save_pngsheet(indexed_strip(bodies, shadows, HARV_W, HARV_H), filename, HARV_W, HARV_H, len(bodies), indexed=True)
-    save_pngsheet(scene_cameo(harv_mesh("full"), "Ore Truck", yaw=35.0, lift=2.0), "harvicon.png", ICON_W, ICON_H, 1)
+    # harvicon.png is a photographic cameo since issue #129 (gen_photo_cameos.py).
 
     print("done")
 
