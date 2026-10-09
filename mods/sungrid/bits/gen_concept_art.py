@@ -4118,12 +4118,10 @@ def main():
         w, h, _half = FAM[fam]
         sheet, frames = building_sheet(name)
         save_pngsheet(sheet, f"{name}.png", w, h, len(frames), indexed=True)
-        if name == "sgproc":
-            # No photographic source for the Refinery: a scene render, like
-            # the two vehicle cameos (issue #123), not the flat panel.
-            icon = scene_cameo(sgproc_mesh(), ICON_LABELS[name], yaw=BUILDING_YAW, lift=6.0, scale=0.8, canvas=(110, 90))
-        else:
-            icon = make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name))
+        # Programmatic fallback cameo; gen_photo_cameos.py overwrites it for
+        # every building with a photographic source (since issue #129 that
+        # includes the Refinery; its scene render went with that issue).
+        icon = make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name))
         save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
         idle = frames[0]
         mk = make_frames(mesh_draw_fn(name), w, h, final=idle)

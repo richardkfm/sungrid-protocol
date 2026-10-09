@@ -765,7 +765,7 @@ barr:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: barricon.shp
+		Filename: barricon.png # Photographic cameo from the owner's render (issue #129).
 
 tent:
 	Defaults:
@@ -791,10 +791,10 @@ tent:
 			DESERT: bib3.des
 		Length: *
 	icon:
-		Filename: tenticon.shp
+		Filename: tenticon.png # Photographic cameo from the owner's render (issue #129).
 		TilesetFilenames:
 	fake-icon:
-		Filename: tenficon.shp
+		Filename: tentfakeicon.png
 		TilesetFilenames:
 
 kenn:
@@ -907,9 +907,9 @@ weap:
 			DESERT: bib2.des
 		Length: *
 	icon:
-		Filename: weapicon.shp
+		Filename: weapicon.png # Photographic cameo from the owner's render (issue #129).
 	fake-icon:
-		Filename: weaficon.shp
+		Filename: weapfakeicon.png
 
 hpad:
 	Defaults:
@@ -1222,7 +1222,7 @@ tsla:
 			DESERT: mbTSLA.des
 		Length: *
 	icon:
-		Filename: tslaicon.shp
+		Filename: tslaicon.png # Photographic cameo from the owner's render (issue #129).
 
 pbox:
 	Defaults:

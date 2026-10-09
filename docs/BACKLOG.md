@@ -4677,3 +4677,54 @@ battlefield; the owner's look is the test, as it was for the material.
 validation as above - met.
 
 ---
+
+### 129. Photographic cameos from the owner's renders for the seven actors that had none
+
+**Type:** art · **Phase:** 6/7 · **Status:** done
+
+**Why.** The owner did not like the cameos made in Claude: the three `scene_cameo()` renders (MCV, Ore Truck,
+Materials Refinery) sat beside nineteen photographic crops and read as a different kind of image, and the four
+stock buildings still in the tree carried stock Red Alert cameos. The owner asked for an Ideogram prompt for a 3D
+render of everything missing.
+
+**What happened.**
+
+1. **Prompt.** Written to match the existing sources (`desert_base2.png`): photorealistic 3D, spec-sheet layout,
+   elevated three-quarter view, golden-hour desert, one subject per concrete slab with clear ground between, no
+   text. Subjects described in the mod's fiction: Refinery (hopper, conveyor, sorting tower, silos, sawtooth PV
+   roof), War Factory (open-fronted PV-roofed hall, gantry crane, tracked chassis inside), Assembly Barracks
+   (hardened block, sandbags, red flag), Consortium Barracks (modular, solar canopy, gold flag), Arc Pylon
+   (lattice pylon, electrode ring, violet discharge), MCV (six-wheel truck, folded crane, container), Ore Truck
+   (six-wheel hauler, tipping bed of ore). A second prompt covers the B7 vehicles and infantry for later. The
+   owner generated four renders at 2000x1125.
+2. **Choosing crops.** A scratch script cut every subject from every render through the real cameo recipe
+   (`make_photo_icon`: cover-fit to 64x48, vignette, label, border) into a 7x4 contact sheet at 4x, and the owner
+   chose: Refinery from render 4, MCV and Ore Truck from 1, War Factory from 3 (the hangar with tanks reads as
+   a factory), both barracks from 1, Tesla Coil from 2 (ring and discharge on clean sky). The owner also chose
+   to put all seven live now, the four stock buildings ahead of their sprites — an exception to issue #123's rule,
+   recorded in `CLAUDE.md` art rule 1, and a reasoned one: the renders are the D5 design reference.
+3. **Wiring.** `gen_photo_cameos.py`: seven `CROPS` entries on `ideogram-base-{1..4}.jpg`, `LABEL_OVERRIDES` for
+   the seven (`Materials Ref`, `MCV`, `Ore Truck`, `War Factory`, `Asm Barracks`, `Con Barracks`, `Tesla Coil` -
+   the actor's in-game name, not the planned Arc Pylon), `FAKES` gains `weap` and `tent` so the fake War Factory
+   and fake Consortium Barracks get the stamped variant. `gen_concept_art.py` no longer special-cases the
+   Refinery's icon (the generic programmatic fallback, overwritten by the photographic pass like every other
+   building); `gen_core_units.py` no longer writes `mcvicon`/`harvicon` and no longer imports `scene_cameo`,
+   which stays in `gen_concept_art.py` unused. `sequences/structures.yaml`: `weap`, `barr`, `tent`, `tsla`
+   `icon:` (and the two `fake-icon:`) nodes point at the new PNGs. New sheets: `weapicon`, `weapfakeicon`,
+   `barricon`, `tenticon`, `tentfakeicon`, `tslaicon`; rewritten: `sgprocicon`, `mcvicon`, `harvicon`.
+
+**Verification.** `./utility.sh --check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` loses exactly
+five entries against the issue #128 run (`weapicon.shp`, `weaficon.shp`, `barricon.shp`, `tenticon.shp`,
+`tslaicon.shp`, which the RA content is not installed here to serve) and gains none, so every new PNG resolves;
+`make check-scripts` passes; the three generators change only the nine cameos and are byte-identical on a second
+run. `docs/concept-art/issue129-cameos.png` is the nine at 4x. Not verified live.
+
+**Files:** `docs/concept-art/cameo-sources/{ideogram-base-1,2,3,4}.jpg` and its `README.md`,
+`mods/sungrid/bits/{gen_photo_cameos,gen_concept_art,gen_core_units}.py`, nine `mods/sungrid/bits/*icon.png`,
+`mods/sungrid/sequences/structures.yaml`, `docs/concept-art/issue129-cameos.png`,
+`docs/{VISUAL_PROPOSALS,ART_DIRECTION}.md`, `CLAUDE.md`, `CHANGELOG.md`.
+
+**Definition of done:** every actor in the build menu on a photographic cameo except `FACT` (stock by the owner's
+choice, issue #107) and the stock units B7 has not reached - met.
+
+---

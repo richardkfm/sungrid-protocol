@@ -197,6 +197,11 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 128 review render: the Yard and the Refinery white on main, then grey with surface detail, idle and damaged.](concept-art/issue128-yard-refinery.png)
 
+**Follow-up: the last Claude-made cameos replaced (`docs/BACKLOG.md` issue #129).** The owner did not like the three scene-render cameos (MCV, Ore Truck, Refinery) beside the photographic set, generated four spec-sheet renders in Ideogram from a prompt written to match the existing desert sources (same elevated three-quarter view, golden hour, one subject per slab), and chose a crop per subject from a contact sheet that showed every subject from every render at the real 64x48. All seven actors that had no photographic subject are photographic now, including the four stock buildings ahead of their sprites — the owner's call, and a reasoned one: the same renders are the design reference for the War Factory, the barracks and the Arc Pylon, so the sprite will converge on the cameo. The renders are `docs/concept-art/cameo-sources/ideogram-base-1..4.jpg`; the nine cameos (two with the FAKE stamp) are in `docs/concept-art/issue129-cameos.png`.
+
+![Issue 129 review render: the nine new photographic cameos at 4x.](concept-art/issue129-cameos.png)
+
+
 
 
 ![Issue 123 review render: the Ore Truck and MCV scene cameos beside the Solar Array, Hauler Drone and Disruptor Trooper cameos.](concept-art/issue123-cameos.png)

@@ -24,3 +24,12 @@ the crops reproducible and documents provenance (see `docs/LICENSE_NOTES.md`).
   as much source detail as possible.
 - One clearly readable subject per region; a simple/neutral backdrop behind
   each subject keeps the tiny crop from muddying.
+
+## Sources on file
+
+- `desert-base.png`, `desert_base2.png` — the desert spec-sheet scenes (issues #45, #107): most of the roster.
+- `grid-scene.png` — the hero scene: the Disruptor Trooper.
+- `ideogram-base-1.jpg` … `ideogram-base-4.jpg` — the owner's Ideogram renders (issue #129) from the prompt in
+  `docs/BACKLOG.md` issue #129: the Materials Refinery, MCV, Ore Truck, War Factory, both barracks and the
+  Tesla Coil as an Arc Pylon. Each subject's crop was chosen from a contact sheet showing all four renders at
+  the real 64x48; the choice per subject is recorded beside its `CROPS` entry.

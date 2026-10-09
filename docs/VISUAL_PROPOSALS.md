@@ -156,7 +156,7 @@ set in it. Cost: artist. Kind: artist. Everything in `gen_chrome.py` consumes th
 Phase 7 is the largest item in the roadmap and has no natural stopping point (`docs/ROADMAP.md`). These
 are ordered by **screen time**: how many seconds of every match a tester spends looking at the thing.
 
-**B2. [shipped, issue #120; withdrawn, issue #123] Build-menu cameos of renamed stock units still say the old name.**
+**B2. [shipped, issue #120; withdrawn, issue #123; the two barracks, the War Factory and the Tesla Coil photographic again in issue #129, from the owner's renders] Build-menu cameos of renamed stock units still say the old name.**
 Now: stock RA cameos bake the actor name into the pixels (issue #44). `V2RL` is "Surge Rocket
 Launcher" but its cameo (`v2rlicon.shp`) reads V2 ROCKET; `QTNK` "Tremor Tank" reads MAD TANK; `PROC`
 "Materials Refinery" reads ORE REFINERY; `TENT`/`BARR` "Consortium/Assembly Barracks", `ATEK`/`STEK`
@@ -368,6 +368,12 @@ Now: `SGDRN`/`SGDRA` have no `WithProductionOverlay`; `RCYD` has no dock overlay
 docked. Cost: S each. Kind: generator + YAML. Verify: condition wiring via `--check-yaml`.
 Shipped: `WithProductionOverlay` on both Drone Bays (a fast marker chase on the Drone Bay, work lights under
 the Aerial Fab's eave) and `WithDockedOverlay` on the Depot (scrap plates arcing into the heap). Not seen live.
+
+**D8. [shipped, issue #129] Claude-made cameos.** The MCV, Ore Truck and Refinery scene renders read as a
+different kind of image beside the photographic set; the owner generated spec-sheet renders in Ideogram from a
+prompt written to match the existing sources, picked a crop per subject from a four-render contact sheet, and
+all seven actors without a photographic subject (those three plus the War Factory, both barracks and the Tesla
+Coil) are photographic now. The renders are also the design reference for the remaining D5 buildings.
 
 **D7. Cameo drift** (issue #107): the Advanced Solar Array's photo still shows the concentrator dish
 the sprite lost. Owner's decision is to keep the photographic set; a re-crop is recorded there, not
