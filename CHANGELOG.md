@@ -44,7 +44,9 @@ The detailed entries below track every issue through #116; this list maps them o
   Construction Yard and the Refinery on stock-concrete grey instead of white, with windows, louvres, pipes, a
   ladder, a hopper grate and yard clutter (issue #128); photographic build-menu cameos for the Mobile Construction
   Vehicle, the Ore Truck, the Materials Refinery, the War Factory, both barracks and the Tesla Coil, cut from the
-  owner's own renders (issue #129).
+  owner's own renders (issue #129); the War Factory, both barracks and the Tesla Coil, now the Arc Pylon, as
+  Sungrid art drawn to those renders, animated: the factory's loading gantry and roller door, the barracks' flags,
+  the pylon's idle corona and the bolt that climbs it as it charges (issue #130).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,

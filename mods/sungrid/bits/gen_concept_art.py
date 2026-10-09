@@ -1113,6 +1113,7 @@ FAM = {
     "1x1": (SG1x1_W, SG1x1_H, 13),
     "fact": (72, 72, 25),
     "proc": (90, 72, 27),       # Materials Refinery: a 3x3 plinth under a 3x4-dimension footprint (issue #126)
+    "pylon": (40, 62, 13),      # Arc Pylon: a 1x1 plinth under a tall lattice tower (issue #130); sequences carry Offset 0,-13
 }
 
 
@@ -1994,6 +1995,391 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
     return m
 
 
+
+# --- The four stock buildings replaced in issue #130, drawn to the owner's
+# Ideogram renders (docs/concept-art/cameo-sources/ideogram-base-*.jpg): the
+# War Factory, the two barracks and the Tesla Coil as an Arc Pylon. Same
+# vocabulary as the roster and the Refinery: LEGACY_GRAY concrete (rule 27),
+# PV roofs, gold accents on the remap ramp, each building's own plot.
+
+VIOLET = (168, 0, 168)              # temperat.pal 1: the pylon's discharge, nowhere near the gold radius
+VIOLET_PALE = (136, 120, 168)       # temperat.pal 63: the discharge's halo
+ARC_CORE = (236, 236, 252)          # white core of a bolt
+
+
+def flag(m, px, py, z0, h, phase, col, torn=False, length=7.2, drop=2.8):
+    """A flagpole with a three-strip pennant waving toward -y (screen lower
+    right), both windings so it reads from either side. `phase` is 0..1 of
+    the wave cycle; `torn` leaves one dim strip. The flag is an accent face,
+    so it takes the owner's colour like stock RA's barracks flags."""
+    m.strut((px, py, z0), (px, py, z0 + h), 0.5, STEEL, cap=lit(STEEL, 0.3), shadow=False)
+    m.box(px - 0.6, py - 0.6, z0 + h, px + 0.6, py + 0.6, z0 + h + 0.8, lit(STEEL, 0.35), top=lit(STEEL, 0.5), order=3, shadow=False)
+    strips = 1 if torn else 3
+    seg = length / 3
+    ztop = z0 + h - 0.4
+    for k in range(strips):
+        wave = lambda j: 0.9 * math.sin(2 * math.pi * phase + j * 1.15)
+        y0, y1 = py - k * seg, py - (k + 1) * seg
+        x0, x1 = px + wave(k), px + wave(k + 1)
+        zb0, zb1 = ztop - drop + k * 0.35, ztop - drop + (k + 1) * 0.35
+        if torn:
+            y1 = py - seg * 0.7
+            zb1 = ztop - drop * 0.6
+        c = col if not torn else dim(col, 0.4)
+        verts = ((x0, y0, ztop), (x1, y1, ztop), (x1, y1, zb1), (x0, y0, zb0))
+        m.poly(verts, c, order=3, accent=True)
+        m.poly(tuple(reversed(verts)), dim(c, 0.12), order=3, accent=True)
+
+
+def _tracked_chassis(m, x0, y0, z, col, turret=True):
+    """A half-built tracked hull on the factory floor: two track pods, a hull
+    slab, optionally a turret ring."""
+    m.box(x0, y0, z, x0 + 9, y0 + 1.6, z + 2.2, dim(col, 0.35), top=dim(col, 0.2), shadow=False)
+    m.box(x0, y0 + 4.4, z, x0 + 9, y0 + 6, z + 2.2, dim(col, 0.35), top=dim(col, 0.2), shadow=False)
+    m.box(x0 + 0.5, y0 + 1.2, z + 1.2, x0 + 8.5, y0 + 4.8, z + 3.6, col, top=lit(col, 0.2), shadow=False)
+    if turret:
+        m.prism(x0 + 4.5, y0 + 3, z + 3.6, z + 5.0, 2.0, lit(col, 0.1), sides=8, top=lit(col, 0.3), shadow=False)
+
+
+def sgweap_mesh(damaged=False, crane=0, lamp=True):
+    """War Factory (issue #130, drawn to render 3): a PV-roofed assembly
+    hangar. The near-left half is an open bay under the roof with two tracked
+    hulls on the floor and a gantry crane whose trolley crosses the bay
+    (`crane`, 0-7, the idle animation); the near-right half is the solid
+    workshop block with the roller door the vehicles leave through (the door
+    itself is the WithProductionDoorOverlay sheet, sgweap_door_mesh) and a
+    beacon mast (`lamp`). Damaged: a roof tooth burnt through, the crane
+    dropped, a bay pillar gone, the door frame dead."""
+    m = Mesh()
+    plinth(m, 27, live=not damaged)
+    hall = LEGACY_GRAY if not damaged else mix(LEGACY_GRAY, DAMAGE_SCORCH, 0.15)
+    frame_ = STEEL if not damaged else mix(STEEL, DAMAGE_SCORCH, 0.3)
+    gold = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4)
+    Z0, ZW, ZR = 2.2, 15.0, 16.2
+    # Floor of the open bay (near-left), dark so the hulls read against it.
+    m.box(-22, -14, Z0, -4, 22, Z0 + 0.4, dim(hall, 0.45), top=dim(hall, 0.4), shadow=False)
+    # Solid workshop block (near-right half): the back wall of the bay too.
+    m.box(-4, -16, Z0, 22, 22, ZW, hall, top=lit(hall, 0.08))
+    # Door wall closing the bay's -y end, with the dark opening the overlay covers.
+    m.box(-22, -16, Z0, -4, -13, ZW, hall, top=lit(hall, 0.08))
+    m.box(-19.5, -16.4, Z0, -6.5, -15.9, 11.0, DAMAGE_SCORCH, top_face=False, order=1, shadow=False)
+    for x0 in (-20.3, -6.5):
+        m.box(x0, -16.5, Z0, x0 + 0.8, -15.8, 11.5, gold, top=lit(gold, 0.2), order=2, shadow=False, accent=not damaged)
+    m.box(-20.3, -16.5, 11.0, -5.7, -15.8, 11.8, gold, top=lit(gold, 0.2), order=2, shadow=False, accent=not damaged)
+    # Bay pillars along the open -x edge, and the two hulls inside.
+    for k, y in enumerate((-12.5, 4.0, 20.0)):
+        if damaged and k == 1:
+            continue
+        m.box(-22.4, y - 1.0, Z0, -20.4, y + 1.0, ZW, frame_, top=lit(frame_, 0.2), shadow=False)
+    _tracked_chassis(m, -18, -8, Z0 + 0.4, mix(LEGACY_GRAY, GREEN_PRIMARY, 0.35), turret=not damaged)
+    _tracked_chassis(m, -18, 9, Z0 + 0.4, mix(LEGACY_GRAY, GREEN_PRIMARY, 0.35), turret=False)
+    # Loading gantry on the apron outside the open bay (the near-left edge,
+    # where it is in view): two posts, a beam along the bay, the trolley
+    # running out and back on it. Damaged, the beam is down.
+    GX, GZ = -24.6, 12.5
+    for gy in (-12.5, 20.0):
+        m.strut((GX, gy, Z0), (GX, gy, GZ if not (damaged and gy > 0) else 5.0), 0.9, frame_, cap=lit(frame_, 0.3), shadow=False)
+    if not damaged:
+        m.strut((GX, -12.5, GZ), (GX, 20, GZ), 1.0, frame_, cap=lit(frame_, 0.3), shadow=False)
+        t = (crane % 8) / 8.0
+        t = 2 * t if t < 0.5 else 2 - 2 * t      # out and back
+        ty = -9 + 26 * t
+        m.box(GX - 2.2, ty - 2, GZ - 2.2, GX + 2.2, ty + 2, GZ - 0.2, SUN_GOLD, top=lit(SUN_GOLD, 0.3), shadow=False, accent=True)
+        m.strut((GX, ty, GZ - 2.2), (GX, ty, GZ - 6.0), 0.3, POLE_DARK, shadow=False)
+    else:
+        m.strut((GX, -12.5, GZ), (GX, 20, 5.0), 1.0, frame_, cap=RUST, shadow=False)
+        m.box(GX - 2.2, 6, Z0, GX + 2.2, 10, Z0 + 1.8, mix(SUN_GOLD, DAMAGE_SCORCH, 0.5), top=DAMAGE_SCORCH, order=1, shadow=False)
+    # Workshop block detail on the faces the camera sees (rule 27): a window
+    # strip and louvres on the -y face, a seam and a vent on the +x end.
+    m.box(2, -16.6, 8.6, 14, -15.9, 10.6, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+    m.box(2, -16.6, 8.2, 14, -15.9, 8.6, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    for z in (4.0, 5.6, 7.2):
+        m.box(16, -16.6, z, 21, -15.9, z + 0.8, dim(hall, 0.45), order=1, shadow=False, top_face=False)
+    m.box(-22.6, -16.6, 12.2, 22.6, -15.9, 12.8, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    m.box(-4.6, -13, 12.2, -3.9, 22, 12.8, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    # Roof slab over the whole hall, four PV sawteeth running along x (the
+    # Refinery's tooth: a sloped panel quad, a riser box behind it).
+    m.box(-23, -17, ZW, 23, 23, ZR, hall, top=lit(hall, 0.12), shadow=False)
+    for i in range(4):
+        y0 = -16 + i * 9.5
+        y1 = y0 + 9.5
+        pv = lit(PANEL_BLUEBLACK, 0.3) if not (damaged and i == 2) else DAMAGE_SCORCH
+        m.quad((-22, y0, ZR), (22, y0, ZR), (22, y1 - 0.7, ZR + 4.2), (-22, y1 - 0.7, ZR + 4.2), pv, order=1)
+        m.box(-22, y1 - 0.7, ZR, 22, y1, ZR + 4.2, dim(hall, 0.2), top=lit(hall, 0.15), shadow=False)
+    # Beacon mast on the workshop's far corner.
+    m.strut((19, 19, ZR), (19, 19, 28 if not damaged else 23), 0.8, STEEL, cap=RUST if damaged else None, shadow=False)
+    if not damaged and lamp:
+        m.box(18.2, 18.2, 28, 19.8, 19.8, 29.4, SUN_GOLD, top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=True)
+    elif not damaged:
+        m.box(18.2, 18.2, 28, 19.8, 19.8, 29.4, dim(PALE_STEEL, 0.45), top=dim(PALE_STEEL, 0.3), order=4, shadow=False)
+    # Yard clutter and the plot: drums by the door, a parts crate, planting at
+    # the near corners, the hall's one tree at the near-right corner.
+    m.prism(2, -21, Z0, Z0 + 3.4, 1.4, STEEL, sides=8, top=lit(STEEL, 0.35), shadow=False)
+    m.prism(5, -23, Z0, Z0 + 3.4, 1.4, RUST, sides=8, top=lit(RUST, 0.3), shadow=False)
+    m.box(-21, -24, Z0, -17, -20.5, Z0 + 2.4, STEEL, top=lit(STEEL, 0.3), shadow=False)
+    bed(m, -14, -25, -4, -19, Z0, lowcap=1.2, salt=21, step=3.0)
+    shrub(m, -25, -24, Z0, r=2.2)
+    tuft(m, -8, -23.5, Z0)
+    tree(m, 23, -22, Z0, h=8.5, r=4.6)
+    shrub(m, 15, -23.5, Z0, r=2.2)
+    tuft(m, 25.5, 2, Z0)
+    if damaged:
+        m.box(-3, -16.6, 3, 8, -15.9, 7.5, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
+        m.box(6, -24, Z0, 13, -18, Z0 + 1.6, mix(STEEL, DAMAGE_SCORCH, 0.5), top=DAMAGE_SCORCH)
+    return m
+
+
+SGWEAP_DOOR_FRAMES = 10
+
+
+def sgweap_door_mesh(open=0.0, damaged=False):
+    """The War Factory's roller door alone, for the WithProductionDoorOverlay
+    sheet: the panel rises into its drum as `open` goes 0 to 1. Fixed tones
+    only (an overlay sheet carries no remap pixels, rule 16)."""
+    m = Mesh()
+    panel = lit(STEEL, 0.25) if not damaged else mix(lit(STEEL, 0.25), DAMAGE_SCORCH, 0.3)
+    z_bot = 2.2 + 8.6 * open
+    if z_bot < 10.9:
+        m.box(-19.5, -16.6, z_bot, -6.5, -16.0, 11.0, panel, top_face=False, order=5, shadow=False)
+        for k in range(1, 4):
+            z = z_bot + (11.0 - z_bot) * k / 4
+            m.box(-19.5, -16.7, z - 0.25, -6.5, -16.0, z + 0.25, dim(panel, 0.3), top_face=False, order=6, shadow=False)
+    m.box(-19.8, -17.0, 11.0, -6.2, -15.6, 12.4, dim(panel, 0.15), top=lit(panel, 0.1), order=6, shadow=False)
+    return m
+
+
+def _barracks_block_detail(m, hall, x0, x1, y_face, z_win, order=1):
+    """A window strip with a sill on a -y face between x0 and x1."""
+    m.box(x0, y_face - 0.6, z_win, x1, y_face + 0.1, z_win + 1.8, PANEL_BLUEBLACK, order=order, shadow=False, top_face=False)
+    m.box(x0, y_face - 0.6, z_win - 0.4, x1, y_face + 0.1, z_win, dim(hall, 0.3), order=order, shadow=False, top_face=False)
+
+
+def sgbarr_mesh(damaged=False, flag_phase=0.0):
+    """Assembly Barracks (issue #130, drawn to render 1): a squat hardened
+    concrete block under a flat PV roof, a sunken sandbagged entrance on the
+    near-right face where the squads come out, slit windows, a vent, and the
+    owner's flag on a pole at the near-right corner (`flag_phase`, the idle
+    animation). Damaged: the flag torn, the roof panel burnt, sandbags
+    scattered, the doorway scorched."""
+    m = Mesh()
+    plinth(m, 20, live=not damaged)
+    hall = LEGACY_GRAY if not damaged else mix(LEGACY_GRAY, DAMAGE_SCORCH, 0.15)
+    gold = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4)
+    Z0 = 2.2
+    m.box(-15, -7, Z0, 13, 15, 11.5, hall, top=lit(hall, 0.08))
+    # Roof: a raised parapet lip and the PV panel field with one divider.
+    m.box(-15.4, -7.4, 11.5, 13.4, 15.4, 12.3, lit(hall, 0.05), top=lit(hall, 0.18), shadow=False)
+    pv = PANEL_BLUEBLACK if not damaged else DAMAGE_SCORCH
+    m.box(-13.5, -5.5, 12.3, 11.5, 13.5, 13.0, pv, top=lit(pv, 0.3), shadow=False)
+    m.box(-1.3, -5.5, 13.0, -0.7, 13.5, 13.2, dim(PANEL_BLUEBLACK, 0.5), top=dim(PANEL_BLUEBLACK, 0.5), shadow=False)
+    # Entrance on the -y face: a recessed dark doorway in a gold frame, a
+    # sunken approach lined with sandbags out to the plinth edge.
+    m.box(-11, -7.4, Z0, -4, -6.9, 7.5, DAMAGE_SCORCH, top_face=False, order=1, shadow=False)
+    for x0 in (-11.8, -4):
+        m.box(x0, -7.5, Z0, x0 + 0.8, -6.8, 8.0, gold, top=lit(gold, 0.2), order=2, shadow=False, accent=not damaged)
+    m.box(-11.8, -7.5, 7.5, -3.2, -6.8, 8.3, gold, top=lit(gold, 0.2), order=2, shadow=False, accent=not damaged)
+    m.box(-11, -19, Z0, -4, -7, Z0 + 0.3, dim(hall, 0.35), top=dim(hall, 0.3), shadow=False)
+    bag = lit(DIRT, 0.25)
+    for side in (-13.6, -3.4):
+        for i in range(4):
+            if damaged and (i + int(side)) % 3 == 0:
+                continue
+            m.box(side, -18.5 + i * 2.9, Z0, side + 2.4, -16.3 + i * 2.9, Z0 + 1.6, bag, top=lit(DIRT, 0.4), shadow=False)
+            m.box(side + 0.3, -18.2 + i * 2.9, Z0 + 1.6, side + 2.1, -16.6 + i * 2.9, Z0 + 2.8, bag, top=lit(DIRT, 0.45), shadow=False)
+    # Faces the camera sees (rule 27): slit windows on the -x face, a window
+    # strip right of the door, a seam, a vent stack and an antenna on the roof.
+    for y in (-2, 4, 10):
+        m.box(-15.6, y, 7.5, -14.9, y + 2.4, 9.0, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+    _barracks_block_detail(m, hall, 0, 10, -7, 7.6)
+    m.box(-15.6, -7.6, 4.8, 13.6, -6.9, 5.4, dim(hall, 0.3), order=1, shadow=False, top_face=False)
+    m.prism(8, 10, 13.0, 15.5, 1.1, STEEL, sides=6, top=dim(STEEL, 0.4), shadow=False)
+    m.strut((-11, 11, 13.0), (-11, 11, 19.0), 0.4, POLE_DARK, shadow=False)
+    # The flag at the near-right corner of the plinth.
+    flag(m, 16.5, -12, Z0, 15.0, flag_phase, SUN_GOLD, torn=damaged)
+    # Plot: a bed and a shrub at the near-left corner, a tree at the far right, grasses.
+    bed(m, -18.5, -18.5, -15.2, -10, Z0, lowcap=1.2, salt=22, step=3.0)
+    shrub(m, -17, -15, Z0, r=2.2)
+    tree(m, 16, 10, Z0, h=7.5, r=4.2)
+    tuft(m, 4, -18, Z0)
+    tuft(m, 12, -17, Z0)
+    if damaged:
+        m.box(-14, -7.5, 3, -12.5, -6.9, 7, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
+        m.box(2, 2, 13.0, 8, 8, 13.6, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
+    return m
+
+
+def sgtent_mesh(damaged=False, flag_phase=0.0):
+    """Consortium Barracks (issue #130, drawn to render 1): two light modular
+    crew containers side by side under a PV canopy on slim posts, a deck in
+    front where the squads form up, planters, and the owner's flag on a pole
+    at the near-right corner (`flag_phase`, the idle animation). Damaged: the
+    canopy's near half dropped, a container scorched, the flag torn."""
+    m = Mesh()
+    plinth(m, 20, live=not damaged)
+    mod = lit(LEGACY_GRAY, 0.3) if not damaged else mix(lit(LEGACY_GRAY, 0.3), DAMAGE_SCORCH, 0.15)
+    gold = SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4)
+    Z0 = 2.2
+    # Two containers with a gap, doors and window strips on the faces the camera sees.
+    for k, (x0, x1) in enumerate(((-15, -1.5), (1.5, 15))):
+        col = mod if not (damaged and k == 0) else mix(mod, DAMAGE_SCORCH, 0.35)
+        m.box(x0, -5, Z0, x1, 14, 9.0, col, top=lit(col, 0.1))
+        m.box(x0 + 1, -5.6, 5.2, x1 - 4, -4.9, 7.0, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+        m.box(x1 - 3.4, -5.6, Z0, x1 - 1.0, -4.9, 7.4, dim(col, 0.5), order=1, shadow=False, top_face=False)
+        m.box(x1 - 3.6, -5.7, Z0, x1 - 3.2, -4.9, 7.6, gold, order=2, shadow=False, top_face=False, accent=not damaged)
+        m.box(x0, -5.6, 3.2, x1, -4.9, 3.7, dim(col, 0.3), order=1, shadow=False, top_face=False)
+        m.box(x0, -5.6, 8.3, x1, -4.9, 8.8, dim(col, 0.3), order=1, shadow=False, top_face=False)
+    m.box(-15.6, -3, 5.2, -14.9, 12, 7.0, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)
+    # Deck in front of the doors.
+    m.box(-15, -12, Z0, 15, -5, Z0 + 0.5, lit(LEGACY_GRAY, 0.18), top=lit(LEGACY_GRAY, 0.3), shadow=False)
+    # PV canopy on slim posts: a thin pale slab with the panel field; damaged,
+    # the near half has come down on its posts.
+    for (px, py) in ((-16, -11), (16, -11), (-16, 15), (16, 15)):
+        top = 12.5 if not (damaged and py < 0) else 7.5
+        m.strut((px, py, Z0), (px, py, top), 0.6, PALE_STEEL, cap=lit(PALE_STEEL, 0.2), shadow=False)
+    if not damaged:
+        m.box(-17, -12, 12.5, 17, 16, 13.1, PALE_STEEL, top=lit(PALE_STEEL, 0.15), shadow=False)
+        for y0 in (-11, 3):
+            m.box(-16, y0, 13.1, 16, y0 + 12, 13.8, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.3), shadow=False)
+            m.box(-0.3, y0, 13.8, 0.3, y0 + 12, 14.0, dim(PANEL_BLUEBLACK, 0.5), top=dim(PANEL_BLUEBLACK, 0.5), shadow=False)
+    else:
+        m.box(-17, 2, 12.5, 17, 16, 13.1, PALE_STEEL, top=lit(PALE_STEEL, 0.15), shadow=False)
+        m.box(-16, 3, 13.1, 16, 15, 13.8, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.3), shadow=False)
+        m.quad((-17, 2, 12.5), (-17, -12, 7.5), (17, -12, 7.5), (17, 2, 12.5), mix(PALE_STEEL, DAMAGE_SCORCH, 0.3), order=1)
+        m.quad((-16, 1, 13.1), (-16, -11, 8.1), (16, -11, 8.1), (16, 1, 13.1), DAMAGE_SCORCH, order=2)
+    # Flag at the near-right corner, planters along the deck's left end, a tree at the far right.
+    flag(m, 17.5, -14, Z0, 14.0, flag_phase, SUN_GOLD, torn=damaged)
+    for (bx, by) in ((-18, -16), (-13, -17.5)):
+        m.box(bx - 1.6, by - 1.6, Z0, bx + 1.6, by + 1.6, Z0 + 1.6, lit(LEGACY_GRAY, 0.2), top=SOIL, shadow=False)
+        shrub(m, bx, by, Z0 + 1.6, r=1.9)
+    bed(m, -18.5, -8, -16.4, 12, Z0, lowcap=1.0, salt=23, step=3.0)
+    tree(m, 17.5, 12, Z0, h=7.0, r=4.0)
+    tuft(m, 6, -17, Z0)
+    tuft(m, 12, -18, Z0)
+    return m
+
+
+PYLON_W, PYLON_H = 40, 62            # the Arc Pylon's frame: a 1x1 plinth under a tall lattice tower
+PYLON_TOP = 33.0                     # ring height, world units
+SGTSLA_IDLE_FRAMES = 6
+SGTSLA_CHARGE_FRAMES = 9
+
+
+def _pylon_ring_pts(n, r, z, cx=0.0, cy=0.0):
+    return [(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n), z) for i in range(n)]
+
+
+def _bolt(m, a, b, seed, col, core=None, r=0.35, kinks=3, throw=1.6, order=5):
+    """A jagged discharge between two points: a zigzag of struts with hashed
+    kinks, optionally a white core on the middle segment."""
+    pts = [a]
+    for k in range(1, kinks + 1):
+        t = k / (kinks + 1)
+        base = tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+        jx = (_scatter(seed, k, 1) - 0.5) * 2 * throw
+        jy = (_scatter(seed, k, 2) - 0.5) * 2 * throw
+        pts.append((base[0] + jx, base[1] + jy, base[2]))
+    pts.append(b)
+    for i in range(len(pts) - 1):
+        m.strut(pts[i], pts[i + 1], r, col, order=order, shadow=False)
+    if core is not None:
+        mid = len(pts) // 2
+        m.strut(pts[mid - 1], pts[mid], r * 0.6, core, order=order + 1, shadow=False)
+
+
+def sgtsla_mesh(damaged=False, corona=None, charge=None):
+    """Arc Pylon (issue #130, the Tesla Coil drawn to render 2): a steel
+    lattice pylon on a 1x1 pad with a transformer at its foot, an electrode
+    ring with six rods at the top and a spire. `corona` (0-5) is the idle
+    flicker, small arcs hopping between neighbouring rods; `charge` (0-8) is
+    the WithTeslaChargeAnimation sequence, a bolt climbing the tower from
+    the transformer and the ring lighting up as it arrives. Damaged: the
+    ring has dropped to one side, two rods are gone, the discharge is weak."""
+    m = Mesh()
+    plinth(m, 13, live=not damaged)
+    steel = lit(LEGACY_GRAY, 0.15) if not damaged else mix(lit(LEGACY_GRAY, 0.15), DAMAGE_SCORCH, 0.25)
+    Z0 = 2.2
+    top = PYLON_TOP
+    # Transformer at the foot (the relay's vocabulary), two bushings, cable trench to the tower.
+    tank = mix(LEGACY_GRAY, PANEL_BLUEBLACK, 0.22)
+    m.box(3.5, -10.5, Z0, 10.5, -4.5, 6.5, tank, top=lit(tank, 0.12))
+    for i in range(3):
+        m.box(10.5, -10 + i * 2, 3, 12.2, -9.2 + i * 2, 6, dim(tank, 0.2), top=lit(tank, 0.05), shadow=False)
+    for x in (5.2, 8.8):
+        m.prism(x, -7.5, 6.5, 9.5, 0.8, lit(PALE_STEEL, 0.1), sides=8, top=lit(PALE_STEEL, 0.25), shadow=False)
+    m.box(0.5, -8, Z0, 3.5, -7, Z0 + 0.5, dim(LEGACY_GRAY, 0.3), top=dim(LEGACY_GRAY, 0.25), shadow=False)
+    # Lattice tower: four legs converging, three tiers of X bracing, a concrete foot under each leg.
+    legs_b = [(-5.5, -5.5), (5.5, -5.5), (5.5, 5.5), (-5.5, 5.5)]
+    legs_t = [(-2.0, -2.0), (2.0, -2.0), (2.0, 2.0), (-2.0, 2.0)]
+    for (bx, by) in legs_b:
+        m.box(bx - 1.2, by - 1.2, Z0, bx + 1.2, by + 1.2, Z0 + 1.2, SLAB, top=lit(SLAB, 0.2), shadow=False)
+    def leg_pt(i, t):
+        bx, by = legs_b[i]; tx, ty = legs_t[i]
+        return (bx + (tx - bx) * t, by + (ty - by) * t, Z0 + (top - 1.0 - Z0) * t)
+    for i in range(4):
+        m.strut(leg_pt(i, 0), leg_pt(i, 1), 0.55, steel, cap=lit(steel, 0.2), shadow=False)
+    for tier in range(4):
+        t0, t1 = tier / 4, (tier + 1) / 4
+        for i in range(4):
+            j = (i + 1) % 4
+            if (i + j) % 2 == 0:
+                continue
+            m.strut(leg_pt(i, t0), leg_pt(j, t1), 0.3, dim(steel, 0.2), shadow=False)
+            m.strut(leg_pt(j, t0), leg_pt(i, t1), 0.3, dim(steel, 0.2), shadow=False)
+        for i in range(4):
+            m.strut(leg_pt(i, t1), leg_pt((i + 1) % 4, t1), 0.3, dim(steel, 0.1), shadow=False)
+    # Electrode ring and rods; damaged, the ring hangs dropped to one side.
+    ring_r = 5.5
+    if not damaged:
+        ring = _pylon_ring_pts(12, ring_r, top)
+        rods = _pylon_ring_pts(6, ring_r, top)
+    else:
+        ring = [(x * 1.0, y * 1.0, top - 3.0 - 0.6 * (x / ring_r)) for (x, y, _z) in _pylon_ring_pts(12, ring_r, top)]
+        rods = [p for k, p in enumerate(_pylon_ring_pts(6, ring_r, top)) if k not in (1, 4)]
+        rods = [(x, y, top - 3.0 - 0.6 * (x / ring_r)) for (x, y, _z) in rods]
+    for i in range(len(ring)):
+        m.strut(ring[i], ring[(i + 1) % len(ring)], 0.5, lit(PALE_STEEL, 0.1), order=2, shadow=False)
+    for i in range(4):
+        m.strut((legs_t[i][0], legs_t[i][1], top - 1.0), ring[i * 3], 0.35, dim(steel, 0.1), order=1, shadow=False)
+    rod_top = []
+    for (x, y, z) in rods:
+        m.strut((x, y, z), (x, y, z + 3.2), 0.45, PALE_STEEL, cap=lit(PALE_STEEL, 0.3), order=3, shadow=False)
+        m.box(x - 0.6, y - 0.6, z + 3.2, x + 0.6, y + 0.6, z + 4.0, SUN_GOLD if not damaged else dim(SUN_GOLD, 0.4),
+              top=lit(SUN_GOLD, 0.3), order=4, shadow=False, accent=not damaged)
+        rod_top.append((x, y, z + 3.6))
+    spire_z = top + 4.5 if not damaged else top - 2.0
+    m.strut((0, 0, top - 1.0), (0, 0, spire_z), 0.4, PALE_STEEL, order=3, shadow=False)
+    m.box(-0.8, -0.8, spire_z, 0.8, 0.8, spire_z + 1.4, lit(PALE_STEEL, 0.3), top=ARC_CORE, order=4, shadow=False)
+    # Idle corona: a small arc hopping between neighbouring rods.
+    weak = damaged
+    if corona is not None and len(rod_top) > 1:
+        k = corona % len(rod_top)
+        if corona % 3 != 2:
+            a, b = rod_top[k], rod_top[(k + 1) % len(rod_top)]
+            _bolt(m, a, b, 60 + corona, VIOLET if not weak else VIOLET_PALE, core=ARC_CORE if corona % 2 == 0 else None,
+                  r=0.45, kinks=2, throw=1.4)
+    # Charge: the bolt climbs the tower, the ring lights at the top.
+    if charge is not None:
+        t = (charge + 1) / SGTSLA_CHARGE_FRAMES
+        foot = (7.0, -7.5, 9.5)
+        apex = (0.0, 0.0, spire_z + 0.7)
+        tip = tuple(foot[i] + (apex[i] - foot[i]) * min(1.0, t * 1.15) for i in range(3))
+        col = VIOLET if not weak else VIOLET_PALE
+        _bolt(m, foot, tip, 70 + charge, col, core=ARC_CORE if charge % 2 == 1 else None, r=0.4, kinks=4, throw=2.2)
+        if charge >= 5 and len(rod_top) > 1:
+            for i in range(len(rod_top)):
+                if (i + charge) % 2 == 0 or charge == 8:
+                    _bolt(m, rod_top[i], rod_top[(i + 1) % len(rod_top)], 80 + charge * 7 + i, col,
+                          core=ARC_CORE if charge >= 7 else None, r=0.35, kinks=2, throw=1.0)
+        if charge >= 7:
+            m.box(-1.3, -1.3, spire_z + 0.4, 1.3, 1.3, spire_z + 2.2, lit(VIOLET, 0.3), top=ARC_CORE, order=6, shadow=False)
+    # Reclaimed fringe around the pad, clear of the trench side.
+    grass_ring(m, 11.5, 14, 31, z=Z0)
+    if damaged:
+        m.box(-4, -4, Z0, 1, 1, Z0 + 0.4, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=1, shadow=False)
+        m.box(4, -11, 3.5, 7, -10.4, 6.2, DAMAGE_SCORCH, top=DAMAGE_SCORCH, order=2, shadow=False)
+    return m
+
+
 # Idle overlays (issue #109): sheets WithIdleOverlay draws *over* the body, at
 # the body's own frame size and origin so no offset is needed. Two reasons a
 # moving part is an overlay rather than body frames: the Depot's body is a
@@ -2062,6 +2448,8 @@ MESHES = {
     "sgshl": ("2x2", sgshl_mesh), "sgsns": ("1x1", sgsns_mesh), "sgrel": ("1x1", sgrel_mesh),
     "sgwnd": ("1x1", sgwnd_mesh), "sghyd": ("3x3", sghyd_mesh), "sgvlt": ("1x1", sgvlt_mesh),
     "rcyd": ("1x1", rcyd_mesh), "sgfact": ("fact", sgfact_mesh), "sgproc": ("proc", sgproc_mesh),
+    "sgweap": ("3x3", sgweap_mesh), "sgbarr": ("2x3", sgbarr_mesh), "sgtent": ("2x3", sgtent_mesh),
+    "sgtsla": ("pylon", sgtsla_mesh),
 }
 
 
@@ -2153,6 +2541,12 @@ ANIM = {
     # The intake conveyor's cleats climb to the sorting tower, Tick 100 (issue #126);
     # the damaged conveyor is broken and still.
     "sgproc": ([dict(belt=i) for i in range(8)], [dict(damaged=True)]),
+    # Issue #130. The War Factory's crane trolley crosses the bay and back, Tick 150; the beacon blinks with it.
+    "sgweap": ([dict(crane=i, lamp=i < 5) for i in range(8)], [dict(damaged=True)]),
+    # The barracks flags wave, ten frames at Tick 100 like the stock ones; the damaged flag is torn and still.
+    "sgbarr": ([dict(flag_phase=i / 10) for i in range(10)], [dict(damaged=True)]),
+    "sgtent": ([dict(flag_phase=i / 10) for i in range(10)], [dict(damaged=True)]),
+    # The Arc Pylon's sheet (idle corona, charge, damaged idle, damaged charge) is assembled in main().
 }
 
 
@@ -2347,6 +2741,7 @@ def building_wreck(name, seed):
 WRECKS = {
     "sgcry": 31, "sgdai": 32, "sgdrn": 33, "sgdra": 34, "sgrel": 35, "sgshl": 36,
     "sgsns": 37, "sgwnd": 38, "sgvlt": 39, "rcyd": 40, "sgproc": 43,
+    "sgweap": 44, "sgbarr": 45, "sgtent": 46, "sgtsla": 47,
 }
 
 
@@ -3610,6 +4005,7 @@ ICON_LABELS = {
     "sgvlt": "Battery Bank",
     "rcyd": "Recycling Depot",
     "sgproc": "Materials Refinery",
+    "sgweap": "War Factory", "sgbarr": "Asm Barracks", "sgtent": "Con Barracks", "sgtsla": "Arc Pylon",
     "arct": "Arc Turret",
     "sgtur": "Grid Defense Turret",
     "sgdro": "Recon Drone",
@@ -4113,16 +4509,19 @@ def main():
     # Every frame carries the stock-style silhouette shadow rim, the build-up's
     # final frame included, so completion never pops.
     for name, (fam, _) in MESHES.items():
-        if name in ("sgvlt", "rcyd", "sgfact"):
+        if name in ("sgvlt", "rcyd", "sgfact", "sgtsla"):
             continue          # multi-state sheets, assembled below
         w, h, _half = FAM[fam]
         sheet, frames = building_sheet(name)
         save_pngsheet(sheet, f"{name}.png", w, h, len(frames), indexed=True)
         # Programmatic fallback cameo; gen_photo_cameos.py overwrites it for
         # every building with a photographic source (since issue #129 that
-        # includes the Refinery; its scene render went with that issue).
-        icon = make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name))
-        save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
+        # includes the Refinery; its scene render went with that issue). The
+        # stock buildings replaced in issue #130 keep their cameos under the
+        # stock actor's name (weapicon.png etc.), so no fallback is written.
+        if name not in ("sgweap", "sgbarr", "sgtent"):
+            icon = make_icon(mesh_draw_fn(name), w, h, label=ICON_LABELS.get(name))
+            save_pngsheet(icon, f"{name}icon.png", ICON_W, ICON_H, 1)
         idle = frames[0]
         mk = make_frames(mesh_draw_fn(name), w, h, final=idle)
         save_pngsheet(indexed_strip(mk, [None] * (len(mk) - 1) + [silhouette_shadow(idle, 2, 2)], w, h),
@@ -4178,6 +4577,27 @@ def main():
     fact_mk = make_frames(mesh_draw_fn("sgfact"), fw, fh, final=fact_frames[0])
     save_pngsheet(indexed_strip(fact_mk, [None] * (len(fact_mk) - 1) + [silhouette_shadow(fact_frames[0], 2, 2)], fw, fh),
                   "sgfactmake.png", fw, fh, len(fact_mk), indexed=True)
+
+    # Arc Pylon (issue #130): idle corona (6), charge (9, what
+    # WithTeslaChargeAnimation plays), damaged idle (1), damaged charge (9),
+    # in that order so the sequence Starts are 0 / 6 / 15 / 16.
+    pw, ph, _ = FAM["pylon"]
+    tsla_frames = [mesh_frame("sgtsla", corona=i) for i in range(SGTSLA_IDLE_FRAMES)]
+    tsla_frames += [mesh_frame("sgtsla", charge=i) for i in range(SGTSLA_CHARGE_FRAMES)]
+    tsla_frames.append(mesh_frame("sgtsla", damaged=True))
+    tsla_frames += [mesh_frame("sgtsla", damaged=True, charge=i) for i in range(SGTSLA_CHARGE_FRAMES)]
+    save_pngsheet(indexed_strip(tsla_frames, [silhouette_shadow(f, 2, 2) for f in tsla_frames], pw, ph),
+                  "sgtsla.png", pw, ph, len(tsla_frames), indexed=True)
+    tsla_mk = make_frames(mesh_draw_fn("sgtsla"), pw, ph, final=tsla_frames[0])
+    save_pngsheet(indexed_strip(tsla_mk, [None] * (len(tsla_mk) - 1) + [silhouette_shadow(tsla_frames[0], 2, 2)], pw, ph),
+                  "sgtslamake.png", pw, ph, len(tsla_mk), indexed=True)
+    # War Factory roller door (issue #130): the WithProductionDoorOverlay
+    # sheet, ten frames closed to open, then the same ten damaged; fixed
+    # tones only, so overlay_sheet's zero-remap assertion holds.
+    dw, dh, _ = FAM["3x3"]
+    door = [_mesh_frame("3x3", sgweap_door_mesh, open=i / (SGWEAP_DOOR_FRAMES - 1)) for i in range(SGWEAP_DOOR_FRAMES)]
+    door += [_mesh_frame("3x3", sgweap_door_mesh, open=i / (SGWEAP_DOOR_FRAMES - 1), damaged=True) for i in range(SGWEAP_DOOR_FRAMES)]
+    save_pngsheet(overlay_sheet(door, dw, dh, "sgweapdoor"), "sgweapdoor.png", dw, dh, len(door), indexed=True)
 
     # Idle overlays (issue #109), drawn over the body by WithIdleOverlay:
     # the Depot's stack puffs, and the grid-strained lamps on the three

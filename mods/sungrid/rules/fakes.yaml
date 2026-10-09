@@ -57,7 +57,7 @@ TENF:
 		Dimensions: 2,3
 		LocalCenterOffset: 0,-512,0
 	RenderSprites:
-		Image: TENT
+		Image: sgtent
 	Valued:
 		Cost: 50
 	Health:
@@ -180,7 +180,7 @@ WEAF:
 		Dimensions: 3,3
 		LocalCenterOffset: 0,-512,0
 	RenderSprites:
-		Image: WEAP
+		Image: sgweap
 	WithBuildingBib:
 	WithProductionDoorOverlay:
 		RequiresCondition: !build-incomplete

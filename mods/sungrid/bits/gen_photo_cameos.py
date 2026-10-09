@@ -89,7 +89,7 @@ LABEL_OVERRIDES = {
     "weap": "War Factory",
     "barr": "Asm Barracks",
     "tent": "Con Barracks",
-    "tsla": "Tesla Coil",
+    "tsla": "Arc Pylon",
     "sgdai": "AI Datacenter",
     "sgdra": "Aerial Fab",
     "sgapwr": "Adv Solar Arr",

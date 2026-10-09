@@ -201,6 +201,11 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 129 review render: the nine new photographic cameos at 4x.](concept-art/issue129-cameos.png)
 
+**Follow-up: the four stock buildings drawn to the renders, animated (`docs/BACKLOG.md` issue #130).** The War Factory, the Assembly Barracks, the Consortium Barracks and the Tesla Coil, renamed Arc Pylon, in one pass at the owner's request, each on the roster's conventions and each to the render its cameo was cut from. The War Factory is a PV-roofed assembly hangar: an open bay on the near-left with two tracked hulls on the floor, a loading gantry on the apron outside it whose trolley runs out and back (the idle animation), a solid workshop block with the roller door the vehicles leave through, which is the engine's production-door overlay rising into its drum. The Assembly Barracks is a squat hardened block under a flat PV roof with a sunken sandbagged entrance; the Consortium Barracks is two light crew containers under a PV canopy on slim posts with a deck in front. Both fly the owner's flag on a pole at the near-right corner, waving through ten frames as stock RA's barracks flags did. The Arc Pylon is a steel lattice tower on a 1x1 pad with a transformer at its foot, an electrode ring with six rods and a spire; a violet corona hops between the rods while it idles, and when it charges a bolt climbs the tower from the transformer and the ring lights as it arrives. Wrecks and build-ups are derived as for the rest of the roster. `docs/concept-art/issue130-four-buildings.png` shows every state beside its cameo.
+
+![Issue 130 review render: the War Factory, both barracks and the Arc Pylon in every state, with their cameos, at 3x.](concept-art/issue130-four-buildings.png)
+
+
 
 
 
