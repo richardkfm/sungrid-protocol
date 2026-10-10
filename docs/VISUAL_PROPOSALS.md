@@ -348,7 +348,7 @@ issue #127 and taken back: the owner's verdict was that the grey paver grid look
 (a tiled floor rather than ground), and every Sungrid building stands on the stock bibs again. Closed; do
 not re-propose without a different approach to the ground plane.
 
-**D5. [Refinery shipped, issue #126, re-toned in #128; WEAP, the barracks and TSLA open] Stock buildings still in the tree, ordered by screen time.**
+**D5. [shipped: Refinery issue #126, re-toned in #128; War Factory, both barracks and the Tesla Coil as the Arc Pylon in issue #130] Stock buildings still in the tree, ordered by screen time.**
 Now: `PROC`, `WEAP`, `BARR`/`TENT`, `DOME`, `FIX`, `HPAD`, `AFLD`, `ATEK`/`STEK`, `SPEN`/`SYRD`, the stock
 defences (`PBOX`, `HBOX`, `GUN`, `AGUN`, `SAM`, `TSLA`, `GAP`), the superweapons. Proposal: `PROC`
 first (in every base, already renamed Materials Refinery, and the Depot beside it is a Sungrid solid),
@@ -359,7 +359,11 @@ Shipped (first of four): the Materials Refinery, `sgproc_mesh()` on a new 90x72 
 animated in the body (the stock `proctop` overlay goes), wreck and build-up derived, apron from D4, scene cameo.
 Seen live in issue #128: the white hall read as a foreign building beside the stock ones; it and the Yard are
 stock-concrete grey now, with surface detail. The next D5 building starts from that material, not from pale steel.
-Not seen live; the War Factory, the two barracks and the Tesla Coil wait on that look.
+Issue #130 took the remaining four in one pass at the owner's request, drawn to the owner's own renders (the
+ones issue #129 cut the cameos from): the War Factory with its roller-door overlay and a loading gantry, the two
+barracks with waving flags, the Tesla Coil renamed Arc Pylon with an idle corona and a charge bolt. D5 is
+closed; the stock buildings left in the tree (`DOME`, `FIX`, `HPAD`, `AFLD`, the tech centres, the naval yards, the
+other stock defences, the superweapons) are a new proposal if wanted, not this one.
 
 **D6. [shipped, issue #125] Production and docking have no animation on the Sungrid producers.**
 Now: `SGDRN`/`SGDRA` have no `WithProductionOverlay`; `RCYD` has no dock overlay (stock `PROC` has

@@ -257,6 +257,142 @@ sgproc:
 	icon:
 		Filename: sgprocicon.png
 
+# Sungrid art for the four stock buildings that got photographic cameos in
+# issue #129 (docs/BACKLOG.md issue #130): WEAP, BARR, TENT and TSLA render
+# these images; the stock blocks above stay for reference. Build-ups and
+# wrecks are derived from each mesh; every animation is in the body sheet.
+sgweap:
+	Defaults:
+		Filename: sgweap.png
+	# The loading gantry's trolley runs out and back, the beacon blinks.
+	idle:
+		Length: 8
+		Tick: 150
+	damaged-idle:
+		Start: 8
+	make:
+		Filename: sgweapmake.png
+		Length: *
+	place:
+		Filename: sgweapmake.png
+		Start: 8
+	# The roller door, closed to open (WithProductionDoorOverlay).
+	build-top:
+		Filename: sgweapdoor.png
+		Length: 10
+	damaged-build-top:
+		Filename: sgweapdoor.png
+		Start: 10
+		Length: 10
+	dead:
+		Filename: sgweapdead.png
+		Tick: 800
+	bib:
+		Filename: bib2.tem
+		TilesetFilenames:
+			SNOW: bib2.sno
+			DESERT: bib2.des
+		Length: *
+	icon:
+		Filename: weapicon.png
+	fake-icon:
+		Filename: weapfakeicon.png
+
+sgbarr:
+	Defaults:
+		Filename: sgbarr.png
+	# The flag waves, ten frames like the stock barracks.
+	idle:
+		Length: 10
+		Tick: 100
+	damaged-idle:
+		Start: 10
+	make:
+		Filename: sgbarrmake.png
+		Length: *
+	place:
+		Filename: sgbarrmake.png
+		Start: 8
+	dead:
+		Filename: sgbarrdead.png
+		Tick: 800
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+	icon:
+		Filename: barricon.png
+
+sgtent:
+	Defaults:
+		Filename: sgtent.png
+	idle:
+		Length: 10
+		Tick: 100
+	damaged-idle:
+		Start: 10
+	make:
+		Filename: sgtentmake.png
+		Length: *
+	place:
+		Filename: sgtentmake.png
+		Start: 8
+	dead:
+		Filename: sgtentdead.png
+		Tick: 800
+	bib:
+		Filename: bib3.tem
+		TilesetFilenames:
+			SNOW: bib3.sno
+			DESERT: bib3.des
+		Length: *
+	icon:
+		Filename: tenticon.png
+	fake-icon:
+		Filename: tentfakeicon.png
+
+# The Arc Pylon's frame is 40x62 over a 1x1 cell, so every body sequence
+# carries the stock Tesla Coil's Offset 0,-13 to keep the pad on the cell.
+sgtsla:
+	Defaults:
+		Filename: sgtsla.png
+		Offset: 0,-13
+	# Idle corona between the rods.
+	idle:
+		Length: 6
+		Tick: 120
+	# The charge WithTeslaChargeAnimation plays: a bolt climbs the tower.
+	active:
+		Start: 6
+		Length: 9
+		Tick: 100
+	damaged-idle:
+		Start: 15
+	damaged-active:
+		Start: 16
+		Length: 9
+		Tick: 100
+	make:
+		Filename: sgtslamake.png
+		Length: *
+	place:
+		Filename: sgtslamake.png
+		Start: 8
+	dead:
+		Filename: sgtsladead.png
+		Tick: 800
+	bib:
+		TilesetFilenames:
+			SNOW: mbTSLA.sno
+			INTERIOR: mbTSLA.int
+			TEMPERAT: mbTSLA.tem
+			DESERT: mbTSLA.des
+		Length: *
+	icon:
+		Filename: tslaicon.png
+
 silo:
 	idle:
 		Filename: silo2.shp

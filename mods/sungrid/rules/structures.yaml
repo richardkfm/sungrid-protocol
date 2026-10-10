@@ -566,6 +566,13 @@ TSLA:
 	Inherits: ^Defense
 	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDown
 	Inherits@AUTOTARGET: ^AutoTargetGround
+	# Sungrid art (docs/BACKLOG.md issue #130): the Arc Pylon, the sgtsla
+	# image; its `active` sequence is the charge WithTeslaChargeAnimation plays.
+	RenderSprites:
+		Image: sgtsla
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 80
@@ -1050,6 +1057,13 @@ WEAP:
 	Inherits: ^Building
 	Inherits@shape: ^3x2Shape
 	Inherits@PRIMARY: ^PrimaryBuilding
+	# Sungrid art (docs/BACKLOG.md issue #130): the sgweap image; the roller
+	# door is its build-top overlay, the wreck its dead sequence.
+	RenderSprites:
+		Image: sgweap
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	Selectable:
 		Bounds: 3072, 2048
 	Buildable:
@@ -1956,6 +1970,12 @@ BARR:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
 	Inherits@PRIMARY: ^PrimaryBuilding
+	# Sungrid art (docs/BACKLOG.md issue #130): the sgbarr image.
+	RenderSprites:
+		Image: sgbarr
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	Selectable:
 		Bounds: 2048, 2048
 	HitShape:
@@ -2124,6 +2144,12 @@ TENT:
 	Inherits: ^Building
 	Inherits@shape: ^2x2Shape
 	Inherits@PRIMARY: ^PrimaryBuilding
+	# Sungrid art (docs/BACKLOG.md issue #130): the sgtent image.
+	RenderSprites:
+		Image: sgtent
+	WithDeathAnimation:
+		DeathSequence: dead
+		UseDeathTypeSuffix: false
 	Selectable:
 		Bounds: 2048, 2048
 	HitShape:

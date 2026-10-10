@@ -577,9 +577,10 @@ actor-pdox =
     the map for 20 seconds.
 
 actor-tsla =
-    .name = Tesla Coil
+    .name = Arc Pylon
     .description =
-    Advanced base defense.
+    Advanced base defense: a lattice pylon that
+    discharges a heavy arc at anything in reach.
     Requires power to operate.
     Can detect cloaked units.
       Strong vs Vehicles and Infantry

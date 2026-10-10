@@ -190,7 +190,7 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | HBOX | Camo Pillbox | Consortium | med | 750 | 40000 | Heavy | −20 | (garrisoned E1, cloaked) | tent | |
 | GUN | Turret | Consortium | med | 800 | 40000 | Heavy | −40 | TurretGun | tent | Higher flat damage, better vs Heavy — see gap G5, since fixed |
 | ARCT | Arc Turret | Assembly | low | 600 | 40000 | Heavy | −20 | ArcDischarge | barr | Also prereq for DISR |
-| TSLA | Tesla Coil | Assembly | med | 1200 | 40000 | Heavy | −80 | TeslaZap | weap | |
+| TSLA | Arc Pylon (was Tesla Coil, issue #130) | Assembly | med | 1200 | 40000 | Heavy | −80 | TeslaZap | weap | |
 | SGTUR | Grid Defense Turret | Both | med | 900 | 40000 | Heavy | −40 | GridPulseCannon | anypower | 125% firepower at Normal power; 70% + 130% reload when strained; own weapon now — strong vs Light, weak vs Heavy (was TurretGun, identical to GUN — see gap G5, since fixed) |
 | AGUN | AA Gun | Assembly | med | 800 | 40000 | Heavy | −50 | ZSU-23 | dome | Swapped from Consortium in issue #84 — the heavier flak cannon fits Assembly, the guided missile fits Consortium |
 | SAM | SAM Site | Consortium | med | 700 | 40000 | Heavy | −40 | Nike | dome | Swapped from Assembly in issue #84 |
