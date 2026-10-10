@@ -513,6 +513,16 @@ is the regression check.
     build-up frame for the actors whose `SequencePlaceBuildingPreview` asks for it. The flags are `accent`
     polys (both windings, or the renderer culls one side), so they take the owner's colour like stock RA's;
     the discharge is palette-exact `VIOLET` (index 1) and `VIOLET_PALE` (63), well off the gold radius.
+    Second pass, the owner's note that every roof came out the same grey as the walls: **a flat PV slab cannot
+    be dark**, because the key light lifts every top face by about 30% toward white before indexing, which
+    turns any navy into a teal-grey (`_shaded`: shade 0.86 on +z). `Flat(colour)` is the answer, a tuple the
+    renderer paints as-is, and `pv_field()` draws a cell field with it (`PV_CELL` index 172, `PV_CELL_DARK`
+    mullions, a pale frame) the way `pv_panel()` already drew the Solar Array's collectors; `_bolt()` is `Flat`
+    too, since a discharge is a light source. Wall detail goes through `wall_ribs()` (cladding joints,
+    corrugation), framed window strips (a pale frame box under a `PV_CELL_DARK` glass box), `wall_lamp()` (a
+    gold accent when on, dead grey when off) and `ac_unit()`; and every building carries two animated things
+    (the factory's gantry and a welding flash, the barracks' flag and door lamp, the pylon's corona and
+    transformer lamp) so a still frame is never the whole sprite.
 
 ### What can and can't be verified in this environment
 

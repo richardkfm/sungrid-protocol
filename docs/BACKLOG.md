@@ -4783,6 +4783,29 @@ own plot, build-up and wreck derived.
    discharge pale. **Rename:** `actor-tsla` is Arc Pylon (fluent and the cameo label; id, prerequisites, weapon
    and AI untouched), `docs/BUILDINGS.md` says so.
 
+**Second pass, the owner's review of the first render:** the solar panels on all four read the same grey as
+the walls, the walls wanted detail, and the animation had to be unmistakable. (1) **Panels.** The flat
+`PANEL_BLUEBLACK` slabs were the problem twice over: the colour is near-black, and the renderer lifts every top
+face about 30% toward white before indexing (`_shaded` at shade 0.86), so any navy comes out teal-grey. `Flat`,
+a tuple subclass the renderer paints unshaded, fixes the second; `pv_field()` fixes the first, drawing a
+photovoltaic field the way `pv_panel()` draws the Solar Array's collectors - a `PV_CELL` face (palette 172,
+dark blue), `PV_CELL_DARK` mullions between the cells, a pale aluminium frame on two edges. The War Factory's
+sawteeth, both barracks' roofs and the Consortium canopy are cell fields now (6x2, 4x3, 5x2 per field). The
+bolts are `Flat` too: a discharge is a light source. (2) **Walls.** `wall_ribs()` puts cladding joints on the
+factory and formwork joints on the Assembly block, corrugation on the containers; windows are framed (a pale
+frame box under a `PV_CELL_DARK` glass box, a mullion); the factory gains a ladder beside the door, hazard
+chevrons on the apron (gold ones on the remap ramp), a wall fan, a pipe run, a roof vent, a tyre stack and
+pillar feet; the Assembly Barracks a sign band, a drainpipe, a cable duct, a rooftop air handler, a dish on
+the antenna, stepped approach treads and two-tone sandbags; the Consortium Barracks door jambs both sides, a
+corner post strip, an air handler per container, deck planking, a bench and an inverter cabinet with a gold
+tell, a canopy edge beam; the pylon ribbed bushings with gold caps, cooling fins, a hazard plate, a cable drum,
+a ladder up the near leg and insulator collars on the rods. (3) **Animation.** Each building now carries two
+moving things: the factory's gantry trolley and a welding flash in the bay on frames 2 and 5 (`flash`, a white
+block on the near hull with its glow on the floor), the barracks' flag and a lamp over the door on six of ten
+frames (`lamp`, via `wall_lamp()`), the pylon's corona and the transformer's status lamp on three of six.
+Remap counts after the pass: `sgweap` 292, `sgbarr` 206, `sgtent` 219, `sgtsla` 122 on frame 0; the door sheet
+still 0 and byte-identical to the first pass.
+
 **Verification.** `./utility.sh --check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` reports exactly
 the issue #129 set (every new PNG resolves) and the negative control - `damaged-active` Length 10 - fails with
 `sgtsla.png does not contain frames: 25`; `make check-scripts` passes; the door sheet has zero remap pixels,
@@ -4792,8 +4815,8 @@ every state of each building beside its cameo, at 3x. **Not verified live:** the
 body's opening while a vehicle exits, the charge animation's timing against the bolt, the pylon's height on a
 busy base.
 
-**Files:** `mods/sungrid/bits/gen_concept_art.py` (meshes, `flag()`, `_bolt()`, `sgweap_door_mesh`, the `pylon`
-family, tables, main), `mods/sungrid/bits/gen_photo_cameos.py` (label), fourteen new
+**Files:** `mods/sungrid/bits/gen_concept_art.py` (meshes, `Flat`, `pv_field()`, `wall_ribs()`, `wall_lamp()`,
+`ac_unit()`, `flag()`, `_bolt()`, `sgweap_door_mesh`, the `pylon` family, tables, main), `mods/sungrid/bits/gen_photo_cameos.py` (label), fourteen new
 `mods/sungrid/bits/{sgweap,sgweapdoor,sgweapmake,sgweapdead,sgbarr,sgbarrmake,sgbarrdead,sgtent,sgtentmake,sgtentdead,sgtsla,sgtslamake,sgtsladead}.png`
 and `tslaicon.png`, `mods/sungrid/sequences/structures.yaml`, `mods/sungrid/rules/{structures,fakes}.yaml`,
 `mods/sungrid/fluent/rules.ftl`, `docs/concept-art/issue130-four-buildings.png`,
