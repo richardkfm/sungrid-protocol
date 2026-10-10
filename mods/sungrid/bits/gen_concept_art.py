@@ -1259,7 +1259,7 @@ def dome(m, cx, cy, z, r, col, steps=5, height=None):
 def pv_panel(m, x0, y, w, d, z, rise=6.5, face=None, order=2, damaged=False, frame=None):
     """A collector panel tilted back-and-up (low edge at the front), on two
     posts, with cell mullions and a lit aluminium frame on its top and left."""
-    face = lit(PANEL_BLUEBLACK, 0.1) if face is None else face
+    face = PV_CELL if face is None else face          # unshaded cell face (issue #130, third pass)
     frame = lit(LEGACY_GRAY, 0.45) if frame is None else frame
     x1, lo, hi = x0 + w, z + 3, z + 3 + rise
     m.strut((x0 + 3, y + d / 2, z), (x0 + 3, y + d / 2, lo + rise * 0.4), 0.7, STEEL)
@@ -1268,10 +1268,10 @@ def pv_panel(m, x0, y, w, d, z, rise=6.5, face=None, order=2, damaged=False, fra
     for k in range(1, 4):
         yy, zz = y + d * k / 4, lo + rise * k / 4
         m.quad((x0, yy - 0.25, zz - 0.15), (x1, yy - 0.25, zz - 0.15), (x1, yy + 0.25, zz + 0.15),
-               (x0, yy + 0.25, zz + 0.15), dim(PANEL_BLUEBLACK, 0.55), order=order + 1)
+               (x0, yy + 0.25, zz + 0.15), PV_CELL_DARK, order=order + 1)
     xm = x0 + w / 2
     m.quad((xm - 0.2, y, lo), (xm + 0.2, y, lo), (xm + 0.2, y + d, hi), (xm - 0.2, y + d, hi),
-           dim(PANEL_BLUEBLACK, 0.55), order=order + 1)
+           PV_CELL_DARK, order=order + 1)
     m.quad((x0, y + d - 0.6, hi - 0.4), (x1, y + d - 0.6, hi - 0.4), (x1, y + d, hi), (x0, y + d, hi), frame, order=order + 2)
     m.quad((x0, y, lo), (x0 + 0.6, y, lo), (x0 + 0.6, y + d, hi), (x0, y + d, hi), frame, order=order + 2)
     if damaged:
@@ -1847,8 +1847,8 @@ def sgproc_mesh(damaged=False, belt=0):
     for i in range(3):
         y0 = -1 + i * 8.6
         y1 = y0 + 8.6
-        pv = PANEL_BLUEBLACK if not (damaged and i == 1) else DAMAGE_SCORCH
-        m.quad((-24.5, y0, 15), (-5.5, y0, 15), (-5.5, y1 - 0.6, 19.5), (-24.5, y1 - 0.6, 19.5), pv, order=1)
+        pv_field(m, (-24.5, y0, 15), (-5.5, y0, 15), (-5.5, y1 - 0.6, 19.5), (-24.5, y1 - 0.6, 19.5),
+                 cols=3, rows=1, order=1, burnt=damaged and i == 1)
         m.box(-24.5, y1 - 0.6, 15, -5.5, y1, 19.5, dim(hall, 0.2), top=lit(hall, 0.15), shadow=False)
     # Surface detail (issue #128): a ribbon window along the hall's left
     # flank, a louvre set left of the door, and a seam line at sill height.
@@ -1866,7 +1866,9 @@ def sgproc_mesh(damaged=False, belt=0):
     # A box band with no top face can take an order override safely (rule 15's
     # disc problem is a prism's cap); at order 0 the tower's walls sorted over it.
     m.box(7.4, 7.4, 13.5, 24.6, 24.6, 15.0, gold, order=1, shadow=False, top_face=False, accent=not damaged)
-    m.box(9, 9, 26, 23, 23, 27.2, PANEL_BLUEBLACK, top=lit(PANEL_BLUEBLACK, 0.3), shadow=False)
+    m.box(9, 9, 26, 23, 23, 27.2, dim(frame_, 0.2), top=lit(frame_, 0.1), shadow=False)
+    pv_field(m, (9, 9, 27.25), (23, 9, 27.25), (23, 23, 27.25), (9, 23, 27.25), cols=2, rows=2, order=1,
+             burnt=damaged)
     # Tower detail (issue #128): a walkway band, a window band under the cap,
     # a ladder up the near face, and the process pipe from the hall.
     m.box(7.2, 7.2, 17.6, 24.8, 24.8, 18.4, lit(frame_, 0.3), order=1, shadow=False, top_face=False)
@@ -1944,7 +1946,8 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
         z0, z1 = 17 + 8 * math.sin(a0), 17 + 8 * math.sin(a1)
         m.quad((x0, 0, z0), (x1, 0, z1), (x1, 24, z1), (x0, 24, z0), lit(hall, 0.05), order=1)
         if 1 <= i <= 3 and not (damaged and i == 2):
-            m.quad((x0 + 1, 3, z0 + 0.4), (x1 - 1, 3, z1 + 0.4), (x1 - 1, 21, z1 + 0.4), (x0 + 1, 21, z0 + 0.4), PANEL_BLUEBLACK, order=2)
+            pv_field(m, (x0 + 1, 3, z0 + 0.4), (x1 - 1, 3, z1 + 0.4), (x1 - 1, 21, z1 + 0.4), (x0 + 1, 21, z0 + 0.4),
+                     cols=1, rows=4, order=2)
         elif damaged and i == 2:
             m.quad((x0 + 1, 3, z0 + 0.4), (x1 - 1, 3, z1 + 0.4), (x1 - 1, 21, z1 + 0.4), (x0 + 1, 21, z0 + 0.4), DAMAGE_SCORCH, order=2)
     m.poly([(-24 * math.cos(math.pi * i / n), 0, 17 + 8 * math.sin(math.pi * i / n)) for i in range(n + 1)], hall, order=1)
@@ -1953,7 +1956,8 @@ def sgfact_mesh(damaged=False, build=None, beacon=True):
     m.box(-11, -1.2, 2, -9, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
     m.box(9, -1.2, 2, 11, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
     m.box(-11, -1.2, 16, 11, 0.4, 18, door, top=lit(door, 0.2), order=2, shadow=False, accent=True)
-    m.box(-24.6, 6, 9, -23.8, 20, 12, PANEL_BLUEBLACK, top=PANEL_BLUEBLACK, order=1, shadow=False)
+    m.box(-24.6, 6, 9, -23.8, 20, 12, dim(hall, 0.3), top=dim(hall, 0.3), order=1, shadow=False)
+    pv_field(m, (-24.7, 20, 9), (-24.7, 6, 9), (-24.7, 6, 12), (-24.7, 20, 12), cols=4, rows=1, order=2)
     # Surface detail (issue #128): windows left of the door, louvres right of
     # it, a seam at sill height, a vent stack on the vault's right shoulder.
     m.box(-22, -0.7, 9.5, -13, 0.1, 12.0, PANEL_BLUEBLACK, order=1, shadow=False, top_face=False)

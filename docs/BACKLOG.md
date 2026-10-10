@@ -4806,6 +4806,14 @@ frames (`lamp`, via `wall_lamp()`), the pylon's corona and the transformer's sta
 Remap counts after the pass: `sgweap` 292, `sgbarr` 206, `sgtent` 219, `sgtsla` 122 on frame 0; the door sheet
 still 0 and byte-identical to the first pass.
 
+**Third pass, at the owner's request:** the same cell fields on the rest of the roster's photovoltaics, so one
+material reads across the base. The Construction Yard's three vault ribs and its wall panel on the near-left
+face, the Materials Refinery's three roof teeth and its tower cap, and both Solar Arrays, whose `pv_panel()`
+collectors now take `PV_CELL` as the face and `PV_CELL_DARK` for the mullions (their frame is unchanged).
+Regeneration changed nine sheets (`sgfact`, `sgfactmake`, `sgproc`, `sgprocmake`, `sgprocdead`, `sgpwr`,
+`sgpwrmake`, `sgapwr`, `sgapwrmake`) and nothing else; `docs/concept-art/issue130-cell-fields.png` is the
+before/after. `PANEL_BLUEBLACK` stays for what is glass, not cells: the window strips and the drones' airframes.
+
 **Verification.** `./utility.sh --check-yaml` exits 0 across all 75 maps; `--check-missing-sprites` reports exactly
 the issue #129 set (every new PNG resolves) and the negative control - `damaged-active` Length 10 - fails with
 `sgtsla.png does not contain frames: 25`; `make check-scripts` passes; the door sheet has zero remap pixels,

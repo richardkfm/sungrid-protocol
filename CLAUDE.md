@@ -522,7 +522,10 @@ is the regression check.
     corrugation), framed window strips (a pale frame box under a `PV_CELL_DARK` glass box), `wall_lamp()` (a
     gold accent when on, dead grey when off) and `ac_unit()`; and every building carries two animated things
     (the factory's gantry and a welding flash, the barracks' flag and door lamp, the pylon's corona and
-    transformer lamp) so a still frame is never the whole sprite.
+    transformer lamp) so a still frame is never the whole sprite. Third pass, at the owner's request: the same
+    cell fields on the Yard's vault ribs and wall panel, the Refinery's roof teeth and tower cap, and both Solar
+    Arrays (`pv_panel()`'s face and mullions are `PV_CELL` / `PV_CELL_DARK` now), so every photovoltaic surface
+    in the mod is one material; `PANEL_BLUEBLACK` is left for glass strips and the drones' parked airframes.
 
 ### What can and can't be verified in this environment
 
