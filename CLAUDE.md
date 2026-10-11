@@ -81,7 +81,7 @@ the server list has failed with cause unknown — so testers are pointed at LAN 
 host's `Logs/server.log` (`Master server: ...` line) is what will diagnose the internet path. Crashes land in
 `<SupportDir>/Logs/exception-*.log`, not only the terminal.
 
-Releases: `alpha1` … `alpha39`; beta tags will be `betaN`. `alpha17` was the first run in the repo's history where all three
+Releases: `alpha1` … `alpha39`, then `beta01` … `beta10` (`CHANGELOG.md`'s release history maps every issue onto its tag). `alpha17` was the first run in the repo's history where all three
 platform jobs (Linux AppImage, Windows installer, macOS DMG) succeeded together — Windows was fixed
 twice (issues #21, #23) and macOS twice (issues #29, #30).
 
