@@ -205,6 +205,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 130 review render: the War Factory, both barracks and the Arc Pylon in every state, with their cameos, at 3x.](concept-art/issue130-four-buildings.png)
 
+**Follow-up: villages and towns on the larger maps (`docs/BACKLOG.md` issue #131).** The civilian world was thin: 23 of the 75 maps had no village house at all, and the six Sungrid scenery pieces of issue #122 stood on three maps and had not been seen live. At the owner's request the 22 four-to-six-player maps with the fewest houses each got a town - two lanes with a double row of houses between them - and one or two hamlets, all from the stock Red Alert civilian kit (houses, wooden fences, utility poles, crop fields), which already reads right on the reskinned ground. The rule for placing anything on a map, from `bits/place_villages.py`: only on free Clear cells, never on a resource, a one-cell ring free of every other actor including the trees already there, lanes two cells wide and never built on, so a village is something to fight around, not a wall. The Sungrid pieces join these villages once they have been looked at live.
+
+![Issue 131 review render: the town and the first hamlet of each of the 22 maps as placement schematics, 42x42 cells each.](concept-art/issue131-villages.png)
+
 
 
 

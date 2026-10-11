@@ -311,6 +311,13 @@ Gem field on Crossfire closes it.
 
 **C6. Map previews** — see A7; it is a world item too.
 
+**C7. [shipped, issue #131] Villages and towns on the larger maps.** Not in the original survey; the owner's pick
+when offered the scenery remainder. 23 of the 75 maps had no village house at all. Shipped: a town (two lanes, a
+double row of 10-16 houses) and one or two hamlets of stock houses, wooden fences, utility poles and crop fields on
+the 22 four-to-six-player maps with the fewest houses, placed by `bits/place_villages.py` (deterministic, re-runnable,
+lanes kept open, one cell clear of every tree). The Sungrid scenery pieces stay off these villages until they have
+been seen live. Still open: the same pass on the other maps, and Scrap fields on any map but the shellmap.
+
 ## D. Buildings and defences
 
 The roster is in good shape; these are the gaps the survey found, smallest first.
