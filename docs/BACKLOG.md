@@ -4973,3 +4973,73 @@ change lives on its `engine-patch/*` branch.
 of late drones on both factions; validation clean - met, live behaviour unverified.
 
 ---
+
+### 133. Four new large maps from the engine's generator, hand-finished: Reclaimed Grid, Salt Flats Array, Thaw Line, The Commons
+
+**Type:** world · **Phase:** 6 · **Status:** done
+
+**Why.** The owner asked for "4 new maps that fit the sungrid idea most (large 4 or 6 player ones)" in the same
+exchange as issue #131, and chose two 4-player and two 6-player maps across the three tilesets. The 75 ported maps
+are community Red Alert maps; none was made for this mod's economy, and none but the shellmap had a Scrap field.
+
+**How the maps were made.** The pinned engine ships OpenRA's classic random map generator, and the mod already
+wired it in (`rules/map-generators.yaml`, `Inherits@MapGenerators` on the world actor) for the in-game editor. A
+new utility command, `OpenRA.Mods.Sungrid/UtilityCommands/GenerateMapCommand.cs`, runs it headlessly:
+`./utility.sh --generate-map /abs/OUT.oramap Tileset=.. Size=W,H Title=.. Author=.. Option=Value ...`, where every
+`Option` is an id from the generator's settings panel (`Seed`, `Players`, `TerrainType`, `Shape`, `Symmetry`,
+`Resources`, `Buildings`, `Density`, `CivilianDensity`). It resolves the generator by `Type`, sets the options as
+the editor's panel would, `Compile`s them for the tileset and size, `Generate`s, sets the title and author (the
+generator leaves both at their fluent defaults) and saves to a zip or a folder. About five seconds a map, so a
+batch of seeds per concept is a script, not an afternoon in the editor. Paths are resolved from `engine/`, so they
+must be absolute, as for `--refresh-map-previews`.
+
+Four concepts, one per theme, 8 seeds each (a few seeds fail generation outright, which the generator reports as
+an exception and the batch skips): a temperate lake-and-river city, a desert of flats between mesas, a mirrored
+snow river valley, a temperate woodland. The first temperate batch on `NarrowWetlands` came out as water mazes;
+`Lakes`, `Puddles` and `Plots` were tried instead. Candidates were scored from the saved `map.bin` by the
+`place_villages.py` grid: smallest spawn-to-spawn distance, spread of spawn distances to the centre, free Clear
+fraction, and the three best per concept were rendered as terrain schematics and put to the owner, who chose:
+
+| Map | Tileset, players, size | Generator settings | Owner's pick |
+|---|---|---|---|
+| **Reclaimed Grid** | temperate, 6, 144x144 | `TerrainType=Lakes Symmetry=3Rotations Resources=High Buildings=Standard Seed=66` | A1 |
+| **Salt Flats Array** | desert, 4, 128x128 | `TerrainType=Rocky Symmetry=4Rotations Resources=Medium Buildings=Standard Seed=33` | B2 (the central gem field) |
+| **Thaw Line** | snow, 4, 128x128 | `TerrainType=Wetlands Symmetry=LeftMatchesRight Resources=High Buildings=Standard Seed=55` | C1 (the wide central lake) |
+| **The Commons** | temperate, 6, 144x144 | `TerrainType=Woodlands Symmetry=3Rotations Resources=High Buildings=Standard Seed=11` | D3 |
+
+Generation is deterministic: the shipped `map.bin` is byte-identical to the candidate's. Author is "Sungrid
+Protocol".
+
+**Hand-finishing.** Two script passes on each, then the engine re-save:
+
+1. `bits/place_villages.py` (issue #131): a town and two hamlets of the stock civilian kit on each, on top of the
+   handful of civilian buildings the generator's `Buildings=Standard` already places.
+2. `bits/paint_scrap.py` (new): Scrap fields, `ResourceIndex 3`, one per two players (three on a 6-player map, two
+   on a 4-player one), each a jittered disc of 24 to 30 cells on free Clear ground with density 5 at the centre
+   falling to 2 at the rim (the shellmap's hand-painted field uses 2..5 of `MaxDensity 6`). Sites are 16 cells from
+   any spawn, clear of ore and gems by 4 cells, in the central 60% of the playable area where possible, 30 cells
+   apart - and spread: every field at about the same distance from the map centre as the first and the angles
+   between them close to an even split of the circle, because the first cut put all three of The Commons' fields in
+   one corner of a three-way rotationally symmetric map. Only `map.bin`'s resource layer changes. `--replace` clears
+   the in-bounds Scrap first; a stray resource byte in the out-of-bounds border (the generator leaves a few, as the
+   stock maps do) is ignored, which is what made the first run skip The Commons.
+3. `--refresh-map-previews` on all four so `map.png` and the normalised `map.yaml` are the engine's.
+
+**Verified.** `--check-yaml` exits 0 across all 79 maps. The four `map.bin`s match the chosen candidates.
+`docs/concept-art/issue133-four-maps.png`: each map as a terrain schematic (villages red, Scrap teal, ore gold,
+gems purple, spawns ringed) beside its lobby preview. **Not verified live:** none of the four has been played; the
+generator's own balance (spawn fairness, ore per player, chokes) is its own, and the 6-player maps' spawns sit
+closer together than a hand-made map's would (37 to 47 cells apart) - a playtest item, and `--generate-map` makes
+a reroll cheap.
+
+**Files:** `OpenRA.Mods.Sungrid/UtilityCommands/GenerateMapCommand.cs` (new), `mods/sungrid/bits/paint_scrap.py`
+(new), `mods/sungrid/maps/{reclaimed-grid,salt-flats-array,thaw-line,the-commons}.oramap` (new),
+`docs/concept-art/issue133-four-maps.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION,ROADMAP}.md`, `CLAUDE.md`,
+`CHANGELOG.md`.
+
+**Phase:** 6 (world identity) - the first maps made for the mod rather than ported to it.
+
+**Definition of done:** four large maps, two per player count, three tilesets, with villages and Scrap, generated
+reproducibly from recorded settings, validated - met; playtest open.
+
+---

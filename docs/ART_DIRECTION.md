@@ -209,6 +209,10 @@ The material is the pale steel of the concept renders in `concept-art/cameo-sour
 
 ![Issue 131 review render: the town and the first hamlet of each of the 22 maps as placement schematics, 42x42 cells each.](concept-art/issue131-villages.png)
 
+**Follow-up: the first maps made for the mod (`docs/BACKLOG.md` issue #133).** Four large maps at the owner's request, from the engine's own random map generator run headlessly (`./utility.sh --generate-map`), a batch of seeds per concept scored and the owner choosing from the best three of each: Reclaimed Grid (temperate, six players, lakes and a river), Salt Flats Array (desert, four, open flats between mesas with a gem field in the middle), Thaw Line (snow, four, a mirrored valley around a wide lake), The Commons (temperate, six, woodland). Each then got the issue #131 villages and, for the first time outside the shellmap, Scrap fields in the contested middle, spread evenly around the centre so a symmetric map stays fair. The world-building rule from this pass: generate, then hand-finish; the generator's terrain is better than anything laid tile by tile, and the mod's identity goes on top as actors and resources, which scripts place reproducibly.
+
+![Issue 133 review render: the four maps as terrain schematics with villages and Scrap, each beside its lobby preview.](concept-art/issue133-four-maps.png)
+
 
 
 
