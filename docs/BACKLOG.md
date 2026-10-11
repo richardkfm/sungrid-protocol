@@ -4833,3 +4833,68 @@ and `tslaicon.png`, `mods/sungrid/sequences/structures.yaml`, `mods/sungrid/rule
 **Definition of done:** the four buildings as above, animated, on the roster's conventions, D5 closed - met.
 
 ---
+
+### 131. Villages and towns on the 22 four-to-six-player maps with the fewest houses
+
+**Type:** world · **Phase:** 6 · **Status:** done
+
+**Why.** The owner asked for "more villages / towns on 30% of the maps" when offered the scenery remainder, and
+chose the larger maps (four to six players, the ones the economic mode targets) over the maps with no houses at all.
+A scan of the 75 maps showed where the civilian world stood: 23 maps had no village house at all, ten of them in
+the four-to-six-player set, and the six Sungrid scenery pieces of issue #122 were on three maps and had not been
+seen live. The kit is therefore the stock Red Alert civilian set - houses, wooden fences, utility poles and crop
+fields - which reads fine on the reskinned ground and carries no risk the owner has not looked at; the Sungrid
+pieces stay off these villages until a live look (the owner's call in the same exchange).
+
+**Which maps.** The 30 maps with four to six spawns, sorted by how many village houses they already had, first 22:
+Asymmetric Battle, Bombardment Islands, Crossfire, Doubles, Minor Pressure, Pie of Animosity, Shuriken Island,
+Synergy, Vegetation, X-Lake (none before); Maelstrom, Tournament Island (4); Doughnut (6); Fortified, Sudden Death
+(8); Jungle Law (10); Collaboration (11); Doublestep (12); Progress, Temperal (16); Dusttown Battle, Union Sacrée
+(20). Three snow, two desert, seventeen temperate.
+
+**How.** `mods/sungrid/bits/place_villages.py`, committed this time (issue #122's placement helper was a scratch
+script; this one is reused across 22 maps and will be again for new maps). It reads a map package directly - a
+directory or an `.oramap` - and derives everything it needs without the engine: the terrain type of every cell from
+`map.bin` (format 2) through the tileset's `Templates` (`Id` -> tile index -> type), the resource layer, the bounds,
+the spawns, and the footprint of every existing actor from `rules/*.yaml` (`Building: Footprint`/`Dimensions`,
+following `Inherits` chains, `OccupiesSpace: false` for the spawn markers). Sites are candidate centres on a 3-cell
+lattice visited in `crc32` order - the same deterministic-hash discipline as `_scatter()` - and accepted by tiers:
+16 cells from any spawn, 36 between sites, 82% free Clear ground in a 17x17 box, falling back to 14/30/72% and
+12/24/62% so a busy map (trees and ore everywhere, or Doubles' 112x54 with four spawns) still gets a village rather
+than none. Every site also keeps 14 cells from any house the map already had.
+
+The first site becomes a **town**: two parallel lanes six cells apart with a double row of houses back to back
+between them, 10-16 houses. The rest are **hamlets**: one lane, houses alternating sides, 4-8. A lane is two cells
+wide and is never built on, every house keeps a one-cell ring free of other placed actors *and* of existing ones
+(trees, rocks), so no placement closes a path; houses sit only on free Clear cells, never on resources. Each lane
+gets a wooden fence run (`wood`; chain-link `fenc` on desert) on its outer side, a utility pole at either end, and on
+temperate and snow a 3x2 block of crop fields (`v14`-`v18`) past one end on 60% of lanes, or a haystack. The desert
+kit is `v20`-`v36`; the temperate/snow kit `v01`-`v11` with the fields. Actors are written as `VilNNN` owned by
+Neutral; `Map.Save` keeps the names, so a map that already carries them is skipped unless `--replace` strips and
+re-places. `--render DIR` writes a schematic per map (terrain by type, resources, existing actors dark, new actors
+highlighted, sites ringed), which is how the placements were reviewed and what the review sheet is cut from.
+
+Totals across the 22 maps: 501 houses, 374 fence segments, 125 poles, 140 field and haystack cells, 1140 actors.
+
+**Two things learned.** The crop fields never landed on the first run: the block went past the lane end, where the
+end pole had just been placed, and the one-cell ring rule rejected it - order matters within a hamlet, so fields go
+down first, then the fence, then the poles. And a fence run per lane in a town cut across the house band between
+the lanes; a town's lanes fence their outer sides only.
+
+**Verified.** `--check-yaml` exits 0 across all 75 maps after the re-save (twice: once per placement run). Each map
+was re-saved with `--refresh-map-previews` so `map.png` follows (the previews gain the house dots; too small to
+judge a village by, so the review sheet is the schematic crops). `docs/concept-art/issue131-villages.png`: the town
+and the first hamlet of every map, 42x42 cells each. **Not verified live:** how a town reads on the real tiles, and
+whether any lane sits where a player would rather build - a village 12 cells from a spawn (the loosest tier, used on
+Doubles and Pie of Animosity) is the one to watch.
+
+**Files:** `mods/sungrid/bits/place_villages.py` (new), the 22 map packages above (`map.yaml`, `map.png`;
+`map.bin` unchanged), `docs/concept-art/issue131-villages.png`, `docs/{VISUAL_PROPOSALS,ART_DIRECTION,ROADMAP}.md`,
+`CLAUDE.md`, `CHANGELOG.md`.
+
+**Phase:** 6 (world identity) - the civilian world on the maps the economic mode is played on.
+
+**Definition of done:** 22 four-to-six-player maps with a town and one or two hamlets each, deterministic and
+re-runnable, previews refreshed, `--check-yaml` clean - met.
+
+---
