@@ -6,8 +6,8 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta10** (issues #131–#132:
-villages and towns on 22 maps, and bots that fly their drones and aircraft). **Testing a release?** Start with the
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta10** (issues #131–#133:
+villages and towns on 22 maps, bots that fly their drones and aircraft, and four new large maps). **Testing a release?** Start with the
 [beta tester guide](docs/BETA_TESTING.md) and report through the
 [issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
 
@@ -25,12 +25,11 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 The detailed entries below track every issue through #119, plus #132; this list maps every issue onto its release tag.
 
-- **Unreleased** (on `main`): four new large maps made for the mod - Reclaimed Grid and The Commons (temperate,
-  6 players), Salt Flats Array (desert, 4) and Thaw Line (snow, 4) - from the engine's map generator, with villages
-  and the first Scrap fields outside the shellmap (issue #133).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
-  pair of late drones for Easy Grid Broker (issue #132).
+  pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
+  The Commons (temperate, 6 players), Salt Flats Array (desert, 4) and Thaw Line (snow, 4) - from the engine's map
+  generator, with villages and the first Scrap fields outside the shellmap (issue #133).
 - **beta09**: the War Factory, both barracks and the Tesla Coil, now the Arc Pylon, as Sungrid art drawn to the
   owner's renders, animated: the factory's loading gantry and roller door, the barracks' flags, the pylon's idle
   corona and the bolt that climbs it as it charges (issue #130).
