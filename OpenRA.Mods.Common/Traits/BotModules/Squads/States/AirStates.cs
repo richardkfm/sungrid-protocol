@@ -119,8 +119,10 @@ namespace OpenRA.Mods.Common.Traits.BotModules.Squads
 
 				var wpos = map.CenterOfCell(pos);
 
-				if (CountAntiAirUnits(owner, owner.World.FindActorsOnLine(position, wpos, WDist.FromCells(dangerRadius)).ToList()) * MissileUnitMultiplier
-					< owner.Units.Count)
+				// Skip this target cell if the flight path to it is covered by too much enemy anti-air.
+				var unitsOnPath = owner.World.FindActorsOnLine(position, wpos, WDist.FromCells(dangerRadius))
+					.Where(owner.SquadManager.IsPreferredEnemyUnit).ToList();
+				if (CountAntiAirUnits(owner, unitsOnPath) * MissileUnitMultiplier >= owner.Units.Count)
 					continue;
 
 				if (NearToPosSafely(owner, wpos, out var detectedEnemyTarget))
