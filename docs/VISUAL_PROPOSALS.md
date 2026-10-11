@@ -318,7 +318,7 @@ the 22 four-to-six-player maps with the fewest houses, placed by `bits/place_vil
 lanes kept open, one cell clear of every tree). The Sungrid scenery pieces stay off these villages until they have
 been seen live. Still open: the same pass on the other maps, and Scrap fields on any map but the shellmap.
 
-**C8. [shipped, issue #132] Maps made for the mod.** Also the owner's pick. The 75 ported maps are community Red
+**C8. [shipped, issue #133] Maps made for the mod.** Also the owner's pick. The 75 ported maps are community Red
 Alert maps; none was laid out for a Scrap economy or a 3+ player economic mode. Shipped: four large maps from the
 engine's classic generator through `./utility.sh --generate-map` (settings and seeds recorded, so each is
 reproducible), hand-finished with villages and Scrap fields - Reclaimed Grid and The Commons (temperate, 6 players),

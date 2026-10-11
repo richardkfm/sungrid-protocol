@@ -12,7 +12,7 @@ Scope control is the whole game here. Each phase must ship something playable or
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` | Done — shipped, and on by default |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` | Substantially done — AI plays Grid Reserve, CI green, all three platforms package. Open: structured external multiplayer playtests |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` | Done |
-| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done: palette reskins for all three tilesets, scenery on the three maps testers play (issue #122), villages and towns on the 22 four-to-six-player maps that had the fewest (issue #131), and four maps made for the mod with villages and Scrap fields (issue #132); the other maps get scenery map by map |
+| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done: palette reskins for all three tilesets, scenery on the three maps testers play (issue #122), villages and towns on the 22 four-to-six-player maps that had the fewest (issue #131), and four maps made for the mod with villages and Scrap fields (issue #133); the other maps get scenery map by map |
 | 7 | Unit & audio identity pass (vehicle/infantry sprites, voice, music) | `P7: Unit & Audio Identity` | Barely started — three unit renames only |
 | 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` | Deferred by design |
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paint Scrap fields onto a map (docs/BACKLOG.md issue #132).
+"""Paint Scrap fields onto a map (docs/BACKLOG.md issue #133).
 
 Scrap is the Recycling Depot's resource (ResourceIndex 3, rules/world.yaml);
 until now only the shellmap carried a painted field and every real match ran

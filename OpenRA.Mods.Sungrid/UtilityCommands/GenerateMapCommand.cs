@@ -24,7 +24,7 @@ namespace OpenRA.Mods.Sungrid.UtilityCommands
 	// generator by default) headlessly and saves the result as a map package, so a batch of
 	// seeds can be generated and compared from a script instead of one at a time in the editor.
 	// The generated map is a starting point: titles, villages, Scrap and the rest are applied
-	// afterwards. See docs/BACKLOG.md issue #132.
+	// afterwards. See docs/BACKLOG.md issue #133.
 	sealed class GenerateMapCommand : IUtilityCommand
 	{
 		string IUtilityCommand.Name => "--generate-map";
