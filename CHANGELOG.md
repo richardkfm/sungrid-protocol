@@ -47,7 +47,8 @@ The detailed entries below track every issue through #116; this list maps them o
   owner's own renders (issue #129); the War Factory, both barracks and the Tesla Coil, now the Arc Pylon, as
   Sungrid art drawn to those renders, animated: the factory's loading gantry and roller door, the barracks' flags,
   the pylon's idle corona and the bolt that climbs it as it charges (issue #130); a town and one or two hamlets of
-  stock houses, fences, poles and crop fields on the 22 four-to-six-player maps that had the fewest (issue #131).
+  stock houses, fences, poles and crop fields on the 22 four-to-six-player maps that had the fewest (issue #131);
+  bots that actually fly their drones and aircraft, and a pair of late drones for Easy Grid Broker (issue #132).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -660,6 +661,21 @@ Nothing in the game changed; this is everything around it that a tester who isn'
   don't match these maps.
 - The lobby has an emblem-and-title header, and the emblem itself is more drawn than drafted (a designer pass is
   still wanted).
+
+## Bots fly their drones and aircraft (issue #132)
+
+- **Fixed:** bots built drones, helicopters and planes and then left them parked in their base all match. The
+  engine's air-attack logic for bots had a check the wrong way round: it only sent air units out when their flight
+  path was covered by anti-air, and it counted the bot's own flak and SAM sites as that anti-air. In stock Red Alert
+  those sites usually happened to be close enough to make it work by accident; here they need Radar first and are
+  the first thing a bot switches off when power runs short, so the planes and drones almost never left. Bot air
+  units now go after targets where *your* anti-air is thin. Applies to Rush, Normal, Turtle, Naval and Grid Broker.
+- Rush, Normal and Grid Broker bots put up their Drone Bay a little earlier.
+- **Easy Grid Broker AI now fields drones, just two and late.** It was deliberately ground-only; it now builds one
+  Drone Bay (or Aerial Fab) around the eight-minute mark and at most two drones from it, so a player learning the
+  mode also learns that the Battery Banks need anti-air cover.
+- Not yet seen in a real match - if bot drones feel too aggressive or Easy Grid Broker's pair arrives too soon,
+  say so.
 
 ## Open / recorded but not implemented
 

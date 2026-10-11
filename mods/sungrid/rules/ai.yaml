@@ -213,8 +213,10 @@ Player:
 			atek: 11000
 			stek: 11000
 			sgtur: 3000
-			sgdrn: 4000
-			sgdra: 4000
+			# 4000->3000 for issue #132, alongside the engine fix that lets a drone squad actually
+			# launch: the Drone Bay also waits on a Recycling Depot, so its delay is not the only gate.
+			sgdrn: 3000
+			sgdra: 3000
 			sgcry: 12000
 			sgdai: 12000
 			sgsns: 8000
@@ -308,8 +310,9 @@ Player:
 			atek: 9000
 			stek: 9000
 			sgtur: 2500
-			sgdrn: 4500
-			sgdra: 4500
+			# 4500->3000 for issue #132, see BaseBuilderBotModule@rush.
+			sgdrn: 3000
+			sgdra: 3000
 			sgsns: 6000
 			sgcry: 10000
 			sgdai: 10000
@@ -350,6 +353,8 @@ Player:
 			rcyd: 1
 			sgrel: 2
 			sgsns: 1
+			sgdrn: 1
+			sgdra: 1
 		BuildingFractions:
 			powr: 1
 			proc: 1
@@ -368,6 +373,8 @@ Player:
 			sgrel: 2
 			sgtur: 2
 			sgsns: 1
+			sgdrn: 1
+			sgdra: 1
 		# weap delay added for issue #82: undelayed, this bot reached its first War Factory at the same
 		# pace as the Normal AI, which is what a new player was actually losing the early game to (not
 		# base expansion - McvExpansionManagerBotModule@easygridbroker below never expands). Pushed out
@@ -383,6 +390,11 @@ Player:
 			sgtur: 5000
 			sgsns: 9000
 			weap: 7000
+			# One drone bay, late (issue #132): ~8 minutes in, well after its War Factory, so the
+			# first air a new player meets is a pair of drones in the mid game, not an opening. It
+			# still needs a Recycling Depot first, as it does for every faction.
+			sgdrn: 12000
+			sgdra: 12000
 	BaseBuilderBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		MinimumExcessPower: 20
@@ -747,7 +759,11 @@ Player:
 	# Easy Grid Broker army. Hard UnitLimits across the board are the point: the Normal AI's list caps
 	# only 4 unit types, so its army grows until its economy stops it, which for a Vault-banking bot is
 	# never. Capping every line keeps the total force small and, just as importantly, keeps it simple -
-	# no air, no naval, no Tesla/mammoth tech to answer while still learning the mode.
+	# no naval, no Tesla/mammoth tech to answer while still learning the mode, and air only as a pair
+	# of drones from its one late bay: Recon Drones (sgdro) from an Assembly Drone Bay, Strike Drones
+	# (sgdrs) from a Consortium Aerial Fab - each faction can build only its own, so both are listed.
+	# Ground-only until issue #132: a player who only ever met this bot never saw an AI drone, and so
+	# never learned that the Battery Bank needs anti-air cover too.
 	# UnitLimits tightened for issue #82, in step with SquadManagerBotModule@easygridbroker's smaller
 	# SquadSize above: total cap ~43 -> ~30, so a full attack wave is most of the standing army rather
 	# than a fraction of a much larger one sitting in reserve.
@@ -763,6 +779,8 @@ Player:
 			2tnk: 35
 			3tnk: 25
 			arty: 10
+			sgdro: 10
+			sgdrs: 10
 		UnitLimits:
 			e1: 8
 			e3: 3
@@ -773,6 +791,8 @@ Player:
 			2tnk: 4
 			3tnk: 2
 			arty: 1
+			sgdro: 2
+			sgdrs: 2
 		UnitDelays:
 			arty: 9000
 	SquadManagerBotModule@turtle:

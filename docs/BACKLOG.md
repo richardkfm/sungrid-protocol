@@ -4898,3 +4898,78 @@ Doubles and Pie of Animosity) is the one to watch.
 re-runnable, previews refreshed, `--check-yaml` clean - met.
 
 ---
+
+### 132. Bots never used drones or aircraft - an inverted air-squad check in the engine, and a pair of late drones for Easy Grid Broker
+
+**Type:** AI · **Phase:** 4 · **Status:** done (not verified in a live client)
+
+**Raised as:** "When playing with ai I realize it never seems to use drones or other air units. I've mostly tested
+easy grid mode so not sure if all modes are affected."
+
+**Two causes, one per half of the report.**
+
+*Easy Grid Broker built no air on purpose.* Issue #78 kept it ground-only to teach the mode (the note in this file's
+issue #83 entry, and CLAUDE.md, said so), so for the personality the owner mostly played this was intended. The
+owner's call this time: keep it easy, but not air-free. It now builds one bay, late, and at most two drones of its
+faction's own type - Recon Drones (`sgdro`) from an Assembly Drone Bay, Strike Drones (`sgdrs`) from a Consortium
+Aerial Fab. Both had to be listed: each faction can build only its own, so a list with `sgdro` alone would have given
+a Consortium bot a bay and nothing to build in it. `BuildingDelays` 12000 (~8 minutes, after its War Factory at 7000
+and before its banking starts at 18000), `BuildingLimits` and `BuildingFractions` 1, `UnitLimits` 2 each, share 10.
+Its squad manager already listed both drones in `AirUnitsTypes`.
+
+*Every other personality built air and then never flew it.* Rush, Normal, Grid Broker, Turtle and Naval all list
+drones (and, except Rush, helicopters and planes) in `UnitsToBuild`, and nothing in `UnitBuilderBotModule` blocks
+them: drones carry no `Rearmable`, so `HasAdequateAirUnitReloadBuildings` passes, and the Aircraft queue is in the
+default `UnitQueues`. The units were built and joined the air squad. The air squad is where it stopped:
+`AirIdleState.FindDefenselessTarget` samples candidate cells across the map, and its first check was
+
+```
+if (CountAntiAirUnits(owner, FindActorsOnLine(position, wpos, dangerRadius)) * MissileUnitMultiplier < owner.Units.Count)
+    continue;
+```
+
+- skip the candidate when the flight path has *little* anti-air. A path with none at all was always skipped. It also
+counted every actor on the line, not only enemies. In stock Red Alert the bot's own flak and SAM sites standing
+within `DangerScanRadius` (10 cells) of the squad satisfied it by accident, so stock air squads did launch. Here
+they mostly could not: both anti-air sites need Radar, which every personality delays (`dome` 3000-7000 ticks);
+both are `^DisableOnLowPowerOrPowerDown`, which pauses their `AttackBase` and drops them out of
+`CountAntiAirUnits`; and `PowerDownBotModule` lists them in `PowerDownTypes`, so a bot short of power - common
+under docs/ENERGY_BALANCE.md's scarcity pass - switches them off first. The check is identical on upstream OpenRA
+`bleed` as of this issue, so it is an upstream bug, not a Sungrid regression.
+
+**Engine patch.** `engine-patch/67f4063-air-squad-defenseless-target` (commit `bded548`), built on the pinned
+`67f4063` so it carries all three earlier patches: the path check now counts only `IsPreferredEnemyUnit`s, the same
+filter `NearToPosSafely` already applies at the destination, and skips the candidate when that enemy anti-air is
+enough to threaten the squad (`>=`, the mirror of `NearToPosSafely`'s threshold). A drone squad now strikes where the
+enemy's anti-air is thin, which is what the method's name always said. Re-pinned in `mod.config`.
+
+**YAML tuning.** Rush's Drone Bay delay 4000 -> 3000 and Normal/Grid Broker's 4500 -> 3000. Modest on purpose: the
+bay also waits on a Recycling Depot, which is one random pick among ~30 `BuildingFractions` entries, so the delay was
+never the main gate. Drone shares were left alone; `UnitsToBuild` shares are a ceiling on army fraction, a count of
+zero always passes, and the Aircraft queue does not compete with the ground queues - `UnitLimits` (4-8 per drone) are
+what cap them.
+
+**Verified.** The patch compiled before pinning: `dotnet build OpenRA.Mods.Common` Release with `-warnaserror`,
+0 warnings, 0 errors; the Debug analyzer pass reports only the known SDK-version `IDE0055` artifacts, none in
+`AirStates.cs`. Then re-pinned, `engine/` deleted, `fetch-engine.sh` fetched the archive by SHA (`engine/VERSION`
+reads `bded548...`, the fetched `AirStates.cs` carries the change), `make` clean, `--check-yaml` exit 0 across all
+maps, `--check-explicit-interfaces` and `--check-conditional-trait-interface-overrides` exit 0, `make check-scripts`
+exit 0. **Negative control, and what it showed:** a bogus id in `UnitsToBuild@easygridbroker` (`sgdrsx`) also passes
+`--check-yaml` - unit-builder keys are not validated as actor references - so the actor ids were checked by hand
+against `rules/aircraft.yaml` and `rules/structures.yaml`. **Not verified live:** no bot match has been watched
+(the black-battlefield blocker stands), so whether drones now launch, and whether two late drones still read as
+"easy", is for the next playtest.
+
+**Still open.** Air units that hover over a target they cannot hit: the air squad's `AirAttackState` keeps a target
+while it is valid and the approach is safe, and gives no order when `CanAttackTarget` fails (for example while a drone's weapons are offline at
+critical power), so the squad waits rather than retargeting. Not seen, not changed.
+
+**Files:** `mod.config`, `mods/sungrid/rules/ai.yaml`, `CLAUDE.md`, `CHANGELOG.md`, `docs/BACKLOG.md`; the engine
+change lives on its `engine-patch/*` branch.
+
+**Phase:** 4 (balance / AI).
+
+**Definition of done:** the air-squad check fixed in a compiled, pinned engine patch; Easy Grid Broker fields a pair
+of late drones on both factions; validation clean - met, live behaviour unverified.
+
+---
