@@ -81,7 +81,7 @@ the server list has failed with cause unknown — so testers are pointed at LAN 
 host's `Logs/server.log` (`Master server: ...` line) is what will diagnose the internet path. Crashes land in
 `<SupportDir>/Logs/exception-*.log`, not only the terminal.
 
-Releases: `alpha1` … `alpha39`; beta tags will be `betaN`. `alpha17` was the first run in the repo's history where all three
+Releases: `alpha1` … `alpha39`, then `beta01` … `beta10` (`CHANGELOG.md`'s release history maps every issue onto its tag). `alpha17` was the first run in the repo's history where all three
 platform jobs (Linux AppImage, Windows installer, macOS DMG) succeeded together — Windows was fixed
 twice (issues #21, #23) and macOS twice (issues #29, #30).
 
@@ -168,8 +168,17 @@ engage a drone or aircraft regardless of tuning. Every `SquadManagerBotModule` a
 drones — but only if they have an anti-air answer standing. Issue #83 found Easy Grid Broker's
 `DefenseTypes` had `sam` but not `agun` (at the time, `sam` was Assembly-only and `agun` Consortium-only),
 leaving one faction's Easy Grid Broker with zero anti-air structures — fixed by adding `agun` alongside
-`sam`, same pattern every other personality already used. Easy Grid Broker still doesn't build the Drone
-Bay or either drone itself (deliberate, per issue #78 — it stays ground-only to teach the mode).
+`sam`, same pattern every other personality already used. Easy Grid Broker was ground-only by design (issue #78)
+until issue #132, which gave it one late bay (`BuildingDelays` 12000) and at most two drones — `sgdro` *and* `sgdrs`
+are both listed because each faction can build only its own, so listing one leaves the other side with an empty bay.
+
+**Bot air units only launch through `AirIdleState.FindDefenselessTarget`, and that check was inverted (issue #132).**
+Its flight-path test skipped every candidate whose path had *little* anti-air, counting the bot's own units too, so
+stock RA's air squads only launched because the bot's own flak/SAM happened to stand near them. Here those need
+Radar and are the first thing `PowerDownBotModule` switches off, so every personality built drones and aircraft and
+parked them. Fixed in the engine (enemy anti-air only, `>=` threshold). If bot air ever looks idle again, check that
+the units reached the air squad (`AirUnitsTypes`) before blaming the build side — and note that `--check-yaml` does
+**not** validate `UnitsToBuild` keys as actor ids, so a typo there is silent.
 
 **`AGUN` is Assembly's, `SAM` is Consortium's** — reversed from stock RA's original Allied-AAGun/
 Soviet-SAM pairing (issue #84): the heavier industrial flak cannon (`ZSU-23`) reads as Assembly, the
@@ -696,3 +705,5 @@ not the URL it fetches — override both, or you will silently stamp the wrong S
 **First fix shipped this way since issue #20 itself:** `engine-patch/461c7c7-flyattack-dead-target-pursuit` (issue #90) — `OpenRA.Mods.Common/Activities/Air/FlyAttack.cs`'s Hover-attack-type path didn't stop a drone from chasing/hovering over a killed target's last position, which read as the drone still firing on the wreck. Built on top of the `bf4102a-cryptoutil-fix` commit (so it carries that fix too), pinned via `ENGINE_VERSION`.
 
 **Second fix, and the first one compiled before it was pinned:** `engine-patch/a15f080-squad-preferred-targets` (issue #105) — `SquadManagerBotModule` gains optional `PreferredTargetTypes` / `PreferredTargetScanRadius` / `PreferredTargetCondition` fields, because squad targeting was purely distance-based and no mod could express "raid the win-condition building first". Built on `461c7c7`'s commit, so it carries all three fixes. **Do this from now on:** set up the build environment first (see "What can and can't be verified" above), compile the patch with `dotnet build OpenRA.Mods.Common`, then re-pin, delete `engine/`, re-run `fetch-engine.sh` and confirm `make` + `--check-yaml` against the genuinely fetched archive. This patch failed its first compile on a missing `using OpenRA.Support` — a one-line error that under the old push-it-blind workflow would have broken CI and every platform installer, exactly as the `fetch-engine.sh` regression did to alpha34.
+
+**Third fix:** `engine-patch/67f4063-air-squad-defenseless-target` (issue #132) — `AirIdleState.FindDefenselessTarget`'s flight-path anti-air check was inverted (and counted the bot's own units), so bot air squads only launched when the path was *covered* by anti-air. Upstream OpenRA has the same code. Built on `engine-patch/a15f080-squad-preferred-targets`'s head (`67f4063`), so it carries all four fixes; compiled before pinning, then re-fetched by SHA and validated.

@@ -6,8 +6,8 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta01** (issues #114–#116:
-Sungrid app icons and names, and the tester guide and issue forms). **Testing a release?** Start with the
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta10** (issues #131–#132:
+villages and towns on 22 maps, and bots that fly their drones and aircraft). **Testing a release?** Start with the
 [beta tester guide](docs/BETA_TESTING.md) and report through the
 [issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
 
@@ -23,31 +23,37 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 ## Release history (recent)
 
-The detailed entries below track every issue through #116; this list maps them onto release tags.
+The detailed entries below track every issue through #119, plus #132; this list maps every issue onto its release tag.
 
-- **Unreleased** (on `main`): the window title while loading (issue #117); the name on the load screen and main
-  menu, fake Solar Arrays on Sungrid art, the Hauler's Scrap spill, no fireball on the Disruptor Trooper, and the
-  visual-work proposals doc (issue #118); the first-impression pass - installer, menu, shellmap, HUD chrome,
-  tips, previews, lobby, emblem (issue #119); the Grid Defense Turret's own bolt and sound, drone rockets,
-  uplink lamps on the drones, drone and Hauler wrecks that smoulder instead of burning, the discharge death, and
-  cameos for the renamed stock units (issue #120); the first three units of the core roster as Sungrid art - the
-  MCV, the Ore Truck and the rifleman (issue #121); scenery on the shellmap, Crossfire and Doubles, Scrap piles
-  that read on every ground plus a Scrap field on the shellmap, and the Legacy Derrick, Field Clinic and Seed Vault
-  (issue #122); after a first live look, the rifleman and the seven renamed-actor cameos back to stock, the
-  derrick back on stock colours, the Grid Defense Turret back on its tank shell, and scene cameos for the MCV
-  and the Ore Truck (issue #123); the sidebar's highlight icons in sun gold and the lobby's Random plaques in the
-  faction plaque style (issue #124); team-colour rings on both defence pedestals, rubble for the twelve buildings
-  and defences that used to vanish when destroyed, paver aprons with grass joints under every Sungrid building (taken back to the stock concrete bibs in
-  issue #127 after the first live look),
-  and work lights on the Drone Bays and a scrap cascade at the Depot while they work (issue #125); the Materials
-  Refinery as Sungrid art, with a running intake conveyor, its own wreck and a scene cameo (issue #126); the
+- **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
+  four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
+  pair of late drones for Easy Grid Broker (issue #132).
+- **beta09**: the War Factory, both barracks and the Tesla Coil, now the Arc Pylon, as Sungrid art drawn to the
+  owner's renders, animated: the factory's loading gantry and roller door, the barracks' flags, the pylon's idle
+  corona and the bolt that climbs it as it charges (issue #130).
+- **beta08**: photographic build-menu cameos for the Mobile Construction Vehicle, the Ore Truck, the Materials
+  Refinery, the War Factory, both barracks and the Tesla Coil, cut from the owner's own renders (issue #129).
+- **beta07**: the paver aprons taken back to the stock concrete bibs after the first live look (issue #127); the
   Construction Yard and the Refinery on stock-concrete grey instead of white, with windows, louvres, pipes, a
-  ladder, a hopper grate and yard clutter (issue #128); photographic build-menu cameos for the Mobile Construction
-  Vehicle, the Ore Truck, the Materials Refinery, the War Factory, both barracks and the Tesla Coil, cut from the
-  owner's own renders (issue #129); the War Factory, both barracks and the Tesla Coil, now the Arc Pylon, as
-  Sungrid art drawn to those renders, animated: the factory's loading gantry and roller door, the barracks' flags,
-  the pylon's idle corona and the bolt that climbs it as it charges (issue #130); a town and one or two hamlets of
-  stock houses, fences, poles and crop fields on the 22 four-to-six-player maps that had the fewest (issue #131).
+  ladder, a hopper grate and yard clutter (issue #128).
+- **beta06**: the sidebar's highlight icons in sun gold and the lobby's Random plaques in the faction plaque style
+  (issue #124); team-colour rings on both defence pedestals, rubble for the twelve buildings and defences that used
+  to vanish when destroyed, paver aprons under every Sungrid building, and work lights on the Drone Bays and a scrap
+  cascade at the Depot while they work (issue #125); the Materials Refinery as Sungrid art, with a running intake
+  conveyor, its own wreck and a scene cameo (issue #126).
+- **beta05**: after a first live look, the rifleman and the seven renamed-actor cameos back to stock, the derrick
+  back on stock colours, the Grid Defense Turret back on its tank shell, and scene cameos for the MCV and the Ore
+  Truck (issue #123).
+- **beta04**: scenery on the shellmap, Crossfire and Doubles, Scrap piles that read on every ground plus a Scrap
+  field on the shellmap, and the Legacy Derrick, Field Clinic and Seed Vault (issue #122).
+- **beta03**: the Grid Defense Turret's own bolt and sound, drone rockets, uplink lamps on the drones, drone and
+  Hauler wrecks that smoulder instead of burning, the discharge death, and cameos for the renamed stock units
+  (issue #120); the first three units of the core roster as Sungrid art - the MCV, the Ore Truck and the rifleman
+  (issue #121).
+- **beta02**: the window title while loading (issue #117); the name on the load screen and main menu, fake Solar
+  Arrays on Sungrid art, the Hauler's Scrap spill, no fireball on the Disruptor Trooper, and the visual-work
+  proposals doc (issue #118); the first-impression pass - installer, menu, shellmap, HUD chrome, tips, previews,
+  lobby, emblem (issue #119).
 - **beta01**: the Sungrid app icons and disk-image background (issue #114), the plain "Sungrid Protocol"
   shortcut and app names (issue #115), and the beta-testing groundwork (issue #116).
 - **alpha39**: issues #110–#113 — the Arc Turret and Disruptor Trooper's arc weapon and discharge sounds,
@@ -660,6 +666,21 @@ Nothing in the game changed; this is everything around it that a tester who isn'
   don't match these maps.
 - The lobby has an emblem-and-title header, and the emblem itself is more drawn than drafted (a designer pass is
   still wanted).
+
+## Bots fly their drones and aircraft (issue #132)
+
+- **Fixed:** bots built drones, helicopters and planes and then left them parked in their base all match. The
+  engine's air-attack logic for bots had a check the wrong way round: it only sent air units out when their flight
+  path was covered by anti-air, and it counted the bot's own flak and SAM sites as that anti-air. In stock Red Alert
+  those sites usually happened to be close enough to make it work by accident; here they need Radar first and are
+  the first thing a bot switches off when power runs short, so the planes and drones almost never left. Bot air
+  units now go after targets where *your* anti-air is thin. Applies to Rush, Normal, Turtle, Naval and Grid Broker.
+- Rush, Normal and Grid Broker bots put up their Drone Bay a little earlier.
+- **Easy Grid Broker AI now fields drones, just two and late.** It was deliberately ground-only; it now builds one
+  Drone Bay (or Aerial Fab) around the eight-minute mark and at most two drones from it, so a player learning the
+  mode also learns that the Battery Banks need anti-air cover.
+- Not yet seen in a real match - if bot drones feel too aggressive or Easy Grid Broker's pair arrives too soon,
+  say so.
 
 ## Open / recorded but not implemented
 
