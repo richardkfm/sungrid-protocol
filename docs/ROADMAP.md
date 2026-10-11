@@ -12,7 +12,7 @@ Scope control is the whole game here. Each phase must ship something playable or
 | 3 | Economic victory mode MVP | `P3: Grid Reserve MVP` | Done — shipped, and on by default |
 | 4 | UI, balance, AI, multiplayer iteration | `P4: Playtest Hardening` | Substantially done — AI plays Grid Reserve, CI green, all three platforms package. Open: structured external multiplayer playtests |
 | 5 | Expanded buildings / faction flavor / polish | `P5: Faction Flavor` | Done |
-| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done: palette reskins for all three tilesets, scenery on the three maps testers play (issue #122), villages and towns on the 22 four-to-six-player maps that had the fewest (issue #131); the other maps get scenery map by map |
+| 6 | World & UI visual identity overhaul (terrain, chrome, cursors, menus) | `P6: World Reskin` | Done: palette reskins for all three tilesets, scenery on the three maps testers play (issue #122), villages and towns on the 22 four-to-six-player maps that had the fewest (issue #131), and four maps made for the mod with villages and Scrap fields (issue #132); the other maps get scenery map by map |
 | 7 | Unit & audio identity pass (vehicle/infantry sprites, voice, music) | `P7: Unit & Audio Identity` | Barely started — three unit renames only |
 | 8+ | Diplomacy / shared-resource systems (conditional) | `P8: Diplomacy (conditional)` | Deferred by design |
 
@@ -124,7 +124,7 @@ people who are not the author.** Phase-completeness is not the bar; nothing bein
 | B1 | No open crash or match-breaking entry in `docs/BACKLOG.md` | Believed met — no open entry describes a crash or an unwinnable/unplayable match |
 | B2 | Feature-complete for declared scope: the full `docs/BUILDINGS.md` roster, Grid Reserve including AI support, both victory paths live | **Met** (Phases 3/4/5) |
 | B3 | No shipped actor's rules contradict its own fiction | **Met** as of issues #102/#103, which audited every Sungrid-original actor's inheritance chain |
-| B4 | `make test` green — `--check-yaml` and `--check-missing-sprites` across all 75 maps, on both CI platforms | **Met**, and CI-enforced on every PR |
+| B4 | `make test` green — `--check-yaml` and `--check-missing-sprites` across all 79 maps, on both CI platforms | **Met**, and CI-enforced on every PR |
 | B5 | All three platform packages build together (Linux AppImage, Windows installer, macOS DMG) | **Met** since alpha17; regressed once at alpha34 and fixed by issue #99 |
 | B6 | The first-run content-install flow works from a clean machine, verified by someone who has never run the mod | **Open** — `mods/sungrid-content` exists and is believed correct, but has never been verified from a genuinely clean install. The tester guide and the feedback form both ask for exactly this (issue #116) |
 | B7 | One full multiplayer match, 3+ external testers, no desyncs and no "obviously broken" balance complaints | **Open** — this is Phase 4's one unmet exit criterion, and the real gate. As of alpha38 a LAN-hosted game has been confirmed *visible* from a second machine; no match has been joined or played across machines yet, and internet play has failed (see below) |
