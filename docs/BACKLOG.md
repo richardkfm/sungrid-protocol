@@ -5043,3 +5043,45 @@ a reroll cheap.
 reproducibly from recorded settings, validated - met; playtest open.
 
 ---
+
+### 134. AI opponents built too fast after beta10, even Easy Grid Broker - the base builder's own pace
+
+**Type:** AI · **Phase:** 4 · **Status:** done (not verified in a live client)
+
+**Raised as:** "ai opponent is now much more powerful, even in easy grid broker mode. slow down base building even
+more" - the first playtest of beta10, the release that made bot drones and aircraft attack (issue #132). Asked
+before changing anything: every personality slower with Easy Grid Broker slowed most, about ten seconds a building
+for Easy Grid Broker, and its drones kept but later.
+
+**Why every earlier pass missed it.** Issues #82, #85, #94 and #96 slowed Easy Grid Broker through `BuildingDelays`
+and cash gates. `BuildingDelays` only says when a building may *first* be considered. The pace between buildings is
+`BaseBuilderBotModule.StructureProductionActiveDelay`: `BaseBuilderQueueManager.Tick` waits that many ticks (plus up
+to `StructureProductionRandomBonusDelay`, 10) after queueing a building, after placing one, and between checks while
+one is under construction; `StructureProductionInactiveDelay` (125) applies only when it found nothing to build. No
+personality set it, so all of them ran on the engine default 25, about one second: a finished building went down
+within a second and the next was queued a second later, for the whole match.
+
+**Change.** `StructureProductionActiveDelay` 175 (~7s at the default 25 ticks a second) on Easy Grid Broker - on
+average about 3.5s before a finished building is placed and up to 7s before the next is queued, so about ten seconds
+added per building on top of its own build time, which is noticeably slower but not a measured fraction. 75 (~3s, about four seconds
+a building) on the other four base builders (Rush; Normal, shared with Grid Broker; Turtle; Naval). Easy Grid
+Broker's `BuildingDelays` were pushed out with it: `weap` 7000 -> 9000, `dome` 9000 -> 11000, `fix` 6000 -> 8000, and
+the drone bay (`sgdrn`/`sgdra`) 12000 -> 18000, about twelve minutes, at the owner's choice to keep its two drones
+but later. Defences run on their own queue manager and get the same delay.
+
+**Verified.** `--check-yaml` exit 0 across all 79 maps. Negative control: a misspelled
+`StructureProductionActiveDelayX` fails `--check-yaml` with "refers to a trait field ... that does not exist on
+`BaseBuilderBotModule`", so the real field is read (unlike issue #132's `UnitsToBuild` keys, which are not
+validated). **Not verified live:** the numbers are reasoned from the engine's queue logic, not measured; whether
+Easy Grid Broker now reads as beatable, and whether the others still feel too fast, is for the next playtest. If
+they still overpower, the next levers are unit production (no equivalent delay exists in `UnitBuilderBotModule`;
+`UnitLimits` and `ProductionMinCashRequirement` are what bound it) and the drones' share.
+
+**Files:** `mods/sungrid/rules/ai.yaml`, `CLAUDE.md`, `CHANGELOG.md`, `docs/BACKLOG.md`.
+
+**Phase:** 4 (balance / AI).
+
+**Definition of done:** every base builder paced by an explicit `StructureProductionActiveDelay`, Easy Grid Broker the
+slowest, its milestones and drones later; validation clean - met, live behaviour unverified.
+
+---
