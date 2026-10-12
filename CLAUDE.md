@@ -161,6 +161,14 @@ personality would expand. Issue #94's 12000 still wasn't enough - issue #96 rais
 pushed `weap` `BuildingDelays` 5000→7000 in the same pass, after feedback that both the second base and
 its tanks were still arriving too fast.
 
+**The base-building pace is `StructureProductionActiveDelay`, not `BuildingDelays` (issue #134).** `BuildingDelays`
+only gates when a building may *first* be considered; between buildings `BaseBuilderQueueManager` re-checks after
+`StructureProductionActiveDelay` ticks (also its poll while one is under construction), and the engine default 25
+(~1s) started the next building about a second after the last went down, whatever the delays said. Easy Grid Broker
+is at 175 (~10s a building on average), every other personality at 75; its War Factory, Radar, Repair Bay and drone
+bay were pushed out in the same pass. A misspelled field name *is* caught by `--check-yaml` (`refers to a trait field
+... that does not exist`), unlike a bad `UnitsToBuild` key.
+
 **Only `AGUN`/`SAM` can hit an airborne target — `ARCT`/`SGTUR` never can.** Both anti-air structures are
 `^AutoTargetAir`; the other two defenses every personality builds are `^AutoTargetGround` and will not
 engage a drone or aircraft regardless of tuning. Every `SquadManagerBotModule` already treats `sgdro`/
@@ -169,7 +177,7 @@ drones — but only if they have an anti-air answer standing. Issue #83 found Ea
 `DefenseTypes` had `sam` but not `agun` (at the time, `sam` was Assembly-only and `agun` Consortium-only),
 leaving one faction's Easy Grid Broker with zero anti-air structures — fixed by adding `agun` alongside
 `sam`, same pattern every other personality already used. Easy Grid Broker was ground-only by design (issue #78)
-until issue #132, which gave it one late bay (`BuildingDelays` 12000) and at most two drones — `sgdro` *and* `sgdrs`
+until issue #132, which gave it one late bay (`BuildingDelays` 12000, 18000 since issue #134) and at most two drones — `sgdro` *and* `sgdrs`
 are both listed because each faction can build only its own, so listing one leaves the other side with an empty bay.
 
 **Bot air units only launch through `AirIdleState.FindDefenselessTarget`, and that check was inverted (issue #132).**

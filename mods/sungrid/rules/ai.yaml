@@ -137,6 +137,11 @@ Player:
 		MaximumExcessPower: 160
 		ExcessPowerIncrement: 40
 		ExcessPowerIncreaseThreshold: 4
+		# Ticks between base-builder checks while a building is queued or under construction. The
+		# engine default 25 (~1s) meant the next building started about a second after the last
+		# one went down - faster than a human plays. 75 (~3s) for issue #134; the Easy Grid Broker
+		# gets much more.
+		StructureProductionActiveDelay: 75
 		ConstructionYardTypes: fact
 		RefineryTypes: proc
 		# rcyd is deliberately NOT in RefineryTypes: that list drives the ore-economy
@@ -227,6 +232,8 @@ Player:
 		MaximumExcessPower: 200
 		ExcessPowerIncrement: 40
 		ExcessPowerIncreaseThreshold: 4
+		# See BaseBuilderBotModule@rush (issue #134).
+		StructureProductionActiveDelay: 75
 		ConstructionYardTypes: fact
 		RefineryTypes: proc
 		InititalMinimumRefineryCount: 0
@@ -328,6 +335,13 @@ Player:
 		MaximumExcessPower: 120
 		ExcessPowerIncrement: 40
 		ExcessPowerIncreaseThreshold: 4
+		# The base-building pace itself (issue #134). Every delay below only says when a building may
+		# first be considered; between buildings the engine checks again after this many ticks, and
+		# its default 25 (~1s) started the next building almost as soon as the last one went down.
+		# 175 (~7s) adds about ten seconds a building on average - up to 7s before a finished
+		# building is placed, then up to 7s before the next is queued - on top of each building's own
+		# build time. Reasoned, not measured. The other personalities use 75.
+		StructureProductionActiveDelay: 175
 		ConstructionYardTypes: fact
 		RefineryTypes: proc
 		InititalMinimumRefineryCount: 0
@@ -381,26 +395,31 @@ Player:
 		# further still (3000->5000) for issue #85, alongside GridReserveBotModule@easygridbroker's
 		# StartDelayTicks below, after feedback that the War Factory was still arriving too soon. Pushed
 		# out again (5000->7000) for issue #96 after feedback that tanks were still arriving too fast.
+		# Issue #134 pushed the War Factory (7000->9000), Radar (9000->11000), Repair Bay
+		# (6000->8000) and the drone bay (12000->18000) out again, alongside the slower pace above.
 		BuildingDelays:
-			dome: 9000
-			fix: 6000
+			dome: 11000
+			fix: 8000
 			pbox: 4000
 			gun: 5000
 			arct: 4000
 			sgtur: 5000
 			sgsns: 9000
-			weap: 7000
-			# One drone bay, late (issue #132): ~8 minutes in, well after its War Factory, so the
-			# first air a new player meets is a pair of drones in the mid game, not an opening. It
-			# still needs a Recycling Depot first, as it does for every faction.
-			sgdrn: 12000
-			sgdra: 12000
+			weap: 9000
+			# One drone bay, late (issue #132): ~12 minutes in since issue #134 (it was ~8), well
+			# after its War Factory, so the first air a new player meets is a pair of drones in the
+			# mid game, not an opening. It still needs a Recycling Depot first, as it does for every
+			# faction.
+			sgdrn: 18000
+			sgdra: 18000
 	BaseBuilderBotModule@turtle:
 		RequiresCondition: enable-turtle-ai
 		MinimumExcessPower: 20
 		MaximumExcessPower: 250
 		ExcessPowerIncrement: 20
 		ExcessPowerIncreaseThreshold: 2
+		# See BaseBuilderBotModule@rush (issue #134).
+		StructureProductionActiveDelay: 75
 		ConstructionYardTypes: fact
 		RefineryTypes: proc
 		PowerTypes: powr,apwr,sgwnd,sghyd,sgrel
@@ -484,6 +503,8 @@ Player:
 		MaximumExcessPower: 400
 		ExcessPowerIncrement: 40
 		ExcessPowerIncreaseThreshold: 3
+		# See BaseBuilderBotModule@rush (issue #134).
+		StructureProductionActiveDelay: 75
 		ConstructionYardTypes: fact
 		RefineryTypes: proc
 		PowerTypes: powr,apwr,sgwnd,sghyd,sgrel

@@ -25,6 +25,8 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 The detailed entries below track every issue through #119, plus #132; this list maps every issue onto its release tag.
 
+- **Unreleased** (on `main`): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
+  its pair of drones arrives later (issue #134).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
@@ -683,6 +685,17 @@ Nothing in the game changed; this is everything around it that a tester who isn'
   mode also learns that the Battery Banks need anti-air cover.
 - Not yet seen in a real match - if bot drones feel too aggressive or Easy Grid Broker's pair arrives too soon,
   say so.
+
+## AI opponents build their bases more slowly (issue #134)
+
+- After beta10, AI opponents felt much stronger, Easy Grid Broker included. Part of that was how fast they build:
+  a bot started its next building about a second after the last one went down, all match long, whatever its other
+  delays said.
+- **Easy Grid Broker** now pauses about ten seconds per building on average, on top of each building's own
+  build time, so its base fills in noticeably more slowly. Its War Factory, Radar and Repair Bay come later too, and its two drones now arrive around
+  the twelve-minute mark instead of eight.
+- **Every other personality** pauses about four seconds per building.
+- Not yet seen in a real match - say if Easy Grid Broker now feels too passive, or the others still too fast.
 
 ## Open / recorded but not implemented
 
