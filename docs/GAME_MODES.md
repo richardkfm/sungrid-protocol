@@ -179,8 +179,10 @@ document.
 
 The phase is a pure function of `World.WorldTick` (`SunCycleController.PhaseAt`): no accumulated state, nothing to
 sync, identical on every client, in a replay and after loading a save. Every timing field lives on
-`SunCycleController` in `rules/world.yaml` and can be overridden in a map's `rules.yaml` (the main-menu shellmap is
-meant to get a fast showcase cycle that way - not done yet).
+`SunCycleController` in `rules/world.yaml` and can be overridden in a map's `rules.yaml`. The main-menu shellmap does exactly that (issue #137): with no lobby the
+controller falls back to `CheckboxEnabled`, which the shellmap's rules force on, and it runs a 2750-tick (1:50)
+showcase cycle with the first dusk at 0:30. Phase changes are never announced on a shellmap - it has no HUD, and it
+keeps running behind the lobby, whose chat would otherwise collect every dusk and dawn line.
 
 **Only solar falls.** `POWR` and `APWR` inherit `^SolarPower` (`rules/defaults.yaml`): two `GrantConditionOnSunPhase`
 traits grant `sun-night` / `sun-twilight`, and two stock `PowerMultiplier`s (30 / 65) re-total the owner's power the
@@ -333,6 +335,6 @@ the gap existed before it.
 No live match has been played with the cycle on - nothing here can run a client (see `CLAUDE.md`). Verified only by
 compiling, `--check-yaml` across every map, the interface checks and negative controls (issue #136 lists them).
 Open: the bank's sprite still shows ore-storage fill, not charge (needs a sprite body that reads `PowerStorage`);
-no night art states (lamps on the arrays, dark panels - art rule 16 territory); the shellmap's showcase cycle; an
+no night art states (lamps on the arrays, dark panels - art rule 16 territory); an
 observer-scoreboard column; a "hit the banks before sunset" squad hook for the bots (`GrantConditionOnSunPhase` works
 on the Player actor and is ready for a `PreferredTargetCondition`); and every constant above is waiting on a playtest.

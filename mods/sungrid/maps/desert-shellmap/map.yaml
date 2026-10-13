@@ -173,13 +173,13 @@ Actors:
 	SovietDroneBay1: sgdrn
 		Location: 46,28
 		Owner: Soviets
-	Actor69: sgrel
+	Actor69: sgwnd
 		Location: 43,29
 		Owner: Soviets
 	Actor68: arct
 		Location: 34,23
 		Owner: Soviets
-	Actor70: sgdra
+	Actor70: sgdrn
 		Location: 47,24
 		Owner: Soviets
 	Actor81: rock7
@@ -191,7 +191,7 @@ Actors:
 	Actor85: powr
 		Location: 49,14
 		Owner: Soviets
-	Actor83: sgdra
+	Actor83: sgdrn
 		Location: 42,18
 		Owner: Soviets
 	Actor52: powr
@@ -272,7 +272,7 @@ Actors:
 	Actor101: apwr
 		Location: 115,39
 		Owner: Soviets
-	Actor110: sgdra
+	Actor110: sgdrn
 		Location: 106,44
 		Owner: Soviets
 	Actor106: fact
@@ -302,7 +302,7 @@ Actors:
 	Actor117: sgshl
 		Location: 107,34
 		Owner: Soviets
-	Actor122: sgdra
+	Actor122: sgdrn
 		Location: 116,49
 		Owner: Soviets
 	SovietDroneBay3: sgdrn
@@ -348,7 +348,7 @@ Actors:
 		Location: 105,33
 		Owner: Soviets
 		Facing: 400
-	Actor123: sgdra
+	Actor123: sgdrn
 		Location: 119,49
 		Owner: Soviets
 	Actor138: 4tnk
@@ -403,7 +403,7 @@ Actors:
 	Actor105: brik
 		Location: 94,70
 		Owner: Allies
-	Actor170: sgrel
+	Actor170: sgwnd
 		Location: 104,41
 		Owner: Soviets
 	Actor162: disr
@@ -786,7 +786,7 @@ Actors:
 	Actor168: brik
 		Location: 95,71
 		Owner: Allies
-	Actor322: sgwnd
+	Actor322: sgrel
 		Location: 58,78
 		Owner: Allies
 	Actor121: mine
@@ -1045,7 +1045,7 @@ Actors:
 		Location: 47,70
 		Owner: Allies
 		Facing: 256
-	SovietHydrogenPlant: sghyd
+	SovietSolarArray: apwr
 		Location: 106,29
 		Owner: Soviets
 	SovietBarracks1: barr
@@ -1075,10 +1075,10 @@ Actors:
 	AlliedBarracks2: tent
 		Location: 50,66
 		Owner: Allies
-	AlliedDroneBay1: sgdrn
+	AlliedDroneBay1: sgdra
 		Location: 70,76
 		Owner: Allies
-	AlliedDroneBay2: sgdrn
+	AlliedDroneBay2: sgdra
 		Location: 64,78
 		Owner: Allies
 	Entry1: waypoint
@@ -1168,10 +1168,10 @@ Actors:
 	Mig24: waypoint
 		Location: 1,28
 		Owner: Neutral
-	Actor901: sgrel
+	Actor901: sgwnd
 		Location: 56,19
 		Owner: Soviets
-	Actor902: sgrel
+	Actor902: sgwnd
 		Location: 119,46
 		Owner: Soviets
 	Actor903: silo
@@ -1204,13 +1204,13 @@ Actors:
 	SovietHauler1: sghau
 		Location: 93,27
 		Owner: Soviets
-	AlliedRecon1: sgdro
+	AlliedStrike1: sgdrs
 		Location: 69,75
 		Owner: Allies
-	SovietStrike1: sgdrs
+	SovietRecon1: sgdro
 		Location: 45,27
 		Owner: Soviets
-	SovietStrike2: sgdrs
+	SovietRecon2: sgdro
 		Location: 45,28
 		Owner: Soviets
 	Scn01: sgpan
@@ -1255,6 +1255,90 @@ Actors:
 	Scn14: sgslv
 		Location: 47,57
 		Owner: Neutral
+	AlliedWarFactory: weap
+		Location: 81,65
+		Owner: Allies
+	AlliedAerialFab: sgdra
+		Location: 59,72
+		Owner: Allies
+	AlliedRefinery: proc
+		Location: 102,71
+		Owner: Allies
+	AlliedRelay2: sgrel
+		Location: 88,79
+		Owner: Allies
+	AlliedRelay3: sgrel
+		Location: 60,82
+		Owner: Allies
+	AlliedSAM1: sam
+		Location: 66,68
+		Owner: Allies
+	AlliedSAM2: sam
+		Location: 80,96
+		Owner: Allies
+	AlliedSAM3: sam
+		Location: 80,79
+		Owner: Allies
+	AlliedSAM4: sam
+		Location: 53,69
+		Owner: Allies
+	SovietRefinery: proc
+		Location: 83,36
+		Owner: Soviets
+	SovietPylon1: tsla
+		Location: 96,39
+		Owner: Soviets
+	SovietPylon2: tsla
+		Location: 100,53
+		Owner: Soviets
+	SovietPylon3: tsla
+		Location: 53,34
+		Owner: Soviets
+	SovietPylon4: tsla
+		Location: 86,41
+		Owner: Soviets
+	SovietFlak1: agun
+		Location: 102,38
+		Owner: Soviets
+	SovietFlak2: agun
+		Location: 44,33
+		Owner: Soviets
+	SovietFlak3: agun
+		Location: 108,55
+		Owner: Soviets
+	SovietBank1: silo
+		Location: 99,36
+		Owner: Soviets
+	SovietBank2: silo
+		Location: 104,39
+		Owner: Soviets
+	SovietBank3: silo
+		Location: 104,43
+		Owner: Soviets
+	SovietBank4: silo
+		Location: 55,26
+		Owner: Soviets
+	SovietBank5: silo
+		Location: 61,29
+		Owner: Soviets
+	SovietTurbine1: sgwnd
+		Location: 104,36
+		Owner: Soviets
+	SovietTurbine2: sgwnd
+		Location: 106,37
+		Owner: Soviets
+	SovietTurbine3: sgwnd
+		Location: 104,45
+		Owner: Soviets
+	SovietTurbine4: sgwnd
+		Location: 105,50
+		Owner: Soviets
+	SovietTurbine5: sgwnd
+		Location: 58,34
+		Owner: Soviets
+	SovietTurbine6: sgwnd
+		Location: 60,34
+		Owner: Soviets
 
 Rules: sungrid|rules/campaign-palettes.yaml, rules.yaml
 

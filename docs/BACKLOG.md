@@ -5448,3 +5448,118 @@ its guarantees; faction night identity; Spy drain and outage rule; HUD, tint and
 `--check-yaml` clean with negative controls - met, pending a live playtest.
 
 ---
+
+### 137. The main-menu battle: a sped-up Sun Cycle, more of the roster, and more varied attack scripting
+
+**Type:** world content / scripting · **Phase:** 6 (world identity) · **Status:** done, not verified live
+
+**Why.** The owner asked for three things on the shellmap behind the main menu (`mods/sungrid/maps/desert-shellmap/`,
+made a Sungrid battle by issue #119, given scenery by #122): show the Sun Cycle (issue #136) as a fast showcase,
+introduce more of the Sungrid-original roster, and give the attack script more variety while keeping it looping so the
+battle never stalls. Reading the map against the roster turned up more than missing pieces:
+
+- **No anti-air at all.** Issue #119's transform turned every AA gun into an Arc or Grid Defense Turret, and only
+  `AGUN`/`SAM` can hit an airborne target (`CLAUDE.md`). Nothing on the menu could ever shoot a drone down, and since
+  the Consortium's map-placed base is unkillable, the Assembly's produced drones attacked it forever and piled up for
+  as long as the menu stayed open (three bays producing without limit).
+- **Drone buildings and power on the wrong side.** The Consortium's two bays were Drone Bays (`sgdrn`, the Assembly's)
+  and the Assembly had five Aerial Fabrication Bays (`sgdra`, the Consortium's); the Assembly held four Smart Grid
+  Relays (Consortium-only since issue #101) and a Hydrogen Plant, the Consortium a Wind Turbine. The Lua produced
+  Strike Drones for the Assembly and Recon Drones for the Consortium accordingly - backwards since issue #84.
+- **Nothing kept the north alive.** The Consortium's produced units `Hunt()` and nothing rebuilt what they destroyed.
+
+**The Sun Cycle, forced on and sped up.** No C# field was needed to force it: a shellmap has no lobby, so
+`OptionOrDefault("suncycle", CheckboxEnabled)` returns the map's own `CheckboxEnabled`. The shellmap's `rules.yaml` sets
+`CheckboxEnabled: True` / `CheckboxLocked: True` (the pattern its bounty option already used) and the timing:
+
+| Field | Shellmap | Normal | Time on the menu |
+|---|---|---|---|
+| `FirstDuskTick` | 750 | 7500 | dusk at 0:30 |
+| `DuskTicks` / `NightTicks` / `DawnTicks` | 375 / 1000 / 375 | 750 / 2250 / 750 | night 0:45-1:25, dawn to 1:40 |
+| `DayTicks` | 1000 | 5250 | 40 s of day, next dusk at 2:20 |
+| Cycle | 2750 (1:50) | 9000 (6:00) | |
+
+One C# change: `SunCycleController` never announces a phase change on a `WorldType.Shellmap`. The engine keeps the
+shellmap world running behind the lobby (`Game.JoinInner`'s shellmap hack) and `LobbyLogic` handles every
+`TextNotification`, so each dusk, night, dawn and day line would have landed in the lobby chat. The infiltration
+lines and speech need nothing: transient lines and notifications only reach the local player, and a shellmap has none.
+Power at night was worked through so the showcase holds: the Consortium runs about -170 at night after the additions
+and its nine Battery Banks (x1.5 capacity and discharge) cover it from charge built up by day, so its SAM sites stay
+lit (its storage identity); the Assembly stays at about +570 on its Wind Turbines.
+
+**The roster.** A new committed script, `mods/sungrid/bits/place_shellmap_roster.py`, does both changes on the map
+deterministically (rule 29's method: terrain from `map.bin` and the tileset templates, footprints from the rules, each
+addition at the nearest valid cell to a fixed anchor - free Clear resource-free footprint, a one-cell passable ring
+clear of every other actor - so no path is closed). Re-running it on the previous `map.yaml` reproduces the committed
+one byte for byte; on the current one it skips (`--replace` redoes it).
+
+| Change | Actors |
+|---|---|
+| Retyped to its own faction (same cell, same footprint) | Consortium: 2 Drone Bays -> Aerial Fabrication Bays, Wind Turbine -> Smart Grid Relay, its parked drone -> Strike Drone. Assembly: 5 Aerial Fabs -> Drone Bays, 4 Relays -> Wind Turbines, Hydrogen Plant -> Advanced Solar Array, its two parked drones -> Recon Drones (16 in all; `SovietStrike1/2`, `AlliedRecon1` and `SovietHydrogenPlant` renamed to match) |
+| Consortium, added | War Factory (`AlliedWarFactory`), Aerial Fabrication Bay (`AlliedAerialFab`), Materials Refinery by the eastern ore (`AlliedRefinery`, its free Ore Truck), two more Smart Grid Relays, four SAM sites over the Battery Banks and the front |
+| Assembly, added | Materials Refinery on the northern ore (`SovietRefinery`, free Ore Truck), four Arc Pylons facing the valley, three flak guns, five Battery Banks, six Wind Turbines |
+
+431 actors (was 403). `docs/concept-art/issue137-shellmap-roster.png` is the review schematic: additions bright and
+labelled, retypes white-edged, the camera's oval and what a 1920x1080 menu sees over one orbit. The stock leftovers on
+the map (three light tanks, two heavy tanks, a destroyer, a landing craft, Tanya, a Chinook husk) are untouched.
+
+**The script** (`desert-shellmap.lua`), on top of what issue #119 had (seven edge entries, Recon Drones on the MiG
+paths, Haulers that search when idle):
+
+- **Assembly ground waves** draw from three mixes (troopers and Recon Drones) and are re-sent 4-16 s after being wiped
+  out, so the seven entries fall out of step.
+- **Production** on both sides with each side's own drone, and a cap per side (`disr` 12, drones 4) - a factory waits
+  while its side is at the cap, so nothing accumulates on a menu left open.
+- **Assembly drone raid** every 55 s: three Recon Drones from the north edge attack a random Consortium Battery Bank -
+  the Grid Reserve Vault raid - and the SAM sites answer (the issue #120 wrecks, which drop Scrap).
+- **The Spy**: a Consortium Spy from alternating barracks, disguised as a Disruptor Trooper, walks into the nearest
+  Assembly Battery Bank (empties its stored charge - the Sun Cycle's Spy rule) or, every other round, Solar Array (a
+  power outage: the Arc Pylons and flak go dark). `Trigger.OnInfiltrated` on every such target launches the
+  **blackout raid**, three Strike Drones from the south edge at a pylon, flak gun or bank. The next Spy follows 45 s
+  after the last is gone however it went; a Spy whose target fell retries up to three times, and an infiltration the
+  engine refuses is caught with `pcall` and retires the Spy instead of stopping the script.
+- Raid survivors **withdraw** after 45 s and leave the map, and no raid launches while that side already flies nine
+  of its drone - a raid on an unkillable bank, or one whose anti-air has gone dark, cannot hover there for good.
+- **Salvage run** every 40 s: if an Assembly unit fell on the Consortium's half of the valley at least 31 s earlier
+  (past `SpawnsResourceOnDeath`'s 30 s hold), the next Consortium Hauler in turn drives to that cell and collects.
+- **Collectors kept up**: below two Haulers or one Ore Truck, the Consortium's War Factory builds a replacement (its
+  door overlay, issue #130) and the Assembly's arrives from the map edge.
+- **The Assembly rebuilds** every structure it loses where it stood, 40 s later, with the build-up art (issues #74,
+  #109); units on the footprint are scattered and the check repeats. A rebuilt factory starts a fresh production
+  loop and the old one ends (a generation counter), and a rebuilt Refinery or Depot comes without a free collector
+  (`FreeActor = false`; the keeper decides). The Consortium's map-placed base stays unkillable, as since issue #119.
+
+**Verified:**
+
+- `make check-scripts` (lua5.1) passes; every global the script reads (`luac -l`) is either engine API or a named actor
+  present in `map.yaml`, and every actor id it passes is defined in `rules/` - checked by script, because nothing else
+  checks either (below).
+- `./utility.sh --check-yaml` exits 0 across all maps. `make` builds; `--check-explicit-interfaces` and
+  `--check-conditional-trait-interface-overrides` exit 0; `dotnet build -c Debug -warnaserror` reports nothing in any
+  mod file (only the known 1840 `IDE0055` + 2 `IDE0301` in engine files), and the analysers do run on the changed
+  file (negative control: a stray space before a parenthesis in `SunCycleController.cs` is reported as `SA1009`/`IDE0055`).
+- `--refresh-map-previews` (absolute path) re-saved the map; it left `map.yaml` byte-identical to the script's output,
+  and `map.png` / `map.bin` are unchanged (neither terrain nor resources moved).
+- A separate check over the final map: all 28 additions sit on Clear, resource-free cells that no other actor shares.
+- **Negative controls**, each restored: a map actor typed `tslx` -> `Actor 'tslx' is not defined by any rule`;
+  `FirstDuskTik` in the shellmap rules -> `refers to a trait field ... that does not exist on SunCycleController`;
+  `DayTicks: 0` -> the controller's ruleset-load `YamlException`; the placer with an anchor in the sea -> `no valid cell`.
+- **Not caught by any check here** (also negative-controlled): a Lua `Produce("spx")` and a reference to a named actor
+  that does not exist both pass `--check-yaml` and `check-scripts` (runtime errors only); a building moved onto
+  another's cell, or into the sea, passes `--check-yaml`. Recorded in `CLAUDE.md` rule 29.
+
+**Not verified:** anything live. No RA content is installed here and the shellmap needs it; nobody has watched this
+battle. In particular unobserved: the tint over the menu, whether the raid and spy paths are clear in practice, the
+night power balance as it actually plays, how the Spy's disguise holds against the pylons, the rebuild timing, and
+whether 431 actors with the extra waves still run smoothly on a slow machine.
+
+**Files:** `mods/sungrid/maps/desert-shellmap/{map.yaml,rules.yaml,desert-shellmap.lua}`,
+`mods/sungrid/bits/place_shellmap_roster.py` (new), `OpenRA.Mods.Sungrid/SunCycle/SunCycleController.cs`,
+`mods/sungrid/rules/world.yaml` (comment), `docs/concept-art/issue137-shellmap-roster.png`, `docs/GAME_MODES.md`,
+`docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Definition of done:** the cycle visibly turns within the first minute on the menu without touching the lobby path or
+its chat; both bases carry the roster on their own side of the faction line; the battle loops with raids, a Spy,
+salvage runs and rebuilding; checks green with negative controls - met, pending a look at the live menu.
+
+---

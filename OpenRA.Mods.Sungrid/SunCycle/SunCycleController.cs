@@ -45,7 +45,8 @@ namespace OpenRA.Mods.Sungrid.SunCycle
 		[Desc("Tooltip description for the Sun Cycle checkbox in the lobby.")]
 		public readonly string CheckboxDescription = "checkbox-suncycle.description";
 
-		[Desc("Default value of the Sun Cycle checkbox in the lobby. Off until it has been playtested.")]
+		[Desc("Default value of the Sun Cycle checkbox in the lobby. Off until it has been playtested.",
+			"Also the value used where there is no lobby: the main-menu shellmap sets it in its own rules.")]
 		public readonly bool CheckboxEnabled = false;
 
 		[Desc("Prevent the Sun Cycle state from being changed in the lobby.")]
@@ -228,7 +229,9 @@ namespace OpenRA.Mods.Sungrid.SunCycle
 				UpdateLowPowerAdvice(world, phase == SunPhase.Dusk || phase == SunPhase.Night);
 
 			// The fast-forward of a loaded save replays every phase change; only the live one is announced.
-			if (!world.IsLoadingGameSave)
+			// The main-menu shellmap runs a showcase cycle (issue #137) but has no HUD, and it keeps running
+			// behind the lobby, whose chat would collect a system line at every dusk, night, dawn and day.
+			if (!world.IsLoadingGameSave && world.Type != WorldType.Shellmap)
 				Announce(world, phase);
 		}
 
