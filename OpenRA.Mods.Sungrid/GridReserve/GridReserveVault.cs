@@ -59,10 +59,11 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		readonly GridReserveManager manager;
 
 		// The Sun Cycle's stored charge, when this building is also a Battery Bank (PowerStorage). The two
-		// share Capacity: charge already in the bank is space Reserve cannot bank into. Charge never displaces
-		// Reserve - PowerStorage only ever charges into space Reserve has left free - so every guarantee below
-		// (irreversibility, the target ceiling, Lockdown) is unchanged; charge can only slow banking down.
-		// Null, or always empty, whenever the suncycle option is off, which leaves this trait exactly as before.
+		// share Capacity, energy first (PowerStorage.ReserveRoom): a protected share is kept for charge, and a bank
+		// absorbing surplus banks no Reserve. Charge never displaces Reserve - PowerStorage only ever charges into
+		// space Reserve has left free - so every guarantee below (irreversibility, the target ceiling, Lockdown) is
+		// unchanged; energy can only slow banking down and lower what one Vault holds (ReserveCapacity).
+		// Null, or disabled, whenever the suncycle option is off, which leaves this trait exactly as before.
 		PowerStorage storage;
 
 		int beaconToken = Actor.InvalidConditionToken;
@@ -72,6 +73,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public int CurrentReserve { get; private set; }
 
 		public int Capacity => info.Capacity;
+
+		// The most Reserve this Vault can hold: Capacity, less the Sun Cycle's protected energy share while that
+		// option is on.
+		public int ReserveCapacity => storage != null && storage.Enabled ? storage.ReserveCapacity : info.Capacity;
 
 		public GridReserveVault(Actor self, GridReserveVaultInfo info)
 		{
@@ -91,10 +96,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			if (!manager.Enabled)
 				return;
 
-			// Charge that has sat unused for a whole sun cycle gives way (PowerStorage.IdleCharge): without that, a
-			// player who never runs short at night would fill their banks with charge that never drains and could
-			// never bank again.
-			var free = info.Capacity - CurrentReserve - (storage?.OccupiedSpace ?? 0) + (storage?.YieldableSpace ?? 0);
+			// Sun Cycle on: energy first - see PowerStorage.ReserveRoom (the protected share, no banking while the
+			// bank charges, idle charge outside the protected share gives way). Off: the whole Capacity, as always.
+			var free = storage != null && storage.Enabled ? storage.ReserveRoom : info.Capacity - CurrentReserve;
 			if (free > 0)
 			{
 				var room = free;

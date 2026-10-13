@@ -37,7 +37,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			"(at or past the minimap-reveal threshold). Losing the economic race is answered by banking harder.")]
 		public readonly int ContestedCoveragePercent = 150;
 
-		[Desc("Never build more than this many Vaults, whatever the Reserve target works out to.")]
+		[Desc("Never build more than this many Vaults for raid redundancy. Never stops the bot from building as",
+			"many as holding the whole Reserve target takes, however large the target and however little Reserve one",
+			"Vault holds (the Sun Cycle keeps a share of every bank for energy).")]
 		public readonly int MaximumVaults = 8;
 
 		[Desc("Only queue another Vault while the bot holds at least this much spendable cash.")]
@@ -82,6 +84,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		PlayerResources playerResources;
 		Player[] enemies;
 		SunCycleBotModule[] sunCycleModules = [];
+		PowerStorageManager storage;
 
 		int vaultCapacity;
 		int ticks;
@@ -103,16 +106,31 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			manager = self.Trait<GridReserveManager>();
 			playerResources = self.Trait<PlayerResources>();
 			sunCycleModules = self.TraitsImplementing<SunCycleBotModule>().ToArray();
+			storage = self.TraitOrDefault<PowerStorageManager>();
 
-			// Vault capacity is a rules constant, so the largest one only needs resolving once.
+			// The Reserve one Vault can hold is fixed for the match (rules plus lobby options), so the largest only
+			// needs resolving once. With the Sun Cycle on, a Vault that is also a Battery Bank keeps a protected
+			// share for energy (PowerStorage.ReserveRoom) and holds that much less Reserve; sizing against the full
+			// Capacity would leave the bot a Vault or more short of its target. The world actor (and so the
+			// controller's lobby option) is created before any player actor.
+			var sunCycle = world.WorldActor.TraitOrDefault<SunCycleController>();
+			var cycleOn = sunCycle != null && sunCycle.Enabled;
 			foreach (var type in Info.VaultTypes)
 			{
 				if (!world.Map.Rules.Actors.TryGetValue(type, out var actorInfo))
 					continue;
 
 				var vaultInfo = actorInfo.TraitInfoOrDefault<GridReserveVaultInfo>();
-				if (vaultInfo != null && vaultInfo.Capacity > vaultCapacity)
-					vaultCapacity = vaultInfo.Capacity;
+				if (vaultInfo == null)
+					continue;
+
+				var reserveCapacity = vaultInfo.Capacity;
+				var storageInfo = actorInfo.TraitInfoOrDefault<PowerStorageInfo>();
+				if (cycleOn && storageInfo != null)
+					reserveCapacity -= storageInfo.ProtectedSpace(vaultInfo.Capacity);
+
+				if (reserveCapacity > vaultCapacity)
+					vaultCapacity = reserveCapacity;
 			}
 		}
 
@@ -179,9 +197,14 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				return;
 
 			// Don't stack up empty Vaults: they all draw from the same treasury at once. Measured against the
-			// Vault share of the banks only - the storage share was never meant to fill with Reserve.
+			// Vault share of the banks only - the storage share was never meant to fill with Reserve. With the Sun
+			// Cycle on, energy comes first: a bank surplus power has filled banks no Reserve until that charge drains
+			// at night or goes idle, so charge outside the protected shares counts as taken here. Otherwise a bot
+			// whose newest bank is full of energy would wait a whole cycle for it before building the next one.
+			// Zero with the cycle off.
 			var vaultShare = owned - storageBanks;
-			if (vaultShare > 0 && manager.TotalReserve * 100 < vaultShare * vaultCapacity * Info.ExpandAtFillPercent)
+			var taken = (long)manager.TotalReserve + (storage?.TotalUnprotectedOccupiedSpace ?? 0);
+			if (vaultShare > 0 && taken * 100 < (long)vaultShare * vaultCapacity * Info.ExpandAtFillPercent)
 				return;
 
 			var queuesByCategory = AIUtils.FindQueuesByCategory(player);
@@ -209,7 +232,11 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 			// Round up: covering the whole target always needs the partially-filled Vault as well.
 			var needed = (int)(((long)manager.Target * coverage / 100 + vaultCapacity - 1) / vaultCapacity);
-			return Math.Clamp(needed, 0, Info.MaximumVaults);
+
+			// MaximumVaults trims the redundancy, never the target itself: a cap below what holding the target takes
+			// would leave Lockdown out of reach for good (four players, or any match with the Sun Cycle on, at 8).
+			var target = (int)(((long)manager.Target + vaultCapacity - 1) / vaultCapacity);
+			return Math.Clamp(needed, 0, Math.Max(Info.MaximumVaults, target));
 		}
 
 		int CountQueuedVaults(ILookup<string, ProductionQueue> queuesByCategory)

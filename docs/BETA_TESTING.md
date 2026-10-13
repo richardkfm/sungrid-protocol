@@ -58,6 +58,9 @@ enough. If it failed, file a [bug report](#4-reporting-a-problem).
   isn't greyed out, it simply doesn't appear. The version is shown in the main menu.
 - **Grid Reserve** is on by default. Destruction victory (eliminate everyone) always works too. A popup explains
   the rules at the start of a match.
+- **Day/Night Cycle** is on by default too (switch it off in the lobby). Solar Arrays drop to 30% at night; Battery
+  Banks charge from spare power by day and power your base at night, on their own. The second bar at the top shows
+  the time of day and the energy stored.
 - **3 or more players is what we most need to test.** Bots are fine for filling slots; **Easy Grid Broker AI** is
   the beginner opponent, **Grid Broker AI** plays the economic win hard, and **Saboteur AI** banks quietly behind
   its defences and sends Spies at your power plants, with small diversion attacks to cover them.
@@ -156,7 +159,7 @@ the **Playtest feedback** form afterwards. It asks, among other things:
 - Did someone try to **raid** a Battery Bank to break a Lockdown — and did it work?
 - Could a player win by just hiding and saving, without being threatened?
 - Did anything feel clearly overpowered or useless (drones, the Cryptominer, a specific defence)?
-- Was it clear what each building does, and what the Grid Reserve bar at the top meant?
+- Was it clear what each building does, and what the two bars at the top (Grid Reserve, and the day/night energy bar) meant?
 
 Bot matches are welcome too, but human-vs-human matches are what we can't produce ourselves.
 

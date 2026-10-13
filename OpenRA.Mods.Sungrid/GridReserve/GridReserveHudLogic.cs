@@ -25,6 +25,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 	public class GridReserveHudLogic : ChromeLogic
 	{
 		[FluentReference("current", "target")]
+		const string Text = "label-grid-reserve-hud.text";
+
+		[FluentReference("current", "target", "banks", "capacity")]
 		const string Tooltip = "label-grid-reserve-hud.tooltip";
 
 		[FluentReference("seconds")]
@@ -126,7 +129,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 					return FluentProvider.GetMessage(EnemyLockdownText, "seconds", enemySeconds.ToString(CultureInfo.CurrentCulture));
 				}
 
-				return string.Format(CultureInfo.CurrentCulture, "{0:N0} / {1:N0}", manager.TotalReserve, manager.Target);
+				return FluentProvider.GetMessage(Text,
+					"current", manager.TotalReserve.ToString("N0", CultureInfo.CurrentCulture),
+					"target", manager.Target.ToString("N0", CultureInfo.CurrentCulture));
 			};
 			label.GetColor = () =>
 			{
@@ -151,8 +156,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 						"seconds", SecondsRemaining(controller.LockdownTicksRemaining(enemy), world).ToString(CultureInfo.CurrentCulture));
 
 				return FluentProvider.GetMessage(Tooltip,
-					"current", manager.TotalReserve.ToString(CultureInfo.CurrentCulture),
-					"target", manager.Target.ToString(CultureInfo.CurrentCulture));
+					"current", manager.TotalReserve.ToString("N0", CultureInfo.CurrentCulture),
+					"target", manager.Target.ToString("N0", CultureInfo.CurrentCulture),
+					"banks", manager.VaultCount.ToString(CultureInfo.CurrentCulture),
+					"capacity", manager.TotalReserveCapacity.ToString("N0", CultureInfo.CurrentCulture));
 			};
 		}
 

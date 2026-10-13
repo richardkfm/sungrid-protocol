@@ -28,7 +28,8 @@ checkbox-suncycle =
     .description = Solar Arrays fall to 30% output at night. Battery Banks
     charge automatically from spare power by day and power your base at
     night - keep your power above zero in daylight to fill them. Energy
-    shares the banks' space with Grid Reserve credits
+    comes first: a third of every bank is kept for it, and Grid Reserve
+    credits fill the rest
 
 notification-insufficient-funds = Insufficient funds.
 notification-new-construction-options = New construction options.
@@ -694,8 +695,9 @@ actor-silo =
     power by day and powers your base at night,
     automatically - no orders needed. Keep your
     power above zero in daylight to fill it.
-    Energy and Reserve share the same space, so
-    build extra banks to do both.
+    Energy comes first: a third of every bank is
+    kept for energy, and a bank banks no Reserve
+    while it is charging. Reserve fills the rest.
 
 actor-rcyd =
     .name = Recycling Depot

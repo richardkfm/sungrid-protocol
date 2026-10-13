@@ -645,6 +645,12 @@ grid-reserve-bar-enemy:
 	Inherits: ^Dialog
 	PanelRegion: 897, 491, 3, 3, 58, 6, 3, 3
 
+# Issue #136 (revised): stored Battery Bank energy, blue - see gen_chrome.py
+# hud_icons().
+grid-reserve-bar-energy:
+	Inherits: ^Dialog
+	PanelRegion: 963, 477, 3, 3, 40, 6, 3, 3
+
 sungrid-marks:
 	Inherits: ^Dialog
 	Regions:
@@ -652,6 +658,13 @@ sungrid-marks:
 		emblem-24: 963, 403, 24, 24
 		emblem-32: 989, 385, 32, 32
 		cdicon: 989, 419, 20, 20
+		# Issue #136 (revised): the Reserve bar's coin, the energy bar's bolt and
+		# the phase icons SunCycleHudLogic switches between (sun, sun-low, moon).
+		coin: 963, 441, 16, 16
+		bolt: 981, 441, 16, 16
+		sun: 999, 441, 16, 16
+		sun-low: 963, 459, 16, 16
+		moon: 981, 459, 16, 16
 
 mainmenu-border:
 	Inherits: ^Dialog

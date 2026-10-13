@@ -1445,8 +1445,12 @@ SILO:
 		RequiresCondition: gridreserve-beacon
 	# Sun Cycle (docs/BACKLOG.md issue #136): the same building stores energy.
 	# Charge shares GridReserveVault's Capacity at 1 power-second per credit of
-	# space; Reserve is never displaced for charge. Rates are per second.
+	# space; Reserve is never displaced for charge. Energy first (the issue's
+	# second revision): a third of the space is kept for charge, so a bank holds
+	# at most 5360 Reserve while the cycle is on, and a bank that is charging
+	# banks no Reserve. Rates are per second.
 	PowerStorage:
+		ProtectedChargePercent: 33
 		ChargeRate: 40
 		DischargeRate: 60
 		DischargingCondition: battery-discharging

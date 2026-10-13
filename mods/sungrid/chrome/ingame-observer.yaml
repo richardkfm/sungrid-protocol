@@ -1128,7 +1128,8 @@ Container@OBSERVER_WIDGETS:
 			Height: 216
 			Children:
 				# Issue #119: same chrome as the player HUD's Grid Reserve panel; the
-				# header is the battery glyph plus the title in the mod's Title face.
+				# header is the glyph plus the title in the mod's Title face. The coin
+				# since issue #136's revision (Reserve is money, the battery is gone).
 				Background@GRID_RESERVE_STANDINGS_BG:
 					Width: PARENT_WIDTH
 					Height: PARENT_HEIGHT
@@ -1137,7 +1138,7 @@ Container@OBSERVER_WIDGETS:
 					X: 8
 					Y: 8
 					ImageCollection: sungrid-marks
-					ImageName: battery
+					ImageName: coin
 				Label@GRID_RESERVE_STANDINGS_HEADER:
 					X: 30
 					Y: 4

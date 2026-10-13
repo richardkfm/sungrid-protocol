@@ -189,7 +189,7 @@ same reasoning that made issue #84's `AGUN`/`SAM` faction swap a rules-only chan
 
 ## Night: the Sun Cycle's faction identity (issue #136)
 
-With the `suncycle` lobby option on (off by default; full spec in `docs/GAME_MODES.md`, "Sun Cycle"), Solar Arrays
+With the `suncycle` lobby option on (on by default since issue #136's second revision; full spec in `docs/GAME_MODES.md`, "Sun Cycle"), Solar Arrays
 fall to 65% at dusk and dawn and 30% at night. Nothing else does. The ledger above gains a column:
 
 | | Cost | Power by day | **Power at night** | Night cr/power | Side |
@@ -222,7 +222,9 @@ lean on storage. Whether that crossover is fair is a playtest question; the leve
 
 Storage costs the Consortium something the turbines don't cost the Assembly: bank space is shared with Grid Reserve, so
 in a Grid Reserve match every power-second of charge is a credit not banked for victory (the tension is worked through
-in `docs/GAME_MODES.md`).
+in `docs/GAME_MODES.md`). Since issue #136's second revision energy comes first - a third of every bank's space is kept
+for charge (3,960 for the Consortium, 2,640 for the Assembly) and a charging bank banks no Reserve - so storage is never
+squeezed out by Reserve over a match; the price moved to the target, which takes more banks with the cycle on.
 
 ## Ant / Zombie replacement
 
