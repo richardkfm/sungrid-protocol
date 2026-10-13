@@ -26,8 +26,8 @@ phase plan and `CLAUDE.md` for detailed current status.
 The detailed entries below track every issue through #119, plus #132; this list maps every issue onto its release tag.
 
 - **Unreleased** (on `main`): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
-  its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that goes for your power
-  grid instead of your army (issue #135).
+  its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that banks toward the
+  Reserve and sends Spies at your power grid under cover of small diversion attacks (issue #135).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
@@ -698,16 +698,20 @@ Nothing in the game changed; this is everything around it that a tester who isn'
 - **Every other personality** pauses about four seconds per building.
 - Not yet seen in a real match - say if Easy Grid Broker now feels too passive, or the others still too fast.
 
-## Saboteur AI - a bot that hunts your power grid (issue #135)
+## Saboteur AI - a bot that plays for the Reserve and sends Spies at your grid (issue #135)
 
-- A seventh lobby personality. It barely bothers with your army: small raiding parties and drones go straight for
-  your Solar Arrays, Wind Turbines, Hydrogen Plants, Smart Grid Relays and Battery Banks, wherever they are on the map.
-- Meanwhile it keeps its heavy tanks and artillery at home. The moment your base drops into low power, it sends
-  everything at once - your Construction Yard, what is left of your grid, and your Battery Banks.
-- Keep a power surplus, spread your plants out and put defences by them, and it has nothing to push into. It is
-  meant to teach exactly that.
-- It does not use Spies yet: no AI in the game knows how to infiltrate a building.
-- Not yet seen in a real match - say if it feels toothless, or if its raids never stop.
+- A seventh lobby personality, and a patient one. It builds a well-defended base, keeps a small army at home, and
+  banks toward the Grid Reserve target the way Grid Broker AI does.
+- Every minute and a half or so it sends one or two Spies at your Solar Arrays, Wind Turbines or Hydrogen Plants -
+  disguised as one of your own soldiers - to black out your grid. Playing the Assembly, which has no Spy, it sends
+  Thieves at your Refinery to steal half your cash instead. Your Smart Grid Relays are safe: they cannot be blacked out.
+- Each infiltration is covered by a small raid on the other side of your base - your War Factory, barracks or
+  Construction Yard - to pull your attention away from the Spies. It picks plants away from your defences and away
+  from that raid.
+- Its tanks and artillery only move once it has blacked you out three times and your grid is down again, or straight
+  away if you go into Grid Lockdown. With Grid Reserve off, that push is how it means to win.
+- Keep dogs and defences by your power plants (dogs see through a disguise), and don't chase every raid.
+- Not yet seen in a real match - say if its Spies never arrive, or if it feels too passive to matter.
 
 ## Open / recorded but not implemented
 
