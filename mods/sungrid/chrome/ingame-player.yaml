@@ -16,13 +16,15 @@ Container@PLAYER_WIDGETS:
 			Logic: GridReserveHudLogic
 			X: (WINDOW_WIDTH - WIDTH) / 2
 			Y: 10
-			Width: 260
+			Width: 380
 			Height: 32
 			Children:
-				# Issue #119: chrome panel, battery glyph and three bar fills (banking,
-				# own Lockdown hold, an opponent's hold) instead of a translucent black
-				# box and hard-coded colours. GridReserveHudLogic flips the bars and reads
-				# the label colours from metrics.yaml's GridReserve* entries.
+				# Issue #119: chrome panel, glyph and three bar fills (banking, own
+				# Lockdown hold, an opponent's hold) instead of a translucent black box
+				# and hard-coded colours. GridReserveHudLogic flips the bars and reads
+				# the label colours from metrics.yaml's GridReserve* entries. Issue #136
+				# (revised): a coin rather than the battery, so money and energy no
+				# longer share one mark; 380 wide for the energy bar's longer line.
 				Background@GRID_RESERVE_BG:
 					Width: PARENT_WIDTH
 					Height: PARENT_HEIGHT
@@ -31,7 +33,7 @@ Container@PLAYER_WIDGETS:
 					X: 8
 					Y: 8
 					ImageCollection: sungrid-marks
-					ImageName: battery
+					ImageName: coin
 				ProgressBar@GRID_RESERVE_BAR:
 					X: 30
 					Y: 6
@@ -67,14 +69,16 @@ Container@PLAYER_WIDGETS:
 					TooltipContainer: TOOLTIP_CONTAINER
 					TooltipTemplate: SIMPLE_TOOLTIP
 		# Sun Cycle (docs/BACKLOG.md issue #136): time of day and stored Battery Bank
-		# charge, under the Grid Reserve bar. SunCycleHudLogic hides it when the
+		# energy, under the Grid Reserve bar. SunCycleHudLogic hides it when the
 		# suncycle lobby option is off and moves it up into the Grid Reserve slot
-		# when that mode is off. Same panel and bar art as the Grid Reserve HUD.
+		# when that mode is off. Same panel art as the Grid Reserve HUD; since the
+		# revision a blue energy bolt on the left, a sun / low sun / moon on the
+		# right that SunCycleHudLogic switches with the phase, and a blue fill.
 		Container@SUN_CYCLE_HUD:
 			Logic: SunCycleHudLogic
 			X: (WINDOW_WIDTH - WIDTH) / 2
 			Y: 46
-			Width: 260
+			Width: 380
 			Height: 32
 			Children:
 				Background@SUN_CYCLE_BG:
@@ -85,19 +89,24 @@ Container@PLAYER_WIDGETS:
 					X: 8
 					Y: 8
 					ImageCollection: sungrid-marks
-					ImageName: battery
+					ImageName: bolt
+				Image@SUN_CYCLE_PHASE_ICON:
+					X: PARENT_WIDTH - 24
+					Y: 8
+					ImageCollection: sungrid-marks
+					ImageName: sun
 				ProgressBar@SUN_CYCLE_BAR:
 					X: 30
 					Y: 6
-					Width: PARENT_WIDTH - 38
+					Width: PARENT_WIDTH - 60
 					Height: 10
 					BarMargin: 2, 2
 					Background: grid-reserve-bar-bg
-					Bar: grid-reserve-bar-thumb
+					Bar: grid-reserve-bar-energy
 				LabelWithTooltip@SUN_CYCLE_LABEL:
 					X: 30
 					Y: 16
-					Width: PARENT_WIDTH - 38
+					Width: PARENT_WIDTH - 60
 					Height: 14
 					Align: Center
 					Font: TinyBold

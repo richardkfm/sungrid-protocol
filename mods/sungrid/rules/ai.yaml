@@ -1,4 +1,10 @@
 Player:
+	# The first ModularBot is the default: the engine's SkirmishLogic adds it to a fresh skirmish, and it
+	# heads every bot dropdown. Saboteur AI since the owner's call (issue #138). "Add bots" (fill every free
+	# slot) stays random - LobbyLogic picks it, and changing that would need an engine patch.
+	ModularBot@SaboteurAI:
+		Name: bot-saboteur-ai.name
+		Type: saboteur
 	ModularBot@RushAI:
 		Name: bot-rush-ai.name
 		Type: rush
@@ -17,9 +23,6 @@ Player:
 	ModularBot@EasyGridBrokerAI:
 		Name: bot-easy-grid-broker-ai.name
 		Type: easygridbroker
-	ModularBot@SaboteurAI:
-		Name: bot-saboteur-ai.name
-		Type: saboteur
 	GrantConditionOnBotOwner@rush:
 		Condition: enable-rush-ai
 		Bots: rush

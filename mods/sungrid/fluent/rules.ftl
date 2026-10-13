@@ -28,7 +28,8 @@ checkbox-suncycle =
     .description = Solar Arrays fall to 30% output at night. Battery Banks
     charge automatically from spare power by day and power your base at
     night - keep your power above zero in daylight to fill them. Energy
-    shares the banks' space with Grid Reserve credits
+    comes first: a third of every bank is kept for it, and Grid Reserve
+    credits fill the rest
 
 notification-insufficient-funds = Insufficient funds.
 notification-new-construction-options = New construction options.
@@ -377,6 +378,8 @@ actor-spy =
     building infiltrated.
     Loses disguise when attacking.
     Can detect spies.
+    Invisible at night (Day/Night Cycle) except
+    near a Sensor Array or base defense.
       Strong vs Infantry
       Weak vs Vehicles and Aircraft
       Special Ability: Disguised
@@ -416,6 +419,8 @@ actor-thf =
     .description =
     Steals enemy credits.
     Hijacks enemy vehicles.
+    Invisible at night (Day/Night Cycle) except
+    near a Sensor Array or base defense.
       Unarmed
 
 actor-shok =
@@ -694,8 +699,9 @@ actor-silo =
     power by day and powers your base at night,
     automatically - no orders needed. Keep your
     power above zero in daylight to fill it.
-    Energy and Reserve share the same space, so
-    build extra banks to do both.
+    Energy comes first: a third of every bank is
+    kept for energy, and a bank banks no Reserve
+    while it is charging. Reserve fills the rest.
 
 actor-rcyd =
     .name = Recycling Depot
@@ -1283,4 +1289,5 @@ actor-sgsns =
     A distributed sensor mesh reading grid load, drone
     traffic, and terrain. Wide vision radius, and the only
     structure that detects cloaked units beyond the reach
-    of a base defense.
+    of a base defense - including Spies and Thieves,
+    which are invisible at night.

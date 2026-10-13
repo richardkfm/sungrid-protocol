@@ -104,6 +104,43 @@ namespace OpenRA.Mods.Sungrid.SunCycle
 			}
 		}
 
+		// Stored charge sitting outside the banks' protected shares: space Reserve could use once it is drained
+		// or goes idle (GridReserveBotModule counts it as taken when it paces its Vaults).
+		public int TotalUnprotectedOccupiedSpace
+		{
+			get
+			{
+				var total = 0;
+				foreach (var b in banks)
+					total += b.Storage.UnprotectedOccupiedSpace;
+				return total;
+			}
+		}
+
+		// Charge the protected shares alone can hold: the energy the banks keep however much Reserve is banked.
+		public int TotalProtectedCharge
+		{
+			get
+			{
+				var total = 0;
+				foreach (var b in banks)
+					total += b.Storage.ProtectedCharge;
+				return total;
+			}
+		}
+
+		// Reserve credits banked in these banks.
+		public int TotalReserveHeld
+		{
+			get
+			{
+				var total = 0;
+				foreach (var b in banks)
+					total += b.Storage.ReserveHeld;
+				return total;
+			}
+		}
+
 		// Power the banks are adding to the grid right now, relative to standing idle.
 		public int TotalGross
 		{
@@ -115,6 +152,20 @@ namespace OpenRA.Mods.Sungrid.SunCycle
 				return total;
 			}
 		}
+
+		public int TotalChargeRate
+		{
+			get
+			{
+				var total = 0;
+				foreach (var b in banks)
+					total += b.Storage.ChargeRate;
+				return total;
+			}
+		}
+
+		// The share of every bank kept for energy while Grid Reserve is on (a rules constant, the same for every bank).
+		public int ProtectedChargePercent => banks.Count > 0 ? banks[0].Storage.Info.ProtectedChargePercent : 0;
 
 		public int TotalDischargeRate
 		{
@@ -153,6 +204,11 @@ namespace OpenRA.Mods.Sungrid.SunCycle
 				b.Storage.ClampToSpace();
 				baseExcess -= b.Storage.Gross;
 			}
+
+			// Energy first (GridReserveVault reads this): a bank banks no Reserve while it is absorbing surplus.
+			// Cleared here and set below for the banks that take some this second.
+			foreach (var b in banks)
+				b.Storage.SetCharging(false);
 
 			var flow = 0;
 			if (baseExcess < 0 && power.PowerOutageRemainingTicks <= 0)
@@ -202,6 +258,7 @@ namespace OpenRA.Mods.Sungrid.SunCycle
 						continue;
 
 					storage.AddCharge(perSecond);
+					storage.SetCharging(true);
 					surplus -= perSecond;
 					flow += perSecond;
 				}

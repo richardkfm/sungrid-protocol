@@ -29,7 +29,7 @@ The detailed entries below track every issue through #119, plus #132; this list 
   its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that banks toward the
   Reserve and sends Spies at your power grid under cover of small diversion attacks - and, with the Day/Night Cycle on, at your
   charged Battery Banks to drain them before nightfall (issue #135); a **Day/Night
-  Cycle** lobby option, off by default: Solar Arrays drop to 65% at dusk and 30% at night on a six-minute cycle, the
+  Cycle** lobby option, on by default (switch it off in the lobby): Solar Arrays drop to 65% at dusk and 30% at night on a six-minute cycle, the
   screen dims and cools after dark, and Battery Banks now store surplus power by day and release it at night - in the
   same space they bank Grid Reserve credits, so night storage and the economic victory compete for the same banks.
   The Consortium's banks hold half as much again and discharge faster; the Assembly's Wind Turbines run all night. A
@@ -37,14 +37,24 @@ The detailed entries below track every issue through #119, plus #132; this list 
   instead of buying Solar Arrays in the dark. A HUD line shows the time of day and stored charge. Also fixed along the
   way: drones now really do lose their weapons when power drops from low to critical (issue #136). The Battery
   Bank's build tooltip and the Day/Night option now say plainly that storing energy is automatic: a bank charges
-  from spare power by day and powers the base at night, so keep power above zero in daylight (issue #136). The
+  from spare power by day and powers the base at night, so keep power above zero in daylight (issue #136). After
+  the first live look, **energy now comes first** in the Battery Banks: a third of every bank is always kept for
+  energy, and a bank that is charging banks no Grid Reserve credits until it stops - so your night storage is no
+  longer squeezed out by Reserve over a match. With the cycle on, one bank holds up to 5,360 Reserve instead of 8,000,
+  so the target takes a few more banks (bots know). The two bars at the top are easier to read: the Grid Reserve bar
+  has a gold coin and says "Reserve 11,528 / 40,000", and the energy bar has a blue lightning bolt, a sun or moon for
+  the time of day, and says how much energy is stored and what the banks are doing, e.g. "Day — dusk in 0:53 ·
+  Energy 1,200 / 10,900 · charging". The Day/Night Cycle is now on by default (issue #136). The
   **main-menu battle** now runs the day/night cycle sped up (dusk half a minute in, a full cycle under two minutes)
   and shows much more of the roster: Arc Pylons, flak and Battery Banks on the Assembly side, a War Factory,
   Materials Refineries with Ore Trucks, an Aerial Fabrication Bay and SAM sites on the Consortium's, each side's
   drone buildings and power on the right side of the faction line; new waves - Assembly drone raids on the
   Consortium's Battery Banks, a disguised Spy walking into an Assembly bank or Solar Array followed by a Strike Drone
   raid, Haulers driving out to collect the Scrap a fight left - and the Assembly rebuilds what it loses, so the
-  battle never runs down (issue #137).
+  battle never runs down (issue #137). Spies and Thieves are **invisible at night**: only a Sensor
+  Array (8 cells), a Pillbox or Arc Pylon (6) or infantry standing right beside them can see one (issue #138).
+  **Saboteur AI is the default bot** - a fresh skirmish adds it and it heads every bot list; "Add bots" still picks at
+  random (issue #138).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and

@@ -78,6 +78,21 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			Target = info.BaseTargetPerPlayer * activePlayers * (1000 - discount) / 1000;
 		}
 
+		public int VaultCount => vaults.Count;
+
+		// The most Reserve the player's standing Vaults can hold between them (less the Sun Cycle's protected energy
+		// share when that option is on). For the HUD; nothing in the rules reads it.
+		public int TotalReserveCapacity
+		{
+			get
+			{
+				var total = 0;
+				foreach (var vault in vaults)
+					total += vault.ReserveCapacity;
+				return total;
+			}
+		}
+
 		public void RegisterVault(GridReserveVault vault) { vaults.Add(vault); }
 
 		public void UnregisterVault(GridReserveVault vault) { vaults.Remove(vault); }

@@ -458,6 +458,20 @@
 		DetectionTypes: Cloak
 		Range: 1c512
 
+# Night cloak for infiltrators (Spies and Thieves): invisible while the Sun Cycle's Night phase lasts.
+# Seen only by DetectCloaked - the Sensor Array (8 cells), Tesla Coil / Arc Pylon and Pillbox (6),
+# and any infantry right beside it (1.5). Uncloaks on Cloak's default triggers (an infiltration consumes
+# the unit anyway). No cloak sound: night falls on every infiltrator at once. Owner's call (issue #138):
+# Spies and Thieves alike, Night only, close-range detection kept.
+^NightCloak:
+	GrantConditionOnSunPhase@NIGHTCLOAK:
+		Condition: night-cloak
+		Phases: Night
+	Cloak@NIGHT:
+		RequiresCondition: night-cloak
+		InitialDelay: 0
+		CloakDelay: 50
+
 ^Soldier:
 	Inherits: ^Infantry
 	UpdatesPlayerStatistics:

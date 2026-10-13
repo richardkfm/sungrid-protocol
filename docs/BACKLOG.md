@@ -5469,6 +5469,104 @@ its guarantees; faction night identity; Spy drain and outage rule; HUD, tint and
   in `mods/sungrid/fluent/rules.ftl` were rewritten: charges automatically from spare power by day, powers the base
   at night, no orders needed, keep power above zero in daylight, energy and Reserve share the space. Text only.
 
+- **Revised again (second live look, owner feedback: "It's still unclear how much money is stored and how much energy
+  saved" and "priority should be to save energy, right?"):** both HUD bars wore the same battery, the energy bar's
+  "Storage 11%" was a share of whatever space Reserve had left free, and under the first rules Reserve - which never
+  leaves - took over the banks within a few cycles. The owner's decisions, implemented as given:
+
+  **1. Energy first, with a protected third** (`PowerStorage.ReserveRoom`, the only place `GridReserveVault` asks while
+  the cycle is on). (a) `ProtectedChargePercent: 33` (new `PowerStorage` field, default 33) of every bank's *space* is
+  kept for energy and Reserve never occupies it: 8000 - floor(8000 x 33 / 100) = **5,360 Reserve** at most per bank,
+  2,640 space always free for charge. It is a share of the space, so the Consortium's `CapacityModifier: 150` applies
+  to it like the rest of the bank: its third holds 3,960 energy, its whole bank 12,000. (b) **Charge first:** a bank
+  that absorbed surplus in `PowerStorageManager`'s last once-a-second update (`PowerStorage.IsCharging`, `[VerifySync]`)
+  banks no Reserve until it stops - full, or no surplus. Chosen over the literal "Reserve may not take space the bank's
+  charge could still fill this day", which needs a per-bank forecast of its share of the surplus until dusk; the flag
+  is deterministic, needs no forecast and no stored state beyond one bool, and since surplus is handed out
+  earliest-built bank first, the banks surplus is not reaching go on banking normally. A stronger variant ("no Reserve
+  in any bank with room while there is any surplus") was rejected: a player with surplus could bank nothing by day,
+  and a turbine base nothing at all. (c) Reserve is still never removed for charge; charge only comes from surplus.
+  (d) **`IdleCharge` kept, for the unprotected two thirds only** (`YieldableSpace` = charge space beyond the protected
+  share, once a bank has given nothing for a whole cycle). Reasoned: charge first means surplus fills every bank it
+  reaches, so a base that never runs short (turbines) would otherwise hold its banks full of energy for good and bank
+  nothing - the protected third alone does not stop that, because the charge also fills the other two thirds. The
+  protected third stays energy whatever happens. Cost, written down: such a base's newest bank holds energy for its
+  first cycle (model below). (e) **Cycle off:** `GridReserveVault` uses its original `Capacity - CurrentReserve`, so a
+  bank banks 8000 exactly as before; `ProtectedSpace` is 0 and `IsCharging` never set. **Grid Reserve off, cycle on:**
+  no Reserve, the whole bank is energy, as before.
+
+  **Target math and bots.** With the cycle on, holding a target takes ceil(Target / 5360) banks: 2 players (40,000) 8
+  (was 5), 3 (55,500) 11 (was 7), 4 (68,000) 13 (was 9), 6 (84,000) 16 (was 11). Lockdown stays reachable (banks are
+  unlimited); the `MaximumTargetPercent` ceiling, the destruction drain (50% of what the killed bank held, now at most
+  5,360) and the 50% minimap reveal all work on Reserve totals and needed no change. New `GridReserveVault.ReserveCapacity`
+  and `PowerStorageInfo.ProtectedSpace(space)` (one formula for the trait and the bots, before any bank exists).
+  `GridReserveBotModule` sizes against the effective capacity (resolved once in `Created` from the lobby option and
+  the actor's `PowerStorageInfo`), paces with charge outside the protected thirds counted as taken
+  (`PowerStorageManager.TotalUnprotectedOccupiedSpace`; zero with the cycle off), and `MaximumVaults` now trims only
+  redundancy - never below ceil(Target / capacity). That floor also fixes a **pre-existing gap with the cycle off**:
+  four players (68,000) needed 9 Vaults of 8,000 and the cap of 8 left every bot 4,000 short of the target for good;
+  it changes cycle-off bot behaviour only in matches of four or more players. Every personality, Easy Grid Broker
+  included, already has a `SunCycleBotModule` (`rules/ai.yaml`), so nothing else needed wiring.
+
+  **Model** (Python, integer, mirrors the C#: the manager every 25 ticks, deposits every tick; not committed, numbers
+  checked by hand against the arithmetic above). 200 Credits/s income, target 40,000:
+  - cycle off, 5 banks: 8000 each, target at 3:19 - the old rule;
+  - turbine base (+100 day and night), 8 banks from 0:00: Reserve 26,800 by 3:20 in the banks surplus was not
+    filling, stalled while the rest held energy, 40,000 at 6:58 once idle charge yielded at 6:00; ends 5,360 + 2,640
+    per full bank;
+  - solar base (+80 day, -25 twilight, -130 night), 8 banks: 32,160 by dusk, 40,000 at 6:24 during the first night as
+    drained space opened; energy 24,000 capacity, refilling every day, never below the 21,120 protected;
+  - the same with Consortium banks: 40,000 at 12:02 (bigger charge holds more of the space until drained); protected
+    charge 3,960 a bank;
+  - Grid Reserve off, 3 banks: 24,000 energy, as before;
+  - bots adding one bank at a time from 6:00 at 65% fill: turbine 20:23 / solar 13:15 to the target with pacing that
+    counts unprotected charge, 39:09 / 18:29 without it; under the old first-come rules 13:33 / 11:42, with 16,000 of
+    56,000 energy left once Reserve had taken the rest.
+
+  **2. HUD.** Grid Reserve bar: a gold coin (`coin`) for the battery, text `Reserve 11,528 / 40,000` (new
+  `label-grid-reserve-hud.text`; Lockdown / enemy Lockdown texts unchanged), tooltip adds bank count and the Reserve
+  they can hold (`GridReserveManager.VaultCount` / `TotalReserveCapacity`). Energy bar: a blue `bolt` on the left, a
+  `sun` / `sun-low` (dusk, dawn) / `moon` on the right switched by `SunCycleHudLogic` through `ImageWidget.GetImageName`,
+  a blue fill (`grid-reserve-bar-energy`, the bank's selection-bar blue 5AB4E6), and `Day — dusk in 0:53 · Energy
+  1,200 / 10,900 · charging` - stored over what the banks can hold now, absolute; states charging / draining / full /
+  empty / blackout / no spare power / no Battery Banks. The tooltip has the solar percentage, banks, stored / held,
+  flow, per-bank rates and, with Grid Reserve on, the protected share and the Reserve in the rest. Both bars are 380
+  wide (the longest realistic line measures ~307 px in FreeSansBold 10). The observer standings header got the coin
+  too. Glyphs: `gen_chrome.py`'s new `hud_icons()` in `dialog.png`'s free corner (963-1015 x 441-488, measured empty
+  before drawing); regenerating changes only that rect (`ImageChops` bbox) and only `dialog.png` in `git status`; the
+  sheet stays 1024x512 (art rule 21). The `battery` region is unused now but kept. Review render, real size and 3x,
+  six states: `docs/concept-art/issue136-hud-bars.png` (composited from the sheet; text through PIL, approximate).
+  Texts: `actor-silo.description` and `checkbox-suncycle.description` say energy comes first and a third is kept.
+
+  **3. On by default** (the owner, same pass): `rules/world.yaml`'s `SunCycleController` sets `CheckboxEnabled: true`,
+  the C# default stays off (Grid Reserve's pattern), unlocked and visible. No map needed changes: the only map rules
+  that touch the World actor are tints and weather (the cycle's tint is its own pass and multiplies with them) and
+  the shellmap, which already forces the cycle on.
+
+  **Verified:** `make` (no errors in the output; the mod project builds), `./utility.sh --check-yaml` exit 0 across all
+  79 maps, `--check-explicit-interfaces` and `--check-conditional-trait-interface-overrides` exit 0, `dotnet build
+  OpenRA.Mods.Sungrid -c Debug -warnaserror -p:BuildProjectReferences=false` clean (negative control: a doubled space
+  in `PowerStorageManager.cs` raised SA1025 / IDE0055, so the analyzers do run on the mod; the full-solution Debug
+  build still stops on the known engine IDE0055 noise), `--check-missing-sprites` reports RA content files only
+  (`*.sno`, `trans.icn`, ...; no RA content here). **Negative controls:** `ProtectedChargePercentt:` is caught (`refers
+  to a trait field ... that does not exist`); a bogus `ImageName: coinx` and `Bar: grid-reserve-bar-energyx` pass
+  `--check-yaml` silently - **nothing lints chrome image or panel names** (it throws on first draw), so a script
+  compared every `sungrid-marks` name the chrome YAML and `SunCycleHudLogic` use against `chrome.yaml`; and a removed
+  Fluent attribute or a renamed `$arg` also passes silently - **this engine's lint checks Fluent syntax only** - so a
+  script compared every `[FluentReference]` in the mod with `fluent/*.ftl` (24 references, 0 mismatches; the same
+  two edits as a negative control were both reported).
+
+  **Not verified:** anything live (no RA content, no client). Open: the protected 33% and the charge-first rule's
+  effect on Grid Reserve pace are modelled, not measured; the Saboteur AI was tuned with the cycle off and now meets a
+  night in every default match (night makes `EnemyGridStateBotModule` read more opponents as "grid down") - watch its
+  push timing; bots now build up to 13 + 3 banks in a four-player match with the cycle on; the bars' fill is a 2px
+  stripe because the bar panel's 3px corners leave no centre at the HUD's 6px bar height (unchanged since issue #119).
+  **Files:** `OpenRA.Mods.Sungrid/SunCycle/{PowerStorage,PowerStorageManager,SunCycleHudLogic}.cs`,
+  `OpenRA.Mods.Sungrid/GridReserve/{GridReserveVault,GridReserveManager,GridReserveBotModule,GridReserveHudLogic}.cs`,
+  `mods/sungrid/rules/{world,structures}.yaml` (`ProtectedChargePercent: 33` set explicitly on `SILO`), `mods/sungrid/chrome.yaml`, `mods/sungrid/chrome/ingame-{player,observer}.yaml`,
+  `mods/sungrid/fluent/{chrome,rules}.ftl`, `mods/sungrid/uibits/{gen_chrome.py,dialog.png}`,
+  `docs/concept-art/issue136-hud-bars.png`, `CLAUDE.md`, `CHANGELOG.md`, `docs/{GAME_MODES,ENERGY_BALANCE,BUILDINGS,BETA_TESTING}.md`.
+
 ### 137. The main-menu battle: a sped-up Sun Cycle, more of the roster, and more varied attack scripting
 
 **Type:** world content / scripting · **Phase:** 6 (world identity) · **Status:** done, not verified live
@@ -5581,5 +5679,36 @@ whether 431 actors with the extra waves still run smoothly on a slow machine.
 **Definition of done:** the cycle visibly turns within the first minute on the menu without touching the lobby path or
 its chat; both bases carry the roster on their own side of the faction line; the battle loops with raids, a Spy,
 salvage runs and rebuilding; checks green with negative controls - met, pending a look at the live menu.
+
+---
+
+### 138. Spies and Thieves vanish at night; Saboteur AI is the default bot
+
+**Status:** Done, not verified in a live client. Two owner requests after the Sun Cycle went on by default.
+
+**Night cloak.** The owner wanted infiltrators to gain an edge after dark, visible only to "the special radar
+building" - the Sensor Array (`SGSNS`), whose tooltip already called it the one structure that detects cloaked units
+beyond a base defense. Owner's choices: Spies *and* Thieves (both sides' infiltrators), Night phase only (not dusk or
+dawn), and close-range detection kept so one undefended gap is not a free win. The Saboteur AI keeps its 90-second
+spy rhythm (no night timing).
+
+- `^NightCloak` in `rules/defaults.yaml`: `GrantConditionOnSunPhase@NIGHTCLOAK` (`night-cloak`, `Phases: Night`) and
+  `Cloak@NIGHT` (`RequiresCondition: night-cloak`, `InitialDelay: 0`, `CloakDelay: 50`, default `DetectionTypes:
+  Cloak` and default `UncloakOn`). Inherited by `SPY` (so `SPY.England` too) and `THF` as `Inherits@NIGHTCLOAK`. With
+  the cycle off the condition is never granted, so nothing changes.
+- **Who sees them** is the existing `DetectCloaked` (`Cloak`) set, unchanged: Sensor Array 8 cells, Arc Pylon (`TSLA`)
+  and Pillbox 6, every infantryman 1.5 (`^Infantry`). Dogs still see through a *disguise*, not a cloak.
+- Tooltips: `actor-spy`, `actor-thf` and `actor-sgsns` say so.
+
+**Default bot.** The engine's default bot is the first `IBotInfo` on the Player actor: `SkirmishLogic` adds it to a
+fresh skirmish and the bot dropdowns list in that order. `ModularBot@SaboteurAI` moved to the top of `rules/ai.yaml`.
+"Add bots" (fill every free slot) stays random - `LobbyLogic` uses `botTypes.Random(...)`, an engine patch to change.
+A player's saved skirmish settings still restore their last bot choice.
+
+**Verified:** `make`, `./utility.sh --check-yaml` (79 maps, exit 0); `--resolved-rules SPY`, `SPY.England`, `THF` show
+the night cloak, `--resolved-rules Player` lists `ModularBot@SaboteurAI` first. Negative control: a misspelt
+`RequiresCondition: night-clok` gives `consumes conditions that are not granted` plus `grants conditions that are
+not consumed: night-cloak`. **Not verified live:** whether a night Spy is too strong against a base without a Sensor
+Array, and how the Saboteur's Spies fare (they gain the cloak too, and night is in every default match now).
 
 ---

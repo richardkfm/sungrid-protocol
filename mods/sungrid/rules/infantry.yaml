@@ -326,6 +326,7 @@ E6:
 
 SPY:
 	Inherits: ^Soldier
+	Inherits@NIGHTCLOAK: ^NightCloak
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Buildable:
 		Queue: Infantry
@@ -620,6 +621,7 @@ GNRL:
 
 THF:
 	Inherits: ^Soldier
+	Inherits@NIGHTCLOAK: ^NightCloak
 	Inherits@selection: ^SelectableSupportUnit
 	Buildable:
 		Queue: Infantry

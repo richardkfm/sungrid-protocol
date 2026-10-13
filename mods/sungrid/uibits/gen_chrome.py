@@ -787,6 +787,116 @@ def grid_reserve_chrome(im, x0, y0):
     bar(y0 + 93, SUN_GOLD)
     bar(y0 + 106, (0xC7, 0x3B, 0x2E))
 
+    hud_icons(im, x0 + 66, y0 + 56)
+
+
+# Issue #136 (revised): the two HUD bars each get their own glyph, so money and
+# energy no longer share the battery. Energy blue is the Battery Bank's selection
+# bar colour (PowerStorage.SelectionBarColor); moonlight is metrics.yaml's
+# SunCycleNightColor.
+ENERGY_BLUE = (0x5A, 0xB4, 0xE6)
+MOONLIGHT = (0x9C, 0xC4, 0xE4)
+
+
+def _glyph(im, x, y, draw_fn, size=16):
+    """Draw `draw_fn(d, s)` supersampled (s = pixels per glyph pixel) on a
+    transparent canvas and composite it, downscaled, onto a PANEL tile at
+    (x, y). The tile is opaque like every other mark in the sheet (dialog.png
+    is saved RGB), so its edges blend into the panel the HUD draws it on."""
+    s = SS
+    big = Image.new("RGBA", (size * s, size * s), (0, 0, 0, 0))
+    draw_fn(ImageDraw.Draw(big), s)
+    small = big.resize((size, size), Image.LANCZOS)
+    ImageDraw.Draw(im).rectangle((x, y, x + size - 1, y + size - 1), fill=PANEL)
+    im.alpha_composite(small, (x, y))
+
+
+def _coin(d, s):
+    # Two stacked credits seen face-on: the edge of the lower one shows as a
+    # darker crescent below, the upper one has a rim, a lit face and a struck
+    # sun mark - money, not energy, in the mod's gold.
+    rim = mix(SUN_GOLD, (0, 0, 0), 0.45)
+    face = SUN_GOLD
+    lit = mix(SUN_GOLD, (255, 255, 255), 0.35)
+    d.ellipse((1.5 * s, 3.5 * s, 14.5 * s, 15.5 * s), fill=rim)
+    d.ellipse((1.5 * s, 0.5 * s, 14.5 * s, 13.0 * s), fill=rim)
+    d.ellipse((2.5 * s, 1.5 * s, 13.5 * s, 12.0 * s), fill=face)
+    d.arc((3.2 * s, 2.2 * s, 12.8 * s, 11.3 * s), 160, 290, fill=lit, width=int(1.0 * s))
+    d.ellipse((4.0 * s, 3.0 * s, 12.0 * s, 10.5 * s), outline=rim, width=int(0.8 * s))
+    # the struck mark: a short upright bar crossed twice, a credit sign
+    d.line([(8.0 * s, 4.2 * s), (8.0 * s, 9.3 * s)], fill=rim, width=int(1.3 * s))
+    d.line([(6.2 * s, 5.6 * s), (9.8 * s, 5.6 * s)], fill=rim, width=int(0.9 * s))
+    d.line([(6.2 * s, 7.9 * s), (9.8 * s, 7.9 * s)], fill=rim, width=int(0.9 * s))
+
+
+def _bolt(d, s):
+    # A lightning bolt in energy blue with a pale lit edge and a dark outline,
+    # so it reads on the blue-black panel at 16px.
+    pts = [(8.6, 0.4), (2.2, 9.0), (6.8, 9.0), (4.6, 15.6), (13.8, 6.0), (9.0, 6.0), (12.4, 0.4)]
+    outline = lift(PANEL, -14)
+    d.polygon([(x * s, y * s) for x, y in pts], fill=ENERGY_BLUE, outline=outline, width=int(0.8 * s))
+    d.line([(8.9 * s, 1.3 * s), (3.8 * s, 8.2 * s)], fill=mix(ENERGY_BLUE, (255, 255, 255), 0.55), width=int(1.0 * s))
+
+
+def _sun(d, s, low=False):
+    # Day: a full sun with eight rays. Dusk and dawn (`low`): half a sun on a
+    # horizon line with its rays fanned above it, in a deeper amber.
+    core = SUN_GOLD if not low else mix(SUN_GOLD, (0xC7, 0x3B, 0x2E), 0.35)
+    lit = mix(core, (255, 255, 255), 0.35)
+    cx, cy = 8.0, (8.0 if not low else 11.0)
+    r = 3.4 if not low else 4.2
+    angles = range(0, 360, 45) if not low else range(180, 361, 45)
+    for a in angles:
+        t = math.radians(a)
+        x0, y0 = cx + math.cos(t) * (r + 1.3), cy + math.sin(t) * (r + 1.3)
+        x1, y1 = cx + math.cos(t) * (r + 3.6), cy + math.sin(t) * (r + 3.6)
+        d.line([(x0 * s, y0 * s), (x1 * s, y1 * s)], fill=core, width=int(1.3 * s))
+    if not low:
+        d.ellipse(((cx - r) * s, (cy - r) * s, (cx + r) * s, (cy + r) * s), fill=core)
+        d.arc(((cx - r + 0.8) * s, (cy - r + 0.8) * s, (cx + r - 0.8) * s, (cy + r - 0.8) * s),
+              180, 270, fill=lit, width=int(0.9 * s))
+    else:
+        d.pieslice(((cx - r) * s, (cy - r) * s, (cx + r) * s, (cy + r) * s), 180, 360, fill=core)
+        d.line([(1.0 * s, (cy + 0.6) * s), (15.0 * s, (cy + 0.6) * s)], fill=GREEN_ACCENT, width=int(1.2 * s))
+
+
+def _moon(d, s):
+    # Night: a crescent in moonlight blue - a disc with an offset bite taken
+    # out of it, drawn as the disc minus a second disc in the clear colour.
+    d.ellipse((2.0 * s, 1.5 * s, 14.0 * s, 13.5 * s), fill=MOONLIGHT)
+    d.ellipse((5.6 * s, -0.4 * s, 16.6 * s, 10.6 * s), fill=(0, 0, 0, 0))
+    d.point([(4.0 * s, 13.8 * s)], fill=MOONLIGHT)
+    for (x, y) in ((12.6, 12.4), (14.2, 9.4)):
+        d.ellipse(((x - 0.7) * s, (y - 0.7) * s, (x + 0.7) * s, (y + 0.7) * s), fill=mix(MOONLIGHT, (255, 255, 255), 0.5))
+
+
+def hud_icons(im, x0, y0):
+    """HUD glyphs and the energy bar fill (issue #136, revised), in the free
+    corner of the Grid Reserve block below emblem-24 / the disc icon:
+
+    coin                     (x0,      y0,      16x16)  the Reserve bar's mark
+    bolt                     (x0+18,   y0,      16x16)  the energy bar's mark
+    sun                      (x0+36,   y0,      16x16)  phase icon: Day
+    sun-low                  (x0,      y0+18,   16x16)  phase icon: Dusk / Dawn
+    moon                     (x0+18,   y0+18,   16x16)  phase icon: Night
+    grid-reserve-bar-energy  (x0,      y0+36,   46x12)  PanelRegion 3/40/3,
+                                                        stored energy: blue fill
+    """
+    _glyph(im, x0, y0, _coin)
+    _glyph(im, x0 + 18, y0, _bolt)
+    _glyph(im, x0 + 36, y0, _sun)
+    _glyph(im, x0, y0 + 18, lambda d, s: _sun(d, s, low=True))
+    _glyph(im, x0 + 18, y0 + 18, _moon)
+
+    d = ImageDraw.Draw(im)
+    bx, by, bw = x0, y0 + 36, 46
+    d.rectangle((bx, by, bx + bw - 1, by + 11), fill=PANEL_DEEP)
+    d.rectangle((bx, by, bx + bw - 1, by + 11), outline=BLACKLINE, width=1)
+    d.rectangle((bx + 1, by + 1, bx + bw - 2, by + 10), outline=lift(PANEL, -4), width=1)
+    d.rectangle((bx + 2, by + 2, bx + bw - 3, by + 9), fill=ENERGY_BLUE)
+    d.line((bx + 2, by + 2, bx + bw - 3, by + 2), fill=mix(ENERGY_BLUE, (255, 255, 255), 0.25))
+    d.line((bx + 2, by + 9, bx + bw - 3, by + 9), fill=lift(ENERGY_BLUE, -18))
+
 
 # --------------------------------------------------------------------------
 # sidebar.png (512x512)

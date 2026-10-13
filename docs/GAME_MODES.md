@@ -17,7 +17,7 @@ Destruction victory (eliminate all opponents) remains the default, always-availa
 Grid Reserve introduces a new building type, the **Vault**, and a new per-player resource pool, **Reserve**, that is separate from ordinary spendable Credits.
 
 1. **Depositing.** Vaults convert spendable Credits into Reserve at a fixed rate, at a capped deposit rate per tick (prevents "dump the whole treasury in one safe moment"), and only ever bank the **surplus above a minimum operating balance** — a Vault will not draw its owner down to nothing. Deposits are **irreversible** — Reserve cannot be withdrawn back into spendable Credits. This is the actual spend-vs-save decision: money in a Vault can never again buy units or defenses.
-2. **Capacity.** Each Vault has a maximum Reserve capacity. Reaching a high Reserve target requires building and defending **multiple Vaults**, which is what keeps the mode from collapsing into "build one Vault in a corner and wait."
+2. **Capacity.** Each Vault has a maximum Reserve capacity. Reaching a high Reserve target requires building and defending **multiple Vaults**, which is what keeps the mode from collapsing into "build one Vault in a corner and wait." With the Sun Cycle on (the default since issue #136's second revision) a third of every Vault is kept for stored energy, so one holds 5,360 Reserve instead of 8,000 - see "Sun Cycle" below.
 3. **Vulnerability.** Vaults are ordinary destructible structures. Destroying an enemy Vault drains a percentage (recommended: 50%) of the Reserve it held and grants the attacker a Credits reward proportional to the drained amount. This is the mechanism that keeps harassment and raiding relevant under this mode — a Vault is a juicier raid target than almost anything else on the map once it's carrying real Reserve.
 4. **Win condition — Grid Lockdown.** When a player's total Reserve across all their Vaults first reaches the map's Reserve target, a **Grid Lockdown countdown** (60–120 seconds, map-configurable) begins and is broadcast to all players. If the player's Reserve stays at or above the target for the full countdown, they win. If Reserve drops below target at any point during the countdown (typically because a Vault was destroyed), the countdown cancels and must be re-triggered from scratch once the target is met again.
 5. **Toggle.** Grid Reserve is a lobby option, still toggleable off per-match, but on by default as of Phase 3's playtest rollout — it's the mode that makes Sungrid Protocol's economy distinct, so it's the standard experience rather than an opt-in extra. Destruction victory remains fully intact and available in every match regardless of this toggle (see pillar 7 in `docs/VISION.md`) — turning Grid Reserve off never removes it, and winning by elimination works identically whether Grid Reserve is on or off.
@@ -120,7 +120,7 @@ Three traits, `OpenRA.Mods.Sungrid/GridReserve/`:
 | `GridReserveControllerInfo` | `DecayIntervalTicks` | 1500 ticks | 60 seconds |
 | `GridReserveControllerInfo` | `DecayPercent` | 1% of each Vault's Reserve per interval | — |
 
-At these defaults, a single Vault (8000 capacity) can never reach even the cheapest 2-player Target (~40000, after issue #93's `BaseTargetPerPlayer` increase): reaching Target always requires multiple Vaults, which is the intended anti-turtle property, not an incidental side effect of the numbers.
+At these defaults (and more so with the Sun Cycle's protected energy share, 5,360 Reserve a Vault), a single Vault (8000 capacity) can never reach even the cheapest 2-player Target (~40000, after issue #93's `BaseTargetPerPlayer` increase): reaching Target always requires multiple Vaults, which is the intended anti-turtle property, not an incidental side effect of the numbers.
 
 **`DepositRate` was retuned from 10 to 3 Credits/tick (see `docs/BACKLOG.md` issue #75).** A report of a Grid Reserve win in ~15 minutes with zero attacks traced back to the old rate: a single Vault capped in ~32 real-time seconds, and several Vaults deposit in parallel, so the window between the 50%-Target beacon reveal and Lockdown completion was too short for raiding a Vault to be a realistic counterplay — even though winning without ever fighting is fully intended by design, the vulnerability that's supposed to come with committing to that path wasn't real. The new rate stretches a single Vault's fill time to ~107 seconds, giving an attentive opponent several real-time minutes between the reveal and Lockdown to scout, redirect an army, and break the countdown per Core Rule 4.
 
@@ -140,7 +140,7 @@ Deliberate coupling worth flagging for reviewers: `GridReserveController` assume
 
 **In-match rules briefing.** `GridReserveBriefingLogic` (`Container@GRID_RESERVE_BRIEFING` in `ingame-player.yaml`) shows a small, non-blocking popup once at match start summarizing the Core Rules above (deposits, irreversibility, multi-Vault requirement, destruction/sale forfeiture, minimap reveal at 50%) with a dismiss button, and hides itself entirely when the `gridreserve` checkbox is off. Added alongside the on-by-default change above so players who have never played a Grid Reserve match aren't dropped into it with no in-game explanation.
 
-**Bot participation (`GridReserveBotModule`).** A per-`Player` `ConditionalTrait`/`IBotTick` module in `OpenRA.Mods.Sungrid/GridReserve/GridReserveBotModule.cs`, wired up in `mods/sungrid/rules/ai.yaml`. It resolves the number of Vaults the bot wants from `GridReserveManager.Target` and `GridReserveVaultInfo.Capacity` (`ceil(Target * CoveragePercent / 100 / Capacity)`, clamped to `MaximumVaults`), and queues one at a time through the Vault's own declared production queue whenever that queue is idle — `BaseBuilderQueueManager` then places whatever finishes at the front of a queue, so placement, base-radius and power checks are all the stock ones and no bespoke placement logic is involved. It reads `GridReserveManager.BeaconActive`/`LockdownEligible` off each enemy player to switch between `CoveragePercent` and `ContestedCoveragePercent` and to honour `AbandonBankingOnEnemyLockdown`. Two optional granted conditions (`EnemyBankingCondition`, `EnemyLockdownCondition`, both unset by default) expose that same race state to `RequiresCondition` on other bot modules, so a future aggression swap needs no further C#.
+**Bot participation (`GridReserveBotModule`).** A per-`Player` `ConditionalTrait`/`IBotTick` module in `OpenRA.Mods.Sungrid/GridReserve/GridReserveBotModule.cs`, wired up in `mods/sungrid/rules/ai.yaml`. It resolves the number of Vaults the bot wants from `GridReserveManager.Target` and the Reserve one Vault can hold - `GridReserveVaultInfo.Capacity`, less `PowerStorageInfo.ProtectedSpace` while the Sun Cycle is on (`ceil(Target * CoveragePercent / 100 / capacity)`, clamped to `MaximumVaults` - but never below `ceil(Target / capacity)`, the count that can hold the target at all; issue #136's second revision, see "Sun Cycle"), and queues one at a time through the Vault's own declared production queue whenever that queue is idle — `BaseBuilderQueueManager` then places whatever finishes at the front of a queue, so placement, base-radius and power checks are all the stock ones and no bespoke placement logic is involved. It reads `GridReserveManager.BeaconActive`/`LockdownEligible` off each enemy player to switch between `CoveragePercent` and `ContestedCoveragePercent` and to honour `AbandonBankingOnEnemyLockdown`. Two optional granted conditions (`EnemyBankingCondition`, `EnemyLockdownCondition`, both unset by default) expose that same race state to `RequiresCondition` on other bot modules, so a future aggression swap needs no further C#.
 
 **Bot Vault raiding (issue #105).** Bots build Vaults from the module above, but until this pass they never *attacked* one on purpose. Squad target selection in the engine is purely distance-based (`FindClosestEnemy` → `ClosestToIgnoringPath`), and its only configurable steering, `IgnoredEnemyTargetTypes`, is an exclusion list — so there was no way to say "hit the Vault first". A squad walked to whichever enemy structure happened to be nearest and stopped there, which meant the raid pressure Core Rule 4 depends on existed only when a human applied it, and a bot could never break an opponent's Lockdown except by accident.
 
@@ -160,8 +160,9 @@ The whole module short-circuits on `GridReserveManager.Enabled`, the same lobby-
 
 ## Sun Cycle (day/night, issue #136)
 
-A second, independent lobby option (`suncycle`, **"Day/Night Cycle", off by default** until it has been played by
-someone other than the author). It changes no victory condition. One sky for the whole table: every player's night
+A second, independent lobby option (`suncycle`, **"Day/Night Cycle", on by default** since issue #136's second
+revision - the owner's call; it was off until then. `rules/world.yaml` sets `CheckboxEnabled: true` over the trait's
+own default of off, the same pattern as Grid Reserve, and the checkbox stays unlocked). It changes no victory condition. One sky for the whole table: every player's night
 falls at the same moment, so a dusk is a shared, readable timing window rather than a per-player hidden state.
 Every number below is **reasoned, not measured**. Tick counts assume Normal speed (25 ticks/s), as elsewhere in this
 document.
@@ -199,24 +200,52 @@ on an actor when it estimates a toggle.
 There is no new building. The Battery Bank (`SILO`, the Grid Reserve Vault) gains a `PowerStorage` trait and stores
 charge as well as Reserve. Charge is held in **power-seconds** (one power for one second).
 
-**Shared capacity.** Each bank has one capacity: the Vault's `Capacity` (8000). Stored charge and banked Reserve
-compete for it at a fixed **exchange rate of 1 power-second per credit of space** (`ChargeExchangePercent: 100`).
-The rules, in priority order:
+**Shared capacity, energy first.** Each bank has one capacity: the Vault's `Capacity` (8000). Stored charge and banked
+Reserve share it at a fixed **exchange rate of 1 power-second per credit of space** (`ChargeExchangePercent: 100`).
+Since issue #136's second revision **energy comes first** (the owner's call after the first live look: "priority
+should be to save energy, right?" - under the first rules Reserve, which never leaves, took over the banks within a
+few cycles). The rules, in priority order:
 
 1. **Banked Reserve is never removed to make room for charge.** Charge only ever enters space Reserve has left free.
    Irreversibility, the `MaximumTargetPercent` ceiling, the drain-on-destruction and Lockdown are untouched, so the
-   guarantees from issues #37, #68, #69, #75 and #76 all hold. Charge can only *slow banking down*, never undo it.
-2. **Charge comes only from surplus power.** Charging draws nothing visible from the grid, so it can never push a
+   guarantees from issues #37, #68, #69, #75 and #76 all hold. Energy can only *slow banking down* and lower what one
+   bank holds, never undo it.
+2. **A protected third.** `ProtectedChargePercent` (33) of every bank's *space* is kept for energy: Reserve can never
+   occupy it, so a plain bank holds at most **5,360 Reserve** (8000 - 2640) and always has room for 2,640 energy. The
+   share is of the space, so the Consortium's x1.5 capacity applies to it as to the rest of the bank: its protected
+   third holds 3,960 energy. A YAML field on `PowerStorage`, not a constant.
+3. **Charge first in the rest.** A bank that took surplus power in the last update (`PowerStorage.IsCharging`, set
+   once a second by `PowerStorageManager`) banks no Reserve until it stops - because it is full, or the surplus has
+   gone. So Reserve only ever takes space surplus power is not flowing into right now, and a bank filling up for the
+   night is never raced for its space. (The literal rule the owner offered - "Reserve may not take space the bank's
+   charge could still fill this day" - would need a forecast of each bank's surplus share until dusk; this is its
+   deterministic, state-free equivalent. Surplus is handed out earliest-built bank first, so the banks surplus does
+   not reach go on banking Reserve normally.)
+4. **Charge comes only from surplus power.** Charging draws nothing visible from the grid, so it can never push a
    player into low power, and the power bar stays honest.
-3. **Grid Reserve off:** no Reserve is ever banked, so the whole 8000 holds charge.
-4. **Sun Cycle off:** `PowerStorageManager` never runs, charge stays 0, and `GridReserveVault` sees exactly the
-   space it always did. The bank behaves exactly as before.
-5. **Charge that has not been drawn on for a whole sun cycle gives way to Reserve** (`PowerStorage.IdleCharge`). This
-   rule exists because without it the option would trap the players it should reward: a base that never runs short
-   at night (lots of Wind Turbines - the Assembly's whole night identity) fills its banks by day, never empties them,
-   and could then never bank Reserve again for the rest of the match. A bank that discharges every night is never
-   idle (the gap between nights is one Day, 5250 ticks, well under a 9000-tick cycle), so for a base that needs its
-   storage the two jobs compete on equal terms.
+5. **Charge outside the protected third that has not been drawn on for a whole sun cycle gives way to Reserve**
+   (`PowerStorage.IdleCharge`). Kept, but only for the unprotected two thirds: with charge first, a base that never
+   runs short at night (lots of Wind Turbines - the Assembly's whole night identity) fills its banks by day and never
+   empties them, and without an exit could never bank Reserve at all. A bank that discharges every night is never idle
+   (the gap between nights is one Day, 5250 ticks, well under a 9000-tick cycle). The protected third stays energy
+   whatever happens.
+6. **Grid Reserve off:** no Reserve is ever banked, so the whole 8000 holds charge.
+7. **Sun Cycle off:** `PowerStorageManager` never runs, charge stays 0, nothing is protected, and `GridReserveVault`
+   uses its original formula (`Capacity - CurrentReserve`): the bank behaves exactly as before, 8000 Reserve each.
+
+**What it does to the target (reasoned, not measured).** With the cycle on, holding a target takes `ceil(Target /
+5360)` banks instead of `ceil(Target / 8000)`: two players (40,000) **8** instead of 5, three (55,500) **11** instead
+of 7, four (68,000) **13** instead of 9, six (84,000) **16** instead of 11. Every bank built still adds 2,640 energy
+of night storage (3,960 for the Consortium), so eight banks for a two-player target carry 21,120 energy - more than the
+~13,000 a solar base's night needs (below), which is the point of protecting a share rather than a fixed amount. The
+number of banks is unlimited, so Lockdown stays reachable; the target ceiling, the drain-on-destruction (50% of what
+the killed bank held - now at most 5,360) and the 50% minimap reveal all work on Reserve totals and are unchanged.
+A deterministic model of the rules (issue #136's second revision in `docs/BACKLOG.md`; 200 Credits a second of
+income, eight banks standing from 0:00) has a solar base reach 40,000 at 6:24, during its first night as drained
+space opens; a turbine base (never short) at 6:58, once its idle charge yields at 6:00; the same solar base with
+Consortium banks, whose bigger charge holds more of the space, at 12:02. Banks added one at a time by a bot's pacing
+from 6:00 reach it at 13:15 (solar) and 20:23 (turbine), against 11:42 / 13:33 under the old first-come rules - which
+left those bots 16,000 energy of 56,000 once Reserve had taken the rest.
 
 **Why 1:1.** The exchange rate decides whether the two jobs genuinely compete. One night of a moderate deficit costs
 about one bank of space: a 100-power shortfall across dusk, night and dawn is 100 x 90 + 35 x 60 (twilight runs at
@@ -249,22 +278,26 @@ only covers the deficit (the bank never overshoots by more than its upkeep).
 The owner wanted this, so it is spelled out: **every power-second of night charge is a credit of bank space not
 banked for victory, and every credit banked is night storage gone for good** (Reserve never leaves).
 
-Worked example, two players, Target 40,000 = five banks of capacity at minimum. A solar base of three Solar Arrays
-and about 220 drain runs +80 by day, -25 at dusk and dawn, -130 at night. Riding the night out on storage takes about
-13,000 power-seconds a cycle and, for the rate, three banks (two for the Consortium). If those banks are the same five
-that are banking toward the target:
+Worked example, two players, Target 40,000 = eight banks at minimum with the cycle on. A solar base of three Solar
+Arrays and about 220 drain runs +80 by day, -25 at dusk and dawn, -130 at night. Riding the night out on storage takes
+about 13,000 power-seconds a cycle and, for the rate, three banks (two for the Consortium). Under the energy-first
+rules:
 
-- **By day** the charge sits in space Reserve wants, so banking slows by up to a third of the target.
-- **By night** the charge drains and Reserve backfills the freed space (deposits are automatic), so banking runs
-  *faster* after dark - a player at exactly target capacity tends to reach Lockdown at night, and a Lockdown hold
-  is exactly one night long.
-- **Over a few cycles Reserve wins the space** (it never leaves), the storage is gone, and the nights become
-  brownouts.
+- **By day** surplus fills the banks it reaches first (earliest-built first, 40 a second each), and those banks bank
+  no Reserve while they charge; the rest bank Reserve as before. A bank surplus has filled is closed to Reserve.
+- **By night** the charge drains and Reserve backfills the freed space down to the protected third (deposits are
+  automatic), so banking runs *faster* after dark - a player at exactly target capacity tends to reach Lockdown at
+  night, and a Lockdown hold is exactly one night long.
+- **Over a few cycles** Reserve settles into the unprotected two thirds of every bank and energy keeps the third:
+  eight banks keep 21,120 energy for the night, more than this base needs. Under the first rules Reserve took the
+  whole of every bank it reached and the nights became brownouts; that is what the protected share fixes.
 
-Keeping both takes **more banks than the target needs** - the Reserve ceiling stops banking at the target, so every
-bank past it is permanent storage. That costs 150 Credits a bank, -10 power each while idle, and one more exposed
-target once the 50% minimap reveal turns on. The alternative is night-proof power instead of storage. Either way,
-night is now a cost paid out of the same budget as victory, which is Pillar 3 doing its job.
+The tension that remains: every bank's third is energy, so the target simply **costs more banks** with the cycle on
+(8 instead of 5 for two players), each 150 Credits, -10 power while idle and one more exposed target once the 50%
+minimap reveal turns on; and a base with big surplus keeps more than a third as energy in the banks it fills, which
+slows its banking until the night drains them (or, if it never runs short, for one cycle). The alternative to storage
+is night-proof power. Either way, night is a cost paid out of the same budget as victory, which is Pillar 3 doing its
+job.
 
 ### Faction night identity
 
@@ -280,10 +313,17 @@ across several nights or outages, and the faster discharge is the difference tha
 ### What the player sees
 
 - **HUD** (`SunCycleHudLogic`, `Container@SUN_CYCLE_HUD` in `chrome/ingame-player.yaml`): under the Grid Reserve bar
-  (or in its slot when Grid Reserve is off), "Day — dusk in 2:41 · Storage 63%", a bar for stored charge as a share
-  of the charge the banks can hold *now* (space Reserve already fills is not counted), and a tooltip with the solar
-  percentage, the bank count, charge / capacity in power-seconds, the current flow and the space taken by Reserve.
-  The label is white by day, sun gold at dusk and dawn, moonlight blue at night (`metrics.yaml`).
+  (or in its slot when Grid Reserve is off). Since issue #136's second revision, absolute numbers and its own marks:
+  a blue lightning bolt on the left, a sun (day), a low sun on the horizon (dusk and dawn) or a moon (night) on the
+  right, a blue bar for stored energy over the energy the banks can hold right now, and
+  "Day — dusk in 0:53 · Energy 1,200 / 10,900 · charging" - the state is *charging*, *draining*, *full*, *empty*,
+  *blackout* (a Spy outage: the banks hold charge but may not give it), *no spare power* or *no Battery Banks*. The
+  tooltip gives the solar percentage, the bank count, energy stored / held, the flow per second, each bank's charge
+  and discharge rates and, with Grid Reserve on, the protected share (percent and energy) and the Reserve held in
+  the rest. The label is white by day, sun gold at dusk and dawn, moonlight blue at night (`metrics.yaml`). The Grid
+  Reserve bar above it now carries a gold coin rather than the shared battery, and reads "Reserve 11,528 / 40,000";
+  its tooltip adds how many banks the player has and how much Reserve they can hold. Both bars are 380 wide for the
+  energy line. Review render: `docs/concept-art/issue136-hud-bars.png`.
 - **Charge bar** under a selected Battery Bank (`ISelectionBar`), whenever the cycle is on.
 - **Screen tint** (`SunCycleTint`): its own post-process pass, so it multiplies with a map's `TintPostProcessEffect`
   rather than replacing it. Night is cool and dim (R0.84 G0.90 B1.12 at ambient 0.74; the floor is 0.70 so team
@@ -296,7 +336,7 @@ across several nights or outages, and the faster discharge is the difference tha
 ### Bots (`SunCycleBotModule`)
 
 The engine's base builder treats low power as a priority override and buys the plant with the highest **nominal**
-output - at night, a Solar Array running at 30%, over and over. `SunCycleBotModule` (all six personalities) answers
+output - at night, a Solar Array running at 30%, over and over. `SunCycleBotModule` (every personality) answers
 that:
 
 - **By day** (from tick 6000, a minute before the first dusk) it projects the night deficit from its solar plants'
@@ -310,8 +350,15 @@ that:
 - **Banks for both jobs.** `GridReserveBotModule` adds the sun module's `StorageBanksWanted` on top of its Vault count
   (the storage share is extra capacity, never taken out of the target coverage), and its "expand once the standing
   Vaults are 80% full" pacing only counts the Vault share - otherwise storage banks that never fill with Reserve
-  would stall it. With the cycle off the storage count is 0 and both modules behave exactly as before. Worked: two
-  players, Target 40,000, `CoveragePercent` 125 -> 7 Vaults, plus up to 3 storage banks = up to 10.
+  would stall it. With the cycle off the storage count is 0 and both modules behave exactly as before. Since issue
+  #136's second revision the Vault count is sized against the Reserve one bank can hold with the protected third
+  taken out (5,360), and its pacing counts charge outside the protected thirds as taken - otherwise a bot whose newest
+  bank surplus has filled with energy waits a whole cycle for it before building the next (the model above: 20:23
+  rather than 39:09 to a two-player target for a turbine base). `MaximumVaults` (8) now trims only the redundancy:
+  it never drops the count below `ceil(Target / 5360)`. Worked, cycle on: two players, Target 40,000,
+  `CoveragePercent` 125 -> 10, trimmed to 8 (the floor is 8), plus up to 3 storage banks = up to 11; three players
+  (55,500) -> 11 (+3); four (68,000) -> 13 (+3). The floor also fixes a gap that predates the cycle: with it off, four
+  players (68,000) needed 9 Vaults of 8,000 and the cap of 8 left bots 4,000 short of the target for good.
 - `silo` stays **out** of every `PowerTypes` list: it is storage, not supply (the same reasoning that keeps `rcyd` out
   of `RefineryTypes`).
 - **The Saboteur (issue #135) gets stronger at night without any change**: its `EnemyGridStateBotModule` reads an
@@ -338,3 +385,7 @@ Open: the bank's sprite still shows ore-storage fill, not charge (needs a sprite
 no night art states (lamps on the arrays, dark panels - art rule 16 territory); an
 observer-scoreboard column; a "hit the banks before sunset" squad hook for the bots (`GrantConditionOnSunPhase` works
 on the Player actor and is ready for a `PreferredTargetCondition`); and every constant above is waiting on a playtest.
+Since the cycle went on by default, the Saboteur AI (tuned with it off) meets a night in every default match, and night
+makes its `EnemyGridStateBotModule` read more opponents as "grid down" - its push timing is the first thing to watch.
+The protected third (33%) and the energy-first rule are the owner's decisions; their numbers above are reasoned and
+modelled, not measured.

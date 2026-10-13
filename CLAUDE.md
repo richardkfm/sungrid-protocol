@@ -50,6 +50,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - **Mod SDK pattern, not a vendored engine fork** — the engine is fetched/pinned via `mod.config` + `fetch-engine.sh`, not committed to this repo. Superseded the original "full engine fork" decision before any mod content existed (see `docs/ARCHITECTURE.md` for the full reasoning).
 - Data-driven-first: buildings/units/rules go through YAML composing existing OpenRA traits wherever possible; new C# traits (in `OpenRA.Mods.Sungrid/`) are reserved for things YAML genuinely can't express (currently: only the Grid Reserve vault/win-condition mechanic).
 - Destruction victory is permanent and always available; Grid Reserve is an additive lobby option, **on by default** since issue #39 (the trait's own C# default is off — `mods/sungrid/rules/world.yaml` turns it on).
+- The Sun Cycle (day/night, issue #136) is a second lobby option, **on by default** since issue #136's second revision, by the same pattern (C# default off, `rules/world.yaml` turns it on, unlocked). It changes no victory condition; with Grid Reserve on, energy has first call on Battery Bank space (see "Sun Cycle" below).
 - "Grid Reserve" is the recommended/working name for the economic victory mode (see `docs/GAME_MODES.md` for the other 4 candidates that were considered).
 - Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 8+ in `docs/ROADMAP.md`).
 
@@ -93,7 +94,7 @@ lobby checkbox), `rules/player.yaml` (manager), `rules/structures.yaml` (`SILO` 
 Vault), `rules/ai.yaml` (bot module) and `chrome/ingame-player.yaml` (HUD + briefing popup).
 **`docs/GAME_MODES.md` is the spec and documents every constant with its reasoning — read it first.**
 
-Shipped tuning: `Capacity` 8000/Vault, `DepositRate` 3 Credits/tick (~75/sec),
+Shipped tuning: `Capacity` 8000/Vault (5,360 of it Reserve while the Sun Cycle is on - see below), `DepositRate` 3 Credits/tick (~75/sec),
 `MinimumOperatingBalance` 3000, `MaximumTargetPercent` 100, `BaseTargetPerPlayer` 20000 (raised from
 15000 by issue #93 - AI opponents were reaching Lockdown too soon),
 `LockdownDurationTicks` 2250 (90s). On by default.
@@ -124,7 +125,9 @@ each other's state and it is easy to leave one of them out:
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Seven lobby personalities: the four
-stock ones plus **Grid Broker AI**, **Easy Grid Broker AI** and **Saboteur AI** (issue #135).
+stock ones plus **Grid Broker AI**, **Easy Grid Broker AI** and **Saboteur AI** (issue #135). **Saboteur AI is the
+default bot** (issue #138): the engine's default is the *first* `ModularBot` on the Player actor, so it heads `ai.yaml`;
+keep it first. "Add bots" picks at random in the engine, not from that order.
 
 **Bots now raid Vaults (issue #105).** This was the deferral above, and it did need the engine-level
 squad target-selection change #67 predicted. Squad targeting is *purely distance-based* — every state
@@ -233,7 +236,9 @@ and config, not measured against observed income.
 
 ### Sun Cycle (day/night, issue #136)
 
-A lobby option, `suncycle`, **off by default**. `docs/GAME_MODES.md` ("Sun Cycle") is the spec with every constant
+A lobby option, `suncycle`, **on by default** since issue #136's second revision (the owner's call; `rules/world.yaml`
+sets `CheckboxEnabled: true`, the trait's C# default stays off, the same pattern as Grid Reserve; still unlocked).
+`docs/GAME_MODES.md` ("Sun Cycle") is the spec with every constant
 and its reasoning; read it before touching `OpenRA.Mods.Sungrid/SunCycle/` or the Battery Bank. Shipped: first dusk at
 7500 ticks, then Day 5250 / Dusk 750 / Night 2250 / Dawn 750 (a 6-minute cycle; night = `LockdownDurationTicks`);
 `POWR`/`APWR` at 65% at dusk/dawn and 30% at night via `^SolarPower`, nothing else changes; the Battery Bank (`SILO`)
@@ -242,11 +247,18 @@ is a pure function of `WorldTick`, so there is no state to sync; every timing fi
 
 Rules that are easy to break:
 
-- **One capacity, two jobs.** Charge and Reserve share the Vault's `Capacity` at 1 power-second per credit of space.
-  Reserve is never removed for charge; charge only comes from surplus; `GridReserveVault` banks only into the space
-  charge has left free. **Charge unused for a whole cycle yields to Reserve** (`PowerStorage.IdleCharge`) - without it
-  a base that never runs short at night fills its banks with charge that never drains and can never bank Reserve again
-  (bots stall too). Don't remove that rule to "simplify".
+- **One capacity, two jobs, energy first** (issue #136, revised). Charge and Reserve share the Vault's `Capacity` at
+  1 power-second per credit of space, and with the cycle on energy has priority (`PowerStorage.ReserveRoom`, the only
+  place `GridReserveVault` asks): `ProtectedChargePercent` (33) of every bank's *space* is kept for charge and Reserve
+  never occupies it (a plain bank holds at most 5,360 Reserve; the Consortium's x1.5 makes that third hold 3,960
+  energy), and a bank that absorbed surplus in the last second (`IsCharging`) banks no Reserve. Reserve is still never
+  removed for charge, charge only comes from surplus, and with the cycle **off** the Vault keeps its whole 8000 by the
+  old formula, byte for byte. **Charge outside the protected third that sat unused for a whole cycle yields to
+  Reserve** (`PowerStorage.IdleCharge`) - without it a base that never runs short at night fills its banks with charge
+  that never drains and can never bank Reserve (bots stall too). Don't remove that rule to "simplify". Anything that
+  sizes Reserve off a Vault must read `GridReserveVault.ReserveCapacity` (or `PowerStorageInfo.ProtectedSpace` before
+  a bank exists), never `Capacity`: `GridReserveBotModule` does, and also counts unprotected charge as taken when it
+  paces, or a bot whose newest bank is full of energy waits a whole cycle before building the next one.
 - **The discharge is an `IPowerModifier` on a 1-power `Power@DISCHARGE`**, and a modifier scales *every* enabled
   `Power` trait on the actor - so the bank's upkeep `Power` is switched off (`!battery-discharging`) while it
   discharges and paid from the charge. Any other Power trait added to `SILO` must be off while it discharges too.
@@ -262,11 +274,21 @@ Rules that are easy to break:
 - **The main-menu shellmap forces the cycle on** (issue #137): no lobby, so `OptionOrDefault` falls back to
   `CheckboxEnabled`, which `maps/desert-shellmap/rules.yaml` sets, with a 2750-tick showcase cycle. Phase lines are
   never announced on a `WorldType.Shellmap` - it keeps running behind the lobby, whose chat would collect them.
+- **Spies and Thieves are cloaked at night** (`^NightCloak`, issue #138): seen only by `DetectCloaked` - the Sensor
+  Array (8 cells), Arc Pylon and Pillbox (6), infantry beside them (1.5). The owner chose both infiltrators, Night only.
 - **Bots:** `SunCycleBotModule` claims the idle Building queue for night-proof power at dusk/night before the base
   builder's low-power override buys a 30%-output Solar Array, and buys storage banks by day; `GridReserveBotModule`
-  adds those storage banks on top of its Vault count and paces against the Vault share only. `silo` stays out of
-  `PowerTypes`. Night also makes `EnemyGridStateBotModule` see more low-power opponents - tune the Saboteur with the
-  cycle off.
+  adds those storage banks on top of its Vault count and paces against the Vault share only. Its `MaximumVaults` (8)
+  trims redundancy only, never below `ceil(Target / ReserveCapacity)` - 8 banks of 5,360 is a two-player target, and
+  four players needed 9 even with the cycle off. `silo` stays out of `PowerTypes`. Night also makes
+  `EnemyGridStateBotModule` see more low-power opponents - the Saboteur was tuned with the cycle off, and the cycle is
+  now on in every default match, so its push timing is an open question (not retuned).
+- **HUD** (issue #136, revised): the Grid Reserve bar has a gold `coin` and reads `Reserve 11,528 / 40,000`; the
+  energy bar has a blue `bolt`, a `sun` / `sun-low` / `moon` that `SunCycleHudLogic` switches by phase (on the right),
+  a blue `grid-reserve-bar-energy` fill and `Day — dusk in 0:53 · Energy 1,200 / 10,900 · charging`. Both are 380
+  wide for that line. The glyphs are `gen_chrome.py`'s `hud_icons()` in `dialog.png`'s free corner; a bad chrome
+  `ImageName` is caught by nothing (it throws on first draw), and nor is a missing Fluent key - `--check-yaml` only
+  checks Fluent syntax. The old `battery` region is unused but kept so the sheet stays byte-identical around it.
 
 Not verified live; the bank's sprite still shows ore-storage fill, not charge (follow-up).
 
