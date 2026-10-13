@@ -51,10 +51,13 @@ Player:
 	# base builder, unit builder and squad manager, and deliberately opts out of support powers and base
 	# expansion below. See docs/GAME_MODES.md.
 	#
-	# The Saboteur (issue #135) hunts the enemy power grid instead of the enemy army. It shares the Normal
-	# AI's harvesters and expansion (McvExpansionManagerBotModule@normal is what deploys its starting MCV -
-	# without an instance of that module a personality never builds anything), and carries its own base
-	# builder, unit builder, two squad managers and the EnemyGridStateBotModule at the end of this file.
+	# The Saboteur (issue #135, reworked) plays for the economic win and slows its opponents with
+	# Spies: a defensive base, a modest army that mostly stays home, Grid Reserve banking like the Grid
+	# Broker, and regular infiltration runs on enemy power plants with a small diversion attack on
+	# another part of the base to cover them. It shares the Normal AI's harvesters and expansion
+	# (McvExpansionManagerBotModule@normal is what deploys its starting MCV - without an instance of
+	# that module a personality never builds anything), and carries its own base builder, unit builder,
+	# three squad managers, a GridReserveBotModule, the SpyBotModule and the EnemyGridStateBotModule.
 	ResourceMapBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-gridbroker-ai || enable-easygridbroker-ai || enable-saboteur-ai
 		ResourceCreatorTypes: mine, gmine
@@ -590,16 +593,17 @@ Player:
 			sgcry: 12000
 			sgdai: 12000
 			sgshl: 13000
-	# Saboteur base (issue #135). The Normal AI's base without the navy, tilted toward what a grid
-	# hunter needs: the Recycling Depot and a Drone Bay early (the bay needs the Depot), Radar early
-	# (artillery needs it), a Repair Bay for the heavy reserve, and air pads for helicopters, which
-	# retarget onto power buildings like everything else in its squads. Defenses are kept at about
-	# two thirds of the Normal AI's weight: its heavy reserve sits at home until the push, and is
-	# most of what guards its own grid. Reasoned, not measured.
+	# Saboteur base (issue #135, reworked). A defensive base: defences weighted above the Normal AI's,
+	# with ground defences and anti-air both early, because most of its army stays home and the base has
+	# to hold while the Reserve fills. Two barracks and two War Factories at most - it fields a modest
+	# army - and no airfields or helipads. Radar (dome) comes early because every Spy and Thief needs it.
+	# Smart Grid Relays are weighted up: the one power building no Spy can black out (issue #101), which
+	# a bot that lives by blackouts would want for itself (the Consortium only; the Assembly builds
+	# what it can). Reasoned, not measured.
 	BaseBuilderBotModule@saboteur:
 		RequiresCondition: enable-saboteur-ai
-		MinimumExcessPower: 0
-		MaximumExcessPower: 200
+		MinimumExcessPower: 20
+		MaximumExcessPower: 220
 		ExcessPowerIncrement: 40
 		ExcessPowerIncreaseThreshold: 4
 		# See BaseBuilderBotModule@rush (issue #134).
@@ -610,79 +614,73 @@ Player:
 		AdditionalMinimumRefineryCount: 2
 		ExpansionTolerate: 1,2
 		PowerTypes: powr,apwr,sgwnd,sghyd,sgrel
-		TechTypes: dome, atek, stek, fix, afld, hpad, sgdai, sgcry
+		TechTypes: dome, atek, stek, fix, sgdai, sgcry
 		ProductionTypes: barr,tent,weap
 		NewProductionCashThreshold: 8000
 		SiloTypes: silo
 		DefenseTypes: hbox,pbox,gun,tsla,agun,sam,arct,sgtur
 		BuildingLimits:
-			barr: 4
-			tent: 4
+			barr: 2
+			tent: 2
 			dome: 1
-			weap: 4
-			hpad: 2
-			afld: 2
-			afld.ukraine: 2
+			weap: 2
 			atek: 1
 			stek: 1
 			fix: 1
 			silo: 8
 			rcyd: 2
-			sgdrn: 2
-			sgdra: 2
+			sgdrn: 1
+			sgdra: 1
 			sgdai: 1
 			sgcry: 3
 			sgsns: 2
 			sgshl: 1
 			sghyd: 3
-			sgrel: 4
+			sgrel: 5
 		BuildingFractions:
 			powr: 1
 			proc: 1
 			tent: 2
 			barr: 2
 			dome: 1
-			weap: 4
-			hpad: 1
-			afld: 1
-			afld.ukraine: 1
-			pbox: 6
-			gun: 6
-			tsla: 3
-			gap: 1
+			weap: 3
+			pbox: 11
+			gun: 11
+			tsla: 6
+			gap: 2
 			fix: 1
-			agun: 5
-			sam: 3
-			arct: 6
+			agun: 6
+			sam: 4
+			arct: 12
 			atek: 1
 			stek: 1
 			mslo: 1
 			rcyd: 3
 			sgwnd: 8
 			sghyd: 3
-			sgrel: 3
-			sgtur: 5
-			sgdrn: 3
-			sgdra: 3
+			sgrel: 5
+			sgtur: 10
+			sgdrn: 1
+			sgdra: 1
 			sgdai: 1
 			sgcry: 3
-			sgsns: 2
+			sgsns: 3
 			sgshl: 1
 		BuildingDelays:
-			dome: 4000
+			dome: 3500
 			fix: 3000
-			pbox: 1500
-			gun: 2000
-			tsla: 2800
-			arct: 1500
+			pbox: 1200
+			gun: 1500
+			tsla: 2500
+			arct: 1200
+			agun: 3000
+			sam: 3000
 			atek: 9000
 			stek: 9000
-			sgtur: 2500
-			# The Saboteur's drones are its first raiders, so its bay comes ahead of every other
-			# personality's 3000 - still behind a Recycling Depot, which the bay requires.
-			sgdrn: 2000
-			sgdra: 2000
-			sgsns: 6000
+			sgtur: 2000
+			sgdrn: 6000
+			sgdra: 6000
+			sgsns: 5000
 			sgcry: 10000
 			sgdai: 10000
 			sgshl: 10000
@@ -1035,69 +1033,93 @@ Player:
 			sgdrs: 4
 		UnitDelays:
 			harv: 10000
-	# Saboteur army (issue #135). Two halves, told apart by which squad manager may take them:
-	# light raiders (Rangers, APCs, Flak Trucks, Light and Phase Tanks, infantry) and drones go out
-	# in small raids on the enemy grid from the start; the heavy reserve (Medium, Heavy, Mammoth and
-	# Tesla Tanks, Artillery, V2s) is excluded from SquadManagerBotModule@saboteur-raid, so it gathers
-	# at home until SquadManagerBotModule@saboteur-push takes everything at once. Spies are not built:
-	# no engine bot module orders a Spy to infiltrate anything, so a bot Spy would only walk into
-	# the enemy base with an assault squad and die. Weights reasoned, not measured.
+	# Saboteur army (issue #135, reworked). Small: every type is capped, so the whole army tops out
+	# around 45 units and production then goes to Spies, defences and the Reserve. Three parts, told
+	# apart by which squad manager may take them:
+	# - Spies (Consortium, `spy`/`spy.england`) and Thieves (Assembly, `thf`) - each faction can only
+	#   build its own, both need a barracks and Radar - are excluded from every squad manager and
+	#   belong to SpyBotModule@saboteur alone.
+	# - Light units (infantry, Rangers, APCs, Flak Trucks, Light and Phase Tanks) and drones are the
+	#   diversion: SquadManagerBotModule@saboteur-diversion takes them only while a spy run is on.
+	# - The heavy reserve (Medium, Heavy, Mammoth and Tesla Tanks, Artillery, V2s) only ever moves in
+	#   the finishing push. Between runs everything sits at home under @saboteur-home.
+	# Weights reasoned, not measured.
 	UnitBuilderBotModule@saboteur:
 		RequiresCondition: enable-saboteur-ai
 		UnitsToBuild:
-			e1: 20
+			spy: 15
+			spy.england: 15
+			thf: 15
+			e1: 15
 			e3: 15
-			disr: 10
+			disr: 8
 			harv: 15
-			jeep: 45
-			apc: 25
-			ftrk: 20
-			1tnk: 40
-			stnk: 10
-			2tnk: 30
-			3tnk: 30
-			4tnk: 10
-			ttnk: 10
-			arty: 20
-			v2rl: 20
-			heli: 15
-			mh60: 15
-			mig: 10
-			yak: 10
-			sgdro: 40
-			sgdrs: 40
-		UnitLimits:
-			harv: 8
-			jeep: 8
-			ftrk: 4
-			stnk: 4
-			4tnk: 3
-			ttnk: 3
-			arty: 4
-			v2rl: 4
-			heli: 3
-			mh60: 3
-			mig: 2
-			yak: 2
+			jeep: 20
+			apc: 10
+			ftrk: 10
+			1tnk: 20
+			stnk: 8
+			2tnk: 15
+			3tnk: 15
+			4tnk: 5
+			ttnk: 5
+			arty: 8
+			v2rl: 8
 			sgdro: 10
 			sgdrs: 10
-	# Saboteur raids (issue #135): while every opponent's grid holds, small squads go for power
-	# buildings and Battery Banks first, anywhere on the map. PreferredTargetScanRadius 0 is no limit
-	# - the 30 cells the Vault raiders use are measured from the squad leader, which starts at home,
-	# so a far enemy grid would fall back to the nearest building of any kind. No
-	# PreferredTargetCondition: unset means always on, in every match, Grid Reserve or not.
-	# RushInterval is pushed out of the match the way the Turtle AI's is, because a rush aims at the
-	# enemy Construction Yard; AttackScanRadius is halved so a raid on its way to a plant is pulled
-	# off it by fewer of the things it passes. Units still return fire on their own either way.
-	SquadManagerBotModule@saboteur-raid:
-		RequiresCondition: enable-saboteur-ai && !enemy-grid-down
-		PreferredTargetTypes: powr, apwr, sgwnd, sghyd, sgrel, silo
-		PreferredTargetScanRadius: 0
-		SquadSize: 5
-		SquadSizeRandomBonus: 4
+		UnitLimits:
+			spy: 3
+			spy.england: 3
+			thf: 3
+			e1: 8
+			e3: 6
+			disr: 3
+			harv: 8
+			jeep: 4
+			apc: 2
+			ftrk: 3
+			1tnk: 4
+			stnk: 2
+			2tnk: 4
+			3tnk: 4
+			4tnk: 2
+			ttnk: 2
+			arty: 3
+			v2rl: 3
+			sgdro: 3
+			sgdrs: 3
+	# Saboteur at home (issue #135, reworked): the default state. SquadSize is far above anything the
+	# capped army reaches, so this manager never forms an attack squad and never rushes; it only
+	# answers attacks on the base with whatever is standing around. Drones are left out so they wait
+	# for the diversion rather than going hunting on their own air-squad logic.
+	SquadManagerBotModule@saboteur-home:
+		RequiresCondition: enable-saboteur-ai && !saboteur-diversion && !enemy-grid-down && !enemy-lockdown
+		SquadSize: 200
+		SquadSizeRandomBonus: 0
 		RushInterval: 100000
-		AttackScanRadius: 6
-		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, 2tnk, 3tnk, 4tnk, ttnk, arty, v2rl
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, spy, spy.england, thf, sgdro, sgdrs
+		ConstructionYardTypes: fact
+		AirUnitsTypes: mig, yak, heli, hind, mh60
+		AircraftTargetType: AirborneActor
+		ProtectionTypes: harv, mcv, mslo, gap, spen, syrd, iron, pdox, tsla, agun, dome, pbox, hbox, gun, sam, atek, weap, fact, proc, silo, hpad, afld, afld.ukraine, powr, apwr, stek, barr, kenn, tent, fix, fpwr, tenf, syrf, spef, weaf, domf, fixf, fapw, atef, pdof, mslf, facf, arct, rcyd, sgcry, sgdai, sgdrn, sgdra, sgtur, sgwnd, sghyd, sgrel, sgsns, sgshl
+		IgnoredEnemyTargetTypes: AirborneActor
+		ProtectUnitScanRadius: 15
+		ProtectionScanRadius: 12
+	# Saboteur diversion (issue #135, reworked): enabled only while SpyBotModule@saboteur holds
+	# saboteur-diversion, i.e. from the start of a spy run for DiversionDurationTicks. The light units
+	# and drones go at the enemy's production and Construction Yard - the buildings that draw a defender
+	# - in squads of 4-6, while the Spies make for a power plant elsewhere. PreferredTargetTypes must
+	# match SpyBotModule@saboteur's DiversionTargetTypes, which is how the Spies know where the noise
+	# will be. When the window closes this manager stops ticking: its squads keep their last order and
+	# fight on where they are, and the next run picks them up again. Rushes are off, as at home.
+	SquadManagerBotModule@saboteur-diversion:
+		RequiresCondition: enable-saboteur-ai && saboteur-diversion && !enemy-grid-down && !enemy-lockdown
+		PreferredTargetTypes: fact, weap, barr, tent, proc, rcyd, hpad, afld, afld.ukraine, sgdrn, sgdra
+		PreferredTargetScanRadius: 0
+		SquadSize: 4
+		SquadSizeRandomBonus: 3
+		RushInterval: 100000
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, spy, spy.england, thf, 2tnk, 3tnk, 4tnk, ttnk, arty, v2rl
 		ConstructionYardTypes: fact
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
 		AircraftTargetType: AirborneActor
@@ -1105,19 +1127,21 @@ Player:
 		IgnoredEnemyTargetTypes: AirborneActor
 		ProtectUnitScanRadius: 15
 		ProtectionScanRadius: 12
-	# Saboteur push (issue #135): enabled only while EnemyGridStateBotModule@saboteur sees an
-	# opponent's grid down (low power or an outage), and then it takes every unit, the heavy reserve
-	# included, into a large assault on the Construction Yard and whatever is left of the grid and
-	# the Vaults. The two managers are mutually exclusive by condition - two enabled at once would
-	# both order the same units. A disabled manager does not tick, so its squads simply stop being
-	# updated; the units keep their last order, and the manager that takes over picks them up.
+	# Saboteur push (issue #135): the finisher. Enabled while EnemyGridStateBotModule@saboteur holds
+	# enemy-grid-down - only after three blackouts have been seen (MinimumOutages), then whenever an
+	# opponent's grid is down again - or while GridReserveBotModule@saboteur sees an opponent holding
+	# Grid Lockdown, which would otherwise win them the match. Takes every unit but the infiltrators,
+	# the heavy reserve included, at the Construction Yard, the grid and the Vaults. The three squad
+	# managers are mutually exclusive by condition - two enabled at once would both order the same
+	# units. A disabled manager does not tick, so its squads keep their last order until the manager
+	# that takes over picks them up.
 	SquadManagerBotModule@saboteur-push:
-		RequiresCondition: enable-saboteur-ai && enemy-grid-down
+		RequiresCondition: enable-saboteur-ai && (enemy-grid-down || enemy-lockdown)
 		PreferredTargetTypes: fact, powr, apwr, sgwnd, sghyd, sgrel, silo
 		PreferredTargetScanRadius: 0
-		SquadSize: 14
+		SquadSize: 12
 		SquadSizeRandomBonus: 6
-		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, spy, spy.england, thf
 		ConstructionYardTypes: fact
 		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
 		AircraftTargetType: AirborneActor
@@ -1131,7 +1155,7 @@ Player:
 	# the economic victory is effectively human-only. Every instance below no-ops entirely while the
 	# gridreserve lobby checkbox is off. See docs/GAME_MODES.md.
 	GridReserveBotModule:
-		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-saboteur-ai
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai
 		VaultTypes: silo
 		# Consumed by each SquadManagerBotModule's PreferredTargetCondition above. This hook has
 		# existed unused since issue #67 built it for exactly this; the engine side that could read
@@ -1166,13 +1190,63 @@ Player:
 		ExpandAtFillPercent: 95
 		BuildIntervalTicks: 400
 		AbandonBankingOnEnemyLockdown: true
-	# The Saboteur's trigger (issue #135, OpenRA.Mods.Sungrid/BotModules/EnemyGridStateBotModule.cs).
-	# Grants enemy-grid-down while any opponent is in low or critical power or a power outage, and
-	# keeps it for HoldTicks (60s) after the last sighting so a single rebuilt Solar Array doesn't call
-	# a push straight back off. Nothing before StartDelayTicks (4 min): an opening base dips into low
-	# power for a moment as a matter of course. Works with Grid Reserve on or off.
+	# Saboteur economy (issue #135, reworked): banks toward the Reserve target exactly like the Grid
+	# Broker above - the same coverage, start delay, fill threshold and pace, and it races an opponent's
+	# Lockdown rather than conceding it - because winning on the Reserve is now its plan. It does not
+	# grant enemy-banking: the Saboteur answers an opponent's banking with Spies, not with Vault raids,
+	# and only goes for Vaults in the push. EnemyLockdownCondition is the first consumer of that hook:
+	# an opponent in Lockdown is about to win, so it calls the push.
+	GridReserveBotModule@saboteur:
+		RequiresCondition: enable-saboteur-ai
+		VaultTypes: silo
+		EnemyLockdownCondition: enemy-lockdown
+		CoveragePercent: 125
+		ContestedCoveragePercent: 150
+		StartDelayTicks: 9000
+		ExpandAtFillPercent: 65
+		BuildIntervalTicks: 150
+		AbandonBankingOnEnemyLockdown: false
+	# The Saboteur's Spies (issue #135, OpenRA.Mods.Sungrid/BotModules/SpyBotModule.cs). Every 90s,
+	# from 5 minutes in, up to two idle infiltrators are each given the enemy building that costs least
+	# to reach: distance, less the target's priority below (in cells), plus 8 cells for every defence or
+	# dog within 6 cells of it (dogs see through a disguise), less up to 12 cells for distance from the
+	# expected diversion point. Spies disguise as an infantryman of the target's owner first. Power
+	# producers of a player already blacked out are skipped. saboteur-diversion is granted at the start
+	# of the run and the infiltrators leave 10s later, so the diversion is already moving.
+	# Targets: the four power plants that carry InfiltrateForPowerOutage (a Spy blacks out the whole
+	# grid for 20s), and the Refinery, which a Spy or a Thief robs of half its owner's cash - the
+	# Thief's only target here, and a direct brake on an opponent's banking. sgrel is left out on
+	# purpose: the Smart Grid Relay cannot be blacked out (issue #101). A Battery Bank (`silo`) is one
+	# line away once it accepts a Spy - add `silo: <cells>` to TargetPriorities.
+	SpyBotModule@saboteur:
+		RequiresCondition: enable-saboteur-ai
+		InfiltratorTypes: spy, spy.england, thf
+		TargetPriorities:
+			powr: 20
+			apwr: 20
+			sgwnd: 20
+			sghyd: 25
+			proc: 0
+		DefenceTypes: pbox, hbox, gun, tsla, arct, sgtur, dog
+		DefenceScanRadius: 6
+		DefenceCost: 8
+		DiversionTargetTypes: fact, weap, barr, tent, proc, rcyd, hpad, afld, afld.ukraine, sgdrn, sgdra
+		DiversionSeparation: 12
+		StartDelayTicks: 7500
+		RunIntervalTicks: 2250
+		MaximumInfiltratorsPerRun: 2
+		DiversionCondition: saboteur-diversion
+		DiversionLeadTicks: 250
+		DiversionDurationTicks: 1500
+	# The Saboteur's finisher trigger (issue #135, OpenRA.Mods.Sungrid/BotModules/EnemyGridStateBotModule.cs).
+	# Grants enemy-grid-down once three power outages have been seen across its opponents (its own
+	# Spies' blackouts, in practice), and from then on while any opponent is in low or critical power
+	# or an outage, kept for HoldTicks (60s) after the last sighting so a single rebuilt Solar Array
+	# doesn't call the push straight back off. Nothing before StartDelayTicks (4 min). Works with
+	# Grid Reserve on or off: with it off, this push is how the Saboteur wins.
 	EnemyGridStateBotModule@saboteur:
 		RequiresCondition: enable-saboteur-ai
 		EnemyGridDownCondition: enemy-grid-down
 		StartDelayTicks: 6000
 		HoldTicks: 1500
+		MinimumOutages: 3

@@ -5189,4 +5189,128 @@ manager to accept a target player, which is an engine patch); making `make` fail
 squads and drones, holds a heavy reserve until an opponent's grid is down and then pushes with everything;
 validation clean with negative controls - met, live behaviour unverified.
 
+#### Revised: plays for the Reserve, sends Spies, raids only as a diversion
+
+**Raised as:** the owner's new direction after the first version: the Saboteur should be *less aggressive* - try to
+win on Battery Banks / Grid Reserve, slow the enemy down with Spies, and use its attack units mainly as diversions
+that draw the defender's attention while the Spies get in. With Grid Reserve off: the same spy-and-diversion play,
+going for a destruction win only after enough blackouts. Nothing above is rewritten; this is what changed.
+
+**Spies, which the first version recorded as impossible.** `OpenRA.Mods.Sungrid/BotModules/SpyBotModule.cs` (new,
+~370 lines) is the first bot code in the project that orders an infiltration. How the order is issued:
+`Infiltrates` (Cnc) offers an `IOrderTargeter` with `OrderID` "Infiltrate", and a player's click becomes
+`new Order("Infiltrate", unit, Target.FromActor(building), queued)`, resolved by `Infiltrates.ResolveOrder` into the
+`Infiltrate` enter activity. The module asks the unit's own `IIssueOrder` targeters whether that order ID can target a
+given actor (`IOrderTargeter.CanTarget`, exactly what the UI does) and then queues the same `Order` through
+`IBot.QueueOrder`. Disguise works the same way: `Disguise.ResolveOrder` on a "Disguise" order targeting a live
+actor disguises the unit instantly, so a Spy is sent with a Disguise order (an infantryman of the target's owner,
+the closest one) and then the Infiltrate order in the same tick. Going through the targeters means the module never
+references `OpenRA.Mods.Cnc` (the mod project only references Game and Common, and `Disguise` is an internal class
+anyway), works for any infiltrating unit, and only ever picks targets the unit's own `Infiltrates.Types` accept.
+
+- **Who infiltrates.** Only the Consortium can build a Spy (`spy` / `spy.england`: `~tent, dome`). The Assembly's
+  infiltrator is the Thief (`thf`: `~barr, dome`), whose `ThiefInfiltrate` opens only the Refinery and the Battery
+  Bank (`InfiltrateForCash`, half the owner's cash). So `InfiltratorTypes: spy, spy.england, thf`, and each unit
+  goes only for what its own order accepts: a Spy for a power plant, a Thief for a Refinery.
+- **Targets** are `TargetPriorities`, an actor -> cells dictionary: `powr`, `apwr`, `sgwnd` 20, `sghyd` 25 (the four
+  power buildings that carry `InfiltrateForPowerOutage` through `^DisabledByPowerOutage`: one infiltration blacks out
+  the owner's whole grid for 500 ticks), `proc` 0 (cash theft - the Thief's target, and a Spy's fallback). `sgrel` is
+  deliberately absent: the Smart Grid Relay has no `^DisabledByPowerOutage` and no `SpyInfiltrate` (issue #101).
+  **`silo` is the next line to add** once the Battery Bank accepts a Spy (the sun-cycle work in progress): one
+  `silo: <cells>` entry, nothing in C#. A target a unit cannot enter is filtered out by its own targeter, so adding
+  `silo` before `SILO` accepts Spies would only ever send Thieves there.
+- **Scoring**, lowest wins, in cells: walking distance as the crow flies, minus the target's priority, plus
+  `DefenceCost` (8) per `DefenceTypes` actor within `DefenceScanRadius` (6) - pillboxes, turrets, Tesla Coils, Arc
+  Turrets, Grid Defense Turrets and **dogs**, which see through a disguise (`IgnoresDisguise`) - minus up to
+  `DiversionSeparation` (12) for distance from where the diversion is expected to land (the enemy
+  `DiversionTargetTypes` actor closest to the infiltrator, the same pick the diversion squad will make from home).
+  A second infiltrator in the same run pays a `DefenceCost` penalty for a target already chosen, so a pair splits
+  across two doors where there is a choice. The cheapest candidate with a terrain path wins.
+- **Pacing.** From `StartDelayTicks` (7500, 5 min), every `RunIntervalTicks` (2250, 90s), up to
+  `MaximumInfiltratorsPerRun` (2) idle infiltrators are planned. With `IgnoreBlackedOutGrids` a power producer of a
+  player already in an outage is skipped - `PowerManager.TriggerPowerOutage` *resets* the timer, it doesn't add,
+  so a second Spy during a blackout is mostly wasted. A mission ends when the unit is gone (a completed
+  infiltration disposes it) or idle again (the target died); an idle infiltrator joins the next run, disguise and all.
+- Deterministic-safe in the same sense as the other bot modules: bots run on the host only, nothing here is synced,
+  the condition it grants feeds only bot modules, and there is no randomness (ties break on `ActorID`).
+
+**Diversions: a condition-timed squad manager, not units commanded by the Spy module.** At the start of each run the
+module grants `saboteur-diversion` for `DiversionDurationTicks` (1500, 60s) and holds the infiltrators back for
+`DiversionLeadTicks` (250, 10s) so the diversion is moving first. `SquadManagerBotModule@saboteur-diversion` is
+enabled only while that condition is held; its `PreferredTargetTypes` are the buildings that pull a defender
+(Construction Yard, War Factory, barracks, Refinery, Recycling Depot, air and drone production), no radius limit,
+squads of 4-6, rushes off, and it excludes the heavy reserve - so the diversion is the light units and drones. The
+alternative was to have the Spy module order a handful of units at a cell chosen on the far side of the base from
+the Spy's target, which aims better but would have a second commander ordering units a squad manager also owns.
+This keeps the invariant from the first version - **exactly one squad manager enabled at a time**:
+
+- `@saboteur-home`: `enable-saboteur-ai && !saboteur-diversion && !enemy-grid-down && !enemy-lockdown`. `SquadSize`
+  200 (no capped army reaches it), so it never forms an attack squad and never rushes; it only protects the base.
+  Drones are excluded so they wait for the diversion instead of hunting on their own air-squad logic.
+- `@saboteur-diversion`: `enable-saboteur-ai && saboteur-diversion && !enemy-grid-down && !enemy-lockdown`.
+- `@saboteur-push`: `enable-saboteur-ai && (enemy-grid-down || enemy-lockdown)` - everything but the infiltrators.
+
+When the window closes the diversion manager stops ticking; its squad keeps its last order and fights on where it
+is, and the next run's window picks it up again. The aim is approximate by design: the Spy side *predicts* the
+diversion's target rather than setting it. Spies, Thieves, harvesters and the MCV are in all three managers'
+`ExcludeFromSquadsTypes`.
+
+**The finisher.** `EnemyGridStateBotModule` gains `MinimumOutages` (default 0, the old behaviour): it counts each
+outage that begins on any opponent (low power alone does not count) and grants its condition only once that many
+have been seen. The Saboteur sets 3, so its own Spies' third blackout arms the push, which then fires whenever an
+opponent's grid is down again. With Grid Reserve off that push is how it wins. The push also fires on
+`enemy-lockdown` - `GridReserveBotModule@saboteur`'s `EnemyLockdownCondition`, the first consumer of the hook issue
+#67 built - because an opponent in Lockdown is about to win the match.
+
+**Grid Reserve.** The Saboteur leaves the shared stock `GridReserveBotModule` for its own `@saboteur` instance with
+the Grid Broker's numbers (coverage 125/150%, `StartDelayTicks` 9000, `ExpandAtFillPercent` 65,
+`BuildIntervalTicks` 150, races a Lockdown instead of conceding it). Vault raids on `enemy-banking` (issue #105): not
+taken. Its answer to an opponent's banking is the Thief's and Spy's cash theft and the blackouts; only the push
+prefers Vaults. That keeps it the less aggressive personality the owner asked for.
+
+**Re-tuned (`rules/ai.yaml`).** Base: defence weights above the Normal AI's (and earlier), anti-air early, at most two
+barracks and two War Factories, no airfields or helipads, one drone bay, Radar at 3500 (every infiltrator needs it),
+Smart Grid Relays weighted up. Army: every type capped (about 45 units in all), Spies/Thieves weight 15 and limit 3,
+drones down from 10 to 3 per type, no aircraft. The old `@saboteur-raid` manager is gone.
+
+**Lobby text.** The engine's `ModularBot` has a `Name` and nothing else - there is no lobby description field for a
+bot - so `bot-saboteur-ai` keeps its name and the behaviour is described in `README.md`, `docs/BETA_TESTING.md`,
+`docs/GAME_MODES.md` and the changelog.
+
+**Verified.** `make` builds the mod (output read, not just the exit code); `dotnet build -c Debug -warnaserror` reports
+nothing in any Sungrid file (the 1842 errors are the known engine IDE0055/IDE0301 noise) - with a negative control:
+a doubled space in `SpyBotModule.cs` is reported (SA1025, IDE0055), so the analyzers do run on the new file;
+`--check-explicit-interfaces` and `--check-conditional-trait-interface-overrides` exit 0; `--check-yaml` exits 0
+across all 79 maps. Negative controls, each against the full check and reverted: a bogus actor in `InfiltratorTypes`,
+in a `TargetPriorities` key, in `DefenceTypes` and in `DiversionTargetTypes` (`Missing actor` each - the dictionary
+keys are linted too); `DiversionCondition` renamed (`grants conditions that are not consumed` plus the consumers'
+`not granted`); the diversion manager's condition misspelled (`not granted`); `EnemyLockdownCondition` removed
+(`consumes conditions that are not granted: enemy-lockdown`); `MinimumOutage` misspelled (`refers to a trait field
+... that does not exist`); `InfiltratorTypes` removed (`Required property missing`); `MaximumInfiltratorsPerRun: 0`
+(the module's own `YamlException`). All 20 `UnitsToBuild` keys checked by hand against `Buildable` actors and
+their prerequisites.
+
+**Known limits (revised).**
+
+- No live match - the Spy order path is reasoned from the engine source and compiled, not watched.
+- The diversion's target is predicted, not set. The squad goes for the preferred building closest to its leader,
+  which in a free-for-all may belong to a different opponent from the one the Spies are visiting.
+- A diversion that finds fewer than four light units at home does not form; the Spies go anyway.
+- The diversion squad and the Spies share the window, not a rendezvous: on a big map the Spies may arrive well after
+  the diversion has been beaten off.
+- Disguise needs an enemy infantryman to copy; against a player with no infantry the Spy goes undisguised.
+- A Thief is cloaked only while still, so it walks in visible. Thieves and Spies cost 500 each; three of each is the
+  cap.
+- `MinimumOutages` counts every outage any opponent suffers, not only the Saboteur's own.
+- Air squads still launch through `AirIdleState.FindDefenselessTarget`, as in the first version.
+
+**Files (revision):** `OpenRA.Mods.Sungrid/BotModules/SpyBotModule.cs` (new),
+`OpenRA.Mods.Sungrid/BotModules/EnemyGridStateBotModule.cs`, `mods/sungrid/rules/ai.yaml`, `CLAUDE.md`,
+`CHANGELOG.md`, `README.md`, `docs/BACKLOG.md`, `docs/GAME_MODES.md`, `docs/BETA_TESTING.md`, `docs/ARCHITECTURE.md`.
+
+**Definition of done (revision):** the Saboteur banks toward the Reserve, keeps a defensive base and a small army,
+sends Spies (Thieves for the Assembly) on paced, disguised runs at enemy power plants covered by a condition-timed
+diversion, and pushes only after three blackouts or against a Lockdown; validation clean with negative controls -
+met, live behaviour unverified.
+
 ---
