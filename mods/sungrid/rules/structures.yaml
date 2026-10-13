@@ -1418,8 +1418,17 @@ SILO:
 	StoresPlayerResources:
 		Capacity: 3000
 	-SpawnActorsOnSell:
+	# The upkeep is switched off while the bank discharges (and paid from its
+	# charge instead): PowerStorage scales Power@DISCHARGE's 1 up to the bank's
+	# output, and that modifier would scale every other enabled Power trait on
+	# the actor too. Never granted with the suncycle option off, so the bank
+	# draws its -10 exactly as before.
 	Power:
 		Amount: -10
+		RequiresCondition: !battery-discharging
+	Power@DISCHARGE:
+		Amount: 1
+		RequiresCondition: battery-discharging
 	FireWarheadsOnDeath:
 		Weapon: SmallBuildingExplode
 		EmptyWeapon: SmallBuildingExplode
@@ -1434,6 +1443,39 @@ SILO:
 		Range: 6c0
 		ValidRelationships: Enemy
 		RequiresCondition: gridreserve-beacon
+	# Sun Cycle (docs/BACKLOG.md issue #136): the same building stores energy.
+	# Charge shares GridReserveVault's Capacity at 1 power-second per credit of
+	# space; Reserve is never displaced for charge. Rates are per second.
+	PowerStorage:
+		ChargeRate: 40
+		DischargeRate: 60
+		DischargingCondition: battery-discharging
+	# Faction night identity: the Assembly generates (Wind Turbines hold their
+	# output all night), the Consortium stores - its banks hold 50% more charge
+	# in the same space and release it 50% faster. Charge only; Reserve credits
+	# are the same for both sides.
+	GrantConditionOnFaction@CONSORTIUM:
+		Condition: consortium-storage
+		Factions: allies, england, france, germany
+	PowerStorageMultiplier@CONSORTIUM:
+		CapacityModifier: 150
+		DischargeRateModifier: 150
+		RequiresCondition: consortium-storage
+	# A Spy empties the bank's charge, leaving its Reserve alone. The target type
+	# only exists while the cycle is on, so a Spy is never spent on a bank that
+	# cannot hold charge (the issue #103 lesson). The Thief's cash steal above is
+	# unchanged.
+	GrantConditionOnSunPhase@STORAGE:
+		Condition: suncycle-storage
+		Phases: Day, Dusk, Night, Dawn
+	Targetable@SPY:
+		TargetTypes: SpyInfiltrate
+		RequiresCondition: suncycle-storage
+	InfiltrateForChargeDrain:
+		Types: SpyInfiltrate
+		PlayerExperience: 10
+		InfiltratedTextNotification: notification-battery-drained
+		InfiltrationTextNotification: notification-battery-sabotaged
 
 RCYD:
 	Inherits: ^Building
@@ -1761,6 +1803,7 @@ AFLD.Ukraine:
 POWR:
 	Inherits: ^Building
 	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
+	Inherits@SOLAR: ^SolarPower
 	Inherits@shape: ^2x2Shape
 	RenderSprites:
 		Image: sgpwr
@@ -1803,6 +1846,7 @@ POWR:
 APWR:
 	Inherits: ^Building
 	Inherits@POWER_OUTAGE: ^DisabledByPowerOutage
+	Inherits@SOLAR: ^SolarPower
 	Inherits@shape: ^3x2Shape
 	RenderSprites:
 		Image: sgapwr

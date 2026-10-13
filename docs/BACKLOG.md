@@ -5216,9 +5216,8 @@ anyway), works for any infiltrating unit, and only ever picks targets the unit's
   power buildings that carry `InfiltrateForPowerOutage` through `^DisabledByPowerOutage`: one infiltration blacks out
   the owner's whole grid for 500 ticks), `proc` 0 (cash theft - the Thief's target, and a Spy's fallback). `sgrel` is
   deliberately absent: the Smart Grid Relay has no `^DisabledByPowerOutage` and no `SpyInfiltrate` (issue #101).
-  **`silo` is the next line to add** once the Battery Bank accepts a Spy (the sun-cycle work in progress): one
-  `silo: <cells>` entry, nothing in C#. A target a unit cannot enter is filtered out by its own targeter, so adding
-  `silo` before `SILO` accepts Spies would only ever send Thieves there.
+  **Battery Banks became a Spy target once issue #136 let a Spy drain one** - see "Revised again" below: they are
+  not in `TargetPriorities` (a Thief can enter `SILO` too and would rob it), but in a sun-cycle-only list.
 - **Scoring**, lowest wins, in cells: walking distance as the crow flies, minus the target's priority, plus
   `DefenceCost` (8) per `DefenceTypes` actor within `DefenceScanRadius` (6) - pillboxes, turrets, Tesla Coils, Arc
   Turrets, Grid Defense Turrets and **dogs**, which see through a disguise (`IgnoresDisguise`) - minus up to
@@ -5312,5 +5311,268 @@ their prerequisites.
 sends Spies (Thieves for the Assembly) on paced, disguised runs at enemy power plants covered by a condition-timed
 diversion, and pushes only after three blackouts or against a Lockdown; validation clean with negative controls -
 met, live behaviour unverified.
+
+---
+
+- **Revised again (Battery Banks, after issue #136):** the owner chose to send the Saboteur's Spies at Battery
+  Banks **only while the Sun Cycle lobby option is on**, and to keep the faction asymmetry (the Consortium's Spies
+  sabotage, the Assembly's Thieves steal - no Assembly blackout infiltrator). `SpyBotModule` gained
+  `SunCycleTargetPriorities` (`silo: 15`, an [actor id]: [cells] map like `TargetPriorities`, consulted only while
+  `SunCycleController.Enabled`), `SunCycleInfiltratorTypes` (`spy, spy.england`, so a Thief is never sent in to rob a
+  bank by this route) and `MinimumTargetCharge` (1000 power-seconds: a bank that was just drained, or has not charged
+  yet, is skipped). With the cycle off a bank holds no charge, so the list is inert. Priority 15 sits between the
+  Refinery (0) and the power plants (20): draining a full bank before dusk browns its owner out for the night, which is
+  worth a little more walk than robbing a Refinery, less than a blackout of the whole grid now. Verified: `make`,
+  `--check-yaml` (79 maps), both interface checks, `dotnet build -c Debug -warnaserror` (no errors in mod files);
+  negative controls: a bogus key in `SunCycleTargetPriorities` and a bogus entry in `SunCycleInfiltratorTypes` each
+  give `Missing actor`, a misspelt `MinimumTargetCharg` gives `refers to a trait field ... that does not exist`. Not
+  verified in a live client; the priority and charge threshold are reasoned, not measured.
+
+### 136. The Sun Cycle: a day/night clock, and Battery Banks that store energy as well as Reserve
+
+**Type:** gameplay · **Phase:** 6/7 (new mechanic behind a lobby option) · **Status:** done, not verified live
+
+**Why.** The owner asked for a solar day: Solar Arrays should mean something different at night, and the Battery Bank
+should actually store power. A design proposal (written after reading the pinned engine) offered four ways to fit
+storage beside Grid Reserve's Vault and recommended a new storage building beside a renamed Vault. The owner chose
+otherwise, and those decisions override it: **one building** (the existing `SILO` Battery Bank stores both, no new
+actor, no rename), **one capacity shared at an exchange rate**, **off by default** (`suncycle` checkbox), **30% solar
+at night and 65% at dusk/dawn, no daytime bonus**, a faction night identity (the Assembly generates, the Consortium
+stores), **Spies drain a bank's charge** and **banks don't discharge in a power outage**, and a cycle length a map can
+override (the shellmap's showcase cycle is a later, separate task).
+
+**What shipped.** New C# in `OpenRA.Mods.Sungrid/SunCycle/`:
+
+| File | Role |
+|---|---|
+| `SunCycleController.cs` | World trait. Owns the `suncycle` lobby option (the one place that reads it - issue #37's lesson); the phase is a pure function of `WorldTick` (no state, nothing to sync, replay- and save-safe); notifies `INotifySunPhaseChanged` actors on a change; system text lines at dusk / night / dawn / day (skipped during a save's fast-forward); mutes the stock low-power nag at Dusk and Night and restores each player's own setting at dawn. Timing fields validated at ruleset load. |
+| `GrantConditionOnSunPhase.cs` | Grants a condition in listed phases, on any actor including the Player actor; reads the current phase at `Created`, so a building finished mid-night starts dark. Never grants with the option off. |
+| `SunCycleTint.cs` | Its own `tint` post-process pass, so it multiplies with a map's `TintPostProcessEffect` instead of overwriting it; cross-fades through a warm twilight; night ambient 0.74 (floor 0.70). Render-only. |
+| `PowerStorage.cs` | On the bank. Charge in power-seconds, `[VerifySync]`; shares the `GridReserveVault`'s `Capacity`; discharges by granting `battery-discharging` (upkeep `Power` off, `Power@DISCHARGE` on) and scaling that 1-power trait to the output as an `IPowerModifier`; charge selection bar; idle-charge rule (below). |
+| `PowerStorageMultiplier.cs` | Conditional percentage modifiers on capacity / charge rate / discharge rate - the faction identity hook. |
+| `PowerStorageManager.cs` | Player trait. Once a second: the grid as it would stand with every bank idle, then cover a deficit (earliest-built bank first, ActorID order, integer only, nothing during an outage) or charge from a surplus. |
+| `InfiltrateForChargeDrain.cs` | A Spy empties the bank's charge; Reserve untouched. Mirrors the engine's `InfiltrateFor*` traits. |
+| `PowerStateChangeNotifier.cs` | Player trait: re-notifies power-state listeners on every `PowerState` change (see "engine gap" below). |
+| `SunCycleHudLogic.cs` | Time of day, time to the next phase, stored charge bar and tooltip; under the Grid Reserve bar, or in its slot when that mode is off. |
+| `SunCycleBotModule.cs` | Bots: storage banks and night-proof power by day, and at dusk/night the idle Building queue before the base builder's low-power override can buy a Solar Array. |
+| `CheckSunCycleSolarPercent.cs` | Lint: the YAML night/twilight `PowerMultiplier`s must equal the controller's `NightSolarPercent` / `TwilightSolarPercent`. |
+
+Changed: `GridReserveVault` (banks only into space charge has left free, plus idle charge's space; exposes `Capacity`),
+`GridReserveBotModule` (adds the storage banks on top of its Vault count; its fill pacing counts the Vault share only).
+YAML: `^SolarPower` in `defaults.yaml` on `POWR`/`APWR`; `SILO`'s storage, discharge wiring, Consortium multiplier and
+Spy target in `structures.yaml`; controller and tint in `world.yaml`; manager and notifier in `player.yaml`; two
+`SunCycleBotModule` instances in `ai.yaml`; the HUD in `chrome/ingame-player.yaml`; three label colours in
+`metrics.yaml`; strings in `fluent/rules.ftl` and `fluent/chrome.ftl`.
+
+**Constants (every one reasoned, not measured):**
+
+| Constant | Value | Reasoning |
+|---|---|---|
+| `FirstDuskTick` | 7500 (5:00) | Opening build out of the first night; equals Grid Reserve bots' `StartDelayTicks` |
+| `DayTicks` / `DuskTicks` / `NightTicks` / `DawnTicks` | 5250 / 750 / 2250 / 750 (6:00 cycle) | Night = `LockdownDurationTicks`; two 30 s steps make the power drop readable |
+| Solar at night / twilight | 30% / 65% | The owner's numbers; average 76.7%, no daytime bonus |
+| `ChargeExchangePercent` | 100 (1 power-second per credit of space) | One night of a moderate deficit costs about one bank of space - a real fraction of a 40,000 target, not a prohibitive one |
+| `ChargeRate` | 40/s | Refills 8000 in 200 s, inside the 210 s day |
+| `DischargeRate` | 60/s | A Relay's output; a full bank lasts 133 s at full draw against 150 s of dusk+night+dawn |
+| Consortium multiplier | capacity x1.5, discharge x1.5 | "Holds ~50% more and discharges faster" (owner); charge rate unchanged |
+| Upkeep while discharging | paid from charge | Engine constraint: the output modifier would scale the upkeep too |
+| Idle charge | yields to Reserve after one full cycle unused | Otherwise a base with no night deficit locks itself out of Grid Reserve |
+| Spy drain | 100% of the bank's charge | The owner's spec; a Spy's other targets are all-or-nothing too |
+| Tint | night R0.84 G0.90 B1.12 x0.74, twilight R1.06 G0.95 B0.84 x0.92 | Ambient floor 0.70 keeps team colours readable |
+| Bot `StartTick` / storage cap / night-plant cap | 6000 / 3 / 6 (Easy Grid Broker 15000 / 1 / 2) | A minute before the first dusk; Easy from the second night, small |
+
+**Shared capacity, and why rule 5 exists.** Reserve is never removed for charge; charge only enters space Reserve
+left free and only from surplus power; with Grid Reserve off the whole 8000 holds charge; with the Sun Cycle off
+nothing changes at all. Working that through turned up a trap the proposal had no reason to see: a base that never
+runs short at night (a turbine-heavy Assembly base - the very identity this issue gives them) fills its banks by day,
+never draws on them, and would then be unable to bank Reserve for the rest of the match. A bot would stall too, since
+its "expand at 80% full" pacing reads Reserve. Hence `PowerStorage.IdleCharge`: charge not drawn on for a whole sun
+cycle gives way to Reserve deposits. A bank used every night is never idle (the gap between nights is a 5250-tick day),
+so where storage matters the two jobs compete on equal terms - which is the tension the owner asked for: by day charge
+slows banking, by night Reserve backfills the drained space (banking runs faster after dark), and over a few cycles
+Reserve wins the space unless the player builds banks beyond the target. Worked numbers in `docs/GAME_MODES.md`.
+
+**Engine gap, fixed mod-side.** The proposal found that `PowerManager.UpdatePowerState` only notifies
+`INotifyPowerLevelChanged` when excess power changes sign, so Low <-> Critical is never announced and the drones'
+`ValidPowerStates: Critical` disarm goes stale. Every night walks a solar grid through exactly that step, so it is
+needed for this feature's correctness. No engine patch (the brief said so): `PowerStateChangeNotifier` re-notifies on
+every `PowerState` change. The only engine listener is `GrantConditionOnPowerState`, which re-reads the state, so the
+duplicate calls are no-ops. It is on the Player actor unconditionally - the gap predates the cycle - which does change
+drone behaviour in matches without the cycle, to what `docs/ENERGY_BALANCE.md` always said it was.
+
+**Bots.** The base builder's low-power override buys the plant with the highest *nominal* output, i.e. a Solar Array
+running at 30%, again and again through the night. `SunCycleBotModule` gets there first: at dusk and night it checks
+every second and, while the grid is under the base builder's own margin (mirrored from `BaseBuilderQueueManager`,
+which doesn't expose it), queues the best buildable of `sgwnd`/`sgrel`/`sghyd` on the idle Building queue. By day it
+projects the night deficit and buys storage banks and night-proof plants ahead of dusk. `GridReserveBotModule` adds the
+storage banks on top of its own Vault count. Best effort, not a guarantee: the modules race for an idle queue, and
+past the cap the stock override still runs.
+
+**Verified** (fresh `./fetch-engine.sh` of the current pin, `bded548`, + `make`, in a separate worktree):
+
+- `make` builds. `dotnet build -c Debug -warnaserror` reports nothing in any mod file; its only errors are the known
+  1840 `IDE0055` + 2 `IDE0301` in `OpenRA.Game`/`OpenRA.Mods.Common` (the SDK-patch artifact in "What can and can't
+  be verified"). The mod project still compiles under it, and the analysers do run on it - negative control: a
+  doubled blank line in `SunCycleTint.cs` is reported as `SA1507`. Two real analyser hits (`IDE0032`, `SA1507`) were
+  fixed on the way.
+- `./utility.sh --check-yaml` exits 0 across every map. `--check-explicit-interfaces` and
+  `--check-conditional-trait-interface-overrides` exit 0.
+- `--resolved-rules SILO` shows the storage, the discharge wiring, the faction multiplier and the conditional Spy target.
+- **Negative controls**, each restored afterwards: night `Modifier: 35` -> the new lint fails on `powr` and `apwr`;
+  `RequiresCondition: sun-nite` -> "consumes conditions that are not granted" / "grants conditions that are not
+  consumed"; `StorageTypes: sgbat` -> `Missing actor`; `StorageTypes: powr` -> "does not have trait
+  `PowerStorageInfo`"; `NightPowerTypes: ... sghyx` -> `Missing actor`; `DischargingCondition` typo and the
+  `Targetable@SPY` condition typo -> both condition errors; `NightTicks: 0` and `DuskTicks: -1` -> the ruleset-load
+  `YamlException`; twilight `Modifier: 60` -> the lint; `SolarTypes: ... apwrx` -> `Missing actor`; the Consortium
+  multiplier's condition typo -> both condition errors; `DuskNotification: NoSuchSpeech` -> `Undefined notification
+  reference`; `CheckboxEnabled: sometimes` -> FieldLoader parse error; `GetPowerModifier` made implicit ->
+  `--check-explicit-interfaces` reports the violation.
+- **Not caught by any check here:** a missing fluent key (renaming `checkbox-suncycle` or `label-sun-cycle-hud-flow`
+  still passes `--check-yaml` - this engine has a fluent *syntax* lint, not a reference lint, so the keys were checked
+  by hand). Same gap for every existing string.
+
+**Not verified:** anything live. No match has been played with the cycle on; the tint, the HUD layout, the
+announcements, the bots' night behaviour and every constant above are unobserved. No RA content is installed here,
+and the headless bot-match harness from earlier issues is recorded in `CLAUDE.md` as rendering black; it was not tried.
+
+**Follow-ups.** The bank's nine sprite stages still show ore-storage fill, not charge (needs a sprite body reading
+`PowerStorage`; no art this pass); night art states for the arrays (art rule 16); the shellmap's fast showcase cycle
+(override the timing fields in its `rules.yaml`); a Sun Cycle column in the observer standings; a "kill the banks
+before sunset" squad hook (`GrantConditionOnSunPhase` on the Player actor + `PreferredTargetCondition`, coordinate with
+issue #135's Saboteur work, which should be tuned with the cycle off first); Turtle-style bots don't yet power down
+non-essentials pre-emptively at dusk. Found in passing, pre-existing and not fixed here: `GridReserveVault` has no
+`INotifyOwnerChanged`, so a Battery Bank captured by an Engineer keeps banking its *original* owner's Credits into
+the original owner's Reserve (its manager and `PlayerResources` are cached at construction). `PowerStorage` does
+follow a capture.
+
+**Doc errors corrected in the same pass:** `docs/BUILDINGS.md` said the Vault deposits "30/tick" in three places
+(shipped: 3, issue #75; it was 10 before that, never 30); `docs/GAME_MODES.md` said the Battery Bank's nine charge
+stages show the fill the Vault trait drove - they show ore-storage fill (`WithResourceLevelSpriteBody` reads
+`PlayerResources`), and still do.
+
+**Files:** `OpenRA.Mods.Sungrid/SunCycle/*` (new), `OpenRA.Mods.Sungrid/GridReserve/{GridReserveVault,GridReserveBotModule}.cs`,
+`mods/sungrid/rules/{defaults,structures,world,player,ai}.yaml`, `mods/sungrid/chrome/ingame-player.yaml`,
+`mods/sungrid/metrics.yaml`, `mods/sungrid/fluent/{rules,chrome}.ftl`,
+`docs/{GAME_MODES,ENERGY_BALANCE,BUILDINGS,BACKLOG}.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Definition of done:** a lobby option, off by default, that runs a deterministic day/night cycle; solar output
+follows it; Battery Banks store and release energy in the space they share with Grid Reserve without weakening any of
+its guarantees; faction night identity; Spy drain and outage rule; HUD, tint and announcements; bots that cope;
+`--check-yaml` clean with negative controls - met, pending a live playtest.
+
+---
+
+### 137. The main-menu battle: a sped-up Sun Cycle, more of the roster, and more varied attack scripting
+
+**Type:** world content / scripting · **Phase:** 6 (world identity) · **Status:** done, not verified live
+
+**Why.** The owner asked for three things on the shellmap behind the main menu (`mods/sungrid/maps/desert-shellmap/`,
+made a Sungrid battle by issue #119, given scenery by #122): show the Sun Cycle (issue #136) as a fast showcase,
+introduce more of the Sungrid-original roster, and give the attack script more variety while keeping it looping so the
+battle never stalls. Reading the map against the roster turned up more than missing pieces:
+
+- **No anti-air at all.** Issue #119's transform turned every AA gun into an Arc or Grid Defense Turret, and only
+  `AGUN`/`SAM` can hit an airborne target (`CLAUDE.md`). Nothing on the menu could ever shoot a drone down, and since
+  the Consortium's map-placed base is unkillable, the Assembly's produced drones attacked it forever and piled up for
+  as long as the menu stayed open (three bays producing without limit).
+- **Drone buildings and power on the wrong side.** The Consortium's two bays were Drone Bays (`sgdrn`, the Assembly's)
+  and the Assembly had five Aerial Fabrication Bays (`sgdra`, the Consortium's); the Assembly held four Smart Grid
+  Relays (Consortium-only since issue #101) and a Hydrogen Plant, the Consortium a Wind Turbine. The Lua produced
+  Strike Drones for the Assembly and Recon Drones for the Consortium accordingly - backwards since issue #84.
+- **Nothing kept the north alive.** The Consortium's produced units `Hunt()` and nothing rebuilt what they destroyed.
+
+**The Sun Cycle, forced on and sped up.** No C# field was needed to force it: a shellmap has no lobby, so
+`OptionOrDefault("suncycle", CheckboxEnabled)` returns the map's own `CheckboxEnabled`. The shellmap's `rules.yaml` sets
+`CheckboxEnabled: True` / `CheckboxLocked: True` (the pattern its bounty option already used) and the timing:
+
+| Field | Shellmap | Normal | Time on the menu |
+|---|---|---|---|
+| `FirstDuskTick` | 750 | 7500 | dusk at 0:30 |
+| `DuskTicks` / `NightTicks` / `DawnTicks` | 375 / 1000 / 375 | 750 / 2250 / 750 | night 0:45-1:25, dawn to 1:40 |
+| `DayTicks` | 1000 | 5250 | 40 s of day, next dusk at 2:20 |
+| Cycle | 2750 (1:50) | 9000 (6:00) | |
+
+One C# change: `SunCycleController` never announces a phase change on a `WorldType.Shellmap`. The engine keeps the
+shellmap world running behind the lobby (`Game.JoinInner`'s shellmap hack) and `LobbyLogic` handles every
+`TextNotification`, so each dusk, night, dawn and day line would have landed in the lobby chat. The infiltration
+lines and speech need nothing: transient lines and notifications only reach the local player, and a shellmap has none.
+Power at night was worked through so the showcase holds: the Consortium runs about -170 at night after the additions
+and its nine Battery Banks (x1.5 capacity and discharge) cover it from charge built up by day, so its SAM sites stay
+lit (its storage identity); the Assembly stays at about +570 on its Wind Turbines.
+
+**The roster.** A new committed script, `mods/sungrid/bits/place_shellmap_roster.py`, does both changes on the map
+deterministically (rule 29's method: terrain from `map.bin` and the tileset templates, footprints from the rules, each
+addition at the nearest valid cell to a fixed anchor - free Clear resource-free footprint, a one-cell passable ring
+clear of every other actor - so no path is closed). Re-running it on the previous `map.yaml` reproduces the committed
+one byte for byte; on the current one it skips (`--replace` redoes it).
+
+| Change | Actors |
+|---|---|
+| Retyped to its own faction (same cell, same footprint) | Consortium: 2 Drone Bays -> Aerial Fabrication Bays, Wind Turbine -> Smart Grid Relay, its parked drone -> Strike Drone. Assembly: 5 Aerial Fabs -> Drone Bays, 4 Relays -> Wind Turbines, Hydrogen Plant -> Advanced Solar Array, its two parked drones -> Recon Drones (16 in all; `SovietStrike1/2`, `AlliedRecon1` and `SovietHydrogenPlant` renamed to match) |
+| Consortium, added | War Factory (`AlliedWarFactory`), Aerial Fabrication Bay (`AlliedAerialFab`), Materials Refinery by the eastern ore (`AlliedRefinery`, its free Ore Truck), two more Smart Grid Relays, four SAM sites over the Battery Banks and the front |
+| Assembly, added | Materials Refinery on the northern ore (`SovietRefinery`, free Ore Truck), four Arc Pylons facing the valley, three flak guns, five Battery Banks, six Wind Turbines |
+
+431 actors (was 403). `docs/concept-art/issue137-shellmap-roster.png` is the review schematic: additions bright and
+labelled, retypes white-edged, the camera's oval and what a 1920x1080 menu sees over one orbit. The stock leftovers on
+the map (three light tanks, two heavy tanks, a destroyer, a landing craft, Tanya, a Chinook husk) are untouched.
+
+**The script** (`desert-shellmap.lua`), on top of what issue #119 had (seven edge entries, Recon Drones on the MiG
+paths, Haulers that search when idle):
+
+- **Assembly ground waves** draw from three mixes (troopers and Recon Drones) and are re-sent 4-16 s after being wiped
+  out, so the seven entries fall out of step.
+- **Production** on both sides with each side's own drone, and a cap per side (`disr` 12, drones 4) - a factory waits
+  while its side is at the cap, so nothing accumulates on a menu left open.
+- **Assembly drone raid** every 55 s: three Recon Drones from the north edge attack a random Consortium Battery Bank -
+  the Grid Reserve Vault raid - and the SAM sites answer (the issue #120 wrecks, which drop Scrap).
+- **The Spy**: a Consortium Spy from alternating barracks, disguised as a Disruptor Trooper, walks into the nearest
+  Assembly Battery Bank (empties its stored charge - the Sun Cycle's Spy rule) or, every other round, Solar Array (a
+  power outage: the Arc Pylons and flak go dark). `Trigger.OnInfiltrated` on every such target launches the
+  **blackout raid**, three Strike Drones from the south edge at a pylon, flak gun or bank. The next Spy follows 45 s
+  after the last is gone however it went; a Spy whose target fell retries up to three times, and an infiltration the
+  engine refuses is caught with `pcall` and retires the Spy instead of stopping the script.
+- Raid survivors **withdraw** after 45 s and leave the map, and no raid launches while that side already flies nine
+  of its drone - a raid on an unkillable bank, or one whose anti-air has gone dark, cannot hover there for good.
+- **Salvage run** every 40 s: if an Assembly unit fell on the Consortium's half of the valley at least 31 s earlier
+  (past `SpawnsResourceOnDeath`'s 30 s hold), the next Consortium Hauler in turn drives to that cell and collects.
+- **Collectors kept up**: below two Haulers or one Ore Truck, the Consortium's War Factory builds a replacement (its
+  door overlay, issue #130) and the Assembly's arrives from the map edge.
+- **The Assembly rebuilds** every structure it loses where it stood, 40 s later, with the build-up art (issues #74,
+  #109); units on the footprint are scattered and the check repeats. A rebuilt factory starts a fresh production
+  loop and the old one ends (a generation counter), and a rebuilt Refinery or Depot comes without a free collector
+  (`FreeActor = false`; the keeper decides). The Consortium's map-placed base stays unkillable, as since issue #119.
+
+**Verified:**
+
+- `make check-scripts` (lua5.1) passes; every global the script reads (`luac -l`) is either engine API or a named actor
+  present in `map.yaml`, and every actor id it passes is defined in `rules/` - checked by script, because nothing else
+  checks either (below).
+- `./utility.sh --check-yaml` exits 0 across all maps. `make` builds; `--check-explicit-interfaces` and
+  `--check-conditional-trait-interface-overrides` exit 0; `dotnet build -c Debug -warnaserror` reports nothing in any
+  mod file (only the known 1840 `IDE0055` + 2 `IDE0301` in engine files), and the analysers do run on the changed
+  file (negative control: a stray space before a parenthesis in `SunCycleController.cs` is reported as `SA1009`/`IDE0055`).
+- `--refresh-map-previews` (absolute path) re-saved the map; it left `map.yaml` byte-identical to the script's output,
+  and `map.png` / `map.bin` are unchanged (neither terrain nor resources moved).
+- A separate check over the final map: all 28 additions sit on Clear, resource-free cells that no other actor shares.
+- **Negative controls**, each restored: a map actor typed `tslx` -> `Actor 'tslx' is not defined by any rule`;
+  `FirstDuskTik` in the shellmap rules -> `refers to a trait field ... that does not exist on SunCycleController`;
+  `DayTicks: 0` -> the controller's ruleset-load `YamlException`; the placer with an anchor in the sea -> `no valid cell`.
+- **Not caught by any check here** (also negative-controlled): a Lua `Produce("spx")` and a reference to a named actor
+  that does not exist both pass `--check-yaml` and `check-scripts` (runtime errors only); a building moved onto
+  another's cell, or into the sea, passes `--check-yaml`. Recorded in `CLAUDE.md` rule 29.
+
+**Not verified:** anything live. No RA content is installed here and the shellmap needs it; nobody has watched this
+battle. In particular unobserved: the tint over the menu, whether the raid and spy paths are clear in practice, the
+night power balance as it actually plays, how the Spy's disguise holds against the pylons, the rebuild timing, and
+whether 431 actors with the extra waves still run smoothly on a slow machine.
+
+**Files:** `mods/sungrid/maps/desert-shellmap/{map.yaml,rules.yaml,desert-shellmap.lua}`,
+`mods/sungrid/bits/place_shellmap_roster.py` (new), `OpenRA.Mods.Sungrid/SunCycle/SunCycleController.cs`,
+`mods/sungrid/rules/world.yaml` (comment), `docs/concept-art/issue137-shellmap-roster.png`, `docs/GAME_MODES.md`,
+`docs/BACKLOG.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+**Definition of done:** the cycle visibly turns within the first minute on the menu without touching the lobby path or
+its chat; both bases carry the roster on their own side of the faction line; the battle loops with raids, a Spy,
+salvage runs and rebuilding; checks green with negative controls - met, pending a look at the live menu.
 
 ---

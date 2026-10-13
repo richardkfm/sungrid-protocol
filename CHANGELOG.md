@@ -27,7 +27,22 @@ The detailed entries below track every issue through #119, plus #132; this list 
 
 - **Unreleased** (on `main`): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
   its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that banks toward the
-  Reserve and sends Spies at your power grid under cover of small diversion attacks (issue #135).
+  Reserve and sends Spies at your power grid under cover of small diversion attacks - and, with the Day/Night Cycle on, at your
+  charged Battery Banks to drain them before nightfall (issue #135); a **Day/Night
+  Cycle** lobby option, off by default: Solar Arrays drop to 65% at dusk and 30% at night on a six-minute cycle, the
+  screen dims and cools after dark, and Battery Banks now store surplus power by day and release it at night - in the
+  same space they bank Grid Reserve credits, so night storage and the economic victory compete for the same banks.
+  The Consortium's banks hold half as much again and discharge faster; the Assembly's Wind Turbines run all night. A
+  Spy drains a bank's charge, and banks stay dark during a Spy blackout. Bots build storage and night-proof power
+  instead of buying Solar Arrays in the dark. A HUD line shows the time of day and stored charge. Also fixed along the
+  way: drones now really do lose their weapons when power drops from low to critical (issue #136). The
+  **main-menu battle** now runs the day/night cycle sped up (dusk half a minute in, a full cycle under two minutes)
+  and shows much more of the roster: Arc Pylons, flak and Battery Banks on the Assembly side, a War Factory,
+  Materials Refineries with Ore Trucks, an Aerial Fabrication Bay and SAM sites on the Consortium's, each side's
+  drone buildings and power on the right side of the faction line; new waves - Assembly drone raids on the
+  Consortium's Battery Banks, a disguised Spy walking into an Assembly bank or Solar Array followed by a Strike Drone
+  raid, Haulers driving out to collect the Scrap a fight left - and the Assembly rebuilds what it loses, so the
+  battle never runs down (issue #137).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and

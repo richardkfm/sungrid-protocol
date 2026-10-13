@@ -22,6 +22,20 @@ World:
 		Scripts: desert-shellmap.lua
 	-StartGameNotification:
 	CameraOvalMover:
+	# Issue #137: the Sun Cycle as a sped-up showcase. A shellmap has no lobby,
+	# so the controller falls back to CheckboxEnabled - forced on (and locked,
+	# like the bounty option above). One cycle is 2750 ticks, 1:50 at Normal
+	# speed: dusk at 0:30, night 0:45-1:25, dawn to 1:40, then 40 s of day.
+	# The phase lines are not announced on a shellmap (SunCycleController), so
+	# nothing reaches the lobby chat the menu battle keeps running behind.
+	SunCycleController:
+		CheckboxEnabled: True
+		CheckboxLocked: True
+		FirstDuskTick: 750
+		DayTicks: 1000
+		DuskTicks: 375
+		NightTicks: 1000
+		DawnTicks: 375
 
 ^Palettes:
 	-MenuPostProcessEffect:

@@ -187,6 +187,43 @@ only blackout-proof power; both roles would have to be rebuilt somewhere else.
 `sgwnd` and `sgrel` together, and a bot only builds what its own faction's prerequisites allow — the
 same reasoning that made issue #84's `AGUN`/`SAM` faction swap a rules-only change.
 
+## Night: the Sun Cycle's faction identity (issue #136)
+
+With the `suncycle` lobby option on (off by default; full spec in `docs/GAME_MODES.md`, "Sun Cycle"), Solar Arrays
+fall to 65% at dusk and dawn and 30% at night. Nothing else does. The ledger above gains a column:
+
+| | Cost | Power by day | **Power at night** | Night cr/power | Side |
+|---|---|---|---|---|---|
+| `POWR` Solar Array | 300 | +100 | **+30** | 10.00 | both |
+| `APWR` Advanced Solar Array | 1000 | +200 | **+60** | 16.67 | both |
+| `SGWND` Wind Turbine Array | 250 | +70 | +70 | **3.57** | Assembly |
+| `SGREL` Smart Grid Relay | 400 | +60 | +60 | 6.67 | Consortium |
+| `SGHYD` Hydrogen Plant | 1200 | +350 | +350 | 3.43 | Consortium |
+| `SILO` Battery Bank (discharging) | 150 | -10 | up to **+60** (Assembly) / **+90** (Consortium) from storage | - | both |
+
+Averaged over a six-minute cycle a Solar Array delivers 76.7% of its rating (3.91 Credits per average power instead of
+3.00). There is no daytime bonus, so the Wind Turbine becomes the better average buy - intended, and the first number
+to revisit if solar stops being built at all.
+
+**The two sides meet the night differently.** The owner asked for one faction suggestion; this is it:
+
+- **The Assembly generates.** Its cheap, early, one-cell Wind Turbines hold full output all night, unchanged. Night
+  barely touches a turbine base; the cost is the one the turbines always had - they are fragile and a Spy blacks
+  them out. **A Spy at night hits the Assembly hardest; a Spy by day hits solar-heavy bases hardest.**
+- **The Consortium stores.** Its Battery Banks hold 50% more charge in the same space and release it 50% faster
+  (`PowerStorageMultiplier@CONSORTIUM` on `SILO`, behind `GrantConditionOnFaction`). A Consortium base banks its daytime
+  solar surplus and spends it after dark; a bank's 90 power/s discharge is half again a Relay's output, for as long as
+  the charge lasts. Charge only: the Battery Bank's Grid Reserve capacity is the same for both sides.
+
+This is the same shape as the rest of the power identity - decentralised and fragile against centralised and
+hardened - moved onto the clock. It also sharpens the early-game asymmetry: the Assembly has night-proof power at
+`low` tech (turbines), the Consortium at `medium` (the Relay) and `high` (Hydrogen), so the Consortium's first nights
+lean on storage. Whether that crossover is fair is a playtest question; the levers are one multiplier line each.
+
+Storage costs the Consortium something the turbines don't cost the Assembly: bank space is shared with Grid Reserve, so
+in a Grid Reserve match every power-second of charge is a credit not banked for victory (the tension is worked through
+in `docs/GAME_MODES.md`).
+
 ## Ant / Zombie replacement
 
 The neutral, capturable "Bio-Research Lab" (`bio` prerequisite, used by the `chernobyl` map's Creeps player)

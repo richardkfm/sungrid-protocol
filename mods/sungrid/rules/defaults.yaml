@@ -1349,6 +1349,27 @@
 	Power:
 		RequiresCondition: !disabled
 
+# Sun Cycle (docs/BACKLOG.md issue #136): solar output follows the sun. The
+# conditions are only ever granted while the suncycle lobby option is on, so
+# without it these multipliers never apply. The percentages must match
+# SunCycleController's NightSolarPercent / TwilightSolarPercent in world.yaml
+# (the HUD and the bots read those). Never put this on an actor a
+# PowerDownBotModule can switch off: that module sums every PowerMultiplier on
+# an actor when it estimates the effect of a toggle.
+^SolarPower:
+	GrantConditionOnSunPhase@NIGHT:
+		Condition: sun-night
+		Phases: Night
+	GrantConditionOnSunPhase@TWILIGHT:
+		Condition: sun-twilight
+		Phases: Dusk, Dawn
+	PowerMultiplier@NIGHT:
+		Modifier: 30
+		RequiresCondition: sun-night
+	PowerMultiplier@TWILIGHT:
+		Modifier: 65
+		RequiresCondition: sun-twilight
+
 ^Selectable:
 	Selectable:
 	SelectionDecorations:

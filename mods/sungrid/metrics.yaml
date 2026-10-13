@@ -23,6 +23,12 @@ Metrics:
 	GridReserveEligibleColor: 8BC34A
 	GridReserveLockdownColor: E8A93D
 	GridReserveEnemyLockdownColor: C73B2E
+	# Sun Cycle HUD label (issue #136), read by SunCycleHudLogic: white by day,
+	# sun-gold at dusk and dawn, a pale moonlight blue at night (the one colour
+	# off the locked palette: the palette's blue-black is unreadable as text).
+	SunCycleDayColor: FFFFFF
+	SunCycleTwilightColor: E8A93D
+	SunCycleNightColor: 9CC4E4
 	PlayerJoinedSound: PlayerJoined
 	LobbyOptionChangedSound: LobbyOptionChanged
 	PlayerLeftSound: PlayerLeft

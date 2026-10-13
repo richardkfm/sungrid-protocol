@@ -1216,8 +1216,12 @@ Player:
 	# Targets: the four power plants that carry InfiltrateForPowerOutage (a Spy blacks out the whole
 	# grid for 20s), and the Refinery, which a Spy or a Thief robs of half its owner's cash - the
 	# Thief's only target here, and a direct brake on an opponent's banking. sgrel is left out on
-	# purpose: the Smart Grid Relay cannot be blacked out (issue #101). A Battery Bank (`silo`) is one
-	# line away once it accepts a Spy - add `silo: <cells>` to TargetPriorities.
+	# purpose: the Smart Grid Relay cannot be blacked out (issue #101). Battery Banks (`silo`) are a
+	# Spy-only target while the Sun Cycle is on (SunCycleTargetPriorities): a Spy drains the bank's
+	# stored charge (issue #136), so its owner browns out at night. Banks holding under 1000 charge are
+	# skipped, and with the cycle off a bank holds no charge at all, so a Spy is never wasted on one.
+	# Thieves stay on the Refinery: the owner kept the asymmetry (the Assembly steals, the Consortium
+	# sabotages).
 	SpyBotModule@saboteur:
 		RequiresCondition: enable-saboteur-ai
 		InfiltratorTypes: spy, spy.england, thf
@@ -1227,6 +1231,10 @@ Player:
 			sgwnd: 20
 			sghyd: 25
 			proc: 0
+		SunCycleTargetPriorities:
+			silo: 15
+		SunCycleInfiltratorTypes: spy, spy.england
+		MinimumTargetCharge: 1000
 		DefenceTypes: pbox, hbox, gun, tsla, arct, sgtur, dog
 		DefenceScanRadius: 6
 		DefenceCost: 8
@@ -1250,3 +1258,29 @@ Player:
 		StartDelayTicks: 6000
 		HoldTicks: 1500
 		MinimumOutages: 3
+	# Sun Cycle (docs/BACKLOG.md issue #136). By day each bot projects the night
+	# deficit of its Solar Arrays and buys Battery Banks (counted on top of its
+	# Grid Reserve Vaults by GridReserveBotModule, since one building does both
+	# jobs) and night-proof power; at dusk and night it claims the idle Building
+	# queue for a night-proof plant before the base builder's low-power override
+	# can buy a Solar Array running at 30%. sgbat does not exist: silo is the
+	# Battery Bank, and it stays OUT of every PowerTypes list (it is storage, not
+	# supply). No-ops entirely while the suncycle lobby option is off. All numbers
+	# reasoned, not measured.
+	SunCycleBotModule:
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-saboteur-ai
+		StorageTypes: silo
+		SolarTypes: powr, apwr
+		NightPowerTypes: sgwnd, sgrel, sghyd
+	# The learn-the-mode opponent copes with the night, but late and small: one
+	# storage bank and two night-proof plants at most, from the second night on.
+	SunCycleBotModule@easygridbroker:
+		RequiresCondition: enable-easygridbroker-ai
+		StorageTypes: silo
+		SolarTypes: powr, apwr
+		NightPowerTypes: sgwnd, sgrel
+		StartTick: 15000
+		MaximumStorageBanks: 1
+		MaximumNightPowerPlants: 2
+		BuildIntervalTicks: 400
+		NightIntervalTicks: 50
