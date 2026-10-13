@@ -59,7 +59,8 @@ enough. If it failed, file a [bug report](#4-reporting-a-problem).
 - **Grid Reserve** is on by default. Destruction victory (eliminate everyone) always works too. A popup explains
   the rules at the start of a match.
 - **3 or more players is what we most need to test.** Bots are fine for filling slots; **Easy Grid Broker AI** is
-  the beginner opponent, **Grid Broker AI** plays the economic win hard.
+  the beginner opponent, **Grid Broker AI** plays the economic win hard, and **Saboteur AI** raids your power grid
+  and pushes when you drop into low power.
 
 ### Same network (LAN)
 

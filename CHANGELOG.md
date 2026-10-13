@@ -26,7 +26,8 @@ phase plan and `CLAUDE.md` for detailed current status.
 The detailed entries below track every issue through #119, plus #132; this list maps every issue onto its release tag.
 
 - **Unreleased** (on `main`): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
-  its pair of drones arrives later (issue #134).
+  its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that goes for your power
+  grid instead of your army (issue #135).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
@@ -696,6 +697,17 @@ Nothing in the game changed; this is everything around it that a tester who isn'
   the twelve-minute mark instead of eight.
 - **Every other personality** pauses about four seconds per building.
 - Not yet seen in a real match - say if Easy Grid Broker now feels too passive, or the others still too fast.
+
+## Saboteur AI - a bot that hunts your power grid (issue #135)
+
+- A seventh lobby personality. It barely bothers with your army: small raiding parties and drones go straight for
+  your Solar Arrays, Wind Turbines, Hydrogen Plants, Smart Grid Relays and Battery Banks, wherever they are on the map.
+- Meanwhile it keeps its heavy tanks and artillery at home. The moment your base drops into low power, it sends
+  everything at once - your Construction Yard, what is left of your grid, and your Battery Banks.
+- Keep a power surplus, spread your plants out and put defences by them, and it has nothing to push into. It is
+  meant to teach exactly that.
+- It does not use Spies yet: no AI in the game knows how to infiltrate a building.
+- Not yet seen in a real match - say if it feels toothless, or if its raids never stop.
 
 ## Open / recorded but not implemented
 

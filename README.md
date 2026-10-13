@@ -29,7 +29,7 @@ This repository follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSD
 
 Playable today: `mods/sungrid` holds real Red Alert-derived gameplay (Phase 1), the full Phase 2/5 building roster, and the Grid Reserve economic victory mode (Phase 3), all confirmed working end-to-end in a local skirmish. Sungrid Protocol launches as its own entry in the OpenRA mod chooser — see [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for exact build/launch/troubleshooting steps.
 
-Grid Reserve is enabled by default in the lobby, and a one-time in-match popup explains the rules the first time you play a match with it on. Six AI personalities are selectable, including two — **Grid Broker AI** and **Easy Grid Broker AI** — that actually play the economic mode rather than ignoring it.
+Grid Reserve is enabled by default in the lobby, and a one-time in-match popup explains the rules the first time you play a match with it on. Seven AI personalities are selectable, including two — **Grid Broker AI** and **Easy Grid Broker AI** — that actually play the economic mode rather than ignoring it, and **Saboteur AI**, which hunts your power grid instead of your army.
 
 Phase 6's visual identity work is essentially complete: original UI chrome, cursors, main menu and menu music, per-faction badges and lobby flags, reskinned palettes for all three terrain tilesets, and original in-world sprites, build-ups, rubble, husks and cameos for every Sungrid-specific building and unit. Still stock OpenRA/RA art: the core inherited unit and vehicle sprites, terrain scenery, and all voice/sound/in-game music — that's Phase 7, which hasn't started beyond a few unit renames. See `docs/ROADMAP.md`'s Phase 6/7 for the plan and [`CHANGELOG.md`](CHANGELOG.md) for the detail.
 
