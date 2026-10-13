@@ -5681,3 +5681,34 @@ its chat; both bases carry the roster on their own side of the faction line; the
 salvage runs and rebuilding; checks green with negative controls - met, pending a look at the live menu.
 
 ---
+
+### 138. Spies and Thieves vanish at night; Saboteur AI is the default bot
+
+**Status:** Done, not verified in a live client. Two owner requests after the Sun Cycle went on by default.
+
+**Night cloak.** The owner wanted infiltrators to gain an edge after dark, visible only to "the special radar
+building" - the Sensor Array (`SGSNS`), whose tooltip already called it the one structure that detects cloaked units
+beyond a base defense. Owner's choices: Spies *and* Thieves (both sides' infiltrators), Night phase only (not dusk or
+dawn), and close-range detection kept so one undefended gap is not a free win. The Saboteur AI keeps its 90-second
+spy rhythm (no night timing).
+
+- `^NightCloak` in `rules/defaults.yaml`: `GrantConditionOnSunPhase@NIGHTCLOAK` (`night-cloak`, `Phases: Night`) and
+  `Cloak@NIGHT` (`RequiresCondition: night-cloak`, `InitialDelay: 0`, `CloakDelay: 50`, default `DetectionTypes:
+  Cloak` and default `UncloakOn`). Inherited by `SPY` (so `SPY.England` too) and `THF` as `Inherits@NIGHTCLOAK`. With
+  the cycle off the condition is never granted, so nothing changes.
+- **Who sees them** is the existing `DetectCloaked` (`Cloak`) set, unchanged: Sensor Array 8 cells, Arc Pylon (`TSLA`)
+  and Pillbox 6, every infantryman 1.5 (`^Infantry`). Dogs still see through a *disguise*, not a cloak.
+- Tooltips: `actor-spy`, `actor-thf` and `actor-sgsns` say so.
+
+**Default bot.** The engine's default bot is the first `IBotInfo` on the Player actor: `SkirmishLogic` adds it to a
+fresh skirmish and the bot dropdowns list in that order. `ModularBot@SaboteurAI` moved to the top of `rules/ai.yaml`.
+"Add bots" (fill every free slot) stays random - `LobbyLogic` uses `botTypes.Random(...)`, an engine patch to change.
+A player's saved skirmish settings still restore their last bot choice.
+
+**Verified:** `make`, `./utility.sh --check-yaml` (79 maps, exit 0); `--resolved-rules SPY`, `SPY.England`, `THF` show
+the night cloak, `--resolved-rules Player` lists `ModularBot@SaboteurAI` first. Negative control: a misspelt
+`RequiresCondition: night-clok` gives `consumes conditions that are not granted` plus `grants conditions that are
+not consumed: night-cloak`. **Not verified live:** whether a night Spy is too strong against a base without a Sensor
+Array, and how the Saboteur's Spies fare (they gain the cloak too, and night is in every default match now).
+
+---

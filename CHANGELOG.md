@@ -51,7 +51,10 @@ The detailed entries below track every issue through #119, plus #132; this list 
   drone buildings and power on the right side of the faction line; new waves - Assembly drone raids on the
   Consortium's Battery Banks, a disguised Spy walking into an Assembly bank or Solar Array followed by a Strike Drone
   raid, Haulers driving out to collect the Scrap a fight left - and the Assembly rebuilds what it loses, so the
-  battle never runs down (issue #137).
+  battle never runs down (issue #137). Spies and Thieves are **invisible at night**: only a Sensor
+  Array (8 cells), a Pillbox or Arc Pylon (6) or infantry standing right beside them can see one (issue #138).
+  **Saboteur AI is the default bot** - a fresh skirmish adds it and it heads every bot list; "Add bots" still picks at
+  random (issue #138).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and

@@ -125,7 +125,9 @@ each other's state and it is easy to leave one of them out:
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Seven lobby personalities: the four
-stock ones plus **Grid Broker AI**, **Easy Grid Broker AI** and **Saboteur AI** (issue #135).
+stock ones plus **Grid Broker AI**, **Easy Grid Broker AI** and **Saboteur AI** (issue #135). **Saboteur AI is the
+default bot** (issue #138): the engine's default is the *first* `ModularBot` on the Player actor, so it heads `ai.yaml`;
+keep it first. "Add bots" picks at random in the engine, not from that order.
 
 **Bots now raid Vaults (issue #105).** This was the deferral above, and it did need the engine-level
 squad target-selection change #67 predicted. Squad targeting is *purely distance-based* — every state
@@ -272,6 +274,8 @@ Rules that are easy to break:
 - **The main-menu shellmap forces the cycle on** (issue #137): no lobby, so `OptionOrDefault` falls back to
   `CheckboxEnabled`, which `maps/desert-shellmap/rules.yaml` sets, with a 2750-tick showcase cycle. Phase lines are
   never announced on a `WorldType.Shellmap` - it keeps running behind the lobby, whose chat would collect them.
+- **Spies and Thieves are cloaked at night** (`^NightCloak`, issue #138): seen only by `DetectCloaked` - the Sensor
+  Array (8 cells), Arc Pylon and Pillbox (6), infantry beside them (1.5). The owner chose both infiltrators, Night only.
 - **Bots:** `SunCycleBotModule` claims the idle Building queue for night-proof power at dusk/night before the base
   builder's low-power override buys a 30%-output Solar Array, and buys storage banks by day; `GridReserveBotModule`
   adds those storage banks on top of its Vault count and paces against the Vault share only. Its `MaximumVaults` (8)

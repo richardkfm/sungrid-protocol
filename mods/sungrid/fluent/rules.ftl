@@ -378,6 +378,8 @@ actor-spy =
     building infiltrated.
     Loses disguise when attacking.
     Can detect spies.
+    Invisible at night (Day/Night Cycle) except
+    near a Sensor Array or base defense.
       Strong vs Infantry
       Weak vs Vehicles and Aircraft
       Special Ability: Disguised
@@ -417,6 +419,8 @@ actor-thf =
     .description =
     Steals enemy credits.
     Hijacks enemy vehicles.
+    Invisible at night (Day/Night Cycle) except
+    near a Sensor Array or base defense.
       Unarmed
 
 actor-shok =
@@ -1285,4 +1289,5 @@ actor-sgsns =
     A distributed sensor mesh reading grid load, drone
     traffic, and terrain. Wide vision radius, and the only
     structure that detects cloaked units beyond the reach
-    of a base defense.
+    of a base defense - including Spies and Thieves,
+    which are invisible at night.
