@@ -35,7 +35,9 @@ The detailed entries below track every issue through #119, plus #132; this list 
   The Consortium's banks hold half as much again and discharge faster; the Assembly's Wind Turbines run all night. A
   Spy drains a bank's charge, and banks stay dark during a Spy blackout. Bots build storage and night-proof power
   instead of buying Solar Arrays in the dark. A HUD line shows the time of day and stored charge. Also fixed along the
-  way: drones now really do lose their weapons when power drops from low to critical (issue #136). The
+  way: drones now really do lose their weapons when power drops from low to critical (issue #136). The Battery
+  Bank's build tooltip and the Day/Night option now say plainly that storing energy is automatic: a bank charges
+  from spare power by day and powers the base at night, so keep power above zero in daylight (issue #136). The
   **main-menu battle** now runs the day/night cycle sped up (dusk half a minute in, a full cycle under two minutes)
   and shows much more of the roster: Arc Pylons, flak and Battery Banks on the Assembly side, a War Factory,
   Materials Refineries with Ore Trucks, an Aerial Fabrication Bay and SAM sites on the Consortium's, each side's
