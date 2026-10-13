@@ -5462,6 +5462,13 @@ its guarantees; faction night identity; Spy drain and outage rule; HUD, tint and
 
 ---
 
+- **Revised (first live look, owner feedback: "I have no idea how to store energy"):** nothing in the game said that
+  storage is automatic - the Battery Bank's tooltip and the lobby option described *what* a bank does, not that the
+  player only has to keep power above zero by day. The owner chose better descriptions only (no HUD or hint changes)
+  and kept storage fully automatic (no per-bank toggle). `actor-silo.description` and `checkbox-suncycle.description`
+  in `mods/sungrid/fluent/rules.ftl` were rewritten: charges automatically from spare power by day, powers the base
+  at night, no orders needed, keep power above zero in daylight, energy and Reserve share the space. Text only.
+
 ### 137. The main-menu battle: a sped-up Sun Cycle, more of the roster, and more varied attack scripting
 
 **Type:** world content / scripting · **Phase:** 6 (world identity) · **Status:** done, not verified live

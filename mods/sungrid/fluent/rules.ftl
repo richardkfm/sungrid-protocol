@@ -25,9 +25,10 @@ checkbox-gridreserve =
 
 checkbox-suncycle =
     .label = Day/Night Cycle
-    .description = Solar Arrays fall to 30% output at night. Battery Banks store
-    surplus power by day and release it after dark, in the same space they
-    bank Grid Reserve credits
+    .description = Solar Arrays fall to 30% output at night. Battery Banks
+    charge automatically from spare power by day and power your base at
+    night - keep your power above zero in daylight to fill them. Energy
+    shares the banks' space with Grid Reserve credits
 
 notification-insufficient-funds = Insufficient funds.
 notification-new-construction-options = New construction options.
@@ -685,13 +686,16 @@ actor-proc =
 actor-silo =
     .name = Battery Bank
     .description =
-    Stores surplus grid capacity, preventing
-    resources from overflowing. Also banks spendable
-    credits into permanent Grid Reserve for the
-    economic victory mode, when enabled. With the
-    day/night cycle on, also stores surplus power
-    by day and releases it at night, in the same
-    space as the Reserve.
+    Stores spare Credits so harvested resources
+    don't overflow.
+    Grid Reserve: banks Credits into the Reserve
+    for the economic victory, automatically.
+    Day/Night Cycle: charges itself from spare
+    power by day and powers your base at night,
+    automatically - no orders needed. Keep your
+    power above zero in daylight to fill it.
+    Energy and Reserve share the same space, so
+    build extra banks to do both.
 
 actor-rcyd =
     .name = Recycling Depot
