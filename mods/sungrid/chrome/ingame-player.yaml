@@ -66,6 +66,44 @@ Container@PLAYER_WIDGETS:
 					Contrast: true
 					TooltipContainer: TOOLTIP_CONTAINER
 					TooltipTemplate: SIMPLE_TOOLTIP
+		# Sun Cycle (docs/BACKLOG.md issue #136): time of day and stored Battery Bank
+		# charge, under the Grid Reserve bar. SunCycleHudLogic hides it when the
+		# suncycle lobby option is off and moves it up into the Grid Reserve slot
+		# when that mode is off. Same panel and bar art as the Grid Reserve HUD.
+		Container@SUN_CYCLE_HUD:
+			Logic: SunCycleHudLogic
+			X: (WINDOW_WIDTH - WIDTH) / 2
+			Y: 46
+			Width: 260
+			Height: 32
+			Children:
+				Background@SUN_CYCLE_BG:
+					Width: PARENT_WIDTH
+					Height: PARENT_HEIGHT
+					Background: grid-reserve-panel
+				Image@SUN_CYCLE_ICON:
+					X: 8
+					Y: 8
+					ImageCollection: sungrid-marks
+					ImageName: battery
+				ProgressBar@SUN_CYCLE_BAR:
+					X: 30
+					Y: 6
+					Width: PARENT_WIDTH - 38
+					Height: 10
+					BarMargin: 2, 2
+					Background: grid-reserve-bar-bg
+					Bar: grid-reserve-bar-thumb
+				LabelWithTooltip@SUN_CYCLE_LABEL:
+					X: 30
+					Y: 16
+					Width: PARENT_WIDTH - 38
+					Height: 14
+					Align: Center
+					Font: TinyBold
+					Contrast: true
+					TooltipContainer: TOOLTIP_CONTAINER
+					TooltipTemplate: SIMPLE_TOOLTIP
 		Container@GRID_RESERVE_BRIEFING:
 			Logic: GridReserveBriefingLogic
 			Width: 560

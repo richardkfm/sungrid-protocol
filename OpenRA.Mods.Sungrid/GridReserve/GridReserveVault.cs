@@ -11,6 +11,7 @@
 
 using System;
 using OpenRA.Mods.Common.Traits;
+using OpenRA.Mods.Sungrid.SunCycle;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Sungrid.GridReserve
@@ -51,17 +52,26 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public override object Create(ActorInitializer init) { return new GridReserveVault(init.Self, this); }
 	}
 
-	public class GridReserveVault : ITick, INotifyKilled, INotifyRemovedFromWorld, ISync
+	public class GridReserveVault : ITick, INotifyKilled, INotifyRemovedFromWorld, INotifyCreated, ISync
 	{
 		readonly GridReserveVaultInfo info;
 		readonly PlayerResources playerResources;
 		readonly GridReserveManager manager;
+
+		// The Sun Cycle's stored charge, when this building is also a Battery Bank (PowerStorage). The two
+		// share Capacity: charge already in the bank is space Reserve cannot bank into. Charge never displaces
+		// Reserve - PowerStorage only ever charges into space Reserve has left free - so every guarantee below
+		// (irreversibility, the target ceiling, Lockdown) is unchanged; charge can only slow banking down.
+		// Null, or always empty, whenever the suncycle option is off, which leaves this trait exactly as before.
+		PowerStorage storage;
 
 		int beaconToken = Actor.InvalidConditionToken;
 		bool removed;
 
 		[VerifySync]
 		public int CurrentReserve { get; private set; }
+
+		public int Capacity => info.Capacity;
 
 		public GridReserveVault(Actor self, GridReserveVaultInfo info)
 		{
@@ -71,14 +81,23 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			manager.RegisterVault(this);
 		}
 
+		void INotifyCreated.Created(Actor self)
+		{
+			storage = self.TraitOrDefault<PowerStorage>();
+		}
+
 		void ITick.Tick(Actor self)
 		{
 			if (!manager.Enabled)
 				return;
 
-			if (CurrentReserve < info.Capacity)
+			// Charge that has sat unused for a whole sun cycle gives way (PowerStorage.IdleCharge): without that, a
+			// player who never runs short at night would fill their banks with charge that never drains and could
+			// never bank again.
+			var free = info.Capacity - CurrentReserve - (storage?.OccupiedSpace ?? 0) + (storage?.YieldableSpace ?? 0);
+			if (free > 0)
 			{
-				var room = info.Capacity - CurrentReserve;
+				var room = free;
 
 				// Ceiling on the owner's *total* Reserve, not this Vault's: spare Vault capacity is meant to be
 				// raid redundancy (somewhere to re-bank after losing one), not extra banked Reserve. Without this
@@ -100,6 +119,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				{
 					CurrentReserve += amount;
 					manager.AddReserve(amount);
+					storage?.YieldToReserve();
 				}
 			}
 

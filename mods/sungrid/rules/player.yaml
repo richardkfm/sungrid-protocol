@@ -118,6 +118,15 @@ Player:
 	PowerManager:
 		SpeechNotification: LowPower
 		TextNotification: notification-low-power
+	# Sun Cycle storage: moves surplus power into Battery Banks and back out
+	# once a second. Idle unless the suncycle lobby option is on (issue #136).
+	PowerStorageManager:
+	# PowerManager only notifies power-state listeners when excess power changes
+	# sign, so Low -> Critical went unannounced and the drones'
+	# `ValidPowerStates: Critical` disarm went stale. Every Sun Cycle night walks
+	# a solar grid through exactly that step, so this re-notifies on every
+	# PowerState change. Active whether or not the cycle is on (issue #136).
+	PowerStateChangeNotifier:
 	AllyRepair:
 	PlayerResources:
 		InsufficientFundsNotification: InsufficientFunds

@@ -14,6 +14,7 @@ using System.Collections.Frozen;
 using System.Linq;
 using OpenRA.Mods.Common;
 using OpenRA.Mods.Common.Traits;
+using OpenRA.Mods.Sungrid.SunCycle;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Sungrid.GridReserve
@@ -80,6 +81,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		GridReserveManager manager;
 		PlayerResources playerResources;
 		Player[] enemies;
+		SunCycleBotModule[] sunCycleModules = [];
 
 		int vaultCapacity;
 		int ticks;
@@ -100,6 +102,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 			manager = self.Trait<GridReserveManager>();
 			playerResources = self.Trait<PlayerResources>();
+			sunCycleModules = self.TraitsImplementing<SunCycleBotModule>().ToArray();
 
 			// Vault capacity is a rules constant, so the largest one only needs resolving once.
 			foreach (var type in Info.VaultTypes)
@@ -165,12 +168,20 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			if (wanted <= 0)
 				return;
 
+			// With the Sun Cycle on, the Vault is also the Battery Bank and the two jobs share one capacity
+			// (docs/GAME_MODES.md). Banking only ever fills to the target, so the storage banks come on top of
+			// the Vault count rather than out of it; zero whenever the cycle is off.
+			var storageBanks = StorageBanksWanted();
+			wanted += storageBanks;
+
 			var owned = world.ActorsHavingTrait<GridReserveVault>().Count(a => a.Owner == player && !a.IsDead);
 			if (owned >= wanted)
 				return;
 
-			// Don't stack up empty Vaults: they all draw from the same treasury at once.
-			if (owned > 0 && manager.TotalReserve * 100 < owned * vaultCapacity * Info.ExpandAtFillPercent)
+			// Don't stack up empty Vaults: they all draw from the same treasury at once. Measured against the
+			// Vault share of the banks only - the storage share was never meant to fill with Reserve.
+			var vaultShare = owned - storageBanks;
+			if (vaultShare > 0 && manager.TotalReserve * 100 < vaultShare * vaultCapacity * Info.ExpandAtFillPercent)
 				return;
 
 			var queuesByCategory = AIUtils.FindQueuesByCategory(player);
@@ -178,6 +189,15 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				return;
 
 			QueueVault(bot, queuesByCategory);
+		}
+
+		int StorageBanksWanted()
+		{
+			foreach (var module in sunCycleModules)
+				if (!module.IsTraitDisabled)
+					return module.StorageBanksWanted;
+
+			return 0;
 		}
 
 		int WantedVaultCount(bool contested)

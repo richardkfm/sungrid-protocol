@@ -244,6 +244,18 @@ World:
 		LockdownStartTextNotification: notification-grid-lockdown-started
 		LockdownCancelledNotification: TimerStopped
 		LockdownCancelledTextNotification: notification-grid-lockdown-cancelled
+	# Sun Cycle (docs/BACKLOG.md issue #136, docs/GAME_MODES.md). Off by default
+	# until playtested. Every timing field (FirstDuskTick, DayTicks, DuskTicks,
+	# NightTicks, DawnTicks) can be overridden in a map's rules.yaml, e.g. for a
+	# sped-up showcase cycle on the shellmap. NightSolarPercent and
+	# TwilightSolarPercent must match ^SolarPower's PowerMultipliers.
+	SunCycleController:
+		CheckboxDisplayOrder: 6
+		DuskTextNotification: notification-sun-dusk
+		NightTextNotification: notification-sun-night
+		DawnTextNotification: notification-sun-dawn
+		DayTextNotification: notification-sun-day
+	SunCycleTint:
 	MapOptions:
 		ShortGameCheckboxDisplayOrder: 2
 		TechLevelDropdownDisplayOrder: 2

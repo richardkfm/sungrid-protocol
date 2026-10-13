@@ -23,6 +23,12 @@ checkbox-gridreserve =
     .description = Adds an economic victory: bank Credits into Battery Banks and
     hold Grid Lockdown once the Reserve target is reached to win
 
+checkbox-suncycle =
+    .label = Day/Night Cycle
+    .description = Solar Arrays fall to 30% output at night. Battery Banks store
+    surplus power by day and release it after dark, in the same space they
+    bank Grid Reserve credits
+
 notification-insufficient-funds = Insufficient funds.
 notification-new-construction-options = New construction options.
 notification-cannot-deploy-here = Cannot deploy here.
@@ -32,6 +38,12 @@ notification-grid-lockdown-started = { $player } has reached their Grid Reserve 
 notification-grid-lockdown-cancelled = { $player }'s Grid Lockdown was cancelled.
 notification-ally-under-attack = Our ally is under attack.
 notification-silos-needed = Battery banks needed.
+notification-sun-dusk = Dusk: solar output falling.
+notification-sun-night = Nightfall: solar output at its lowest.
+notification-sun-dawn = Dawn: solar output rising.
+notification-sun-day = Full daylight: solar output restored.
+notification-battery-drained = Battery Bank drained.
+notification-battery-sabotaged = Enemy Battery Bank drained.
 
 ## world.yaml
 notification-game-saved = Game saved.
@@ -676,7 +688,10 @@ actor-silo =
     Stores surplus grid capacity, preventing
     resources from overflowing. Also banks spendable
     credits into permanent Grid Reserve for the
-    economic victory mode, when enabled.
+    economic victory mode, when enabled. With the
+    day/night cycle on, also stores surplus power
+    by day and releases it at night, in the same
+    space as the Reserve.
 
 actor-rcyd =
     .name = Recycling Depot

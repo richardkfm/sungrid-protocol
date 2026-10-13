@@ -89,7 +89,7 @@ Bots read every player's Reserve total directly rather than inferring it from th
 
 This section records the concrete trait design implemented for Phase 3, superseding the open questions in `docs/ARCHITECTURE.md`'s "New C# traits" friction point for this specific mechanic.
 
-**The Vault is the existing Battery Bank (`SILO` in `mods/sungrid/rules/structures.yaml`), not a new actor.** `docs/BUILDINGS.md` already scoped "Battery Bank (Vault)" as one evolving building — Phase 2 shipped its storage-capacity role, Phase 3 adds the Grid Reserve deposit role on the same actor. No new actor id was introduced. It initially kept stock RA's silo art too; that was replaced in `docs/BACKLOG.md` issue #70 with dedicated Battery Bank art (`mods/sungrid/bits/sgvlt.png`, wired via `RenderSprites: Image: sgvlt`), since an ore bin filling with ore is the wrong read for a building that banks Credits as grid capacity. The nine `stages` frames now show battery charge, which is the same fill-fraction the trait already drove.
+**The Vault is the existing Battery Bank (`SILO` in `mods/sungrid/rules/structures.yaml`), not a new actor.** `docs/BUILDINGS.md` already scoped "Battery Bank (Vault)" as one evolving building — Phase 2 shipped its storage-capacity role, Phase 3 adds the Grid Reserve deposit role on the same actor. No new actor id was introduced. It initially kept stock RA's silo art too; that was replaced in `docs/BACKLOG.md` issue #70 with dedicated Battery Bank art (`mods/sungrid/bits/sgvlt.png`, wired via `RenderSprites: Image: sgvlt`), since an ore bin filling with ore is the wrong read for a building that banks Credits as grid capacity. The nine `stages` frames are drawn as battery charge, but what drives them is **ore-storage fill**: `WithResourceLevelSpriteBody` reads `PlayerResources` (stored ore against storage capacity), not Reserve and - since the Sun Cycle (below) - not stored energy either. (This paragraph said "the same fill-fraction the trait already drove" until issue #136; neither `GridReserveVault` nor `PowerStorage` has ever driven the sprite. Showing charge or Reserve needs a sprite body that reads them, which is open follow-up work.)
 
 **Naming convention: "Vault" is internal, "Battery Bank" is what the player sees.** These docs, the trait names (`GridReserveVault`), and the C# `[Desc]` modder documentation all say *Vault*, because that is what the thing is in design terms. Every string a player actually reads says *Battery Bank* — the actor's display name, the in-match briefing popup (`label-grid-reserve-briefing-line1`…`line5`), and the baked cameo label. Keep new player-facing text on that side of the split: a player never sees a building called a Vault, so using the word in the lobby or HUD sends them looking for something that does not exist. (This was a real leak in the lobby checkbox description until issue #70's follow-up.)
 
@@ -157,3 +157,182 @@ Applied to the Rush, Normal, Turtle, Naval and Grid Broker squad managers. **Del
 Note what this does and does not change. It changes which enemy a *squad* walks toward. It does not change individual-unit auto-targeting: `^AutoTargetGround`'s default `AutoTargetPriority` omits `Structure`, so units still never open fire on a building of their own accord — a squad ordered onto a Vault attacks it, but units idling beside one do nothing, for bots and humans alike. That is stock Red Alert behaviour and is left intact.
 
 The whole module short-circuits on `GridReserveManager.Enabled`, the same lobby-toggle gate `GridReserveVault` and `GridReserveController` use — with the checkbox off it never touches production, and the base builder's ordinary "build a silo when ore storage is nearly full" behaviour is all that remains. `BuildingLimits: silo` was also added to all four stock personalities (previously unlimited) so that overflow path can't fight the module for build slots.
+
+## Sun Cycle (day/night, issue #136)
+
+A second, independent lobby option (`suncycle`, **"Day/Night Cycle", off by default** until it has been played by
+someone other than the author). It changes no victory condition. One sky for the whole table: every player's night
+falls at the same moment, so a dusk is a shared, readable timing window rather than a per-player hidden state.
+Every number below is **reasoned, not measured**. Tick counts assume Normal speed (25 ticks/s), as elsewhere in this
+document.
+
+### The cycle
+
+| Phase | Ticks | Time | Solar output | Why |
+|---|---|---|---|---|
+| Opening day | 7500 | 5:00 | 100% | `FirstDuskTick`. Keeps the opening build order out of the first night, and matches `GridReserveBotModule.StartDelayTicks` (7500): the first dusk arrives as banking can start |
+| Dusk | 750 | 0:30 | 65% | One visible step down before the drop: the power bar changes in two readable steps (Pillar 1), and the dusk line is the warning |
+| Night | 2250 | 1:30 | **30%** | Equal to `LockdownDurationTicks` (2250): a full Grid Lockdown hold fits exactly inside one night |
+| Dawn | 750 | 0:30 | 65% | Mirror of Dusk |
+| Day | 5250 | 3:30 | 100% | The bulk of the cycle, so solar's average loss stays bounded |
+| **Cycle** | **9000** | **6:00** | avg 76.7% | No daytime bonus (the owner's call): `POWR` effectively costs 3.91 Credits/power on average instead of 3.00, `APWR` 6.52 instead of 5.00 |
+
+The phase is a pure function of `World.WorldTick` (`SunCycleController.PhaseAt`): no accumulated state, nothing to
+sync, identical on every client, in a replay and after loading a save. Every timing field lives on
+`SunCycleController` in `rules/world.yaml` and can be overridden in a map's `rules.yaml` (the main-menu shellmap is
+meant to get a fast showcase cycle that way - not done yet).
+
+**Only solar falls.** `POWR` and `APWR` inherit `^SolarPower` (`rules/defaults.yaml`): two `GrantConditionOnSunPhase`
+traits grant `sun-night` / `sun-twilight`, and two stock `PowerMultiplier`s (30 / 65) re-total the owner's power the
+moment the condition changes. Health scaling stacks multiplicatively (a Solar Array at 25% health gives about 7 at
+night). Wind Turbines, Hydrogen Plants and Smart Grid Relays are unchanged. The conditions are never granted with the
+option off, so the multipliers never apply and the rules are exactly as before. `SunCycleController` repeats the two
+percentages (`NightSolarPercent`, `TwilightSolarPercent`) because the HUD shows them and the bots plan with them; a
+mod lint pass (`CheckSunCycleSolarPercent`) fails `--check-yaml` if the YAML multipliers and the controller disagree.
+**Never put `^SolarPower` on an actor `PowerDownBotModule` can switch off** - that module sums every `PowerMultiplier`
+on an actor when it estimates a toggle.
+
+### The Battery Bank stores energy too (one building, two jobs)
+
+There is no new building. The Battery Bank (`SILO`, the Grid Reserve Vault) gains a `PowerStorage` trait and stores
+charge as well as Reserve. Charge is held in **power-seconds** (one power for one second).
+
+**Shared capacity.** Each bank has one capacity: the Vault's `Capacity` (8000). Stored charge and banked Reserve
+compete for it at a fixed **exchange rate of 1 power-second per credit of space** (`ChargeExchangePercent: 100`).
+The rules, in priority order:
+
+1. **Banked Reserve is never removed to make room for charge.** Charge only ever enters space Reserve has left free.
+   Irreversibility, the `MaximumTargetPercent` ceiling, the drain-on-destruction and Lockdown are untouched, so the
+   guarantees from issues #37, #68, #69, #75 and #76 all hold. Charge can only *slow banking down*, never undo it.
+2. **Charge comes only from surplus power.** Charging draws nothing visible from the grid, so it can never push a
+   player into low power, and the power bar stays honest.
+3. **Grid Reserve off:** no Reserve is ever banked, so the whole 8000 holds charge.
+4. **Sun Cycle off:** `PowerStorageManager` never runs, charge stays 0, and `GridReserveVault` sees exactly the
+   space it always did. The bank behaves exactly as before.
+5. **Charge that has not been drawn on for a whole sun cycle gives way to Reserve** (`PowerStorage.IdleCharge`). This
+   rule exists because without it the option would trap the players it should reward: a base that never runs short
+   at night (lots of Wind Turbines - the Assembly's whole night identity) fills its banks by day, never empties them,
+   and could then never bank Reserve again for the rest of the match. A bank that discharges every night is never
+   idle (the gap between nights is one Day, 5250 ticks, well under a 9000-tick cycle), so for a base that needs its
+   storage the two jobs compete on equal terms.
+
+**Why 1:1.** The exchange rate decides whether the two jobs genuinely compete. One night of a moderate deficit costs
+about one bank of space: a 100-power shortfall across dusk, night and dawn is 100 x 90 + 35 x 60 (twilight runs at
+65%, so its shortfall is about a third of the night's) = about 11,000 power-seconds. At 1:1 that is one and a half
+banks' worth of space, a fifth to a quarter of a two-player Reserve target (40,000) - big enough to hurt, small
+enough that a player can afford both with a few extra banks. At 10:1 storage would be free and there would be no
+tension; at 1:10 a single night would need more banks than the target itself.
+
+**Rates.** `ChargeRate` 40 power/s per bank: refills 8000 in 200 s, inside a 210 s day, so a bank that ran flat
+overnight is full again by the next dusk. `DischargeRate` 60 power/s per bank (net, to the grid), the output of a
+Smart Grid Relay: a full bank lasts 133 s at full draw against 150 s of dusk, night and dawn, so a base that leans
+on storage needs more than one bank, and the rate - not the capacity - is usually what limits a single bank.
+While a bank discharges, its own -10 upkeep is switched off and paid from its charge instead (an engine constraint:
+the output is applied as a power modifier, and a modifier scales every enabled Power trait on the actor), so a
+discharging bank spends output + 10 per second. Discharge is allocated once a second, earliest-built bank first, and
+only covers the deficit (the bank never overshoots by more than its upkeep).
+
+**What stops a bank.**
+- **A power outage** (a Spy in any `^DisabledByPowerOutage` plant): banks do not discharge while it lasts, and keep
+  their charge. Without this, storage would be universal blackout insurance and the Spy would lose its hard counter.
+- **A Spy in the bank itself** (`InfiltrateForChargeDrain`, new): empties that bank's charge. Reserve credits in it
+  are untouched; the Thief's existing 50% cash steal (`InfiltrateForCash`) is unchanged. The `SpyInfiltrate` target
+  type is on a separate `Targetable@SPY` that only exists while the cycle is on, so a Spy is never spent on a bank
+  that cannot hold charge (issue #103's "advertised capability with nothing behind it").
+- **Destruction or sale:** the charge is lost, with **no** reward to anyone - one kill must not pay twice on top of
+  the Vault's Reserve reward.
+
+### The spend-vs-save tension it creates
+
+The owner wanted this, so it is spelled out: **every power-second of night charge is a credit of bank space not
+banked for victory, and every credit banked is night storage gone for good** (Reserve never leaves).
+
+Worked example, two players, Target 40,000 = five banks of capacity at minimum. A solar base of three Solar Arrays
+and about 220 drain runs +80 by day, -25 at dusk and dawn, -130 at night. Riding the night out on storage takes about
+13,000 power-seconds a cycle and, for the rate, three banks (two for the Consortium). If those banks are the same five
+that are banking toward the target:
+
+- **By day** the charge sits in space Reserve wants, so banking slows by up to a third of the target.
+- **By night** the charge drains and Reserve backfills the freed space (deposits are automatic), so banking runs
+  *faster* after dark - a player at exactly target capacity tends to reach Lockdown at night, and a Lockdown hold
+  is exactly one night long.
+- **Over a few cycles Reserve wins the space** (it never leaves), the storage is gone, and the nights become
+  brownouts.
+
+Keeping both takes **more banks than the target needs** - the Reserve ceiling stops banking at the target, so every
+bank past it is permanent storage. That costs 150 Credits a bank, -10 power each while idle, and one more exposed
+target once the 50% minimap reveal turns on. The alternative is night-proof power instead of storage. Either way,
+night is now a cost paid out of the same budget as victory, which is Pillar 3 doing its job.
+
+### Faction night identity
+
+The Assembly **generates**: Wind Turbines (`SGWND`, `low` tech, 250) hold full output all night, unchanged. The
+Consortium **stores**: its Battery Banks hold 50% more charge in the same space (12,000 power-seconds in an empty
+bank) and release it 50% faster (90 power/s). Both come from a faction-gated `PowerStorageMultiplier@CONSORTIUM` on
+`SILO` behind `GrantConditionOnFaction` (allies, england, france, germany). It affects **charge only**; Reserve
+capacity is identical for both sides. The charge rate is deliberately unchanged (the owner's spec named capacity and
+discharge only), so a drained Consortium bank refills 8,400 of its 12,000 in one day: the extra capacity is a buffer
+across several nights or outages, and the faster discharge is the difference that shows every night. See
+`docs/ENERGY_BALANCE.md`, "Night".
+
+### What the player sees
+
+- **HUD** (`SunCycleHudLogic`, `Container@SUN_CYCLE_HUD` in `chrome/ingame-player.yaml`): under the Grid Reserve bar
+  (or in its slot when Grid Reserve is off), "Day — dusk in 2:41 · Storage 63%", a bar for stored charge as a share
+  of the charge the banks can hold *now* (space Reserve already fills is not counted), and a tooltip with the solar
+  percentage, the bank count, charge / capacity in power-seconds, the current flow and the space taken by Reserve.
+  The label is white by day, sun gold at dusk and dawn, moonlight blue at night (`metrics.yaml`).
+- **Charge bar** under a selected Battery Bank (`ISelectionBar`), whenever the cycle is on.
+- **Screen tint** (`SunCycleTint`): its own post-process pass, so it multiplies with a map's `TintPostProcessEffect`
+  rather than replacing it. Night is cool and dim (R0.84 G0.90 B1.12 at ambient 0.74; the floor is 0.70 so team
+  colours and silhouettes stay readable), twilight warm (R1.06 G0.95 B0.84 at 0.92); Dusk fades day -> twilight ->
+  night across its 30 seconds and Dawn the reverse. Render-only; not drawn before the first dusk or with the option off.
+- **Announcements**: a system text line at dusk, nightfall, dawn and full daylight. No new speech (Phase 7 has no voice
+  set yet). The stock low-power nag (every 10 s) is muted during Dusk and Night, since the dusk line already said it,
+  and restored at dawn to whatever it was before.
+
+### Bots (`SunCycleBotModule`)
+
+The engine's base builder treats low power as a priority override and buys the plant with the highest **nominal**
+output - at night, a Solar Array running at 30%, over and over. `SunCycleBotModule` (all six personalities) answers
+that:
+
+- **By day** (from tick 6000, a minute before the first dusk) it projects the night deficit from its solar plants'
+  current output and the controller's night percentage, wants `ceil(deficit / bank discharge rate)` storage banks
+  (max 3; Easy Grid Broker 1), and buys night-proof power (`sgwnd`, `sgrel`, `sghyd`, best buildable by output; max 6,
+  Easy Grid Broker 2) for whatever the storage cannot discharge fast enough to cover.
+- **At dusk and night** it checks every second and claims the idle Building queue for a night-proof plant whenever
+  the grid is under the base builder's own power margin (mirrored from `BaseBuilderQueueManager`, which does not
+  expose it), getting there before the low-power override can buy a Solar Array. Best effort: the two modules race
+  for an idle queue, and if no night-proof plant is buildable, or the cap is reached, the stock override still runs.
+- **Banks for both jobs.** `GridReserveBotModule` adds the sun module's `StorageBanksWanted` on top of its Vault count
+  (the storage share is extra capacity, never taken out of the target coverage), and its "expand once the standing
+  Vaults are 80% full" pacing only counts the Vault share - otherwise storage banks that never fill with Reserve
+  would stall it. With the cycle off the storage count is 0 and both modules behave exactly as before. Worked: two
+  players, Target 40,000, `CoveragePercent` 125 -> 7 Vaults, plus up to 3 storage banks = up to 10.
+- `silo` stays **out** of every `PowerTypes` list: it is storage, not supply (the same reasoning that keeps `rcyd` out
+  of `RefineryTypes`).
+- **The Saboteur (issue #135) gets stronger at night without any change**: its `EnemyGridStateBotModule` reads an
+  opponent in low or critical power as "grid down", and night puts solar bases there. Tune it with the cycle off
+  first, so its strength never depends on an optional mode. Its `SpyBotModule` could add `silo` to
+  `TargetPriorities` to drain banks before dusk; it asks the Spy's own targeters, so with the cycle off (no
+  `SpyInfiltrate` on the bank) it would simply never pick one. Not done here - that is issue #135's call.
+
+### A pre-existing engine gap the night exposes
+
+`PowerManager` only notifies `INotifyPowerLevelChanged` listeners when excess power changes sign (Normal <-> Low).
+Low <-> Critical was never announced, so a `GrantConditionOnPowerState` with `ValidPowerStates: Critical` went stale:
+the drones stayed armed at Critical power, and once disarmed could stay disarmed until power was fully back. Every
+night walks a solar grid down through exactly that step. Fixed mod-side, without an engine patch:
+`PowerStateChangeNotifier` on the Player actor watches `PowerState` every tick and re-notifies on any change
+(duplicates are harmless; the only listener re-reads the state). It is active whether or not the cycle is on, since
+the gap existed before it.
+
+### Not verified, and open
+
+No live match has been played with the cycle on - nothing here can run a client (see `CLAUDE.md`). Verified only by
+compiling, `--check-yaml` across every map, the interface checks and negative controls (issue #136 lists them).
+Open: the bank's sprite still shows ore-storage fill, not charge (needs a sprite body that reads `PowerStorage`);
+no night art states (lamps on the arrays, dark panels - art rule 16 territory); the shellmap's showcase cycle; an
+observer-scoreboard column; a "hit the banks before sunset" squad hook for the bots (`GrantConditionOnSunPhase` works
+on the Player actor and is ready for a `PreferredTargetCondition`); and every constant above is waiting on a playtest.
