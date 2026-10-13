@@ -5216,9 +5216,8 @@ anyway), works for any infiltrating unit, and only ever picks targets the unit's
   power buildings that carry `InfiltrateForPowerOutage` through `^DisabledByPowerOutage`: one infiltration blacks out
   the owner's whole grid for 500 ticks), `proc` 0 (cash theft - the Thief's target, and a Spy's fallback). `sgrel` is
   deliberately absent: the Smart Grid Relay has no `^DisabledByPowerOutage` and no `SpyInfiltrate` (issue #101).
-  **`silo` is the next line to add** once the Battery Bank accepts a Spy (the sun-cycle work in progress): one
-  `silo: <cells>` entry, nothing in C#. A target a unit cannot enter is filtered out by its own targeter, so adding
-  `silo` before `SILO` accepts Spies would only ever send Thieves there.
+  **Battery Banks became a Spy target once issue #136 let a Spy drain one** - see "Revised again" below: they are
+  not in `TargetPriorities` (a Thief can enter `SILO` too and would rob it), but in a sun-cycle-only list.
 - **Scoring**, lowest wins, in cells: walking distance as the crow flies, minus the target's priority, plus
   `DefenceCost` (8) per `DefenceTypes` actor within `DefenceScanRadius` (6) - pillboxes, turrets, Tesla Coils, Arc
   Turrets, Grid Defense Turrets and **dogs**, which see through a disguise (`IgnoresDisguise`) - minus up to
@@ -5314,6 +5313,20 @@ diversion, and pushes only after three blackouts or against a Lockdown; validati
 met, live behaviour unverified.
 
 ---
+
+- **Revised again (Battery Banks, after issue #136):** the owner chose to send the Saboteur's Spies at Battery
+  Banks **only while the Sun Cycle lobby option is on**, and to keep the faction asymmetry (the Consortium's Spies
+  sabotage, the Assembly's Thieves steal - no Assembly blackout infiltrator). `SpyBotModule` gained
+  `SunCycleTargetPriorities` (`silo: 15`, an [actor id]: [cells] map like `TargetPriorities`, consulted only while
+  `SunCycleController.Enabled`), `SunCycleInfiltratorTypes` (`spy, spy.england`, so a Thief is never sent in to rob a
+  bank by this route) and `MinimumTargetCharge` (1000 power-seconds: a bank that was just drained, or has not charged
+  yet, is skipped). With the cycle off a bank holds no charge, so the list is inert. Priority 15 sits between the
+  Refinery (0) and the power plants (20): draining a full bank before dusk browns its owner out for the night, which is
+  worth a little more walk than robbing a Refinery, less than a blackout of the whole grid now. Verified: `make`,
+  `--check-yaml` (79 maps), both interface checks, `dotnet build -c Debug -warnaserror` (no errors in mod files);
+  negative controls: a bogus key in `SunCycleTargetPriorities` and a bogus entry in `SunCycleInfiltratorTypes` each
+  give `Missing actor`, a misspelt `MinimumTargetCharg` gives `refers to a trait field ... that does not exist`. Not
+  verified in a live client; the priority and charge threshold are reasoned, not measured.
 
 ### 136. The Sun Cycle: a day/night clock, and Battery Banks that store energy as well as Reserve
 

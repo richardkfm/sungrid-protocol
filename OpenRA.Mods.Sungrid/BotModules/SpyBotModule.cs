@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.Common;
 using OpenRA.Mods.Common.Traits;
+using OpenRA.Mods.Sungrid.SunCycle;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Sungrid.BotModules
@@ -38,6 +39,21 @@ namespace OpenRA.Mods.Sungrid.BotModules
 		[Desc("Enemy actor types to infiltrate, each with a priority measured in cells: how much further an",
 			"infiltrator will walk for this target than for one with priority 0. A dictionary of [actor id]: [cells].")]
 		public readonly FrozenDictionary<string, int> TargetPriorities = FrozenDictionary<string, int>.Empty;
+
+		[ActorReference(dictionaryReference: LintDictionaryReference.Keys)]
+		[Desc("Extra targets, in the same [actor id]: [cells] form as TargetPriorities, that only count while the Sun Cycle",
+			"lobby option is on: the Battery Banks, whose stored charge a Spy drains (issue #136). With the cycle off a bank",
+			"holds no charge and entering it would waste the Spy.")]
+		public readonly FrozenDictionary<string, int> SunCycleTargetPriorities = FrozenDictionary<string, int>.Empty;
+
+		[ActorReference]
+		[Desc("Own actor types that may go for SunCycleTargetPriorities. Empty means every InfiltratorTypes actor.",
+			"Lets a Spy drain a bank without also sending a Thief in to rob it.")]
+		public readonly FrozenSet<string> SunCycleInfiltratorTypes = FrozenSet<string>.Empty;
+
+		[Desc("Skip a SunCycleTargetPriorities target whose stored charge is below this, in power-seconds: there is",
+			"nothing to drain in a bank that has just been emptied.")]
+		public readonly int MinimumTargetCharge = 1000;
 
 		[ActorReference]
 		[Desc("Enemy actor types that make a target more dangerous to reach (defences, and units that see through",
@@ -116,6 +132,7 @@ namespace OpenRA.Mods.Sungrid.BotModules
 
 		readonly World world;
 		readonly Player player;
+		readonly SunCycleController sunCycle;
 
 		// Infiltrators on a mission, with the tick they were sent.
 		readonly Dictionary<Actor, int> missions = [];
@@ -133,6 +150,7 @@ namespace OpenRA.Mods.Sungrid.BotModules
 		{
 			world = self.World;
 			player = self.Owner;
+			sunCycle = world.WorldActor.TraitOrDefault<SunCycleController>();
 		}
 
 		void IBotTick.BotTick(IBot bot)
@@ -250,9 +268,27 @@ namespace OpenRA.Mods.Sungrid.BotModules
 			pending.Clear();
 		}
 
+		// The target's priority in cells, or null if this infiltrator should not go for it at all.
+		int? Priority(Actor infiltrator, Actor target)
+		{
+			if (Info.TargetPriorities.TryGetValue(target.Info.Name, out var priority))
+				return priority;
+
+			if (sunCycle == null || !sunCycle.Enabled
+				|| !Info.SunCycleTargetPriorities.TryGetValue(target.Info.Name, out priority)
+				|| (Info.SunCycleInfiltratorTypes.Count > 0 && !Info.SunCycleInfiltratorTypes.Contains(infiltrator.Info.Name)))
+				return null;
+
+			var storage = target.TraitOrDefault<PowerStorage>();
+			if (storage == null || storage.Charge < Info.MinimumTargetCharge)
+				return null;
+
+			return priority;
+		}
+
 		bool IsWorthEntering(Actor infiltrator, Actor target)
 		{
-			if (!Info.TargetPriorities.ContainsKey(target.Info.Name)
+			if (Priority(infiltrator, target) == null
 				|| player.RelationshipWith(target.Owner) != PlayerRelationship.Enemy
 				|| !CanIssue(infiltrator, Info.InfiltrateOrder, target))
 				return false;
@@ -305,7 +341,7 @@ namespace OpenRA.Mods.Sungrid.BotModules
 
 		int Cost(Actor infiltrator, Actor target, WPos? diversionPoint, HashSet<Actor> alreadyChosen)
 		{
-			var cost = Cells(infiltrator.CenterPosition, target.CenterPosition) - Info.TargetPriorities[target.Info.Name];
+			var cost = Cells(infiltrator.CenterPosition, target.CenterPosition) - (Priority(infiltrator, target) ?? 0);
 
 			if (Info.DefenceTypes.Count > 0)
 			{

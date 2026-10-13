@@ -151,8 +151,11 @@ sends up to two Spies (Consortium) or Thieves (Assembly - it cannot build a Spy)
 own `IIssueOrder` targeters whether `Infiltrate` / `Disguise` can target an actor (how a player's click resolves, so it
 needs no reference to `OpenRA.Mods.Cnc`) and queues that order. Targets are a YAML `TargetPriorities` dictionary
 (actor -> cells of extra walk it is worth), scored by distance, nearby `DefenceTypes`, and separation from where the
-diversion will land; `sgrel` is left out on purpose (blackout-proof, issue #101), and a Battery Bank is one line away
-once `SILO` accepts a Spy. Three `SquadManagerBotModule`s, **exactly one enabled at a time by condition**:
+diversion will land; `sgrel` is left out on purpose (blackout-proof, issue #101). Battery Banks are a **Spy-only,
+Sun-Cycle-only** target (`SunCycleTargetPriorities` / `SunCycleInfiltratorTypes`, skipped under `MinimumTargetCharge`):
+with the cycle off a bank holds no charge, and a Thief can enter `SILO` too and would rob it instead. The owner kept the
+asymmetry on purpose - the Consortium's Spies sabotage, the Assembly's Thieves steal; don't add an Assembly blackout
+infiltrator without asking. Three `SquadManagerBotModule`s, **exactly one enabled at a time by condition**:
 `@saboteur-home` (`SquadSize` 200 - never attacks, only protects), `@saboteur-diversion` (while the Spy module holds
 `saboteur-diversion`; light units and drones only) and `@saboteur-push` (`enemy-grid-down || enemy-lockdown`; everything).
 `EnemyGridStateBotModule`'s `MinimumOutages: 3` holds the push until three blackouts have been seen, and the Saboteur's

@@ -1216,8 +1216,12 @@ Player:
 	# Targets: the four power plants that carry InfiltrateForPowerOutage (a Spy blacks out the whole
 	# grid for 20s), and the Refinery, which a Spy or a Thief robs of half its owner's cash - the
 	# Thief's only target here, and a direct brake on an opponent's banking. sgrel is left out on
-	# purpose: the Smart Grid Relay cannot be blacked out (issue #101). A Battery Bank (`silo`) is one
-	# line away once it accepts a Spy - add `silo: <cells>` to TargetPriorities.
+	# purpose: the Smart Grid Relay cannot be blacked out (issue #101). Battery Banks (`silo`) are a
+	# Spy-only target while the Sun Cycle is on (SunCycleTargetPriorities): a Spy drains the bank's
+	# stored charge (issue #136), so its owner browns out at night. Banks holding under 1000 charge are
+	# skipped, and with the cycle off a bank holds no charge at all, so a Spy is never wasted on one.
+	# Thieves stay on the Refinery: the owner kept the asymmetry (the Assembly steals, the Consortium
+	# sabotages).
 	SpyBotModule@saboteur:
 		RequiresCondition: enable-saboteur-ai
 		InfiltratorTypes: spy, spy.england, thf
@@ -1227,6 +1231,10 @@ Player:
 			sgwnd: 20
 			sghyd: 25
 			proc: 0
+		SunCycleTargetPriorities:
+			silo: 15
+		SunCycleInfiltratorTypes: spy, spy.england
+		MinimumTargetCharge: 1000
 		DefenceTypes: pbox, hbox, gun, tsla, arct, sgtur, dog
 		DefenceScanRadius: 6
 		DefenceCost: 8

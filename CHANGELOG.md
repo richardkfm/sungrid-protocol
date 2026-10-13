@@ -27,7 +27,8 @@ The detailed entries below track every issue through #119, plus #132; this list 
 
 - **Unreleased** (on `main`): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
   its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that banks toward the
-  Reserve and sends Spies at your power grid under cover of small diversion attacks (issue #135); a **Day/Night
+  Reserve and sends Spies at your power grid under cover of small diversion attacks - and, with the Day/Night Cycle on, at your
+  charged Battery Banks to drain them before nightfall (issue #135); a **Day/Night
   Cycle** lobby option, off by default: Solar Arrays drop to 65% at dusk and 30% at night on a six-minute cycle, the
   screen dims and cools after dark, and Battery Banks now store surplus power by day and release it at night - in the
   same space they bank Grid Reserve credits, so night storage and the economic victory compete for the same banks.
