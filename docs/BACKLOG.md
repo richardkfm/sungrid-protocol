@@ -5085,3 +5085,108 @@ they still overpower, the next levers are unit production (no equivalent delay e
 slowest, its milestones and drones later; validation clean - met, live behaviour unverified.
 
 ---
+
+### 135. Saboteur AI - a seventh bot personality that hunts the power grid, not the army
+
+**Type:** AI · **Phase:** 4 · **Status:** done (not verified in a live client)
+
+**Raised as:** a new personality agreed with the owner: a bot that barely fights your army, goes for your power grid
+(Solar Array `powr`, Advanced Solar Array `apwr`, Wind Turbine `sgwnd`, Hydrogen Plant `sghyd`, Smart Grid Relay
+`sgrel`) and your Battery Banks (`silo`), uses drones and Spies for blackouts where the engine allows, and holds its
+main force back until your grid collapses. Both an unusual opponent and a teaching tool: it makes the player defend
+the grid, which is Pillar 4 (pressure never disappears) and Pillar 2 (the solarpunk lens changes play) at once.
+
+**What the engine could already express.** Issue #105's `SquadManagerBotModule.PreferredTargetTypes` matches enemy
+*actor names* (it is an `[ActorReference]` list compared against `Actor.Info.Name`), not `TargetTypes`, so no shared
+`GridTarget` target type was needed and no weapon's `ValidTargets` was touched. `PreferredTargetCondition` is optional
+- unset means always on. `PreferredTargetScanRadius` is measured from the squad leader, which is at home when an
+assault squad first picks its target, so the 30 cells the Vault raiders use would let a far enemy grid fall back to
+the nearest building of any kind; 0 means no limit, which is what this bot wants. In flight a ground squad re-picks
+inside `AttackScanRadius` (12 by default), preferred types first.
+
+**What it could not.** Two gaps, both recorded rather than worked around:
+
+- **Spies.** No engine bot module orders a Spy to infiltrate anything (`CaptureManagerBotModule` captures with
+  Engineers; nothing else issues an infiltrate order), even though every power building carries
+  `InfiltrateForPowerOutage` through `^DisabledByPowerOutage`. A bot Spy would just walk into the enemy base with an
+  assault squad. So the Saboteur builds none. A small `SpyBotModule` (send idle Spies at the nearest enemy power
+  building) is the follow-up if the owner wants it; it is new C# either way.
+- **"Waits for the grid to collapse."** Nothing in the engine or the mod gave a bot a condition for the *enemy's*
+  power state. `GridReserveBotModule` grants `enemy-banking` / `enemy-lockdown` from enemy state, but only while Grid
+  Reserve is on, and the Saboteur should work in destruction matches too. Hence the one piece of C#.
+
+**Change.**
+
+- `OpenRA.Mods.Sungrid/BotModules/EnemyGridStateBotModule.cs` (new, ~100 lines): a `ConditionalTrait` bot module that
+  grants `EnemyGridDownCondition` on the player actor while any living opponent's `PowerManager` reports low or
+  critical power or an outage, held for `HoldTicks` (1500, 60s) after the last sighting so one rebuilt Solar Array
+  doesn't call the push straight back off, and ignored before `StartDelayTicks` (6000, 4 min) because an opening
+  base dips into low power as a matter of course. It observes no extra conditions, so no `GetVariableObservers`
+  override. Bots run on the host only, so the condition may only feed other bot modules, never a synced trait - the
+  same footing as `GridReserveBotModule`'s conditions.
+- `rules/ai.yaml`: `ModularBot@SaboteurAI` (`Type: saboteur`, condition `enable-saboteur-ai`), its own
+  `BaseBuilderBotModule@saboteur` (the Normal AI's base without the navy: Drone Bay delay 2000 against everyone
+  else's 3000, Radar 4000 against 6000, defences at about two thirds of the Normal AI's weights),
+  `UnitBuilderBotModule@saboteur`, two squad managers and `EnemyGridStateBotModule@saboteur`. It shares the Normal
+  AI's harvesters and `McvExpansionManagerBotModule@normal` (which deploys its starting MCV), and the stock
+  `ResourceMap`, `SupportPower`, `PowerDown`, `BuildingRepair` and `GridReserveBotModule` instances.
+- **The army is two halves, split by which squad manager may take them.** `SquadManagerBotModule@saboteur-raid`
+  (`enable-saboteur-ai && !enemy-grid-down`) sends squads of 5-8 at the grid and Vaults with no radius limit, rushes
+  disabled (`RushInterval` 100000, as the Turtle AI does - a rush aims at the Construction Yard) and
+  `AttackScanRadius` 6 so fewer things it passes pull it off a plant. Its `ExcludeFromSquadsTypes` adds the heavy
+  reserve (`2tnk`, `3tnk`, `4tnk`, `ttnk`, `arty`, `v2rl`), which therefore gathers at home. `@saboteur-push`
+  (`enable-saboteur-ai && enemy-grid-down`) takes everything, reserve included, in squads of 14-20, preferring the
+  Construction Yard, what is left of the grid and the Vaults. The two are mutually exclusive by condition; a
+  disabled manager doesn't tick, so its squads stop being updated, its units keep their last order, and the other
+  manager picks them up as new units.
+- Drones (`sgdro` *and* `sgdrs` - each faction builds only its own) carry the largest weights, limit 10 each.
+- `fluent/rules.ftl`: `bot-saboteur-ai` = "Saboteur AI".
+
+**Verified.** `make` builds the mod; `dotnet build -c Debug -warnaserror` reports nothing in any Sungrid file (the
+1842 errors are the known SDK-patch IDE0055/IDE0301 noise, all in `engine/OpenRA.Game` and `engine/OpenRA.Mods.Common`,
+and `OpenRA.Mods.Sungrid.dll` still builds); `--check-explicit-interfaces` and
+`--check-conditional-trait-interface-overrides` exit 0; `--check-yaml` exits 0 across all 79 maps. Negative controls,
+each run against the full check and reverted: the raid manager's condition misspelled (`consumes conditions that are
+not granted`); the C# module's condition renamed (`grants conditions that are not consumed` plus the consumers'
+error - which proves `--check-yaml` sees the new trait's `GrantedConditionReference`); `PreferredTargetScanRadiu`
+(`refers to a trait field ... that does not exist`); a bogus actor in `PreferredTargetTypes` and in
+`ExcludeFromSquadsTypes` (`Missing actor`); and the required `EnemyGridDownCondition` removed (a loader exception).
+`UnitsToBuild` keys are not validated by `--check-yaml` (issue #132), so all 21 were checked by hand against actor
+definitions with a `Buildable` trait.
+
+A gotcha found on the way: **`make` exits 0 when the mod's own C# fails to compile.** The `all` target runs
+`find ... -exec dotnet build ... \;`, and `find` does not propagate a command's exit status with `\;`. The first
+build of this module failed on a missing `using OpenRA.Mods.Common;` and `make` still returned 0. Read the build
+output, not the exit code.
+
+**Reasoned, not measured.** Every number: squad sizes, the reserve split, unit weights, `HoldTicks`,
+`StartDelayTicks`, the halved `AttackScanRadius`. Not seen in a live client - no match can be played in this
+environment.
+
+**Known limits.**
+
+- Units on attack-move still return fire and engage whatever is in weapon range; the preference only steers where a
+  squad *goes*. "Barely fights your army" is as close as squad targeting gets.
+- Air squads launch through `AirIdleState.FindDefenselessTarget`, which picks a random enemy near an undefended
+  map cell, not a preferred type; the preference only applies when they retarget after a kill.
+- `enemy-grid-down` is any opponent's grid. In a free-for-all the push goes for the nearest preferred target, which
+  may belong to a different opponent from the one in blackout. Exact in 1v1 and in team games against one side.
+- Heavy units still out on a push when the condition lapses keep their last order and then idle where they are,
+  until the next push picks them up again.
+- Fake power plants (`fpwr`, `fapw`) are not on the preferred list, so they do not bait it. Adding them would make
+  it fall for decoys - possibly a good teaching beat; the owner's call.
+
+**Open follow-ups.** A `SpyBotModule` for real blackouts by infiltration; a per-opponent push (needs the squad
+manager to accept a target player, which is an engine patch); making `make` fail on a mod compile error.
+
+**Files:** `OpenRA.Mods.Sungrid/BotModules/EnemyGridStateBotModule.cs`, `mods/sungrid/rules/ai.yaml`,
+`mods/sungrid/fluent/rules.ftl`, `CLAUDE.md`, `CHANGELOG.md`, `README.md`, `docs/BACKLOG.md`, `docs/GAME_MODES.md`,
+`docs/BETA_TESTING.md`, `docs/ARCHITECTURE.md`.
+
+**Phase:** 4 (balance / AI).
+
+**Definition of done:** a lobby-selectable Saboteur AI that raids power buildings and Battery Banks with small
+squads and drones, holds a heavy reserve until an opponent's grid is down and then pushes with everything;
+validation clean with negative controls - met, live behaviour unverified.
+
+---
