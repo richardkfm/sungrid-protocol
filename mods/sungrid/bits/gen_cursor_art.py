@@ -144,6 +144,9 @@ def _chevron(sd, cx, cy, size, color, width=2.2):
 
 
 def draw_pointer(sd, w, h, small=False):
+    # The tip below is the click point: cursors.yaml's default / joystick-all
+    # and default-minimap hotspots are set to it (issue #141). Move the tip and
+    # those X/Y values have to move with it.
     cx, cy = (w / 2, h / 2) if small else (w / 2 - 3, h / 2 - 4)
     s = 6 if small else 9
     tip = (cx - s * 0.35, cy - s * 0.75)
