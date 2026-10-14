@@ -46,6 +46,23 @@ You don't need to build from source to try it — pre-built Windows installers, 
 
 **Testing it?** Read the [beta tester guide](docs/BETA_TESTING.md) — it covers the install warnings, playing together over a LAN or VPN, and where the crash logs are — and report bugs, crashes, connection problems and match feedback through the [issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
 
+### Multiplayer
+
+The first full online match across two machines was played in October 2026: a Windows host and a Mac player, over
+[Tailscale](https://tailscale.com) with Direct IP, on The Commons with Grid Reserve on (issue #140). That is the route
+the [beta tester guide](docs/BETA_TESTING.md#over-the-internet--use-a-vpn-recommended-for-this-beta) walks through
+step by step. What is still open for beta is one match with **three or more** testers and no desyncs (gate B7 in the
+[roadmap](docs/ROADMAP.md)), and a Mac as host, which has not worked over Tailscale yet.
+
+<img width="1179" height="797" alt="Lobby of the first online match: two players on The Commons" src="docs/screenshots/first-online-match-lobby.webp" />
+
+The lobby, with both machines connected. The yellow lines are why the public server list stays empty: the master
+server is reached, but it cannot reach the host's port from the internet, so the game is never advertised.
+
+<img width="1783" height="990" alt="End screen of the first online match on The Commons" src="docs/screenshots/first-online-match-end.webp" />
+
+The same match at its end screen.
+
 **Game content:** like OpenRA's own Red Alert mod, Sungrid Protocol doesn't ship the underlying Red Alert asset files — it reads them from your own copy. On first launch it offers the same options OpenRA does: download the official freeware Red Alert package (~13MB, no purchase required), or install from an original disc, Steam, or Origin copy. Everything Sungrid Protocol-specific — buildings, drones, UI, cursors, cameos, menu music — is original art shipped in the package itself.
 
 ## Building
@@ -65,7 +82,7 @@ See [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for a full walkthrough includin
 
 
 <img width="1592" height="1027" alt="grafik" src="https://github.com/user-attachments/assets/721e2b1f-7827-41eb-a804-3191ec861095" />
-LAN game visible from a second machine (alpha38) — a full cross-machine match is still the open beta gate
+LAN game visible from a second machine (alpha38), the step before the first full online match (see [Multiplayer](#multiplayer))
 
 ## Upstream OpenRA
 
