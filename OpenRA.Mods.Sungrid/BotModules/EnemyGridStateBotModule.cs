@@ -47,6 +47,15 @@ namespace OpenRA.Mods.Sungrid.BotModules
 			"alone is not counted. Zero grants it on the first grid seen down.")]
 		public readonly int MinimumOutages = 0;
 
+		[Desc("Grant the condition anyway once this many ticks have passed without it - from the start of the match,",
+			"then from the end of the last push. A safety net for a bot that can never see the grid-down signal it",
+			"waits for: the Assembly's Saboteur builds Thieves, not Spies, so nothing it does causes a blackout and",
+			"MinimumOutages is never reached (issue #141). Zero disables it.")]
+		public readonly int FallbackTicks = 0;
+
+		[Desc("How long a fallback push keeps the condition, in ticks.")]
+		public readonly int FallbackDurationTicks = 3000;
+
 		public override object Create(ActorInitializer init) { return new EnemyGridStateBotModule(init.Self, this); }
 	}
 
@@ -59,6 +68,8 @@ namespace OpenRA.Mods.Sungrid.BotModules
 		bool[] enemyInOutage;
 		int outagesSeen;
 		int lastSeenDownTick = int.MinValue;
+		int lastActiveTick;
+		int fallbackUntilTick = int.MinValue;
 		int token = Actor.InvalidConditionToken;
 
 		public EnemyGridStateBotModule(Actor self, EnemyGridStateBotModuleInfo info)
@@ -104,6 +115,23 @@ namespace OpenRA.Mods.Sungrid.BotModules
 
 			var active = outagesSeen >= Info.MinimumOutages
 				&& lastSeenDownTick != int.MinValue && tick - lastSeenDownTick <= Info.HoldTicks;
+
+			if (!active && Info.FallbackTicks > 0)
+			{
+				if (fallbackUntilTick == int.MinValue && tick - lastActiveTick >= Info.FallbackTicks)
+				{
+					AIUtils.BotDebug("{0} has waited {1} ticks for an enemy grid to fail: pushing anyway", player, Info.FallbackTicks);
+					fallbackUntilTick = tick + Info.FallbackDurationTicks;
+				}
+
+				active = fallbackUntilTick != int.MinValue && tick < fallbackUntilTick;
+			}
+
+			if (active)
+				lastActiveTick = tick;
+			else
+				fallbackUntilTick = int.MinValue;
+
 			if (active && token == Actor.InvalidConditionToken)
 			{
 				AIUtils.BotDebug("{0} sees an enemy grid down: pushing", player);

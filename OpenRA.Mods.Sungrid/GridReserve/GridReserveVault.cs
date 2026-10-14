@@ -38,11 +38,9 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			"disable the ceiling and let Vaults fill to Capacity regardless.")]
 		public readonly int MaximumTargetPercent = 100;
 
-		[Desc("Percentage (0-100) of this Vault's held Reserve that is drained from the owner's total Reserve when the Vault is destroyed.")]
-		public readonly int DestructionDrainPercent = 50;
-
-		[Desc("Percentage (0-100) of the drained amount awarded to the attacker as Credits when this Vault is destroyed.")]
-		public readonly int DestructionRewardPercent = 50;
+		[Desc("Percentage (0-100) of this Vault's held Reserve awarded as Credits to an enemy that destroys or captures it.",
+			"The owner loses the whole of the Vault's Reserve either way - it is lost with the building (issue #141).")]
+		public readonly int DestructionRewardPercent = 25;
 
 		[GrantedConditionReference]
 		[Desc("Condition granted on this actor while the owner's Reserve is at or above the manager's minimap reveal threshold.",
@@ -52,11 +50,12 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public override object Create(ActorInitializer init) { return new GridReserveVault(init.Self, this); }
 	}
 
-	public class GridReserveVault : ITick, INotifyKilled, INotifyRemovedFromWorld, INotifyCreated, ISync
+	public class GridReserveVault : ITick, INotifyKilled, INotifyAddedToWorld, INotifyRemovedFromWorld, INotifyOwnerChanged,
+		INotifyCreated, ISync
 	{
 		readonly GridReserveVaultInfo info;
-		readonly PlayerResources playerResources;
-		readonly GridReserveManager manager;
+		PlayerResources playerResources;
+		GridReserveManager manager;
 
 		// The Sun Cycle's stored charge, when this building is also a Battery Bank (PowerStorage). The two
 		// share Capacity, energy first (PowerStorage.ReserveRoom): a protected share is kept for charge, and a bank
@@ -67,7 +66,14 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		PowerStorage storage;
 
 		int beaconToken = Actor.InvalidConditionToken;
-		bool removed;
+
+		// Registered with the owner's manager while in the world. A capture takes the building out of the world and
+		// back in under the new owner (Actor.ChangeOwnerSync), and an actor out of the world still ticks, so
+		// everything here keys off this rather than off the building existing.
+		bool registered;
+
+		// Reserve the last removal forfeited, so a capture that follows it can pay the captor the raid reward.
+		int forfeitedOnRemoval;
 
 		[VerifySync]
 		public int CurrentReserve { get; private set; }
@@ -81,9 +87,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public GridReserveVault(Actor self, GridReserveVaultInfo info)
 		{
 			this.info = info;
-			playerResources = self.Owner.PlayerActor.Trait<PlayerResources>();
-			manager = self.Owner.PlayerActor.Trait<GridReserveManager>();
-			manager.RegisterVault(this);
+			BindOwner(self.Owner);
+		}
+
+		void BindOwner(Player owner)
+		{
+			playerResources = owner.PlayerActor.Trait<PlayerResources>();
+			manager = owner.PlayerActor.Trait<GridReserveManager>();
 		}
 
 		void INotifyCreated.Created(Actor self)
@@ -91,9 +101,21 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			storage = self.TraitOrDefault<PowerStorage>();
 		}
 
+		void INotifyAddedToWorld.AddedToWorld(Actor self)
+		{
+			if (registered)
+				return;
+
+			registered = true;
+			forfeitedOnRemoval = 0;
+			manager.RegisterVault(this);
+		}
+
 		void ITick.Tick(Actor self)
 		{
-			if (!manager.Enabled)
+			// Unregistered means out of the world (mid-capture) or gone: such a building must not move its owner's
+			// Credits into a Reserve nothing can raid any more (issue #141).
+			if (!registered || !manager.Enabled)
 				return;
 
 			// Sun Cycle on: energy first - see PowerStorage.ReserveRoom (the protected share, no banking while the
@@ -116,7 +138,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 				// Only the surplus above the operating balance is bankable. Vaults tick in sequence and each
 				// re-reads the current balance, so the floor holds across all of a player's Vaults, not per-Vault.
-				var available = playerResources.GetCashAndResources() - info.MinimumOperatingBalance;
+				var available = playerResources.GetCashAndResources() - manager.MinimumOperatingBalance(info.MinimumOperatingBalance);
 				var amount = Math.Min(wanted, available);
 
 				if (amount > 0 && playerResources.TakeCash(amount))
@@ -136,47 +158,63 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 		void INotifyKilled.Killed(Actor self, AttackInfo e)
 		{
-			if (removed)
-				return;
-			removed = true;
-			manager.UnregisterVault(this);
-
-			if (CurrentReserve <= 0)
-				return;
-
-			// Destroying a Vault drains its Reserve from the owner's total. Only a share of the
-			// drained amount is recovered by the attacker as a raid reward; the rest is simply lost.
-			var drained = CurrentReserve * info.DestructionDrainPercent / 100;
-			CurrentReserve = 0;
-			manager.AddReserve(-drained);
-
-			if (drained <= 0)
-				return;
-
-			var attacker = e.Attacker;
-			if (attacker == null || attacker.Owner == null || attacker.Owner.NonCombatant || attacker.Owner == self.Owner)
-				return;
-
-			var reward = drained * info.DestructionRewardPercent / 100;
-			if (reward > 0)
-				attacker.Owner.PlayerActor.Trait<PlayerResources>().GiveCash(reward);
+			// Destroying a Vault loses all of its Reserve: it is lost with the building, as docs/GAME_MODES.md has
+			// always said. Until issue #141 only half came off the owner's total, and the other half stayed in it
+			// while no building held it, out of reach of any raid and of Grid Decay.
+			var lost = Unregister();
+			PayRaidReward(self.Owner, e.Attacker?.Owner, lost);
 		}
 
 		void INotifyRemovedFromWorld.RemovedFromWorld(Actor self)
 		{
-			if (removed)
-				return;
-			removed = true;
+			// Covers sales, captures and any other removal: Reserve deposits are irreversible, so a Vault that leaves
+			// play forfeits its held Reserve outright rather than refunding it. A capture re-adds the building under
+			// its new owner straight after, empty (OnOwnerChanged pays that owner the raid reward).
+			forfeitedOnRemoval = Unregister();
+		}
+
+		void INotifyOwnerChanged.OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
+		{
+			// Captured: the bank now banks for its new owner (AddedToWorld registers it with them), and the capture
+			// counts as a raid - the old owner has lost what it held, the captor gets the same reward as for
+			// destroying it. The Reserve itself does not change hands (issue #141).
+			BindOwner(newOwner);
+			PayRaidReward(oldOwner, newOwner, forfeitedOnRemoval);
+			forfeitedOnRemoval = 0;
+
+			if (beaconToken != Actor.InvalidConditionToken)
+				beaconToken = self.RevokeCondition(beaconToken);
+		}
+
+		// Takes the Vault off its owner's books, along with everything it held. Returns the Reserve lost.
+		int Unregister()
+		{
+			if (!registered)
+				return 0;
+
+			registered = false;
 			manager.UnregisterVault(this);
 
-			// Covers sales and any other non-combat removal: Reserve deposits are irreversible,
-			// so a Vault that leaves play by any means other than being killed in combat forfeits
-			// its held Reserve outright rather than refunding it.
-			if (CurrentReserve > 0)
+			var lost = CurrentReserve;
+			if (lost > 0)
 			{
-				manager.AddReserve(-CurrentReserve);
+				manager.AddReserve(-lost);
 				CurrentReserve = 0;
 			}
+
+			return lost;
+		}
+
+		void PayRaidReward(Player victim, Player raider, int lost)
+		{
+			// Only an enemy is paid: an ally's shell landing on the bank, or a captured bank changing hands between
+			// allies, is not a raid.
+			if (lost <= 0 || raider == null || raider.NonCombatant || raider.RelationshipWith(victim) != PlayerRelationship.Enemy)
+				return;
+
+			var reward = lost * info.DestructionRewardPercent / 100;
+			if (reward > 0)
+				raider.PlayerActor.Trait<PlayerResources>().GiveCash(reward);
 		}
 
 		public int ApplyDecay(int percent)

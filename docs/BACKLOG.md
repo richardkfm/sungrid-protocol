@@ -5849,3 +5849,105 @@ stock corner.
 pixels (8,1) and (12,7), the arrow tips. **Not verified live:** the click feel on a high-DPI Mac.
 
 ---
+
+### 141. Audit fixes: a 3+ player match ended at its first defeat, banks lost half their Reserve, and five bots ignored a Lockdown
+
+**Status:** Done (code, not verified in a live client). Came out of a three-part audit (mechanics, modes and AI,
+bugs) run against a real engine build; the first batch, chosen by the owner with the AI as an opponent weighted
+first. Every item below passed `make` (0 errors), the mod's own `-warnaserror` Debug compile,
+`--check-yaml` on all 79 maps, `--check-explicit-interfaces` and `--check-conditional-trait-interface-overrides`;
+the new `enemy-lockdown` wiring was negative-controlled (a misspelled consumer fails `--check-yaml` with
+`consumes conditions that are not granted`).
+
+**1. Free-for-all of three or more ended at the first defeat.** `rules/player.yaml` set
+`MissionObjectives.EarlyGameOver: true` so a Grid Reserve win would resolve the other players. The engine also
+applies it on every *loss*: `OnPlayerLost` marks every enemy of the loser `Won`, so the first player eliminated in a
+3+ free-for-all handed every survivor the win and the match ended - in exactly the player count Pillar 8 and beta
+gate B7 are about. A Grid Reserve win in a 3-player game could even mark a loser `Won`, depending on player order.
+Fix: `EarlyGameOver` off (the engine default; stock RA only uses it in campaigns), and
+`GridReserveController.CompleteGridReserveVictory` calls `ForceDefeat` on every non-allied player still undecided;
+the winner's allies complete through their own `ConquestVictoryConditions`.
+
+**2. A captured Battery Bank kept banking for its old owner.** `SILO` is capturable (`^Building`). A capture is
+`World.Remove` -> owner change -> `World.Add`, and `GridReserveVault` cached its owner's `PlayerResources` and
+`GridReserveManager` once, in the constructor: the removal forfeited the bank's Reserve and unregistered it, and from
+then on it kept moving the *old* owner's Credits into the old owner's Reserve every tick (an actor out of the world
+still ticks), where no raid or Decay could reach it; the captor's bot counted the bank as its own and stopped
+building Vaults. Owner's call: a capture transfers the bank cleanly. The Vault now registers on `AddedToWorld`,
+unregisters on removal, ticks only while registered, and rebinds on `INotifyOwnerChanged`. The old owner loses
+everything the bank held, the captor gets the same 25% reward as for destroying it, and the bank banks for the
+captor from then on; the Reserve itself does not change hands (an Engineer swinging up to 5,360 Reserve both ways
+would be the strongest Lockdown answer in the game).
+
+**3. Destroying a bank left half its Reserve behind.** `Killed` took `DestructionDrainPercent` (50%) off the total
+and zeroed the bank, so the other half stayed in `TotalReserve` with no building holding it - out of reach of raids
+and of Grid Decay, which walks the banks. The spec always said it is "lost with the building"; the owner chose the
+spec. The whole holding now comes off; `DestructionDrainPercent` is gone and `DestructionRewardPercent` is 25% of the
+holding (the attacker's reward is unchanged). Raids hit twice as hard. Also: only an enemy is paid now - an ally's
+shell or splash used to pay the ally the reward.
+
+**4. Only the player in Lockdown heard the Lockdown speech.** `Broadcast` passed that player to
+`Sound.PlayNotification`, which only plays for the local player; opponents got the text line, against the spec's
+"audible to every player". Now `null`, in the listener's faction voice. It also skips while a save loads, like
+`SunCycleController`, so a loaded game no longer replays every past start and cancel.
+
+**5. The Assembly's Saboteur never pushed.** Its heavy units wait for `enemy-grid-down`, which needs three blackouts
+(`MinimumOutages: 3`); only a Spy causes one, and the Assembly builds Thieves. So the default bot, on three of the
+seven factions, never sent its army (and with Grid Reserve off could not win). `EnemyGridStateBotModule` gained
+`FallbackTicks` / `FallbackDurationTicks`: after 21000 ticks (14 minutes) without a push - from the start, then from
+the end of the last one - it pushes anyway for 3000 ticks. Both factions (the owner's choice); the Consortium's Spies
+usually call the push long before.
+
+**6. Only the Saboteur answered an enemy Lockdown.** The other personalities only stopped buying banks; their
+squads went for Vaults only if already attacking, and Turtle never attacks, so a human held the 90s untouched.
+`GridReserveBotModule` (stock four) and `@gridbroker` now grant `EnemyLockdownCondition: enemy-lockdown`; their squad
+managers carry `!enemy-lockdown`, and a new `SquadManagerBotModule@lockdown-response` takes over while it holds -
+squads of six, no attack delay, `PreferredTargetTypes: silo` map-wide - so exactly one manager is enabled at a time.
+Easy Grid Broker still concedes by design.
+
+**7. The Wasp Gunship (`HIND`) could never rearm.** Built at the Assembly's Airfield since issue #106 but rearmed only
+at the Helipad, which is Consortium-only: 24 shots and dead weight. `RearmActors: hpad, afld, afld.ukraine` (the
+Airfield's `Reservable` dock is the one the MiG and Yak use). No bot builds any stock aircraft yet, so this is the
+human side only.
+
+**8. Drones did almost nothing.** `DroneRocket` 2x700 per ~85 ticks: about a seventh of a Rocket Soldier's damage
+per credit, two minutes for a Recon Drone to kill a Medium Tank, while every bot buys them (issue #132). Raised to
+2x2000 and `DroneRocket.Strike` to 2x2700 (about 40% / 32% of the Rocket Soldier per credit; still `Light`, still
+fragile, still disarmed at Critical power). Reasoned, not measured - the first thing to playtest; the drone bays need
+no Radar, so they arrive before either side's anti-air structures.
+
+**9. Bots stopped growing once they banked.** Vaults hold spendable cash at `MinimumOperatingBalance` (3000), below
+every bot's `NewProductionCashThreshold` (7000-8000) and `BuildAdditionalMCVCashAmount` (5000), so no new production
+or expansion after minute five or six. New Player trait `GridReserveOperatingBalance` (conditional) raises the floor
+the manager hands its Vaults; `ai.yaml` sets 8500 for every personality but Easy Grid Broker, through
+`GrantConditionOnBotOwner`'s conditions - those resolve alike on every client, which matters because Vaults are
+synced (a bot module's condition is host-only and would desync). Playtest it: a bot holds 5,500 more unbanked.
+
+**10. No difficulty ladder.** The lobby names now carry a tag: Easy Grid Broker (beginner), Normal / Naval / Grid
+Broker (standard), Turtle (defensive), Rush (aggressive), Saboteur (advanced). The default stays Saboteur (issue
+#138). Tags reasoned from the audit, not measured; not seen in the lobby (name width).
+
+**Still open from the same audit** (the second batch; numbers from the audit reports):
+- *Lockdown re-banks in seconds*: after a raid the owner's cash, piled up above the floor during the hold, re-banks
+  the loss in ~5s with 8 banks, and bank spam makes it worse. A re-arm cooldown after a cancel and a `BuildLimit` on
+  `SILO` (e.g. 16). Playtest.
+- *Recycling Depot stacks*: 300/min per Depot, no cap, no risk, no power gate - ten bank a 2-player target alone in
+  ~13 minutes. `BuildLimit: 3` and/or a strained rate.
+- *Night switches off all anti-air*: `SAM`/`AGUN`/`TSLA`/`DOME` go dark at *Low* power, which a solar base reaches
+  every night, while the low-power nag is muted at dusk/night. A Critical-only variant for anti-air, and a briefing line.
+- *Team games*: an ally's Lockdown is shown as "ENEMY LOCKDOWN"; the target counts every player rather than opponents.
+- *Opponents' Reserve is invisible* to a player (only observers see the standings) and the 50% reveal is silent.
+- *Grid Decay* (1%/min per bank) is refilled in seconds and ends no stalemate.
+- *Saboteur push timing with the Sun Cycle on* (first push likely in the first night) - playtest.
+- Smaller: briefing omits the 3000 floor, the 90s hold and the energy share; tooltips omit night output and the
+  Grid Defense Turret's weak-vs-heavy; the Grid Defense Turret detects no cloaked units; the drone bays have no Spy
+  veterancy hook; wreck salvage (15-30 credits a kill) is too small to matter; the Advanced Solar Array is dominated
+  by the Hydrogen Plant and the Wind Turbine; `PowerStorage`'s capture comment says the captor keeps the charge, but
+  `RemovedFromWorld` zeroes it; the main-menu battle over-queues collectors; a Scrap drop on a painted field can decay
+  field Scrap away; both lobby checkboxes share `CheckboxDisplayOrder: 6`.
+
+**Files:** `OpenRA.Mods.Sungrid/GridReserve/{GridReserveVault,GridReserveController,GridReserveManager}.cs`, new
+`GridReserveOperatingBalance.cs`, `BotModules/EnemyGridStateBotModule.cs`; `rules/{player,ai,aircraft}.yaml`,
+`weapons/missiles.yaml`, `fluent/rules.ftl`; `docs/GAME_MODES.md`, `docs/BUILDINGS.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---

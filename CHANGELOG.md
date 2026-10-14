@@ -65,6 +65,16 @@ The detailed entries below track every issue through #119, plus #132; this list 
   Windows player host (issue #140). **Clicks land where the mouse pointer points again**: since the new cursor
   art, every click had hit a spot about 9 pixels left of the pointer's tip (twice that on high-resolution screens)
   (issue #141).
+  Windows player host (issue #140). **A free-for-all of three or more no longer ends at the first defeat** - it
+  used to hand every survivor the win the moment one player was knocked out; now the match plays on to the last
+  side standing (or a Grid Lockdown). **Battery Banks:** destroying one now wipes all the Reserve it held, not half
+  (you still get a quarter of it as cash), and an Engineer can capture one cleanly - its owner loses what it held,
+  you get the same quarter, and the bank banks for you from then on. Everyone now hears the Lockdown warning, not
+  just the player holding it. **The bots got better:** every one but Easy Grid Broker now attacks your Battery Banks
+  as soon as you go into Lockdown (Turtle included); the Assembly's Saboteur actually sends its army now (it waited
+  for blackouts only a Spy can cause); bots keep enough cash to keep building factories and new bases while they
+  bank; and each bot's name says how hard it is, from "beginner" to "advanced". **Drones hit about three times as
+  hard**, and the Assembly's **Wasp Gunship** can finally reload at its own Airfield (issue #141).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and

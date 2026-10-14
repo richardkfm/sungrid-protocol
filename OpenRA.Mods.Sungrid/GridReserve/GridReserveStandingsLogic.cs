@@ -20,7 +20,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 {
 	[Desc("Attach to a Container in ingame-observer.yaml to list every active player's Grid Reserve",
 		"total against the match target. Observers (including players who have finished the match",
-		"and dropped to spectating, per MissionObjectives' EarlyGameOver) can use this as the",
+		"and dropped to spectating once defeated) can use this as the",
 		"end-of-match Reserve scoreboard regardless of which victory condition ended the game.",
 		"Expects MaxRows Container children named ROW_0.. each with NAME/AMOUNT labels and a BAR.",
 		"Hides itself when the Grid Reserve lobby option is off.")]
