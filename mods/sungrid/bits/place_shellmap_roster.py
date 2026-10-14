@@ -10,7 +10,7 @@ side of the faction line (issues #84, #101: the Drone Bay and the Wind Turbine
 are the Assembly's, the Aerial Fabrication Bay, the Smart Grid Relay and the
 Hydrogen Plant the Consortium's).
 
-This script does two things, both deterministic:
+This script does three things, all deterministic:
 
 1. RETYPE: actors already on the map whose type belongs to the other faction
    are swapped for their own side's same-footprint counterpart, keeping their
@@ -20,13 +20,19 @@ This script does two things, both deterministic:
    free, Clear and resource-free inside the bounds, and the one-cell ring
    around the footprint is passable ground clear of every other actor (the
    rule from issue #131: nothing closes a path, nothing touches a neighbour).
+3. RELOCATE (issue #139): each actor named in RELOCATE that shares a cell with
+   another actor's footprint is moved to the nearest valid cell (the same
+   rule) to where it stands, keeping its name and every other field. Two
+   Battery Banks had stood on the Data Center since issue #119, which
+   --check-yaml cannot see. Afterwards no two footprints on the map may share
+   a cell, or the script fails.
 
 Usage:
     place_shellmap_roster.py [--dry-run] [--replace] [--render PNG] [MAP]
 
 MAP defaults to the desert shellmap. --replace strips the actors this script
 added (the names in ADDITIONS) before placing again; without it a map that
-already carries them is left alone. --render writes a schematic: terrain,
+already carries them keeps them, and only RELOCATE runs. --render writes a schematic: terrain,
 resources, existing actors dimmed, the additions and retypes highlighted, the
 camera's oval path and the area a 1920x1080 menu sees around it.
 
@@ -94,6 +100,12 @@ ADDITIONS = [
     ("SovietTurbine6", "sgwnd", "Soviets", 60, 32),
 ]
 
+# Actors placed by hand (issue #119, or the stock map) that overlapped another
+# footprint: two Battery Banks on the Consortium Data Center, a Solar Array on
+# the Advanced Solar Array's bib, a rock under the Assembly's Sensor Array and
+# a Wind Turbine. Each moves only while it overlaps something.
+RELOCATE = ["Actor908", "Actor909", "Actor161", "Actor81"]
+
 PASSABLE = {"Clear", "Road", "Rough", "Beach", "Bridge"}
 SEARCH_RADIUS = 6
 
@@ -153,6 +165,49 @@ class Site:
                 self.grid.occupied.update(self.cells(kind, x, y))
                 return x, y
         return None
+
+
+def occupancy(actors, footprints):
+    """{cell: [actor names]} over every actor's footprint."""
+    cells = {}
+    for name, kind, x, y in actors:
+        if kind == "mpspawn":
+            continue
+        for dx, dy in footprints.get(kind, [(0, 0)]):
+            cells.setdefault((x + dx, y + dy), []).append(name)
+    return cells
+
+
+def overlaps(actors, footprints):
+    """Sorted pairs of actor names whose footprints share a cell."""
+    pairs = set()
+    for names in occupancy(actors, footprints).values():
+        for i, a in enumerate(names):
+            for b in names[i + 1:]:
+                pairs.add(tuple(sorted((a, b))))
+    return sorted(pairs)
+
+
+def relocate(pkg, footprints, templates):
+    """Move each RELOCATE actor that overlaps another to the nearest valid
+    cell to where it stands. Returns the package and the moves made."""
+    moved = []
+    for name in RELOCATE:
+        entry = next((a for a in pkg.actors if a[0] == name), None)
+        if entry is None or not any(name in pair for pair in overlaps(pkg.actors, footprints)):
+            continue
+        _, kind, x, y = entry
+        others = pv.MapPackage.__new__(pv.MapPackage)
+        others.__dict__.update(pkg.__dict__)
+        others.actors = [a for a in pkg.actors if a[0] != name]
+        spot = Site(pv.Grid(others, footprints, templates), footprints).place(kind, x, y)
+        if spot is None:
+            raise SystemExit(f"  {name} ({kind}): no valid cell within {SEARCH_RADIUS} of {x},{y}")
+        pkg.yaml = re.sub(rf"^(\t{name}: \S+\n(?:\t\t.*\n)*?\t\tLocation: )-?\d+,-?\d+",
+                          rf"\g<1>{spot[0]},{spot[1]}", pkg.yaml, count=1, flags=re.M)
+        pkg = reload(pkg)
+        moved.append((name, kind, x, y) + spot)
+    return pkg, moved
 
 
 def camera_oval(pkg):
@@ -228,37 +283,48 @@ def main(argv):
     pkg = pv.MapPackage(path)
     names = {n for n, _, _, _, _ in ADDITIONS}
     present = [a for a in pkg.actors if a[0] in names]
-    if present and not replace:
-        print(f"{pkg.name}: already carries the roster additions, skipping (--replace to redo)")
-        return 0
-    if present:
+    add = not present or replace
+    if not add:
+        print(f"{pkg.name}: already carries the roster additions, keeping them (--replace to redo)")
+    if present and replace:
         for name in names:
             pkg.yaml = re.sub(rf"^\t{name}: \S+\n(?:\t\t.*\n)*", "", pkg.yaml, flags=re.M)
 
-    retyped = retype(pkg)
+    retyped = retype(pkg) if add else []
     pkg = reload(pkg)
     footprints = pv.load_footprints()
-    grid = pv.Grid(pkg, footprints, pv.load_tileset(pkg.tileset))
+    templates = pv.load_tileset(pkg.tileset)
+    grid = pv.Grid(pkg, footprints, templates)
     grid.footprints = footprints
     site = Site(grid, footprints)
 
     placed = []
-    for name, kind, owner, ax, ay in ADDITIONS:
+    for name, kind, owner, ax, ay in ADDITIONS if add else []:
         spot = site.place(kind, ax, ay)
         if spot is None:
             print(f"  {name} ({kind}): no valid cell within {SEARCH_RADIUS} of {ax},{ay}")
             return 1
         placed.append((name, kind, owner, spot[0], spot[1]))
 
-    block = "".join(f"\t{n}: {k}\n\t\tLocation: {x},{y}\n\t\tOwner: {o}\n" for n, k, o, x, y in placed)
-    m = re.search(r"^Actors:\n((?:\t.*\n?)*)", pkg.yaml, re.M)
-    pkg.yaml = pkg.yaml[:m.end()].rstrip("\n") + "\n" + block + pkg.yaml[m.end():]
+    if placed:
+        block = "".join(f"\t{n}: {k}\n\t\tLocation: {x},{y}\n\t\tOwner: {o}\n" for n, k, o, x, y in placed)
+        m = re.search(r"^Actors:\n((?:\t.*\n?)*)", pkg.yaml, re.M)
+        pkg.yaml = pkg.yaml[:m.end()].rstrip("\n") + "\n" + block + pkg.yaml[m.end():]
+
+    pkg, moved = relocate(reload(pkg), footprints, templates)
+    remaining = overlaps(pkg.actors, footprints)
 
     for n, old, new, x, y in retyped:
         print(f"  retype {n} at {x},{y}: {old} -> {new}")
     for n, k, o, x, y in placed:
         print(f"  add {n} ({k}, {o}) at {x},{y}")
-    print(f"{pkg.name}: {len(retyped)} retyped, {len(placed)} added")
+    for n, k, x, y, nx, ny in moved:
+        print(f"  move {n} ({k}) from {x},{y} to {nx},{ny}")
+    print(f"{pkg.name}: {len(retyped)} retyped, {len(placed)} added, {len(moved)} moved")
+    for a, b in remaining:
+        print(f"  overlap: {a} and {b}")
+    if remaining:
+        return 1
 
     if render_path:
         pkg = reload(pkg)

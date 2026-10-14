@@ -183,7 +183,7 @@ Actors:
 		Location: 47,24
 		Owner: Soviets
 	Actor81: rock7
-		Location: 53,19
+		Location: 53,21
 		Owner: Neutral
 	Actor48: brik
 		Location: 72,63
@@ -460,7 +460,7 @@ Actors:
 		Location: 93,85
 		Owner: Allies
 	Actor161: powr
-		Location: 89,90
+		Location: 87,90
 		Owner: Allies
 	Actor84: apwr
 		Location: 38,10
@@ -1190,10 +1190,10 @@ Actors:
 		Location: 64,73
 		Owner: Allies
 	Actor908: silo
-		Location: 78,92
+		Location: 78,96
 		Owner: Allies
 	Actor909: silo
-		Location: 79,92
+		Location: 80,88
 		Owner: Allies
 	AlliedHauler1: sghau
 		Location: 89,71

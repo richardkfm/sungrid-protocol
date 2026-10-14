@@ -127,7 +127,7 @@ people who are not the author.** Phase-completeness is not the bar; nothing bein
 | B4 | `make test` green — `--check-yaml` and `--check-missing-sprites` across all 79 maps, on both CI platforms | **Met**, and CI-enforced on every PR |
 | B5 | All three platform packages build together (Linux AppImage, Windows installer, macOS DMG) | **Met** since alpha17; regressed once at alpha34 and fixed by issue #99 |
 | B6 | The first-run content-install flow works from a clean machine, verified by someone who has never run the mod | **Open** — `mods/sungrid-content` exists and is believed correct, but has never been verified from a genuinely clean install. The tester guide and the feedback form both ask for exactly this (issue #116) |
-| B7 | One full multiplayer match, 3+ external testers, no desyncs and no "obviously broken" balance complaints | **Open** — this is Phase 4's one unmet exit criterion, and the real gate. As of alpha38 a LAN-hosted game has been confirmed *visible* from a second machine; no match has been joined or played across machines yet, and internet play has failed (see below) |
+| B7 | One full multiplayer match, 3+ external testers, no desyncs and no "obviously broken" balance complaints | **Open, half-way** — this is Phase 4's one unmet exit criterion, and the real gate. Issue #140: the first match across two machines was played to the end over Tailscale (a Windows host, a Mac player, The Commons, Grid Reserve), so the supported route works. Still missing: a third player, and a report on desyncs and balance from that match |
 | B8 | A tester who is not the author can install, find help and report a problem without being walked through it | **Met by issue #116 once GitHub Issues is enabled** — `docs/BETA_TESTING.md` (install, content, LAN/VPN hosting, log locations, known issues), Sungrid issue forms for bugs, crashes, connection problems and playtest feedback, and the crash dialog's "View FAQ" pointing at the guide instead of `BLUEPRINT.md` |
 
 **B7 is the gate.** Everything else is either already met or cheap to meet; the project has never been
@@ -138,11 +138,13 @@ research project.
 **How B7 gets run (issue #116).** Beta is distributed the same way the alphas were — GitHub Releases — and
 feedback comes back as GitHub Issues through the forms in `.github/ISSUE_TEMPLATE/`. The supported way for
 testers in different homes to play together is **LAN or a mesh VPN (Tailscale/ZeroTier) with Direct IP**, not
-the public server list: the one attempt at internet play failed on both paths (the game never appeared in the
-list, and a direct connection to the host's public IP:port was refused), cause not yet established. The engine
-records the master server's verdict on the host — `Master server: …` in `Logs/server.log`, and "Server port is
-not accessible from the internet." in the lobby chat — so the first report that includes those settles whether
-this is the host's port forward/CGNAT (the working hypothesis in `docs/PLAYTESTING.md`) or something in the mod.
+the public server list. Issue #140 settled why the list fails: the host's lobby reported "Master server
+communication established." and then "Server port is not accessible from the internet." / "Game has not been
+advertised online." — the master server is reached, but it cannot reach the host's port 1234, so the game is never
+listed. That is the host's port forward or CGNAT (the working hypothesis in `docs/PLAYTESTING.md`), not the mod.
+The VPN route was proven in the same session: a full two-player match, Windows host, macOS client, Tailscale node
+sharing and Direct IP. One gap remains on it: a **Mac host** could not be reached through Tailscale (see issue
+#140), so the tester guide tells testers to let a Windows player host.
 
 ### Cutting `beta1`
 
