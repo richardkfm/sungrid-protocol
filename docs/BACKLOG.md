@@ -5817,9 +5817,8 @@ Windows firewall rule, a connection check before joining with `Test-NetConnectio
 means, the Mac-host known issue), the server-list section and known issues explain the lobby messages;
 `docs/ROADMAP.md`'s B7 row and "How B7 gets run" updated; B7 stays **open** - the gate asks for 3+ testers and a
 desync-free match, and this was two players with no desync report. Follow-up at the owner's request: `README.md`
-no longer calls a cross-machine match the open gate; a **Multiplayer** section carries the owner's two screenshots of
-the match (the lobby with the master-server lines, and the end screen), committed as
-`docs/screenshots/first-online-match-*.webp` rather than as web uploads.
+no longer calls a cross-machine match the open gate; a short **Multiplayer** section says what was played and what is
+still open. No screenshots of the match are published (the owner's call).
 
 ---
 
