@@ -18,7 +18,12 @@
 -- What plays out, on a loop that never runs dry:
 --  * Assembly ground waves from seven map edges (Disruptor Troopers and Recon
 --    Drones, in varying mixes), each re-sent a little after it is wiped out.
---  * Both sides' barracks and drone buildings producing, up to a cap per side.
+--  * Both sides' barracks and drone buildings producing, up to a cap per side;
+--    what the Consortium produces hunts its way north into the valley.
+--  * A little armour (issue #139): the Consortium's War Factory builds a tank
+--    now and then, and an Assembly tank column with an infantry escort comes
+--    in from the north or east - at most two tanks a side, the drones already
+--    fill the sky.
 --  * Assembly drone raids on the Consortium's Battery Banks - the Grid Reserve
 --    Vault raid - which the SAM sites shoot down (issue #120's wrecks).
 --  * A Consortium Spy, disguised as a Disruptor Trooper, walking into an
@@ -31,16 +36,22 @@
 --  * Assembly structures are rebuilt where they fell (rubble, then the build-up
 --    art), so the north never empties; the Consortium's map-placed base is
 --    unkillable, as it has been since issue #119.
--- Recon Drones fly the old MiG paths. No stock Red Alert unit is spawned.
+-- Recon Drones fly the old MiG paths. The tanks are the only stock Red Alert
+-- units spawned (issue #139, the owner's call; their sprites are Phase 7).
 -- The Sun Cycle itself is forced on and sped up in rules.yaml.
 
 AssemblyWaves =
 {
-	{ "disr", "disr", "disr", "sgdro" },
-	{ "disr", "disr", "disr", "disr", "disr" },
-	{ "disr", "disr", "sgdro", "sgdro" }
+	{ "disr", "disr", "disr", "disr", "sgdro" },
+	{ "disr", "disr", "disr", "disr", "disr", "disr" },
+	{ "disr", "disr", "disr", "sgdro", "sgdro" }
 }
-AssemblyBeachWave = { "disr", "disr", "disr", "disr", "disr", "disr" }
+AssemblyBeachWave = { "disr", "disr", "disr", "disr", "disr", "disr", "disr" }
+
+-- The Assembly's armour: one heavy tank with an escort, from the two northern
+-- entries the collectors already drive in by.
+AssemblyArmorWave = { "3tnk", "disr", "disr", "disr" }
+ArmorInterval = DateTime.Seconds(70)
 
 -- Each side's own drone (issues #84/#101): the Assembly flies Recon Drones
 -- from its Drone Bays, the Consortium Strike Drones from its Aerial
@@ -52,6 +63,7 @@ ProducedUnitTypes =
 	{ factory = AlliedDroneBay1, types = { "sgdrs" } },
 	{ factory = AlliedDroneBay2, types = { "sgdrs" } },
 	{ factory = AlliedAerialFab, types = { "sgdrs" } },
+	{ factory = AlliedWarFactory, types = { "1tnk", "2tnk" }, pause = DateTime.Seconds(45) },
 	{ factory = SovietBarracks1, types = { "disr" } },
 	{ factory = SovietBarracks2, types = { "disr" } },
 	{ factory = SovietBarracks3, types = { "disr" } },
@@ -60,9 +72,14 @@ ProducedUnitTypes =
 	{ factory = SovietDroneBay3, types = { "sgdro" } }
 }
 
--- Most of each type a side fields from its own production; a factory waits
--- while its side is at the cap, so nothing accumulates on a menu left open.
-ProductionCaps = { disr = 12, sgdro = 4, sgdrs = 4 }
+-- Most of each type a side fields from the script (production, armour
+-- columns); a factory waits while its side is at the cap, so nothing
+-- accumulates on a menu left open. Only what the script fielded counts: the
+-- map already places 23 Consortium troopers, which used to hold its barracks
+-- at the cap for good (issue #139).
+ProductionCaps = { disr = 10, sgdro = 4, sgdrs = 4, ["1tnk"] = 2, ["2tnk"] = 2, ["3tnk"] = 2 }
+TankTypes = { ["1tnk"] = true, ["2tnk"] = true, ["3tnk"] = true }
+Fielded = { }
 
 -- Collectors each side keeps working (replaced if lost).
 HaulerMinimum = 2
@@ -101,9 +118,22 @@ LastWreckTime = 0
 SalvageIndex = 0
 SpyRound = 0
 
+-- Tanks share one cap per side; everything else is capped by its own type.
+FieldedKey = function(player, unitType)
+	return player.InternalName .. ":" .. (TankTypes[unitType] and "tank" or unitType)
+end
+
 AtCap = function(player, unitType)
 	local cap = ProductionCaps[unitType]
-	return cap ~= nil and #player.GetActorsByType(unitType) >= cap
+	return cap ~= nil and (Fielded[FieldedKey(player, unitType)] or 0) >= cap
+end
+
+CountFielded = function(a)
+	local key = FieldedKey(a.Owner, a.Type)
+	Fielded[key] = (Fielded[key] or 0) + 1
+	Trigger.OnRemovedFromWorld(a, function()
+		Fielded[key] = Fielded[key] - 1
+	end)
 end
 
 BindActorTriggers = function(a)
@@ -290,10 +320,29 @@ SendAssemblyUnits = function(entryCell, waves)
 		BindActorTriggers(unit)
 	end)
 	Trigger.OnAllKilled(units, function()
-		Trigger.AfterDelay(DateTime.Seconds(Utils.RandomInteger(4, 16)), function()
+		Trigger.AfterDelay(DateTime.Seconds(Utils.RandomInteger(3, 10)), function()
 			SendAssemblyUnits(entryCell, waves)
 		end)
 	end)
+end
+
+-- A tank column from the north or the east, alternately, while the Assembly
+-- has fewer tanks out than its cap.
+ArmorRound = 0
+SendAssemblyArmor = function()
+	if not AtCap(Soviets, "3tnk") then
+		ArmorRound = ArmorRound + 1
+		local entry = ArmorRound % 2 == 0 and Entry4 or Entry5
+		local units = Reinforcements.Reinforce(Soviets, AssemblyArmorWave, { entry.Location }, 25)
+		Utils.Do(units, function(unit)
+			if TankTypes[unit.Type] then
+				CountFielded(unit)
+			end
+			BindActorTriggers(unit)
+		end)
+	end
+
+	Trigger.AfterDelay(ArmorInterval, SendAssemblyArmor)
 end
 
 SendRecon = function(waypoints)
@@ -322,7 +371,7 @@ ProduceUnits = function(t, gen)
 		return
 	end
 
-	factory.Wait(Actor.BuildTime(unitType))
+	factory.Wait(Actor.BuildTime(unitType) + (t.pause or 0))
 	factory.Produce(unitType)
 	factory.CallFunc(function() ProduceUnits(t, gen) end)
 end
@@ -334,6 +383,7 @@ OnProduced = function(_, a)
 		BindHaulerTriggers(a)
 		a.FindResources()
 	else
+		CountFielded(a)
 		BindActorTriggers(a)
 	end
 end
@@ -439,6 +489,7 @@ WorldLoaded = function()
 	Trigger.AfterDelay(DateTime.Seconds(20), SendSpy)
 	Trigger.AfterDelay(DateTime.Seconds(40), SendSalvageRun)
 	Trigger.AfterDelay(DateTime.Seconds(10), KeepCollectors)
+	Trigger.AfterDelay(DateTime.Seconds(35), SendAssemblyArmor)
 
 	SendAssemblyUnits(Entry1.Location, AssemblyWaves)
 	SendAssemblyUnits(Entry2.Location, AssemblyWaves)

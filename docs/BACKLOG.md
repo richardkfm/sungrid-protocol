@@ -5712,3 +5712,52 @@ not consumed: night-cloak`. **Not verified live:** whether a night Spy is too st
 Array, and how the Saboteur's Spies fare (they gain the cloak too, and night is in every default match now).
 
 ---
+
+### 139. The main-menu battle: overlapping buildings, a production cap that never let go, and a little armour
+
+**Status:** Done, not verified in a live client. Owner report from a screenshot of the menu: Battery Banks "oddly
+overlaid" on another building, and next to no infantry or tank activity. The owner asked for the overlaps fixed, more
+infantry, and tanks back - fewer of them, since the drones already fill the sky.
+
+**Overlaps.** A footprint check over every actor on `maps/desert-shellmap` found four, none visible to
+`--check-yaml` (it checks a map actor's type, not where it stands - CLAUDE.md art rule 29):
+
+- `Actor908`/`Actor909` (Consortium Battery Banks, placed in issue #119) stood on `AlliedDatacenter` (`sgdai` at
+  78,91, 2x2 plus its bib row) - the cluster in the screenshot, the Data Center's dish showing through the banks.
+- `Actor161` (`powr` at 89,90) sat on `Actor155`'s (`apwr`) bib row; `Actor81` (`rock7`, five cells wide at 53,19) lay
+  under the Assembly's Sensor Array and a Wind Turbine. Both from the stock map.
+
+`bits/place_shellmap_roster.py` gains a third step, `RELOCATE`: each named actor that overlaps another footprint is
+moved to the nearest valid cell to where it stands, by the same rule as the additions (free Clear cells, a one-cell
+ring clear of every other actor), keeping its name and fields. Moves: `Actor908` 78,92 -> 78,96, `Actor909` 79,92 ->
+80,88, `Actor161` 89,90 -> 87,90, `Actor81` 53,19 -> 53,21. The script now fails if any two footprints on the map
+still share a cell, so a later hand edit can't bring this back unnoticed. Without `--replace` it keeps the issue #137
+additions and only relocates (it used to skip the map entirely); `--replace --dry-run` reproduces every addition at
+its current cell, so the refactor moved nothing else.
+
+**Why there was so little infantry.** `AtCap` counted *every* actor of a type the side owned. The map places 23
+Consortium Disruptor Troopers (unkillable, `Defend` stance), so with a cap of 12 the Consortium's barracks never
+produced a single unit; on the Assembly side the seven edge waves filled the same cap, so its barracks rarely did
+either. The battle was the waves walking into an unkillable defence line and nothing coming back out. `AtCap` now
+counts only what the script itself fielded (`CountFielded`, decremented on `OnRemovedFromWorld`); caps are 10
+troopers and 4 drones of each side's type. What the Consortium produces hunts north (`Hunt` on idle, as before -
+it simply never had anything to send).
+
+**More infantry.** Edge waves are one trooper larger (5-6, the beach wave 7) and are re-sent 3-10 s after being wiped
+out instead of 4-16 s.
+
+**Armour (fewer than the old stock battle).** The Consortium's War Factory adds Light and Medium Tanks (`1tnk`,
+`2tnk`) to its production loop with a 45 s pause on top of the build time; every 70 s, while it has fewer than its
+cap out, the Assembly sends one Heavy Tank (`3tnk`) with three troopers from the north or the east entry (the ones
+its collectors already use). Tanks share one cap per side: **2**. These are the only stock Red Alert units the script
+spawns - an exception to issues #119/#137's "no stock unit", the owner's call; their sprites are Phase 7. The tanks
+already standing on the map (three Consortium Light Tanks, two Assembly Mammoths) don't count toward it.
+
+**Verified:** `make`, `make check-scripts`, `./utility.sh --check-yaml` (79 maps, exit 0); the map re-saved with
+`--refresh-map-previews`; a second run of the placer reports `0 moved` and no overlaps; every engine API the new Lua
+calls (`Player.InternalName`, `Trigger.OnRemovedFromWorld`, `Reinforcements.Reinforce`, `Actor.BuildTime`) checked
+against the pinned engine source. **Not verified live:** that the waves, production and armour columns actually
+read as a busier battle on the menu (Lua runtime errors are not caught by anything here), and whether the extra
+units cost frame rate on a menu left open.
+
+---

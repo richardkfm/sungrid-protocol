@@ -54,7 +54,11 @@ The detailed entries below track every issue through #119, plus #132; this list 
   battle never runs down (issue #137). Spies and Thieves are **invisible at night**: only a Sensor
   Array (8 cells), a Pillbox or Arc Pylon (6) or infantry standing right beside them can see one (issue #138).
   **Saboteur AI is the default bot** - a fresh skirmish adds it and it heads every bot list; "Add bots" still picks at
-  random (issue #138).
+  random (issue #138). The **main-menu battle** is busier: the Consortium's barracks finally produce (the troopers
+  already on the map had held them at their cap all along) and send infantry north, Assembly waves are larger and
+  return sooner, and a few tanks join in - at most two a side, from the Consortium's War Factory and an Assembly tank
+  column from the north or east. Two Battery Banks no longer stand on top of the Data Center, and a Solar Array and
+  a rock no longer overlap their neighbours (issue #139).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
