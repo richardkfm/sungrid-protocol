@@ -5819,3 +5819,31 @@ means, the Mac-host known issue), the server-list section and known issues expla
 desync-free match, and this was two players with no desync report.
 
 ---
+
+### 141. Clicks landed left of the mouse pointer's tip
+
+**Status:** Done, not verified in a live client. Report from the external tester of issue #140 (a Mac at a high
+resolution): clicking a sidebar icon only worked with the pointer about 10 px to the *right* of it. The owner had
+also turned down their own 27" QHD screen's resolution.
+
+**Cause - the mod, not the platform.** `bits/gen_cursor_art.py` (issue #13/#33 follow-up) replaced the stock
+`mouse.shp` art with a new pointer and kept `cursors.yaml` byte-identical to stock RA, on the reasoning that the
+frame layout was unchanged. But a cursor's `X`/`Y` is its *hotspot*, relative to the frame centre, and the stock
+`default` value `-16,-12` puts the click point at frame pixel (-1,0): the corner where the stock arrow's tip is.
+`CursorManager` adds the frame with offset `-Hotspot - Size/2` and draws its top-left at the mouse position plus
+that offset (software and hardware cursors alike). The generated arrow's tip is at frame pixel (8,1)
+(`draw_pointer`: `tip = (cx - 0.35 s, cy - 0.75 s)`, `cx, cy = 12, 8`, `s = 9`), so every click landed ~9 px left
+of the tip and a pixel up. The engine doubles the cursor at `NativeWindowScale > 1.5` (high-DPI / Retina) and
+with "Increase Cursor Size", which doubles the miss to ~18 px - why the tester at high resolution noticed it first.
+The minimap arrow (`default-minimap`, frame 80, tip at (12,7)) had the same fault.
+
+**Fix:** `cursors.yaml` hotspots set to the drawn tips: `default` and `joystick-all` `X: -7, Y: -11`,
+`default-minimap` `X: -3, Y: -5`, with a comment; `draw_pointer()` carries a note that its tip and those values move
+together. No art changed (regenerating `mouse.shp` is byte-identical). Every other cursor is centred (`X`/`Y` 0, a
+reticle drawn at the frame centre) or a scroll arrow shown only at the screen edge, so nothing else depended on the
+stock corner.
+
+**Verified:** `./utility.sh --check-yaml` exit 0; the engine's formula applied to the new values lands on frame
+pixels (8,1) and (12,7), the arrow tips. **Not verified live:** the click feel on a high-DPI Mac.
+
+---

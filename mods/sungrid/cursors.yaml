@@ -59,14 +59,19 @@ Cursors:
 		select:
 			Start: 15
 			Length: 6
+		# Issue #141: the hotspot is relative to the frame centre (15,12) and must
+		# sit on the tip gen_cursor_art.py's draw_pointer() draws - (8,1) for the
+		# full arrow, (12,7) for the minimap one. The stock -16,-12 aimed at the
+		# stock arrow's corner tip, so every click landed ~8 px left of the tip
+		# (16 px with the cursor doubled on a high-DPI screen).
 		default:
 			Start: 0
-			X: -16
-			Y: -12
+			X: -7
+			Y: -11
 		default-minimap:
 			Start: 80
-			X: -16
-			Y: -12
+			X: -3
+			Y: -5
 		generic-blocked:
 			Start: 9
 		generic-blocked-minimap:
@@ -145,8 +150,8 @@ Cursors:
 			Length: 8
 		joystick-all:
 			Start: 0
-			X: -16
-			Y: -12
+			X: -7
+			Y: -11
 		joystick-t-blocked:
 			Start: 124
 		joystick-tr-blocked:
