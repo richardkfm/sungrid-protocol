@@ -5822,7 +5822,7 @@ still open. No screenshots of the match are published (the owner's call).
 
 ---
 
-### 141. Clicks landed left of the mouse pointer's tip
+### 142. Clicks landed left of the mouse pointer's tip
 
 **Status:** Done, not verified in a live client. Report from the external tester of issue #140 (a Mac at a high
 resolution): clicking a sidebar icon only worked with the pointer about 10 px to the *right* of it. The owner had
