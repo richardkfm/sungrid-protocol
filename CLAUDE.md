@@ -125,6 +125,13 @@ each other's state and it is easy to leave one of them out:
   holding Lockdown - only the one-time broadcast, easy to miss mid-fight. `GridReserveHudLogic` now
   also warns ("ENEMY LOCKDOWN — Ns", naming the opponent) when someone else is in the hold and the
   local player isn't. Same underlying gap as #92, third widget-facing symptom.
+- **#141** — `MissionObjectives.EarlyGameOver: true` (set so a Lockdown win would resolve the other players) also
+  fires on every *defeat*: the first player knocked out of a 3+ free-for-all made every survivor the winner. It is
+  off; `GridReserveController` force-defeats the winner's non-allied opponents itself. Never turn it back on. Same
+  issue: a Vault cached its owner once, so a **captured** bank kept banking the old owner's Credits (a capture is
+  remove -> owner change -> add, and an actor out of the world still ticks) - the Vault now registers on add,
+  unregisters on removal, ticks only while registered and rebinds on owner change; and a destroyed bank now loses its
+  *whole* holding (it used to leave half in `TotalReserve` with no building behind it).
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Seven lobby personalities: the four
@@ -144,8 +151,12 @@ managers **except Easy Grid Broker's**, which stays a beatable clock by design. 
 `GridReserveBotModule`'s pre-existing `EnemyBankingCondition`, finally consumed by something, so the
 preference switches on only while an opponent is actually banking and no-ops in destruction matches.
 The 30-cell radius is reasoned (an enemy base plus approaches), not measured — playtest it.
-Still deferred: Turtle AI doesn't drop turtling against an imminent economic win; `EnemyLockdownCondition`
-is the hook for that one (only the Saboteur consumes it so far, issue #135).
+Since issue #141 every personality but Easy Grid Broker answers an opponent's Lockdown: the stock four and the Grid
+Broker grant `enemy-lockdown`, their squad managers carry `!enemy-lockdown`, and `SquadManagerBotModule@lockdown-response`
+(squads of six, no delay, `silo` map-wide) takes over while it holds - Turtle included. Bots also keep 8500 spendable
+(`GridReserveOperatingBalance@bots`, driven by `GrantConditionOnBotOwner`) instead of 3000, or their production and
+expansion thresholds were unreachable once banking began. **A synced trait (a Vault, the floor) may only read
+conditions every client agrees on** - `GrantConditionOnBotOwner`'s, never a bot module's.
 
 Gotcha for any future personality: `McvExpansionManagerBotModule` is what deploys the starting MCV, so
 a personality with no instance of it never builds anything at all.
@@ -165,7 +176,8 @@ infiltrator without asking. Three `SquadManagerBotModule`s, **exactly one enable
 `@saboteur-home` (`SquadSize` 200 - never attacks, only protects), `@saboteur-diversion` (while the Spy module holds
 `saboteur-diversion`; light units and drones only) and `@saboteur-push` (`enemy-grid-down || enemy-lockdown`; everything).
 `EnemyGridStateBotModule`'s `MinimumOutages: 3` holds the push until three blackouts have been seen, and the Saboteur's
-`EnemyLockdownCondition` is the first consumer of that hook. Two rules: never enable two squad managers at once on
+`EnemyLockdownCondition` is the first consumer of that hook. A Thief cannot cause a blackout, so the Assembly's
+Saboteur never pushed until issue #141's `FallbackTicks` (21000): 14 minutes without a push and it pushes anyway. Two rules: never enable two squad managers at once on
 one bot (both would order the same units), and a bot-granted condition may only feed bot modules - bots run on the
 host alone. Infiltrators belong in *every* squad manager's `ExcludeFromSquadsTypes`, or a squad takes them along.
 

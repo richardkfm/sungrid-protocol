@@ -511,8 +511,11 @@ HIND:
 		Prerequisites: aircraft.upgraded
 	Selectable:
 		DecorationBounds: 1621, 1365
+	# The Hind is built at the Assembly's Airfield (issue #106) but only rearmed at the Helipad, which is
+	# Consortium-only, so it had nowhere to reload after 24 shots (issue #141). The Airfield's Reservable
+	# dock is the one the MiG and Yak already rearm on.
 	Rearmable:
-		RearmActors: hpad
+		RearmActors: hpad, afld, afld.ukraine
 	WithAmmoPipsDecoration:
 		Position: BottomLeft
 		Margin: 4, 3

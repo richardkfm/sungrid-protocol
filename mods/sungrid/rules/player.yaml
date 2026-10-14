@@ -108,11 +108,11 @@ Player:
 		WinNotification: Win
 		LoseNotification: Lose
 		LeaveNotification: Leave
-		# Lets a Grid Reserve Lockdown win force-resolve every other player's WinState the moment
-		# it completes, instead of leaving still-undefeated opponents stuck Undefined forever.
-		# ConquestVictoryConditions is unaffected: by the time it can complete, opponents are
-		# already Lost through normal elimination, so this is a no-op for destruction victories.
-		EarlyGameOver: true
+		# EarlyGameOver stays off (the engine default). It was on until issue #141 so a Grid
+		# Reserve win would resolve the other players, but the engine also applies it to every
+		# defeat: the first player eliminated in a 3+ player free-for-all made every survivor the
+		# winner and ended the match. GridReserveController now defeats the Lockdown winner's
+		# opponents itself, and destruction victory ends the normal way, with the last side standing.
 	ConquestVictoryConditions:
 	GridReserveManager:
 	PowerManager:
