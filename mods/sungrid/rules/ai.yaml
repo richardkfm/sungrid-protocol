@@ -687,13 +687,22 @@ Player:
 			sgcry: 10000
 			sgdai: 10000
 			sgshl: 10000
+	# Bots keep more spendable cash than a human's 3000 before their Vaults bank the rest (issue #141).
+	# Their base builders only add production above NewProductionCashThreshold (7000-8000) and their
+	# expansion managers only buy an MCV above BuildAdditionalMCVCashAmount (5000), so a bot whose Vaults
+	# held it at 3000 stopped growing for the rest of the match once banking began. 8500 clears every
+	# one of those. Easy Grid Broker keeps the 3000: its slow growth is the point. Driven by
+	# GrantConditionOnBotOwner, which every client resolves alike - Vaults are synced.
+	GridReserveOperatingBalance@bots:
+		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-saboteur-ai
+		MinimumOperatingBalance: 8500
 	PowerDownBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-easygridbroker-ai || enable-saboteur-ai
 		PowerDownTypes: dome,tsla,mslo,agun,sam
 	BuildingRepairBotModule:
 		RequiresCondition: enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai || enable-easygridbroker-ai || enable-saboteur-ai
 	SquadManagerBotModule@rush:
-		RequiresCondition: enable-rush-ai
+		RequiresCondition: enable-rush-ai && !enemy-lockdown
 		# Raid enemy Vaults ahead of whatever building happens to be nearest, but only while an
 		# opponent is actually banking toward the Reserve target (enemy-banking, granted by
 		# GridReserveBotModule below). Without this a squad walks to the closest structure and
@@ -711,6 +720,33 @@ Player:
 		AircraftTargetType: AirborneActor
 		ProtectionTypes: harv, mcv, mslo, gap, spen, syrd, iron, pdox, tsla, agun, dome, pbox, hbox, gun, sam, atek, weap, fact, proc, silo, hpad, afld, afld.ukraine, powr, apwr, stek, barr, kenn, tent, fix, fpwr, tenf, syrf, spef, weaf, domf, fixf, fapw, atef, pdof, mslf, facf, arct, rcyd, sgcry, sgdai, sgdrn, sgdra, sgtur, sgwnd, sghyd, sgrel, sgsns, sgshl
 		IgnoredEnemyTargetTypes: AirborneActor
+	# Lockdown response (issue #141). Until this only the Saboteur reacted to an opponent holding Grid
+	# Lockdown: the other personalities' squads only went for Vaults if they happened to be attacking
+	# already, and Turtle never attacks, so a human in Lockdown held the 90s against them untouched.
+	# While GridReserveBotModule grants enemy-lockdown, this manager replaces the personality's own
+	# (each of those carries !enemy-lockdown - two enabled managers would order the same units) and
+	# sends everything at the Vaults in waves of six from the first tick, map-wide. Easy Grid Broker
+	# is left out on purpose: it concedes a Lockdown (AbandonBankingOnEnemyLockdown), the beatable
+	# clock it was built to be. When the Lockdown ends the personality's own manager picks the units
+	# back up where they stand.
+	SquadManagerBotModule@lockdown-response:
+		RequiresCondition: (enable-rush-ai || enable-normal-ai || enable-turtle-ai || enable-naval-ai || enable-gridbroker-ai) && enemy-lockdown
+		PreferredTargetTypes: silo
+		PreferredTargetScanRadius: 0
+		SquadSize: 6
+		SquadSizeRandomBonus: 0
+		MinimumAttackForceDelay: 0
+		RushInterval: 100000
+		NavalUnitsTypes: ss, msub, dd, ca, lst, pt
+		ExcludeFromSquadsTypes: harv, sghau, mcv, dog, badr.bomber, u2, mnly
+		ConstructionYardTypes: fact
+		NavalProductionTypes: spen, syrd
+		AirUnitsTypes: mig, yak, heli, hind, mh60, sgdro, sgdrs
+		AircraftTargetType: AirborneActor
+		ProtectionTypes: harv, mcv, mslo, gap, spen, syrd, iron, pdox, tsla, agun, dome, pbox, hbox, gun, sam, atek, weap, fact, proc, silo, hpad, afld, afld.ukraine, powr, apwr, stek, barr, kenn, tent, fix, fpwr, tenf, syrf, spef, weaf, domf, fixf, fapw, atef, pdof, mslf, facf, arct, rcyd, sgcry, sgdai, sgdrn, sgdra, sgtur, sgwnd, sghyd, sgrel, sgsns, sgshl
+		IgnoredEnemyTargetTypes: AirborneActor
+		ProtectUnitScanRadius: 15
+		ProtectionScanRadius: 12
 	McvManagerBotModule@naval:
 		RequiresCondition: enable-naval-ai
 		McvTypes: mcv
@@ -787,7 +823,7 @@ Player:
 			sgdro: 6
 			sgdrs: 6
 	SquadManagerBotModule@normal:
-		RequiresCondition: enable-normal-ai
+		RequiresCondition: enable-normal-ai && !enemy-lockdown
 		# Vault raiding -- see SquadManagerBotModule@rush above.
 		PreferredTargetTypes: silo
 		PreferredTargetScanRadius: 30
@@ -807,7 +843,7 @@ Player:
 	# commitment of income that could have been army, so an opponent left completely unpressured just
 	# out-banks it - the raid is what buys the time its own Reserve needs.
 	SquadManagerBotModule@gridbroker:
-		RequiresCondition: enable-gridbroker-ai
+		RequiresCondition: enable-gridbroker-ai && !enemy-lockdown
 		# Vault raiding -- see SquadManagerBotModule@rush above.
 		PreferredTargetTypes: silo
 		PreferredTargetScanRadius: 30
@@ -925,7 +961,7 @@ Player:
 		UnitDelays:
 			arty: 9000
 	SquadManagerBotModule@turtle:
-		RequiresCondition: enable-turtle-ai
+		RequiresCondition: enable-turtle-ai && !enemy-lockdown
 		# Vault raiding -- see SquadManagerBotModule@rush above.
 		PreferredTargetTypes: silo
 		PreferredTargetScanRadius: 30
@@ -993,7 +1029,7 @@ Player:
 		AwayFromAlliedTargetTypes: Structure, Defense
 		AwayFromEnemyTargetTypes: Structure, Defense
 	SquadManagerBotModule@naval:
-		RequiresCondition: enable-naval-ai
+		RequiresCondition: enable-naval-ai && !enemy-lockdown
 		# Vault raiding -- see SquadManagerBotModule@rush above.
 		PreferredTargetTypes: silo
 		PreferredTargetScanRadius: 30
@@ -1164,6 +1200,8 @@ Player:
 		# existed unused since issue #67 built it for exactly this; the engine side that could read
 		# it did not exist until now.
 		EnemyBankingCondition: enemy-banking
+		# Consumed by SquadManagerBotModule@lockdown-response (issue #141).
+		EnemyLockdownCondition: enemy-lockdown
 	# Coverage is spare *capacity* only, now that GridReserveVaultInfo.MaximumTargetPercent caps what is
 	# actually banked at the Reserve target - before that ceiling existed these percentages were banked
 	# in full, which bought a Lockdown no single raid could break (see docs/BACKLOG.md issue #69).
@@ -1173,6 +1211,7 @@ Player:
 		RequiresCondition: enable-gridbroker-ai
 		VaultTypes: silo
 		EnemyBankingCondition: enemy-banking
+		EnemyLockdownCondition: enemy-lockdown
 		CoveragePercent: 125
 		ContestedCoveragePercent: 150
 		StartDelayTicks: 9000
@@ -1261,6 +1300,13 @@ Player:
 		StartDelayTicks: 6000
 		HoldTicks: 1500
 		MinimumOutages: 3
+		# Issue #141: the Assembly's Saboteur builds Thieves, which cannot black anything out, so it
+		# never saw three outages and never sent its heavy units at all (with Grid Reserve off it could
+		# not win). If 14 minutes pass without a push - from the start, then from the end of the last
+		# one - it pushes anyway for two minutes. Both factions; the Consortium's Spies usually call
+		# the push long before.
+		FallbackTicks: 21000
+		FallbackDurationTicks: 3000
 	# Sun Cycle (docs/BACKLOG.md issue #136). By day each bot projects the night
 	# deficit of its Solar Arrays and buys Battery Banks (counted on top of its
 	# Grid Reserve Vaults by GridReserveBotModule, since one building does both

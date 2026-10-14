@@ -36,10 +36,11 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public override object Create(ActorInitializer init) { return new GridReserveManager(this); }
 	}
 
-	public class GridReserveManager : IWorldLoaded, ISync
+	public class GridReserveManager : IWorldLoaded, INotifyCreated, ISync
 	{
 		readonly GridReserveManagerInfo info;
 		readonly List<GridReserveVault> vaults = [];
+		GridReserveOperatingBalance[] operatingBalances = [];
 
 		[VerifySync]
 		public int TotalReserve { get; private set; }
@@ -60,6 +61,23 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public GridReserveManager(GridReserveManagerInfo info)
 		{
 			this.info = info;
+		}
+
+		void INotifyCreated.Created(Actor self)
+		{
+			operatingBalances = self.TraitsImplementing<GridReserveOperatingBalance>().ToArray();
+		}
+
+		// The spendable Credits a Vault leaves this player: the Vault's own floor, raised by any enabled
+		// GridReserveOperatingBalance on the player (the bots' higher floor, issue #141).
+		public int MinimumOperatingBalance(int vaultFloor)
+		{
+			var floor = vaultFloor;
+			foreach (var balance in operatingBalances)
+				if (!balance.IsTraitDisabled)
+					floor = Math.Max(floor, balance.Info.MinimumOperatingBalance);
+
+			return floor;
 		}
 
 		void IWorldLoaded.WorldLoaded(World w, WorldRenderer wr)

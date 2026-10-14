@@ -47,7 +47,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		public readonly int CheckboxDisplayOrder = 0;
 
 		[Desc("Description of the Grid Reserve objective, shown in the mission objectives panel.")]
-		public readonly string Objective = "Bank enough Grid Reserve across your Vaults and hold Grid Lockdown to win.";
+		public readonly string Objective = "Bank enough Grid Reserve across your Battery Banks and hold Grid Lockdown to win.";
 
 		[Desc("Ticks the Reserve total must stay at or above target to win once Grid Lockdown starts (60-120s at normal speed recommended).")]
 		public readonly int LockdownDurationTicks = 2250;
@@ -154,7 +154,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 					else if (remaining <= 1)
 					{
 						lockdownRemaining.Remove(player);
-						CompleteGridReserveVictory(mo, player);
+						CompleteGridReserveVictory(self.World, mo, player);
 					}
 					else
 						lockdownRemaining[player] = remaining - 1;
@@ -167,7 +167,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			}
 		}
 
-		static void CompleteGridReserveVictory(MissionObjectives mo, Player winner)
+		static void CompleteGridReserveVictory(World world, MissionObjectives mo, Player winner)
 		{
 			// Grid Reserve rides the existing MissionObjectives required-objective gate: force-completing the
 			// winner's other pending required objectives (i.e. ConquestVictoryConditions' "destroy all opposition")
@@ -176,15 +176,30 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			for (var id = 0; id < mo.Objectives.Count; id++)
 				if (mo.Objectives[id].State == ObjectiveState.Incomplete)
 					mo.MarkCompleted(winner, id);
+
+			// The winner's opponents lose here, not through MissionObjectives.EarlyGameOver: that flag also makes
+			// the *first* player eliminated in a free-for-all hand every survivor the win, ending a 3+ player match
+			// at its first defeat (docs/BACKLOG.md issue #141). The winner's allies are left alone - their
+			// ConquestVictoryConditions completes on its own once every non-allied player has lost.
+			foreach (var p in world.Players)
+				if (!p.NonCombatant && p.WinState == WinState.Undefined && !p.IsAlliedWith(winner))
+					p.PlayerActor.Trait<MissionObjectives>().ForceDefeat(p);
 		}
 
 		static void Broadcast(World world, Player player, string speechNotification, string textNotification)
 		{
+			// A loaded save fast-forwards through every past tick; don't replay every Lockdown start and cancel.
+			if (world.IsLoadingGameSave)
+				return;
+
 			if (textNotification != null)
 				TextNotificationsManager.AddSystemLine(textNotification, "player", player.ResolvedPlayerName);
 
+			// Every player hears it, not only the one holding Lockdown: a null player plays the notification for
+			// whoever is local, and an opponent is the one who most needs the warning (issue #141).
 			if (speechNotification != null)
-				Game.Sound.PlayNotification(world.Map.Rules, player, "Speech", speechNotification, player.Faction.InternalName);
+				Game.Sound.PlayNotification(world.Map.Rules, null, "Speech", speechNotification,
+					world.LocalPlayer?.Faction.InternalName ?? player.Faction.InternalName);
 		}
 	}
 }
