@@ -255,8 +255,8 @@ Values below are read straight out of `mods/sungrid/rules/*.yaml` with `Inherits
 | MH60 | Black Hawk | Consortium | med | 1500 | 10000 | 112 | ChainGun | hpad | |
 | HELI | Longbow | Consortium | high | 2000 | 12000 | 149 | Hellfire AA/AG | hpad, atek | |
 | HIND | Wasp Gunship | Assembly | med | 1500 | 10000 | 112 | ChainGun | afld | Rebranded as the Assembly's rotary counterpart to Consortium's HPAD helicopters (was disabled dead content — see gap G6, since fixed) |
-| SGDRO | Recon Drone | Assembly | **med** | 350 | 3000 | 170 | DroneRocket (2×700) | ~sgdrn | Weapon disabled at Critical power. `BuildAtProductionType: Drone` — Drone Bay only |
-| SGDRS | Strike Drone | Consortium | **med** | 600 | 3500 | 150 | DroneRocket.Strike (2×950) | ~sgdra | Weapon disabled at Critical power — see gap G7 (tracked, issue #31). `BuildAtProductionType: Drone` — Fabrication Bay only |
+| SGDRO | Recon Drone | Assembly | **med** | 350 | 3000 | 170 | DroneRocket (2×2000, was 2×700 until issue #141) | ~sgdrn | Weapon disabled at Critical power. `BuildAtProductionType: Drone` — Drone Bay only |
+| SGDRS | Strike Drone | Consortium | **med** | 600 | 3500 | 150 | DroneRocket.Strike (2×2700, was 2×950 until issue #141) | ~sgdra | Weapon disabled at Critical power — see gap G7 (tracked, issue #31). `BuildAtProductionType: Drone` — Fabrication Bay only |
 
 ### Ships
 

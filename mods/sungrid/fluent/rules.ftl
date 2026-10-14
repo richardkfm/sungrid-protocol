@@ -1022,25 +1022,25 @@ actor-powerproxy-paratroopers =
 
 ## ai.yaml
 bot-rush-ai =
-    .name = Rush AI
+    .name = Rush AI (aggressive)
 
 bot-normal-ai =
-    .name = Normal AI
+    .name = Normal AI (standard)
 
 bot-turtle-ai =
-    .name = Turtle AI
+    .name = Turtle AI (defensive)
 
 bot-naval-ai =
-    .name = Naval AI
+    .name = Naval AI (standard)
 
 bot-grid-broker-ai =
-    .name = Grid Broker AI
+    .name = Grid Broker AI (standard)
 
 bot-easy-grid-broker-ai =
-    .name = Easy Grid Broker AI
+    .name = Easy Grid Broker AI (beginner)
 
 bot-saboteur-ai =
-    .name = Saboteur AI
+    .name = Saboteur AI (advanced)
 
 ## map-generators.yaml
 label-random-map = Random Map

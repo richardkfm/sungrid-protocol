@@ -87,13 +87,17 @@ DroneRocket:
 		TrailImage: sgexhaust
 		TrailInterval: 2
 		ContrailLength: 6
+	# 700 -> 2000 for issue #141: at 700 a Recon Drone did about a seventh of a Rocket Soldier's damage
+	# per credit (two minutes to kill a Medium Tank), so it harassed nothing and every bot that built
+	# drones wasted the money. Still well under the Rocket Soldier per credit, and still fragile. Reasoned,
+	# not measured - playtest it.
 	Warhead@1Dam: SpreadDamage
-		Damage: 700
+		Damage: 2000
 
 DroneRocket.Strike:
 	Inherits: DroneRocket
 	Warhead@1Dam: SpreadDamage
-		Damage: 950
+		Damage: 2700
 
 HellfireAG:
 	Inherits: ^AntiGroundMissile
