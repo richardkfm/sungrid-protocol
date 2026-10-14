@@ -77,10 +77,13 @@ with 3+ testers) are the same session's work. **B7 is the real gate** — nothin
 anyone but the author, and no further solo auditing substitutes for that. The section also lists what is
 explicitly *not* a beta blocker (all of Phase 7, terrain scenery, issues #60 and #31), so the bar can't drift.
 Issue #116 added **B8** (a non-author can install, find help and report unassisted: `docs/BETA_TESTING.md`,
-Sungrid issue forms, the crash dialog's FAQ link) and a `beta1` checklist. Multiplayer facts as of alpha38: a LAN
-game is *visible* from a second machine, nothing has been joined or played across machines, and internet play via
-the server list has failed with cause unknown — so testers are pointed at LAN or a mesh VPN with Direct IP, and the
-host's `Logs/server.log` (`Master server: ...` line) is what will diagnose the internet path. Crashes land in
+Sungrid issue forms, the crash dialog's FAQ link) and a `beta1` checklist. Multiplayer facts since issue #140: the
+first full match across two machines was played over Tailscale (Windows host, macOS client, Direct IP to the host's
+`100.x` address, port 1234), so B7 is half-way - it still needs a third player. The server list fails because the
+master server can't reach the host's port ("Server port is not accessible from the internet." in the lobby), not
+because of the mod. A **Mac host** could not be reached over Tailscale even with its firewall and Shields Up off
+(ICMP timed out too, `tailscale ping` answered) - cause open, testers are told to let Windows host. In the client,
+"Unknown error" on connect is the engine's 5-second TCP timeout (packets dropped), not a refusal. Crashes land in
 `<SupportDir>/Logs/exception-*.log`, not only the terminal.
 
 Releases: `alpha1` … `alpha39`, then `beta01` … `beta10` (`CHANGELOG.md`'s release history maps every issue onto its tag). `alpha17` was the first run in the repo's history where all three

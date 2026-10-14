@@ -5761,3 +5761,61 @@ read as a busier battle on the menu (Lua runtime errors are not caught by anythi
 units cost frame rate on a menu left open.
 
 ---
+
+### 140. The first full online match: Tailscale works with a Windows host, the server list's failure explained, a Mac host still unreachable
+
+**Status:** Done (documentation of a live session, 2026-10-14). The owner and one external player played the first
+match across two machines; this records how it was made to work, what failed on the way, and what is still open.
+Not a code change.
+
+**The match.** `beta12` build (the main-menu label), The Commons, Conquest with Grid Reserve on. Host: the owner on
+Windows; client: an external tester on an Apple-silicon Mac (`apphost-arm64`). Joined with Multiplayer -> Direct IP
+to the host's Tailscale address (`100.x`), port 1234, the Mac accepting a Tailscale node share of the host. The match
+ran to the end screen: the host "Won" (score 185) with the Grid Reserve objective ticked, the client "Gone" (50).
+**Not reported:** whether it ended on a real Lockdown or because the client left (a departed opponent also completes
+the remaining player's objectives), how long it ran, and whether there were desyncs or lag - so this is not yet
+evidence for B7's "no desyncs" clause, only for the connection path.
+
+**What failed first, and why - the Mac as host.** Everything on the Mac checked out and the connection still failed:
+
+- The game listened on both stacks (`lsof`: `apphost-arm64`, `*:1234 (LISTEN)` IPv4 and IPv6).
+- `socketfilterfw --getglobalstate`: firewall disabled; `--getblockall`: disabled. The binary was also added and
+  unblocked explicitly - worth knowing: the macOS package runs the game as a separate helper binary,
+  `Contents/MacOS/apphost-<arch>` (`packaging/macos/buildpackage.sh`), which the macOS application firewall treats as
+  its own unsigned program, so allowing the app bundle may not cover it when the firewall *is* on.
+- `tailscale set --shields-up=false`; `tailscale ip -4` matched the address being dialled.
+- From the Windows peer: `tailscale ping` answered (`pong ... via <public ip>:41641 in 59ms`, a direct path), but
+  `Test-NetConnection 100.x -Port 1234` failed **and its ICMP ping timed out too**.
+
+`tailscale ping` uses Tailscale's own disco protocol and bypasses its access rules; ICMP and TCP go through the
+WireGuard tunnel and are filtered. A Mac with its firewall off answers ICMP, so traffic to the Mac was dropped inside
+Tailscale, not by the game or macOS. The main suspect is the access-control policy of the tailnet that shared the
+Mac (not inspected); `tailscale ping --tsmp` / `--icmp` from the peer and a look at that policy are the next checks.
+**Open.** The tester guide tells testers to let a Windows player host meanwhile.
+
+**What worked - Windows as host.** The host shared its machine with the Mac player, `netstat` showed `0.0.0.0:1234` and
+`[::]:1234` listening, `nc -vz 100.x 1234` from the Mac succeeded, and the in-game Direct IP join went straight in.
+The guide's inbound rule (`New-NetFirewallRule ... -LocalPort 1234 -Profile Any`) is the recommended setup step,
+because Windows puts the Tailscale adapter in the Public profile.
+
+**"Unknown error".** The client's Connection Failed dialog says "Unknown error" when `NetworkConnection` gets no TCP
+connection within its 5-second wait (`OpenRA.Game/Network/Connection.cs`, `NetworkConnectionConnect`) and no thread
+has set an error yet - i.e. the packets were silently dropped. A refused connection sets "Failed to connect", a bad
+handshake "Connection failed", and a server-side rejection (version, mod, full game) its own `ServerError`. So
+"Unknown error" points at a firewall or a tunnel, never at the game version. The detailed reason lands in the client's
+`Logs/client.log` ("Failed to connect to ...") once the OS-level connect gives up.
+
+**Why the public server list never showed a game - settled.** The host's lobby printed, on creating the server:
+"Master server communication established.", "Server port is not accessible from the internet.", "Game has not been
+advertised online." The master server is reachable and working; it lists only games whose port it can reach, and
+the host's port 1234 was not reachable from the internet (no forward, or CGNAT). That is the working hypothesis
+`docs/PLAYTESTING.md` and the roadmap recorded, now observed - nothing in the mod is at fault. A host with a working
+port forward is still untested.
+
+**Docs:** `docs/BETA_TESTING.md`'s "Over the internet" section rewritten as the route that worked (node share, the
+Windows firewall rule, a connection check before joining with `Test-NetConnection` / `nc -vz`, what "Unknown error"
+means, the Mac-host known issue), the server-list section and known issues explain the lobby messages;
+`docs/ROADMAP.md`'s B7 row and "How B7 gets run" updated; B7 stays **open** - the gate asks for 3+ testers and a
+desync-free match, and this was two players with no desync report.
+
+---

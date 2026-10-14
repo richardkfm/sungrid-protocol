@@ -75,25 +75,49 @@ on a second machine.
 
 ### Over the internet — use a VPN (recommended for this beta)
 
-**Known issue:** hosting a game for friends over the internet via the public server list has not worked yet in
-our own tests (the game did not appear in the list, and connecting directly also failed). Until that's solved,
-the reliable way to play together from different homes is a free mesh VPN, which makes your computers behave as
-if they were on the same network:
+**This works — a full match has been played this way** (a Windows host and a Mac player over Tailscale, October
+2026). The public server list usually won't show your game, because most home connections can't be reached from
+the internet without router setup (see the next section). A free mesh VPN avoids that and makes your computers
+behave as if they were on the same network:
 
-1. Everyone installs the same VPN — [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com)
-   both work — and joins the host's network.
-2. The host starts the game and clicks **Multiplayer → Create**.
-3. Everyone else clicks **Multiplayer → Direct IP** and enters the **host's VPN address** (Tailscale: the
-   `100.x.y.z` address shown in the Tailscale app) and port `1234`. The server list may not show games over a VPN —
-   use Direct IP.
+1. Everyone installs the same VPN — [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com).
+   With Tailscale, only the host's computer has to be reachable, so the simplest setup is for the host to **share
+   their computer** with each player: Tailscale admin console → **Machines** → the host's computer → **Share…**,
+   and each player accepts the link with their own Tailscale account. (Inviting them as users works too.)
+2. **Windows host:** open the game's port in the firewall once. Open PowerShell **as administrator** and run
+   ```
+   New-NetFirewallRule -DisplayName "Sungrid Protocol" -Direction Inbound -Protocol TCP -LocalPort 1234 -Action Allow -Profile Any
+   ```
+   Windows counts the VPN as a *public* network, so allowing the game only for private networks is not enough.
+3. The host starts the game and clicks **Multiplayer → Create** (port `1234`), and leaves the lobby open.
+4. **Check the connection before joining** — this tells you in seconds whether the problem is the network or the
+   game. On a player's computer, with the host's lobby open:
+   - Windows (PowerShell): `Test-NetConnection 100.x.y.z -Port 1234` — look for `TcpTestSucceeded : True`
+   - Mac (Terminal): `nc -vz 100.x.y.z 1234` — look for `succeeded!`
 
-**Windows hosts:** the first time you create a server, Windows Firewall asks whether to allow the game. Allow it.
-VPN connections often count as a *public* network on Windows, so tick **both** private and public, or players
-won't get through.
+   where `100.x.y.z` is the **host's** Tailscale address (shown in the host's Tailscale app). If it fails, the
+   game can't connect either: check the share was accepted, and the host's firewall.
+5. Everyone else clicks **Multiplayer → Direct IP**, enters the host's `100.x.y.z` address and port `1234`, and
+   joins. The server list may not show games over a VPN — use Direct IP.
+
+**"Could not connect … Unknown error"** means the connection got no answer at all within five seconds: something
+between you and the host silently dropped it (almost always the host's firewall, or the VPN not reaching the
+host). A refused connection, a wrong version or a full game each give their own message instead.
+
+**Mac hosts — known issue:** in our first test a Mac host could not be reached through Tailscale, although the game
+was listening, the macOS firewall was off and Tailscale's "Allow incoming connections" was on — even a plain `ping`
+to it timed out, while `tailscale ping` answered. We have not found the cause yet (the Tailscale access rules of the
+account that shared the Mac are the main suspect). Until then, **let a Windows player host**; if you get a Mac host
+working, please tell us how.
 
 ### Over the internet without a VPN (helps us fix the known issue)
 
 If you want to try the normal way and help us diagnose it:
+
+The server list itself works: when you host, the lobby chat reports *"Master server communication established."*
+What keeps a game off the list is that the master server cannot reach the host from the internet — the lobby then
+says *"Server port is not accessible from the internet."* and *"Game has not been advertised online."* That is the
+host's router or internet provider, not the game. To make the port reachable:
 
 1. On the host's router, forward **TCP port 1234** to the host computer — or enable
    **Settings → Advanced → Enable UPnP/NAT-PMP Discovery** in the game if your router supports it (restart
@@ -172,8 +196,11 @@ These are known and planned; reports about them won't change anything yet:
   and the Disruptor Trooper's weapon are new. A unit and audio pass comes after beta.
 - **Terrain is recoloured Red Alert terrain.** Solarpunk scenery (solar farms, salvage piles, greenery on the
   map) comes later.
-- **Internet play via the server list doesn't work yet** — use a VPN, see
-  [Playing together](#over-the-internet--use-a-vpn-recommended-for-this-beta). Diagnostic reports *are* welcome.
+- **Your game doesn't appear in the public server list** unless the host's port 1234 is reachable from the
+  internet (the lobby chat says whether it is) — use a VPN, see
+  [Playing together](#over-the-internet--use-a-vpn-recommended-for-this-beta). Reports from a host with a working
+  port forward *are* welcome.
+- **A Mac can't host over Tailscale yet** in our tests — let a Windows player host (see above).
 - **Security warnings on install** — see [Install](#1-install).
 - **Numbers aren't final.** Costs, Grid Reserve targets and AI behaviour are reasoned, not yet measured against
   real matches — telling us what felt off is exactly what feedback is for.
