@@ -6060,3 +6060,35 @@ git rather than committed.
 `mods/sungrid/rules/vehicles.yaml`, `CHANGELOG.md`, `CLAUDE.md`.
 
 ---
+
+### 146. A Grid Reserve win never ended the match: the loser's units could no longer attack anything
+
+**Status:** Done, **reproduced and verified in a running client** with a test map (not committed). Owner report from
+`beta13` against Saboteur AI: about thirty minutes in, none of their units would attack the enemy any more - no attack
+cursor on any enemy unit or building, for every unit, fire-at-will on; only force-fire worked, and not on moving
+targets. A regression from issue #141.
+
+**Cause.** Issue #141 turned `MissionObjectives.EarlyGameOver` off and had `GridReserveController.CompleteGridReserveVictory`
+defeat the winner's opponents itself - but it marked the winner's objectives complete *first* and then picked the
+opponents with `!p.IsAlliedWith(winner)`. A player with a WinState is spectating, and `Player.RelationshipWith` counts
+every player as allied to a spectator ("Observers are considered allies to active combatants"), so no opponent was
+ever found: the match never ended. The Saboteur had won on the Reserve; the owner was never defeated and played on, and
+from their side every one of the winner's actors was now an ally - hence no attack cursor and no auto-fire, while
+force-fire (allowed on allies) still worked.
+
+**Fix.** The opponents are collected before the winner is marked, then force-defeated afterwards.
+
+**Verified live.** A throwaway map (one playable player with two Battery Banks and 20,000 cash, one enemy with a Yard
+and a tank; `BaseTargetPerPlayer` 300, `LockdownDurationTicks` 50, Sun Cycle off) launched with `Launch.Map=`, a Lua
+log on `Trigger.OnPlayerWon`/`OnPlayerLost` and `IsAlliedWith`: with the old code the player won at tick 101, the enemy
+never lost, and the enemy counted the winner as an ally for the rest of the run; with the fix the enemy lost in the same
+tick, its tank was destroyed (`OwnerLostAction`) and the match ended. Then `make`, the mod's `-warnaserror` Debug
+compile, `--check-yaml`, both interface checks.
+
+**Lesson (CLAUDE.md).** Anything that reads player relationships after a WinState changes reads the spectator rule,
+not the teams; decide who is an opponent before anyone wins. A mission-style test map launched with
+`Launch.Map=<folder name>` needs an `mpspawn` for each playable player.
+
+**Files:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveController.cs`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---

@@ -191,6 +191,19 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 
 		static void CompleteGridReserveVictory(World world, MissionObjectives mo, Player winner)
 		{
+			// The winner's opponents lose here, not through MissionObjectives.EarlyGameOver: that flag also makes
+			// the *first* player eliminated in a free-for-all hand every survivor the win, ending a 3+ player match
+			// at its first defeat (docs/BACKLOG.md issue #141). The winner's allies are left alone - their
+			// ConquestVictoryConditions completes on its own once every non-allied player has lost.
+			// Collected BEFORE the winner is marked: a player with a WinState is spectating, and the engine counts
+			// every player as allied to a spectator (Player.RelationshipWith), so checking afterwards found no
+			// opponent at all. The match then never ended, and the winner's units were "allies" nobody could
+			// attack - a tester's units lost their attack cursor on everything (issue #146).
+			var opponents = new List<Player>();
+			foreach (var p in world.Players)
+				if (!p.NonCombatant && p.WinState == WinState.Undefined && p != winner && !p.IsAlliedWith(winner))
+					opponents.Add(p);
+
 			// Grid Reserve rides the existing MissionObjectives required-objective gate: force-completing the
 			// winner's other pending required objectives (i.e. ConquestVictoryConditions' "destroy all opposition")
 			// is what actually resolves player.WinState and ends the match through the engine's normal win path,
@@ -199,12 +212,8 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				if (mo.Objectives[id].State == ObjectiveState.Incomplete)
 					mo.MarkCompleted(winner, id);
 
-			// The winner's opponents lose here, not through MissionObjectives.EarlyGameOver: that flag also makes
-			// the *first* player eliminated in a free-for-all hand every survivor the win, ending a 3+ player match
-			// at its first defeat (docs/BACKLOG.md issue #141). The winner's allies are left alone - their
-			// ConquestVictoryConditions completes on its own once every non-allied player has lost.
-			foreach (var p in world.Players)
-				if (!p.NonCombatant && p.WinState == WinState.Undefined && !p.IsAlliedWith(winner))
+			foreach (var p in opponents)
+				if (p.WinState == WinState.Undefined)
 					p.PlayerActor.Trait<MissionObjectives>().ForceDefeat(p);
 		}
 

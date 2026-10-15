@@ -132,6 +132,11 @@ each other's state and it is easy to leave one of them out:
   remove -> owner change -> add, and an actor out of the world still ticks) - the Vault now registers on add,
   unregisters on removal, ticks only while registered and rebinds on owner change; and a destroyed bank now loses its
   *whole* holding (it used to leave half in `TotalReserve` with no building behind it).
+- **#146** - #141's own win path picked the opponents *after* marking the winner, and a player with a WinState is
+  spectating, which `Player.RelationshipWith` makes everyone's ally - so nobody was defeated, the match never ended and
+  the loser could no longer target the winner's units. Opponents are collected first now. Any code that reads
+  relationships after a WinState changes reads that spectator rule, not the teams. Reproduced and fixed with a
+  throwaway `Launch.Map=` test map (needs an `mpspawn` per playable player) and a Lua log.
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Seven lobby personalities: the four
