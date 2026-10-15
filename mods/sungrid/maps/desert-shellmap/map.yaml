@@ -174,7 +174,7 @@ Actors:
 		Location: 46,28
 		Owner: Soviets
 	Actor69: sgwnd
-		Location: 43,29
+		Location: 44,30
 		Owner: Soviets
 	Actor68: arct
 		Location: 34,23
@@ -288,7 +288,7 @@ Actors:
 		Location: 95,34
 		Owner: Soviets
 	Actor112: arct
-		Location: 93,29
+		Location: 92,29
 		Owner: Soviets
 	Actor113: arct
 		Location: 90,33
@@ -796,7 +796,7 @@ Actors:
 		Location: 90,21
 		Owner: Neutral
 	Actor341: sgsns
-		Location: 63,73
+		Location: 63,74
 		Owner: Allies
 	Actor166: wood
 		Location: 17,52
@@ -970,7 +970,7 @@ Actors:
 		Location: 81,91
 		Owner: Allies
 	Actor364: silo
-		Location: 77,92
+		Location: 73,92
 		Owner: Allies
 	Actor366: brik
 		Location: 59,60
@@ -1169,25 +1169,25 @@ Actors:
 		Location: 1,28
 		Owner: Neutral
 	Actor901: sgwnd
-		Location: 56,19
+		Location: 57,19
 		Owner: Soviets
 	Actor902: sgwnd
-		Location: 119,46
+		Location: 120,46
 		Owner: Soviets
 	Actor903: silo
-		Location: 63,72
+		Location: 63,70
 		Owner: Allies
 	Actor904: silo
-		Location: 64,72
+		Location: 65,71
 		Owner: Allies
 	Actor905: silo
-		Location: 75,77
+		Location: 75,79
 		Owner: Allies
 	Actor906: silo
-		Location: 76,77
+		Location: 77,78
 		Owner: Allies
 	Actor907: sgrel
-		Location: 64,73
+		Location: 65,73
 		Owner: Allies
 	Actor908: silo
 		Location: 78,96

@@ -26,6 +26,14 @@ This script does three things, all deterministic:
    Battery Banks had stood on the Data Center since issue #119, which
    --check-yaml cannot see. Afterwards no two footprints on the map may share
    a cell, or the script fails.
+4. SPREAD (issue #144): a one-cell Sungrid building is drawn in a frame wider
+   than its cell (the Battery Bank's is 40 px on a 24 px cell), so two of them
+   side by side, or one beside any other building, draw into each other even
+   though no footprints overlap - the owner's screenshot of the menu showed
+   three Battery Banks, a Sensor Array and a Relay as one heap. Each actor
+   named in SPREAD that touches another building is moved by the same rule,
+   and afterwards no WIDE building may touch another building, or the script
+   fails.
 
 Usage:
     place_shellmap_roster.py [--dry-run] [--replace] [--render PNG] [MAP]
@@ -105,6 +113,17 @@ ADDITIONS = [
 # the Advanced Solar Array's bib, a rock under the Assembly's Sensor Array and
 # a Wind Turbine. Each moves only while it overlaps something.
 RELOCATE = ["Actor908", "Actor909", "Actor161", "Actor81"]
+
+# One-cell buildings whose art is wider than their cell (SPREAD above).
+WIDE = {"silo", "sgrel", "sgsns", "sgwnd", "rcyd", "arct", "sgtur", "tsla"}
+
+# The hand-placed (issue #119) and stock actors that touched another building:
+# the Consortium's two bank rows with the Sensor Array and Relay below one of
+# them, a bank against the Data Center and an Arc Turret, and on the Assembly
+# side two Wind Turbines against Sensor Arrays, one against a barracks, and an
+# Arc Turret against the Depot. The first actor of each group stays put.
+SPREAD = ["Actor903", "Actor904", "Actor907", "Actor341", "Actor905", "Actor906", "Actor364",
+          "Actor902", "Actor901", "Actor69", "Actor112"]
 
 PASSABLE = {"Clear", "Road", "Rough", "Beach", "Bridge"}
 SEARCH_RADIUS = 6
@@ -188,6 +207,73 @@ def overlaps(actors, footprints):
     return sorted(pairs)
 
 
+def structure_types():
+    """Actor types that inherit ^Building somewhere up their chain."""
+    parents = {}
+    for name in sorted(os.listdir(pv.RULES_DIR)):
+        if not name.endswith(".yaml"):
+            continue
+        text = open(os.path.join(pv.RULES_DIR, name), encoding="utf-8").read()
+        for block in re.split(r"^(?=\S)", text, flags=re.M):
+            m = re.match(r"^([^\s:]+):", block)
+            if m:
+                parents[m.group(1)] = re.findall(r"^\tInherits(?:@\w+)?: (\S+)", block, re.M)
+
+    def is_building(key, seen=()):
+        if key == "^Building":
+            return True
+        return key not in seen and any(is_building(p, seen + (key,)) for p in parents.get(key, []))
+
+    return {k.lower() for k in parents if not k.startswith("^") and is_building(k)}
+
+
+def crowded(actors, footprints, structures):
+    """Sorted pairs of actor names where a WIDE building's one-cell ring
+    touches another building's footprint."""
+    owner = {}
+    for name, kind, x, y in actors:
+        if kind in structures:
+            for dx, dy in footprints.get(kind, [(0, 0)]):
+                owner[(x + dx, y + dy)] = name
+    pairs = set()
+    for name, kind, x, y in actors:
+        if kind not in WIDE:
+            continue
+        for rx in (x - 1, x, x + 1):
+            for ry in (y - 1, y, y + 1):
+                other = owner.get((rx, ry))
+                if other is not None and other != name:
+                    pairs.add(tuple(sorted((name, other))))
+    return sorted(pairs)
+
+
+def move(pkg, name, footprints, templates):
+    """Move one named actor to the nearest valid cell to where it stands."""
+    _, kind, x, y = next(a for a in pkg.actors if a[0] == name)
+    others = pv.MapPackage.__new__(pv.MapPackage)
+    others.__dict__.update(pkg.__dict__)
+    others.actors = [a for a in pkg.actors if a[0] != name]
+    spot = Site(pv.Grid(others, footprints, templates), footprints).place(kind, x, y)
+    if spot is None:
+        raise SystemExit(f"  {name} ({kind}): no valid cell within {SEARCH_RADIUS} of {x},{y}")
+    pkg.yaml = re.sub(rf"^(\t{name}: \S+\n(?:\t\t.*\n)*?\t\tLocation: )-?\d+,-?\d+",
+                      rf"\g<1>{spot[0]},{spot[1]}", pkg.yaml, count=1, flags=re.M)
+    return reload(pkg), (name, kind, x, y) + spot
+
+
+def spread(pkg, footprints, templates, structures):
+    """Move each SPREAD actor that touches another building (issue #144)."""
+    moved = []
+    for name in SPREAD:
+        if not any(a[0] == name for a in pkg.actors):
+            continue
+        if not any(name in pair for pair in crowded(pkg.actors, footprints, structures)):
+            continue
+        pkg, m = move(pkg, name, footprints, templates)
+        moved.append(m)
+    return pkg, moved
+
+
 def relocate(pkg, footprints, templates):
     """Move each RELOCATE actor that overlaps another to the nearest valid
     cell to where it stands. Returns the package and the moves made."""
@@ -196,17 +282,8 @@ def relocate(pkg, footprints, templates):
         entry = next((a for a in pkg.actors if a[0] == name), None)
         if entry is None or not any(name in pair for pair in overlaps(pkg.actors, footprints)):
             continue
-        _, kind, x, y = entry
-        others = pv.MapPackage.__new__(pv.MapPackage)
-        others.__dict__.update(pkg.__dict__)
-        others.actors = [a for a in pkg.actors if a[0] != name]
-        spot = Site(pv.Grid(others, footprints, templates), footprints).place(kind, x, y)
-        if spot is None:
-            raise SystemExit(f"  {name} ({kind}): no valid cell within {SEARCH_RADIUS} of {x},{y}")
-        pkg.yaml = re.sub(rf"^(\t{name}: \S+\n(?:\t\t.*\n)*?\t\tLocation: )-?\d+,-?\d+",
-                          rf"\g<1>{spot[0]},{spot[1]}", pkg.yaml, count=1, flags=re.M)
-        pkg = reload(pkg)
-        moved.append((name, kind, x, y) + spot)
+        pkg, m = move(pkg, name, footprints, templates)
+        moved.append(m)
     return pkg, moved
 
 
@@ -312,7 +389,11 @@ def main(argv):
         pkg.yaml = pkg.yaml[:m.end()].rstrip("\n") + "\n" + block + pkg.yaml[m.end():]
 
     pkg, moved = relocate(reload(pkg), footprints, templates)
+    structures = structure_types()
+    pkg, spread_moves = spread(pkg, footprints, templates, structures)
+    moved += spread_moves
     remaining = overlaps(pkg.actors, footprints)
+    touching = crowded(pkg.actors, footprints, structures)
 
     for n, old, new, x, y in retyped:
         print(f"  retype {n} at {x},{y}: {old} -> {new}")
@@ -323,7 +404,9 @@ def main(argv):
     print(f"{pkg.name}: {len(retyped)} retyped, {len(placed)} added, {len(moved)} moved")
     for a, b in remaining:
         print(f"  overlap: {a} and {b}")
-    if remaining:
+    for a, b in touching:
+        print(f"  touching: {a} and {b}")
+    if remaining or touching:
         return 1
 
     if render_path:

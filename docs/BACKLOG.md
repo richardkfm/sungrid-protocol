@@ -5985,3 +5985,49 @@ so every key the HUD and controller reference was checked against the `.ftl` fil
 `mods/sungrid/fluent/{rules,chrome}.ftl`, `docs/GAME_MODES.md`, `CHANGELOG.md`, `CLAUDE.md`.
 
 ---
+
+### 144. The main-menu battle, seen running: Assembly units stood at their barracks, and one-cell buildings drew into each other
+
+**Status:** Done, **verified in a running client** - the first change in this repo checked that way (see "How it was
+seen" below). Owner report on `beta13`, the first release carrying issue #139: still no units attacking, and Battery
+Banks overlapping (a screenshot with three banks, a Sensor Array and a Relay drawn as one heap).
+
+**No attacks - the cause.** Every Assembly unit's idle trigger attack-moved it to
+`AlliedConstructionYard.Location`, the Yard's own cell. A building cell can never be reached, and from most starting
+points the move ended the tick it began; the trigger re-issued it every tick, so the unit stood still for good. Every
+trooper the Assembly's three barracks produced sat at its rally point all match (five on one cell at 38,29 next to
+`SovietBarracks3`), which also held production at its cap. Only the edge waves sometimes found a path, so the valley
+stayed nearly empty. Proven step by step in the running game: the trigger fired every tick for the stuck troopers;
+`Hunt`, a plain `Move` and an attack-move to a free cell all moved them; an attack-move to the Yard's cell did not;
+the ground between the ridge and the Yard is connected (checked with the placer's own map reader). Issue #139's
+production fix was correct but could never show, because the units it produced never left.
+
+**Fix.** `AssaultCells`: three free, reachable cells in the Consortium base (its War Factory, its Battery Banks, its
+western barracks - each with a free one-cell ring, reachable from the map edge), one picked at random per attack-move.
+Measured over two minutes: idle Assembly units fell from 20-28 to a constant 8, which are exactly the eight guards the
+map places (six troopers, two Mammoth Tanks; they have no triggers by design), and more of the Assembly now stands
+and dies in the south.
+
+**Overlap - the cause.** The one-cell Sungrid buildings are drawn in frames wider than their cell (the Battery Bank's
+is 40 px on a 24 px cell), so neighbours draw into each other even though no footprints overlap - which is all issue
+#139's check tested. The Consortium had two rows of three banks on adjacent cells (62-64,72 with the Sensor Array and
+a Relay right below, and 74-76,77), and a bank against the Data Center and an Arc Turret; the Assembly had Wind
+Turbines against two Sensor Arrays and a barracks, and an Arc Turret against the Depot.
+
+**Fix.** `bits/place_shellmap_roster.py` gains a fourth step, `SPREAD`: each named actor that touches another
+building is moved to the nearest valid cell by the existing ring rule (11 moves), and the script now fails if any
+`WIDE` one-cell building (`silo`, `sgrel`, `sgsns`, `sgwnd`, `rcyd`, `arct`, `sgtur`, `tsla`) touches another
+building. Negative-controlled: with an empty move list it fails and names all 17 touching pairs. A second run moves
+nothing. Map re-saved with `--refresh-map-previews`.
+
+**How it was seen.** The official freeware Red Alert package (`ra-quickinstall`, SHA1 checked) installed into
+`~/.config/openra/Content/ra/v2/` per `docs/PLAYTESTING.md`; then `xvfb-run ./launch-game.sh Game.Mod=sungrid
+Game.IntroductionPromptVersion=99 Debug.SystemInformationVersionPrompt=99` runs the main menu with the battle behind
+it, `import -window root` captures the screen, and Lua `print()` lands in `~/.config/openra/Logs/lua.log` - so a
+temporary diagnostic appended to the map script (not committed) measured the units. The battlefield rendered
+normally; the "fully black" blocker recorded for bot skirmishes did not appear on the shellmap.
+
+**Files:** `mods/sungrid/maps/desert-shellmap/{desert-shellmap.lua,map.yaml}`, `mods/sungrid/bits/place_shellmap_roster.py`,
+`CHANGELOG.md`, `CLAUDE.md`.
+
+---

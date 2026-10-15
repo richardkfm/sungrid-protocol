@@ -708,6 +708,18 @@ maps), `--check-missing-sprites`, `--png-sheet-export` (proves the engine's own 
 sheet at its intended frame layout), `--resolved-rules`, `--resolved-sequences`. Use these — they have
 caught real bugs that reading YAML did not.
 
+**The main-menu battle CAN be run and watched here (issue #144)** - the first live check in the repo. Install the
+freeware RA content per `docs/PLAYTESTING.md` (`ra-quickinstall`, mirrors listed at
+`https://www.openra.net/packages/ra-quickinstall-mirrors.txt`, SHA1 `44241f68...`) into `~/.config/openra/Content/ra/v2/`,
+then `xvfb-run -a ./launch-game.sh Game.Mod=sungrid Game.IntroductionPromptVersion=99 Debug.SystemInformationVersionPrompt=99`
+shows the menu with the battle behind it (`import -window root` for screenshots), and Lua `print()` goes to
+`~/.config/openra/Logs/lua.log` - so a temporary diagnostic appended to a map script can measure units, then be
+removed. The shellmap rendered normally; the black battlefield below was a bot skirmish. Two lessons from the first
+look: **never attack-move to a building's own cell** (`AttackMove(SomeBuilding.Location)` - unreachable, the move ends
+at once, an `OnIdle` trigger re-issues it every tick and the unit never moves; issue #144's whole "no attacks"), and
+**a footprint check is not a sprite check** - one-cell Sungrid buildings are drawn 40 px wide, so the placer's `SPREAD`
+step keeps a one-cell gap around them.
+
 **Not verifiable here: anything requiring a live client.** No RA game content is installed by default
 (see `docs/PLAYTESTING.md` for the freeware install), and even with content plus the
 `Launch.SkirmishBots` engine patch, a 4-player bot match runs to completion but the battlefield

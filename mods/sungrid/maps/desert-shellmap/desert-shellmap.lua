@@ -53,6 +53,15 @@ AssemblyBeachWave = { "disr", "disr", "disr", "disr", "disr", "disr", "disr" }
 AssemblyArmorWave = { "3tnk", "disr", "disr", "disr" }
 ArmorInterval = DateTime.Seconds(70)
 
+-- Where Assembly units attack-move to, at random: open ground at the
+-- Consortium's War Factory, its Battery Banks and its western barracks. Not
+-- the Construction Yard's own cell, as until issue #144: a building cell can
+-- never be reached, so from most starting points the attack-move ended the
+-- moment it began, the idle trigger issued it again every tick, and every
+-- trooper the Assembly's barracks produced stood at its rally point for good.
+-- Only the edge waves sometimes found a path; the valley stayed nearly empty.
+AssaultCells = { CPos.New(85, 80), CPos.New(73, 72), CPos.New(60, 68) }
+
 -- Each side's own drone (issues #84/#101): the Assembly flies Recon Drones
 -- from its Drone Bays, the Consortium Strike Drones from its Aerial
 -- Fabrication Bays.
@@ -156,7 +165,7 @@ BindActorTriggers = function(a)
 		else
 			Trigger.OnIdle(a, function(a)
 				if a.IsInWorld then
-					a.AttackMove(AlliedConstructionYard.Location)
+					a.AttackMove(Utils.Random(AssaultCells))
 				end
 			end)
 		end
