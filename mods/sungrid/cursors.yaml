@@ -59,7 +59,7 @@ Cursors:
 		select:
 			Start: 15
 			Length: 6
-		# Issue #141: the hotspot is relative to the frame centre (15,12) and must
+		# Issue #142: the hotspot is relative to the frame centre (15,12) and must
 		# sit on the tip gen_cursor_art.py's draw_pointer() draws - (8,1) for the
 		# full arrow, (12,7) for the minimap one. The stock -16,-12 aimed at the
 		# stock arrow's corner tip, so every click landed ~8 px left of the tip

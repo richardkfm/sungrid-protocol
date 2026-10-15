@@ -64,8 +64,7 @@ The detailed entries below track every issue through #119, plus #132; this list 
   list (the lobby says so: the host's port isn't reachable from the internet). A Mac can't host that way yet - let a
   Windows player host (issue #140). **Clicks land where the mouse pointer points again**: since the new cursor
   art, every click had hit a spot about 9 pixels left of the pointer's tip (twice that on high-resolution screens)
-  (issue #141).
-  Windows player host (issue #140). **A free-for-all of three or more no longer ends at the first defeat** - it
+  (issue #142). **A free-for-all of three or more no longer ends at the first defeat** - it
   used to hand every survivor the win the moment one player was knocked out; now the match plays on to the last
   side standing (or a Grid Lockdown). **Battery Banks:** destroying one now wipes all the Reserve it held, not half
   (you still get a quarter of it as cash), and an Engineer can capture one cleanly - its owner loses what it held,
