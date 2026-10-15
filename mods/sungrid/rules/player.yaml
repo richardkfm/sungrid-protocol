@@ -115,6 +115,12 @@ Player:
 		# opponents itself, and destruction victory ends the normal way, with the last side standing.
 	ConquestVictoryConditions:
 	GridReserveManager:
+	# Caps the Battery Banks a player may own while Grid Reserve is on: as many as
+	# the Reserve target needs, plus four (issue #147). Two players with the Sun
+	# Cycle on: 8 + 4 = 12. Provides the `bankslot` prerequisite SILO asks for.
+	GridReserveBankLimit:
+		BankTypes: silo
+		Prerequisite: bankslot
 	PowerManager:
 		SpeechNotification: LowPower
 		TextNotification: notification-low-power

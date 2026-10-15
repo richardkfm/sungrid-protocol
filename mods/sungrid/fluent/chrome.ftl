@@ -12,7 +12,7 @@ label-grid-reserve-standings-header = Grid Reserve
 ## ingame-player.yaml
 label-grid-reserve-hud =
     .text = Reserve { $current } / { $target }
-    .tooltip = Grid Reserve: { $current } banked of the { $target } target. Your { $banks } Battery Banks can hold { $capacity } Reserve.
+    .tooltip = Grid Reserve: { $current } banked of the { $target } target. Your { $banks } of { $limit } Battery Banks can hold { $capacity } Reserve.
 label-grid-reserve-hud-lockdown =
     .text = GRID LOCKDOWN — { $seconds }s
     .tooltip = Hold Reserve at target for { $seconds }s more to win via Grid Lockdown.

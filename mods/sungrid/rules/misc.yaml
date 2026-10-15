@@ -461,3 +461,11 @@ CTFLAG:
 	MapEditorData:
 		Categories: Decoration
 	Interactable:
+
+# Not a map actor: names the `bankslot` prerequisite GridReserveBankLimit provides
+# (issue #147), so the Battery Bank's tooltip reads "Requires: ... Free Bank Slot"
+# instead of the raw id. Nothing places or renders it.
+BANKSLOT:
+	Interactable:
+	Tooltip:
+		Name: actor-bankslot.name

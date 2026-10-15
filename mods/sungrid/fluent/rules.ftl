@@ -702,6 +702,11 @@ actor-silo =
     Energy comes first: a third of every bank is
     kept for energy, and a bank banks no Reserve
     while it is charging. Reserve fills the rest.
+    Limited under Grid Reserve: the banks the
+    target needs, plus four.
+
+actor-bankslot =
+    .name = Free Bank Slot
 
 actor-rcyd =
     .name = Recycling Depot
