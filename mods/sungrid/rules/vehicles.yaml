@@ -478,8 +478,10 @@ MCV:
 		Cost: 2000
 	Tooltip:
 		Name: actor-mcv.name
+	# The MCV is drawn at 1.5x since issue #145 (about 44x35 px on screen), so
+	# the selection box and health bar grew with it.
 	Selectable:
-		DecorationBounds: 1792, 1792
+		DecorationBounds: 2304, 1920
 	Health:
 		HP: 60000
 	Armor:

@@ -6031,3 +6031,32 @@ normally; the "fully black" blocker recorded for bot skirmishes did not appear o
 `CHANGELOG.md`, `CLAUDE.md`.
 
 ---
+
+### 145. The MCV and the Ore Truck looked alike: the MCV at 1.5x, and a cameo of its own
+
+**Status:** Done (sprite checked with the engine's sprite loader, not yet seen moving in a live match). Owner report
+on `beta13`: the MCV and the Ore Truck, unit and cameo both, look too similar - "make the MCV much bigger".
+
+**Why.** Issue #121 drew both as grey `Mesh` vehicles with a gold flank band, in nearly the same frame (MCV 48x40,
+Ore Truck 44x36); issue #129 cut both cameos from the same render (`ideogram-base-1.jpg`), two six-wheel trucks.
+
+**Sprite (the owner chose 1.5x).** `gen_core_units.py` builds the same MCV model and scales every vertex by
+`MCV_SCALE` 1.5 about the ground origin (`scaled()`), in a frame grown to 72x60 (`MCV_OY` 6); the husk and its
+decals follow. The frame size travels in the PNG, so `sequences/vehicles.yaml` is unchanged; the sheet uses
+x 17-60, y 12-46 of every frame at all 32 facings. `MCV`'s `Selectable.DecorationBounds` grew 1792,1792 ->
+2304,1920 so the selection box and health bar fit it. A deliberate exception to art rule 24's "frame sizes never
+change" - the owner's call, and the reason the rule existed (sequence edits) does not apply here.
+
+**Cameo (the owner chose from four 64x48 candidates).** `CROPS["mcv"]` now cuts the olive-green eight-wheel carrier
+with a container module from `ideogram-base-3.jpg` - different colour and outline from the grey Ore Truck.
+
+**Verification.** `--check-yaml` exit 0; `--check-missing-sprites` exit 0 with the freeware content installed (no
+missing file at all); negative control `Facings: 33` on `mcv.idle` fails. Re-running the generators changed only
+the MCV's three files. Note for the next art pass: in this environment `gen_core_units.py` also rewrites `harv*.png`
+with no source change (a library-version drift, reproduced on the untouched script), so those were restored from
+git rather than committed.
+
+**Files:** `mods/sungrid/bits/{gen_core_units.py,gen_photo_cameos.py,mcv.png,mcvhusk.png,mcvicon.png}`,
+`mods/sungrid/rules/vehicles.yaml`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---

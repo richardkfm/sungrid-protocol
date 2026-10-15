@@ -555,7 +555,10 @@ is the regression check.
     withdrawn in issue #123 after the first live look; the convention stands, the drawing is in history at the #121
     commit). Keeping the stock frame order and count (111 for `harv`, 378 for `e1`, unreferenced frames left blank)
     means the sequence YAML changes by Filename only, and `--check-missing-sprites`'s negative control is to lengthen
-    the sheet's *last* block by one.
+    the sheet's *last* block by one. Issue #145 (owner's call): the MCV is the same model at `MCV_SCALE` 1.5 in a 72x60
+    frame, so it never reads as the Ore Truck; a frame size can grow without touching the sequence (it travels in the
+    PNG), but the actor's `DecorationBounds` must grow with it. `gen_core_units.py` rewrites `harv*.png` here with no
+    source change (library drift) - restore them from git unless you meant to change the Ore Truck.
 20. **A turret sheet animates within a facing, and a baked idle sweep needs a static `aim` twin (issue
     #113).** `WithSpriteTurret` plays its sequence repeating, so `Facings: 32, Length: N` gives N frames per
     facing, facing-major (the Arc Turret's arc flicker, the Grid Defense Turret's +-15 degree scan). A sweep

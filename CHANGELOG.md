@@ -81,6 +81,8 @@ The detailed entries below track every issue through #119, plus #132; this list 
   building, which nobody can stand on, so most of them - every trooper its barracks built - stood still all match.
   They now attack open ground in the Consortium base and pour across the valley. The Battery Banks, Sensor Arrays,
   Relays and Wind Turbines on the menu map no longer stand shoulder to shoulder and draw into each other (issue #144).
+  The **MCV** is now half again as big as before and clearly the largest vehicle on the field, and its build icon
+  shows a green container carrier instead of a grey truck, so it can't be mistaken for the Ore Truck (issue #145).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
