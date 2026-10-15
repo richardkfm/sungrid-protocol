@@ -68,6 +68,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			widget.IsVisible = () => controller.Enabled;
 
 			var manager = player.PlayerActor.Trait<GridReserveManager>();
+			var bankLimit = player.PlayerActor.TraitOrDefault<GridReserveBankLimit>();
 			var opponents = world.Players.Where(p => p != player && !p.NonCombatant && p.Playable).ToArray();
 			var label = widget.Get<LabelWithTooltipWidget>("GRID_RESERVE_LABEL");
 
@@ -210,6 +211,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 					"current", manager.TotalReserve.ToString("N0", CultureInfo.CurrentCulture),
 					"target", manager.Target.ToString("N0", CultureInfo.CurrentCulture),
 					"banks", manager.VaultCount.ToString(CultureInfo.CurrentCulture),
+					"limit", Math.Max(bankLimit?.Limit ?? 0, manager.VaultCount).ToString(CultureInfo.CurrentCulture),
 					"capacity", manager.TotalReserveCapacity.ToString("N0", CultureInfo.CurrentCulture));
 			};
 		}

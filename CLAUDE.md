@@ -100,7 +100,9 @@ Vault), `rules/ai.yaml` (bot module) and `chrome/ingame-player.yaml` (HUD + brie
 Shipped tuning: `Capacity` 8000/Vault (5,360 of it Reserve while the Sun Cycle is on - see below), `DepositRate` 3 Credits/tick (~75/sec),
 `MinimumOperatingBalance` 3000, `MaximumTargetPercent` 100, `BaseTargetPerPlayer` 20000 (raised from
 15000 by issue #93 - AI opponents were reaching Lockdown too soon),
-`LockdownDurationTicks` 2250 (90s), `LockdownRearmTicks` 1125 (45s after a cancel before it may restart, issue #143). On by default.
+`LockdownDurationTicks` 2250 (90s), `LockdownRearmTicks` 1125 (45s after a cancel before it may restart, issue #143),
+Battery Banks capped at `ceil(Target / Reserve a bank holds) + SpareBanks` 4 (issue #147, `GridReserveBankLimit` provides the
+`bankslot` prerequisite `SILO` needs; `BANKSLOT` in `misc.yaml` only names it for the tooltip). On by default.
 
 Four bugs worth remembering, because each one came from the same blind spot — the mode's pieces read
 each other's state and it is easy to leave one of them out:

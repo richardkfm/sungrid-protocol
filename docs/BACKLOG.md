@@ -5928,7 +5928,7 @@ Broker (standard), Turtle (defensive), Rush (aggressive), Saboteur (advanced). T
 #138). Tags reasoned from the audit, not measured; not seen in the lobby (name width).
 
 **Still open from the same audit** (the second batch; numbers from the audit reports):
-- *Lockdown re-banks in seconds* (the re-arm cooldown is done, issue #143; a `BuildLimit` on `SILO` is still open): after a raid the owner's cash, piled up above the floor during the hold, re-banks
+- *Lockdown re-banks in seconds* (both done: the re-arm cooldown is issue #143, the bank cap issue #147): after a raid the owner's cash, piled up above the floor during the hold, re-banks
   the loss in ~5s with 8 banks, and bank spam makes it worse. A re-arm cooldown after a cancel and a `BuildLimit` on
   `SILO` (e.g. 16). Playtest.
 - *Recycling Depot stacks*: 300/min per Depot, no cap, no risk, no power gate - ten bank a 2-player target alone in
@@ -6090,5 +6090,61 @@ not the teams; decide who is an opponent before anyone wins. A mission-style tes
 `Launch.Map=<folder name>` needs an `mpspawn` for each playable player.
 
 **Files:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveController.cs`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---
+
+### 147. Battery Bank spam: a cap of what the Reserve target needs, plus four
+
+**Status:** Done, **verified in a running client** with a throwaway test map (not committed). The second item of issue
+#141's second batch, the owner's pick; the owner chose a cap that scales with the target, four spare banks, and no cap
+at all with Grid Reserve off.
+
+**The problem.** Nothing limited how many Battery Banks a player could build. Every bank deposits 3 Credits a tick on
+its own, so ten more banks meant ten times the banking rate: a Lockdown broken by a raid re-banked the loss in seconds
+(issue #143's re-arm now holds the restart for 45s, but the refill itself stayed instant), and spare capacity past the
+target was free raid redundancy. A fixed `BuildLimit` could not do it: holding the target takes 8 banks for two players
+with the Sun Cycle on and 17 for eight, so any one number is either toothless in a 1v1 or makes Lockdown unreachable in a
+big free-for-all.
+
+**Fix.** New Player trait `GridReserveBankLimit` (`OpenRA.Mods.Sungrid/GridReserve/GridReserveBankLimit.cs`). The cap is
+`ceil(Target / Reserve one bank can hold) + SpareBanks` (4), with the Sun Cycle's protected energy share taken off a
+bank's Reserve when that option is on - the same per-bank figure `GridReserveBotModule` sizes against, now one shared
+helper (`GridReserveBankLimitInfo.ReserveCapacityPerBank`). The trait provides the `bankslot` prerequisite while the
+player owns fewer banks than the cap, and `SILO` lists it, so at the cap the build button greys out and anything still
+queued is cancelled and refunded by the stock queue (`CancelUnbuildableItems`). Banks are not tech-tree actors, so the
+trait re-evaluates the tech tree itself, once, whenever the answer changes. Counted: every bank registered with the
+player's `GridReserveManager`, under construction included; a captured bank counts and may take a player past the cap
+(they just cannot build more). Grid Reserve off: no cap.
+
+| Players | Target | Cap, Sun Cycle on (5,360 a bank) | Cap, Sun Cycle off (8,000 a bank) |
+|---|---|---|---|
+| 2 | 40,000 | 8 + 4 = **12** | 5 + 4 = **9** |
+| 3 | 55,500 | 11 + 4 = **15** | 7 + 4 = **11** |
+| 4 | 68,000 | 13 + 4 = **17** | 9 + 4 = **13** |
+| 6 | 84,000 | 16 + 4 = **20** | 11 + 4 = **15** |
+| 8 | 88,000 | 17 + 4 = **21** | 11 + 4 = **15** |
+
+The tooltip says "Requires: Ore Refinery, Free Bank Slot": `BANKSLOT` in `rules/misc.yaml` exists only to give the
+prerequisite a name (the production tooltip looks prerequisite ids up as actors; a placeholder needs `Interactable`
+for `Tooltip`, and has no render trait, so the map editor does not list it). The Reserve bar's tooltip reads "Your 9 of
+12 Battery Banks ...", and the Battery Bank's description names the cap.
+
+**Bots.** Both bank-buying modules only queue what `BuildableItems()` offers, so they respect the cap with no change;
+`GridReserveBotModule` also clamps its wanted count to it, so it stops asking. A standard bot wants at most
+`max(MaximumVaults 8, banks the target needs)` plus `MaximumStorageBanks` (3) - 11 in a two-player match, under the 12.
+
+**Verified live.** A test map (one playable player, so target 20,000 and a cap of 4 + 4 = 8; Sun Cycle on) adding banks
+with `Actor.Create` and logging `HasPrerequisites({"bankslot"})` each step: free up to 7 banks, closed at 8, 9 and 10,
+open again once kills brought it back to 7. With Grid Reserve off: open at 10. Negative control: pointing the trait's
+`Prerequisite` at a bogus id makes `--check-yaml` fail with `Buildable actor 'silo' has prereq 'bankslot' not provided
+by anything`. Then `make`, the mod's `-warnaserror` Debug compile, `--check-yaml`, both interface checks. Not seen: the
+greyed button and its tooltip on screen (no input automation here).
+
+**Reasoned, not measured:** the four spares. With them, losing four banks during a Lockdown still leaves room to rebuild
+up to the target; fewer would make the Sun Cycle's storage banks compete with the Reserve for slots.
+
+**Files:** new `OpenRA.Mods.Sungrid/GridReserve/GridReserveBankLimit.cs`, `GridReserveBotModule.cs`,
+`GridReserveHudLogic.cs`; `rules/{player,structures,misc}.yaml`, `fluent/{rules,chrome}.ftl`; `docs/GAME_MODES.md`,
+`docs/BUILDINGS.md`, `CHANGELOG.md`, `CLAUDE.md`.
 
 ---

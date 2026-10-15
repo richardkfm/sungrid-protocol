@@ -1387,7 +1387,7 @@ SILO:
 	Buildable:
 		Queue: Defense
 		BuildPaletteOrder: 35
-		Prerequisites: proc, ~techlevel.infonly
+		Prerequisites: proc, bankslot, ~techlevel.infonly
 		Description: actor-silo.description
 	Valued:
 		Cost: 150
