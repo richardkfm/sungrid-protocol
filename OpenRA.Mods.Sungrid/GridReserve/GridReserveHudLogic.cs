@@ -42,6 +42,18 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[FluentReference("player", "seconds")]
 		const string EnemyLockdownTooltip = "label-grid-reserve-hud-enemy-lockdown.tooltip";
 
+		[FluentReference("seconds")]
+		const string RearmText = "label-grid-reserve-hud-rearm.text";
+
+		[FluentReference("seconds")]
+		const string RearmTooltip = "label-grid-reserve-hud-rearm.tooltip";
+
+		[FluentReference("seconds")]
+		const string EnemyRearmText = "label-grid-reserve-hud-enemy-rearm.text";
+
+		[FluentReference("player", "seconds")]
+		const string EnemyRearmTooltip = "label-grid-reserve-hud-enemy-rearm.tooltip";
+
 		[ObjectCreator.UseCtor]
 		public GridReserveHudLogic(Widget widget, World world)
 		{
@@ -110,6 +122,27 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				return soonest;
 			}
 
+			// The opponent whose broken Lockdown re-arms soonest, or null: the window a raider has to follow up in
+			// (issue #143). Like the Lockdown itself, the cancel was announced to everyone, so this leaks nothing.
+			Player EnemyRearming()
+			{
+				Player soonest = null;
+				var soonestRemaining = int.MaxValue;
+				foreach (var opponent in opponents)
+				{
+					var remaining = controller.LockdownRearmTicksRemaining(opponent);
+					if (remaining > 0 && remaining < soonestRemaining)
+					{
+						soonest = opponent;
+						soonestRemaining = remaining;
+					}
+				}
+
+				return soonest;
+			}
+
+			string Seconds(int ticks) => SecondsRemaining(ticks, world).ToString(CultureInfo.CurrentCulture);
+
 			// Once Lockdown is counting down the current/target numbers stop changing (Reserve is held at
 			// target while it holds), so swap the label to a countdown instead - otherwise the only sign a
 			// countdown is even running is the one-time start broadcast, easy to miss mid-match. If it's an
@@ -128,6 +161,14 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 					var enemySeconds = SecondsRemaining(controller.LockdownTicksRemaining(enemy), world);
 					return FluentProvider.GetMessage(EnemyLockdownText, "seconds", enemySeconds.ToString(CultureInfo.CurrentCulture));
 				}
+
+				var rearm = controller.LockdownRearmTicksRemaining(player);
+				if (rearm > 0)
+					return FluentProvider.GetMessage(RearmText, "seconds", Seconds(rearm));
+
+				var rearming = EnemyRearming();
+				if (rearming != null)
+					return FluentProvider.GetMessage(EnemyRearmText, "seconds", Seconds(controller.LockdownRearmTicksRemaining(rearming)));
 
 				return FluentProvider.GetMessage(Text,
 					"current", manager.TotalReserve.ToString("N0", CultureInfo.CurrentCulture),
@@ -154,6 +195,16 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 					return FluentProvider.GetMessage(EnemyLockdownTooltip,
 						"player", enemy.ResolvedPlayerName,
 						"seconds", SecondsRemaining(controller.LockdownTicksRemaining(enemy), world).ToString(CultureInfo.CurrentCulture));
+
+				var rearm = controller.LockdownRearmTicksRemaining(player);
+				if (rearm > 0)
+					return FluentProvider.GetMessage(RearmTooltip, "seconds", Seconds(rearm));
+
+				var rearming = EnemyRearming();
+				if (rearming != null)
+					return FluentProvider.GetMessage(EnemyRearmTooltip,
+						"player", rearming.ResolvedPlayerName,
+						"seconds", Seconds(controller.LockdownRearmTicksRemaining(rearming)));
 
 				return FluentProvider.GetMessage(Tooltip,
 					"current", manager.TotalReserve.ToString("N0", CultureInfo.CurrentCulture),

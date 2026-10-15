@@ -5928,7 +5928,7 @@ Broker (standard), Turtle (defensive), Rush (aggressive), Saboteur (advanced). T
 #138). Tags reasoned from the audit, not measured; not seen in the lobby (name width).
 
 **Still open from the same audit** (the second batch; numbers from the audit reports):
-- *Lockdown re-banks in seconds*: after a raid the owner's cash, piled up above the floor during the hold, re-banks
+- *Lockdown re-banks in seconds* (the re-arm cooldown is done, issue #143; a `BuildLimit` on `SILO` is still open): after a raid the owner's cash, piled up above the floor during the hold, re-banks
   the loss in ~5s with 8 banks, and bank spam makes it worse. A re-arm cooldown after a cancel and a `BuildLimit` on
   `SILO` (e.g. 16). Playtest.
 - *Recycling Depot stacks*: 300/min per Depot, no cap, no risk, no power gate - ten bank a 2-player target alone in
@@ -5949,5 +5949,39 @@ Broker (standard), Turtle (defensive), Rush (aggressive), Saboteur (advanced). T
 **Files:** `OpenRA.Mods.Sungrid/GridReserve/{GridReserveVault,GridReserveController,GridReserveManager}.cs`, new
 `GridReserveOperatingBalance.cs`, `BotModules/EnemyGridStateBotModule.cs`; `rules/{player,ai,aircraft}.yaml`,
 `weapons/missiles.yaml`, `fluent/rules.ftl`; `docs/GAME_MODES.md`, `docs/BUILDINGS.md`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---
+
+### 143. Breaking a Lockdown bought five seconds: a 45-second re-arm before it can start again
+
+**Status:** Done (code, not verified in a live client). The first item of issue #141's second batch, the owner's pick.
+
+**The problem.** While a player holds Grid Lockdown, banking stops at the target ceiling, so income piles up as
+spendable cash above `MinimumOperatingBalance`. When a raid killed a bank and the total dropped below target, that
+cash went straight back in at 75/s per bank - with 8 banks the ~2,700 a kill takes off came back in about five
+seconds, and the countdown restarted from 90. A raider had to kill a bank every 90 seconds, forever, and more banks
+made it worse. Core Rule 4's raid only reset the clock; it never bought time.
+
+**The fix.** `GridReserveControllerInfo.LockdownRearmTicks` (1125 ticks, 45s - half the hold; the owner chose 45s,
+fixed length rather than escalating). When a player's Lockdown is cancelled the controller records
+`WorldTick + LockdownRearmTicks`, and a player back at target does not start a new Lockdown until that tick has
+passed. Banking itself carries on, so the owner can be at target the moment the re-arm ends. State is a pure function
+of the world tick and the cancel, deterministic on every client.
+
+**What players see.** The cancel line now reads "...Grid Lockdown was cancelled. It cannot restart for 45 seconds."
+(`notification-grid-lockdown-cancelled` gained `$seconds`). The HUD label, after the existing own/enemy Lockdown
+countdowns, shows "LOCKDOWN RE-ARMING — Ns" to the owner and "ENEMY RE-ARMING — Ns" (with a tooltip naming the
+player) to everyone else, from `GridReserveController.LockdownRearmTicksRemaining`. The observer standings are
+unchanged (they show the Reserve total as before).
+
+**Bots.** No change needed: `GridReserveBotModule` grants `enemy-lockdown` off `LockdownEligible` (at target), not off
+the countdown, so the issue #141 Lockdown response keeps attacking the banks through the re-arm window.
+
+**Verification.** `make` (0 errors), the mod's `-warnaserror` Debug compile, `--check-yaml` on all 79 maps, both
+interface checks. Fluent keys are not linted (a misspelled HUD key passed `--check-yaml`, negative-controlled here),
+so every key the HUD and controller reference was checked against the `.ftl` files by script.
+
+**Files:** `OpenRA.Mods.Sungrid/GridReserve/{GridReserveController,GridReserveHudLogic}.cs`,
+`mods/sungrid/fluent/{rules,chrome}.ftl`, `docs/GAME_MODES.md`, `CHANGELOG.md`, `CLAUDE.md`.
 
 ---
