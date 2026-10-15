@@ -73,7 +73,10 @@ The detailed entries below track every issue through #119, plus #132; this list 
   as soon as you go into Lockdown (Turtle included); the Assembly's Saboteur actually sends its army now (it waited
   for blackouts only a Spy can cause); bots keep enough cash to keep building factories and new bases while they
   bank; and each bot's name says how hard it is, from "beginner" to "advanced". **Drones hit about three times as
-  hard**, and the Assembly's **Wasp Gunship** can finally reload at its own Airfield (issue #141).
+  hard**, and the Assembly's **Wasp Gunship** can finally reload at its own Airfield (issue #141). **Breaking a
+  Lockdown now buys real time:** after a raid cancels it, it cannot start again for 45 seconds, even if the owner
+  banks straight back to the target - before, it restarted about five seconds later. The bar shows "LOCKDOWN
+  RE-ARMING" to the owner and "ENEMY RE-ARMING" to everyone else, with the seconds left (issue #143).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and

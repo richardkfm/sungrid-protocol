@@ -9,6 +9,7 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Mods.Common.Traits;
@@ -52,6 +53,12 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		[Desc("Ticks the Reserve total must stay at or above target to win once Grid Lockdown starts (60-120s at normal speed recommended).")]
 		public readonly int LockdownDurationTicks = 2250;
 
+		[Desc("Ticks after a player's Grid Lockdown is cancelled before it can start again, even if their Reserve is back at",
+			"target sooner. Without it a raid bought the raider about five seconds: cash piles up above the operating balance",
+			"while Lockdown holds, so the owner's banks refilled the loss almost at once and the countdown restarted.",
+			"Banking itself carries on. Zero disables it. See docs/BACKLOG.md issue #143.")]
+		public readonly int LockdownRearmTicks = 1125;
+
 		[Desc("Ticks after the match starts before Grid Decay can begin, if nobody has triggered Grid Lockdown yet.")]
 		public readonly int DecayGraceTicks = 45000;
 
@@ -87,6 +94,8 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		readonly GridReserveControllerInfo info;
 		readonly HashSet<Player> objectiveAdded = [];
 		readonly Dictionary<Player, int> lockdownRemaining = [];
+		readonly Dictionary<Player, int> rearmUntilTick = [];
+		World world;
 
 		bool anyLockdownEverTriggered;
 		int elapsedTicks;
@@ -109,8 +118,13 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		// The full hold length, so a HUD can draw a countdown as a draining bar (issue #119).
 		public int LockdownDurationTicks => info.LockdownDurationTicks;
 
+		// 0 unless the player's Lockdown was cancelled recently; otherwise ticks until it may start again (issue #143).
+		public int LockdownRearmTicksRemaining(Player player) =>
+			world != null && rearmUntilTick.TryGetValue(player, out var until) ? Math.Max(0, until - world.WorldTick) : 0;
+
 		void INotifyCreated.Created(Actor self)
 		{
+			world = self.World;
 			Enabled = self.World.LobbyInfo.GlobalSettings.OptionOrDefault("gridreserve", info.CheckboxEnabled);
 		}
 
@@ -147,6 +161,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				{
 					if (remaining < 0)
 					{
+						// Back at target, but a raid broke the last Lockdown too recently: keep banking, wait to re-arm.
+						if (LockdownRearmTicksRemaining(player) > 0)
+							continue;
+
 						lockdownRemaining[player] = info.LockdownDurationTicks;
 						anyLockdownEverTriggered = true;
 						Broadcast(self.World, player, info.LockdownStartNotification, info.LockdownStartTextNotification);
@@ -162,7 +180,11 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 				else if (remaining >= 0)
 				{
 					lockdownRemaining.Remove(player);
-					Broadcast(self.World, player, info.LockdownCancelledNotification, info.LockdownCancelledTextNotification);
+					if (info.LockdownRearmTicks > 0)
+						rearmUntilTick[player] = self.World.WorldTick + info.LockdownRearmTicks;
+
+					Broadcast(self.World, player, info.LockdownCancelledNotification, info.LockdownCancelledTextNotification,
+						"seconds", (info.LockdownRearmTicks * self.World.Timestep + 999) / 1000);
 				}
 			}
 		}
@@ -186,14 +208,14 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 					p.PlayerActor.Trait<MissionObjectives>().ForceDefeat(p);
 		}
 
-		static void Broadcast(World world, Player player, string speechNotification, string textNotification)
+		static void Broadcast(World world, Player player, string speechNotification, string textNotification, params object[] args)
 		{
 			// A loaded save fast-forwards through every past tick; don't replay every Lockdown start and cancel.
 			if (world.IsLoadingGameSave)
 				return;
 
 			if (textNotification != null)
-				TextNotificationsManager.AddSystemLine(textNotification, "player", player.ResolvedPlayerName);
+				TextNotificationsManager.AddSystemLine(textNotification, ["player", player.ResolvedPlayerName, .. args]);
 
 			// Every player hears it, not only the one holding Lockdown: a null player plays the notification for
 			// whoever is local, and an opponent is the one who most needs the warning (issue #141).
