@@ -128,11 +128,29 @@ def flank_band(m, x, y0, y1, z, live=True):
 # sgfact (the Sungrid Construction Yard), whose mast and beacon it borrows.
 # ---------------------------------------------------------------------------
 
-MCV_W, MCV_H = 48, 40
-MCV_OY = 4
+# Issue #145: the owner found the MCV and the Ore Truck too alike - two grey
+# tracked boxes of nearly the same size. The MCV is now the biggest vehicle on
+# the field, the same model built at 1.5x, in a frame grown to hold it (the
+# frame size travels in the PNG, so the sequence is unchanged).
+MCV_SCALE = 1.5
+MCV_W, MCV_H = 72, 60
+MCV_OY = 6
+
+
+def scaled(m, k):
+    """The same model, every vertex multiplied by k about the ground origin."""
+    out = Mesh()
+    out.faces = [([(x * k, y * k, z * k) for x, y, z in verts], color, order, accent)
+                 for verts, color, order, accent in m.faces]
+    out.solids = [[(x * k, y * k, z * k) for x, y, z in solid] for solid in m.solids]
+    return out
 
 
 def mcv_mesh(damaged=False):
+    return scaled(_mcv_model(damaged), MCV_SCALE)
+
+
+def _mcv_model(damaged=False):
     m = Mesh()
     hull = _scorched(_HULL, damaged)
     pods(m, 3.8, 6.2, -10.0, 10.0, 3.2, _scorched(_TRACK, damaged, 0.3), axles=(-7.0, 0.0, 7.0))
@@ -174,10 +192,10 @@ def mcv_mesh(damaged=False):
 
 
 def _mcv_decals(sd, w, h):
-    ox, oy = w // 2, h // 2 + MCV_OY
-    sd.ellipse([ox - 2.0, oy - 9.0, ox + 2.6, oy - 6.6], fill=DAMAGE_SCORCH + (235,))
-    sd.ellipse([ox + 1.0, oy - 3.5, ox + 4.0, oy - 2.0], fill=(0, 0, 0, 225))
-    sd.rect([ox - 4.6, oy - 1.0, ox - 3.9, oy + 2.5], fill=RUST + (220,))
+    ox, oy, k = w // 2, h // 2 + MCV_OY, MCV_SCALE
+    sd.ellipse([ox - 2.0 * k, oy - 9.0 * k, ox + 2.6 * k, oy - 6.6 * k], fill=DAMAGE_SCORCH + (235,))
+    sd.ellipse([ox + 1.0 * k, oy - 3.5 * k, ox + 4.0 * k, oy - 2.0 * k], fill=(0, 0, 0, 225))
+    sd.rect([ox - 4.6 * k, oy - 1.0 * k, ox - 3.9 * k, oy + 2.5 * k], fill=RUST + (220,))
 
 
 # ---------------------------------------------------------------------------

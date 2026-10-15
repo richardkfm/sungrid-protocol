@@ -5985,3 +5985,110 @@ so every key the HUD and controller reference was checked against the `.ftl` fil
 `mods/sungrid/fluent/{rules,chrome}.ftl`, `docs/GAME_MODES.md`, `CHANGELOG.md`, `CLAUDE.md`.
 
 ---
+
+### 144. The main-menu battle, seen running: Assembly units stood at their barracks, and one-cell buildings drew into each other
+
+**Status:** Done, **verified in a running client** - the first change in this repo checked that way (see "How it was
+seen" below). Owner report on `beta13`, the first release carrying issue #139: still no units attacking, and Battery
+Banks overlapping (a screenshot with three banks, a Sensor Array and a Relay drawn as one heap).
+
+**No attacks - the cause.** Every Assembly unit's idle trigger attack-moved it to
+`AlliedConstructionYard.Location`, the Yard's own cell. A building cell can never be reached, and from most starting
+points the move ended the tick it began; the trigger re-issued it every tick, so the unit stood still for good. Every
+trooper the Assembly's three barracks produced sat at its rally point all match (five on one cell at 38,29 next to
+`SovietBarracks3`), which also held production at its cap. Only the edge waves sometimes found a path, so the valley
+stayed nearly empty. Proven step by step in the running game: the trigger fired every tick for the stuck troopers;
+`Hunt`, a plain `Move` and an attack-move to a free cell all moved them; an attack-move to the Yard's cell did not;
+the ground between the ridge and the Yard is connected (checked with the placer's own map reader). Issue #139's
+production fix was correct but could never show, because the units it produced never left.
+
+**Fix.** `AssaultCells`: three free, reachable cells in the Consortium base (its War Factory, its Battery Banks, its
+western barracks - each with a free one-cell ring, reachable from the map edge), one picked at random per attack-move.
+Measured over two minutes: idle Assembly units fell from 20-28 to a constant 8, which are exactly the eight guards the
+map places (six troopers, two Mammoth Tanks; they have no triggers by design), and more of the Assembly now stands
+and dies in the south.
+
+**Overlap - the cause.** The one-cell Sungrid buildings are drawn in frames wider than their cell (the Battery Bank's
+is 40 px on a 24 px cell), so neighbours draw into each other even though no footprints overlap - which is all issue
+#139's check tested. The Consortium had two rows of three banks on adjacent cells (62-64,72 with the Sensor Array and
+a Relay right below, and 74-76,77), and a bank against the Data Center and an Arc Turret; the Assembly had Wind
+Turbines against two Sensor Arrays and a barracks, and an Arc Turret against the Depot.
+
+**Fix.** `bits/place_shellmap_roster.py` gains a fourth step, `SPREAD`: each named actor that touches another
+building is moved to the nearest valid cell by the existing ring rule (11 moves), and the script now fails if any
+`WIDE` one-cell building (`silo`, `sgrel`, `sgsns`, `sgwnd`, `rcyd`, `arct`, `sgtur`, `tsla`) touches another
+building. Negative-controlled: with an empty move list it fails and names all 17 touching pairs. A second run moves
+nothing. Map re-saved with `--refresh-map-previews`.
+
+**How it was seen.** The official freeware Red Alert package (`ra-quickinstall`, SHA1 checked) installed into
+`~/.config/openra/Content/ra/v2/` per `docs/PLAYTESTING.md`; then `xvfb-run ./launch-game.sh Game.Mod=sungrid
+Game.IntroductionPromptVersion=99 Debug.SystemInformationVersionPrompt=99` runs the main menu with the battle behind
+it, `import -window root` captures the screen, and Lua `print()` lands in `~/.config/openra/Logs/lua.log` - so a
+temporary diagnostic appended to the map script (not committed) measured the units. The battlefield rendered
+normally; the "fully black" blocker recorded for bot skirmishes did not appear on the shellmap.
+
+**Files:** `mods/sungrid/maps/desert-shellmap/{desert-shellmap.lua,map.yaml}`, `mods/sungrid/bits/place_shellmap_roster.py`,
+`CHANGELOG.md`, `CLAUDE.md`.
+
+---
+
+### 145. The MCV and the Ore Truck looked alike: the MCV at 1.5x, and a cameo of its own
+
+**Status:** Done (sprite checked with the engine's sprite loader, not yet seen moving in a live match). Owner report
+on `beta13`: the MCV and the Ore Truck, unit and cameo both, look too similar - "make the MCV much bigger".
+
+**Why.** Issue #121 drew both as grey `Mesh` vehicles with a gold flank band, in nearly the same frame (MCV 48x40,
+Ore Truck 44x36); issue #129 cut both cameos from the same render (`ideogram-base-1.jpg`), two six-wheel trucks.
+
+**Sprite (the owner chose 1.5x).** `gen_core_units.py` builds the same MCV model and scales every vertex by
+`MCV_SCALE` 1.5 about the ground origin (`scaled()`), in a frame grown to 72x60 (`MCV_OY` 6); the husk and its
+decals follow. The frame size travels in the PNG, so `sequences/vehicles.yaml` is unchanged; the sheet uses
+x 17-60, y 12-46 of every frame at all 32 facings. `MCV`'s `Selectable.DecorationBounds` grew 1792,1792 ->
+2304,1920 so the selection box and health bar fit it. A deliberate exception to art rule 24's "frame sizes never
+change" - the owner's call, and the reason the rule existed (sequence edits) does not apply here.
+
+**Cameo (the owner chose from four 64x48 candidates).** `CROPS["mcv"]` now cuts the olive-green eight-wheel carrier
+with a container module from `ideogram-base-3.jpg` - different colour and outline from the grey Ore Truck.
+
+**Verification.** `--check-yaml` exit 0; `--check-missing-sprites` exit 0 with the freeware content installed (no
+missing file at all); negative control `Facings: 33` on `mcv.idle` fails. Re-running the generators changed only
+the MCV's three files. Note for the next art pass: in this environment `gen_core_units.py` also rewrites `harv*.png`
+with no source change (a library-version drift, reproduced on the untouched script), so those were restored from
+git rather than committed.
+
+**Files:** `mods/sungrid/bits/{gen_core_units.py,gen_photo_cameos.py,mcv.png,mcvhusk.png,mcvicon.png}`,
+`mods/sungrid/rules/vehicles.yaml`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---
+
+### 146. A Grid Reserve win never ended the match: the loser's units could no longer attack anything
+
+**Status:** Done, **reproduced and verified in a running client** with a test map (not committed). Owner report from
+`beta13` against Saboteur AI: about thirty minutes in, none of their units would attack the enemy any more - no attack
+cursor on any enemy unit or building, for every unit, fire-at-will on; only force-fire worked, and not on moving
+targets. A regression from issue #141.
+
+**Cause.** Issue #141 turned `MissionObjectives.EarlyGameOver` off and had `GridReserveController.CompleteGridReserveVictory`
+defeat the winner's opponents itself - but it marked the winner's objectives complete *first* and then picked the
+opponents with `!p.IsAlliedWith(winner)`. A player with a WinState is spectating, and `Player.RelationshipWith` counts
+every player as allied to a spectator ("Observers are considered allies to active combatants"), so no opponent was
+ever found: the match never ended. The Saboteur had won on the Reserve; the owner was never defeated and played on, and
+from their side every one of the winner's actors was now an ally - hence no attack cursor and no auto-fire, while
+force-fire (allowed on allies) still worked.
+
+**Fix.** The opponents are collected before the winner is marked, then force-defeated afterwards.
+
+**Verified live.** A throwaway map (one playable player with two Battery Banks and 20,000 cash, one enemy with a Yard
+and a tank; `BaseTargetPerPlayer` 300, `LockdownDurationTicks` 50, Sun Cycle off) launched with `Launch.Map=`, a Lua
+log on `Trigger.OnPlayerWon`/`OnPlayerLost` and `IsAlliedWith`: with the old code the player won at tick 101, the enemy
+never lost, and the enemy counted the winner as an ally for the rest of the run; with the fix the enemy lost in the same
+tick, its tank was destroyed (`OwnerLostAction`) and the match ended. Then `make`, the mod's `-warnaserror` Debug
+compile, `--check-yaml`, both interface checks.
+
+**Lesson (CLAUDE.md).** Anything that reads player relationships after a WinState changes reads the spectator rule,
+not the teams; decide who is an opponent before anyone wins. A mission-style test map launched with
+`Launch.Map=<folder name>` needs an `mpspawn` for each playable player.
+
+**Files:** `OpenRA.Mods.Sungrid/GridReserve/GridReserveController.cs`, `CHANGELOG.md`, `CLAUDE.md`.
+
+---

@@ -67,7 +67,8 @@ CROPS = {
     #     the four stock buildings get these ahead of their own sprites, the
     #     owner's call (it supersedes issue #123's rule for these four).
     "sgproc": ("ideogram-base-4.jpg", (240, 230, 640, 520)),    # hopper, conveyor, sorting tower, silos
-    "mcv":    ("ideogram-base-1.jpg", (240, 470, 540, 640)),    # six-wheel truck with folded crane
+    "mcv":    ("ideogram-base-3.jpg", (870, 580, 1230, 880)),   # olive 8-wheel carrier with a container module (issue #145:
+                                                                 # render 1's grey crane truck read as the Ore Truck)
     "harv":   ("ideogram-base-1.jpg", (880, 630, 1240, 850)),   # six-wheel hauler, tipping bed full of ore
     "weap":   ("ideogram-base-3.jpg", (770, 280, 1350, 620)),   # PV-roofed hangar with tanks inside
     "barr":   ("ideogram-base-1.jpg", (1270, 290, 1600, 470)),  # hardened block, sandbags, red flag

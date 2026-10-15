@@ -132,6 +132,11 @@ each other's state and it is easy to leave one of them out:
   remove -> owner change -> add, and an actor out of the world still ticks) - the Vault now registers on add,
   unregisters on removal, ticks only while registered and rebinds on owner change; and a destroyed bank now loses its
   *whole* holding (it used to leave half in `TotalReserve` with no building behind it).
+- **#146** - #141's own win path picked the opponents *after* marking the winner, and a player with a WinState is
+  spectating, which `Player.RelationshipWith` makes everyone's ally - so nobody was defeated, the match never ended and
+  the loser could no longer target the winner's units. Opponents are collected first now. Any code that reads
+  relationships after a WinState changes reads that spectator rule, not the teams. Reproduced and fixed with a
+  throwaway `Launch.Map=` test map (needs an `mpspawn` per playable player) and a Lua log.
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Seven lobby personalities: the four
@@ -555,7 +560,10 @@ is the regression check.
     withdrawn in issue #123 after the first live look; the convention stands, the drawing is in history at the #121
     commit). Keeping the stock frame order and count (111 for `harv`, 378 for `e1`, unreferenced frames left blank)
     means the sequence YAML changes by Filename only, and `--check-missing-sprites`'s negative control is to lengthen
-    the sheet's *last* block by one.
+    the sheet's *last* block by one. Issue #145 (owner's call): the MCV is the same model at `MCV_SCALE` 1.5 in a 72x60
+    frame, so it never reads as the Ore Truck; a frame size can grow without touching the sequence (it travels in the
+    PNG), but the actor's `DecorationBounds` must grow with it. `gen_core_units.py` rewrites `harv*.png` here with no
+    source change (library drift) - restore them from git unless you meant to change the Ore Truck.
 20. **A turret sheet animates within a facing, and a baked idle sweep needs a static `aim` twin (issue
     #113).** `WithSpriteTurret` plays its sequence repeating, so `Facings: 32, Length: N` gives N frames per
     facing, facing-major (the Arc Turret's arc flicker, the Grid Defense Turret's +-15 degree scan). A sweep
@@ -707,6 +715,18 @@ Verifiable with a real engine build (`make`, then `./utility.sh`): `--check-yaml
 maps), `--check-missing-sprites`, `--png-sheet-export` (proves the engine's own PNG reader parses a
 sheet at its intended frame layout), `--resolved-rules`, `--resolved-sequences`. Use these — they have
 caught real bugs that reading YAML did not.
+
+**The main-menu battle CAN be run and watched here (issue #144)** - the first live check in the repo. Install the
+freeware RA content per `docs/PLAYTESTING.md` (`ra-quickinstall`, mirrors listed at
+`https://www.openra.net/packages/ra-quickinstall-mirrors.txt`, SHA1 `44241f68...`) into `~/.config/openra/Content/ra/v2/`,
+then `xvfb-run -a ./launch-game.sh Game.Mod=sungrid Game.IntroductionPromptVersion=99 Debug.SystemInformationVersionPrompt=99`
+shows the menu with the battle behind it (`import -window root` for screenshots), and Lua `print()` goes to
+`~/.config/openra/Logs/lua.log` - so a temporary diagnostic appended to a map script can measure units, then be
+removed. The shellmap rendered normally; the black battlefield below was a bot skirmish. Two lessons from the first
+look: **never attack-move to a building's own cell** (`AttackMove(SomeBuilding.Location)` - unreachable, the move ends
+at once, an `OnIdle` trigger re-issues it every tick and the unit never moves; issue #144's whole "no attacks"), and
+**a footprint check is not a sprite check** - one-cell Sungrid buildings are drawn 40 px wide, so the placer's `SPREAD`
+step keeps a one-cell gap around them.
 
 **Not verifiable here: anything requiring a live client.** No RA game content is installed by default
 (see `docs/PLAYTESTING.md` for the freeware install), and even with content plus the
