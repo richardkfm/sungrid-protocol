@@ -85,6 +85,7 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 		Player[] enemies;
 		SunCycleBotModule[] sunCycleModules = [];
 		PowerStorageManager storage;
+		GridReserveBankLimit bankLimit;
 
 		int vaultCapacity;
 		int ticks;
@@ -108,30 +109,11 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			sunCycleModules = self.TraitsImplementing<SunCycleBotModule>().ToArray();
 			storage = self.TraitOrDefault<PowerStorageManager>();
 
-			// The Reserve one Vault can hold is fixed for the match (rules plus lobby options), so the largest only
-			// needs resolving once. With the Sun Cycle on, a Vault that is also a Battery Bank keeps a protected
-			// share for energy (PowerStorage.ReserveRoom) and holds that much less Reserve; sizing against the full
-			// Capacity would leave the bot a Vault or more short of its target. The world actor (and so the
-			// controller's lobby option) is created before any player actor.
-			var sunCycle = world.WorldActor.TraitOrDefault<SunCycleController>();
-			var cycleOn = sunCycle != null && sunCycle.Enabled;
-			foreach (var type in Info.VaultTypes)
-			{
-				if (!world.Map.Rules.Actors.TryGetValue(type, out var actorInfo))
-					continue;
-
-				var vaultInfo = actorInfo.TraitInfoOrDefault<GridReserveVaultInfo>();
-				if (vaultInfo == null)
-					continue;
-
-				var reserveCapacity = vaultInfo.Capacity;
-				var storageInfo = actorInfo.TraitInfoOrDefault<PowerStorageInfo>();
-				if (cycleOn && storageInfo != null)
-					reserveCapacity -= storageInfo.ProtectedSpace(vaultInfo.Capacity);
-
-				if (reserveCapacity > vaultCapacity)
-					vaultCapacity = reserveCapacity;
-			}
+			// The Reserve one Vault can hold is fixed for the match. With the Sun Cycle on, a Vault that is also a
+			// Battery Bank keeps a protected share for energy and holds that much less Reserve; sizing against the full
+			// Capacity would leave the bot a Vault or more short of its target.
+			vaultCapacity = GridReserveBankLimitInfo.ReserveCapacityPerBank(world, Info.VaultTypes);
+			bankLimit = self.TraitOrDefault<GridReserveBankLimit>();
 		}
 
 		void IBotTick.BotTick(IBot bot)
@@ -191,6 +173,10 @@ namespace OpenRA.Mods.Sungrid.GridReserve
 			// the Vault count rather than out of it; zero whenever the cycle is off.
 			var storageBanks = StorageBanksWanted();
 			wanted += storageBanks;
+
+			// The player's bank cap (issue #147) holds for bots too: anything queued past it would only be refunded.
+			if (bankLimit != null && bankLimit.Limit > 0)
+				wanted = Math.Min(wanted, bankLimit.Limit);
 
 			var owned = world.ActorsHavingTrait<GridReserveVault>().Count(a => a.Owner == player && !a.IsDead);
 			if (owned >= wanted)
