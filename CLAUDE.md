@@ -346,6 +346,14 @@ Known limitation, not a bug: 30s decouples the Hauler from a skirmish, not from 
 fixed front. Fixing that needs engine-side target selection ("don't path within N cells of a known
 enemy"), so scope it as such rather than tuning these numbers a third time.
 
+**The Depot's dock tile is part of its footprint (issue #148).** `RCYD`'s dock is the cell south of the building,
+and as a plain 1x1 (`Footprint: x`) that cell was any free cell: a wall or building placed below the Depot, or the
+Depot placed with a tree or cliff there, left every loaded Hauler waiting beside it for the rest of the match. The
+tell in a report is that the Ore Truck kept unloading (storage was not full). The footprint is `x =` /
+`Dimensions: 1,2` with `LocalCenterOffset: 0,-512,0`, the pattern `PROC` and `DOME` use, so the centre, sprite,
+selection and `DockOffset` stay where they were and the minibib moves onto the dock tile. Any dock building whose
+`DockOffset` lands outside its footprint has the same bug.
+
 ### Audit a Sungrid-original actor against its own fiction, not just its stats
 
 Issues #102/#103. A Sungrid-original actor sits at the bottom of a stock RA `^` inheritance chain, and that
@@ -724,7 +732,10 @@ freeware RA content per `docs/PLAYTESTING.md` (`ra-quickinstall`, mirrors listed
 then `xvfb-run -a ./launch-game.sh Game.Mod=sungrid Game.IntroductionPromptVersion=99 Debug.SystemInformationVersionPrompt=99`
 shows the menu with the battle behind it (`import -window root` for screenshots), and Lua `print()` goes to
 `~/.config/openra/Logs/lua.log` - so a temporary diagnostic appended to a map script can measure units, then be
-removed. The shellmap rendered normally; the black battlefield below was a bot skirmish. Two lessons from the first
+removed. The shellmap rendered normally; the black battlefield below was a bot skirmish. A `Launch.Map=` test map
+renders too if its own `rules.yaml` sets `Player: Shroud: FogCheckboxEnabled: False, ExploredMapCheckboxEnabled: True`
+(issue #148); never name a test script's function `Tick` (the engine calls a global `Tick()` every game tick), and
+`lua.log` is written late, so time a screenshot by the on-screen clock, not by the log. Two lessons from the first
 look: **never attack-move to a building's own cell** (`AttackMove(SomeBuilding.Location)` - unreachable, the move ends
 at once, an `OnIdle` trigger re-issues it every tick and the unit never moves; issue #144's whole "no attacks"), and
 **a footprint check is not a sprite check** - one-cell Sungrid buildings are drawn 40 px wide, so the placer's `SPREAD`

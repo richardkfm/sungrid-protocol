@@ -89,7 +89,11 @@ The detailed entries below track every issue through #119, plus #132; this list 
   (issue #146). **Battery Banks are capped under Grid Reserve:** as many as your Reserve target needs, plus four
   spare - 12 in a two-player match with the Day/Night Cycle on. At the cap the build button greys out; lose a bank
   and you can build another. The Reserve bar's tooltip shows how many you have of how many. No cap with Grid Reserve
-  off (issue #147).
+  off (issue #147). **Fixed: a fully loaded Hauler Drone could get stuck for good beside its Recycling Depot** if
+  anything stood on the tile directly below the Depot, where it unloads - a wall or another building, or a tree or
+  cliff the Depot had been placed next to. That tile now belongs to the Depot: the placement preview shows it, nothing
+  can be built on it, and the Depot can only be placed where it is open ground. The small concrete pad now lies on
+  that tile (issue #148).
 - **beta10**: a town and one or two hamlets of stock houses, fences, poles and crop fields on the 22
   four-to-six-player maps that had the fewest (issue #131); bots that actually fly their drones and aircraft, and a
   pair of late drones for Easy Grid Broker (issue #132); four new large maps made for the mod - Reclaimed Grid and
