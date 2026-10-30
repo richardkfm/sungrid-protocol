@@ -1510,6 +1510,19 @@ RCYD:
 	Tooltip:
 		Name: actor-rcyd.name
 	-GivesBuildableArea:
+	# The Hauler's dock tile (DockOffset below, one cell south) is part of the
+	# footprint, the way PROC's and DOME's bottom rows are: '=' is passable for
+	# units but nothing can be built on it, and the placement check needs it to
+	# be clear ground. As a plain 1x1 the dock tile was any free cell, so a
+	# building or wall put right below the depot, or the depot placed with a
+	# tree or cliff south of it, left every loaded Hauler waiting beside it for
+	# the rest of the match. LocalCenterOffset keeps the centre (sprite,
+	# selection, dock position) on the building's own cell; the minibib now
+	# lies under the dock tile, like PROC's bib under its own. Issue #148.
+	Building:
+		Footprint: x =
+		Dimensions: 1,2
+		LocalCenterOffset: 0,-512,0
 	Health:
 		HP: 40000
 	Armor:

@@ -6148,3 +6148,47 @@ up to the target; fewer would make the Sun Cycle's storage banks compete with th
 `docs/BUILDINGS.md`, `CHANGELOG.md`, `CLAUDE.md`.
 
 ---
+### 148. A loaded Hauler Drone stuck for good beside its Recycling Depot
+
+**Status:** Done, **reproduced and verified in a running client** with a throwaway test map (not committed). Owner
+report from a beta13 playtest: a fully loaded Hauler could no longer return to its Depot and unload, and stayed stuck
+at the building. Asked before fixing: the Hauler was waiting *next to* the Depot (not docked), the Ore Truck kept
+unloading at the same time (so storage was not full - a full store leaves a harvester docked and waiting, and stops
+the Ore Truck too), and it never recovered.
+
+**Cause.** `RCYD` is a 1x1 building (`^BasicBuilding`'s `Footprint: x`) whose `DockOffset` (0, 700, 0) puts the dock
+in the cell south of it - outside the footprint. Nothing reserved that cell, so a wall or building placed directly
+below the Depot, or the Depot placed with a tree, rock or cliff there, made the dock unreachable. `MoveToDock`
+reserves the dock and queues `MoveOntoTarget`; the move ends beside the blocked cell and `MoveCooldownHelper`
+(`RetryIfDestinationBlocked`) retries forever, so the Hauler waits there loaded for the rest of the match. Stock
+buildings avoid this by putting the dock cells in the footprint as `=` (passable for units, but part of the
+building's influence, so `IsCellBuildable` refuses anything else there, and the placement check needs the cell to be
+clear `TerrainTypes` ground): `PROC`'s `X== ===` rows, `DOME`'s `==`. Issue #5 had left "DockHost/DockOffset tuning
+against a real client" open; this is what that would have found.
+
+**Fix.** `RCYD` gets `Building: Footprint: x =`, `Dimensions: 1,2`, `LocalCenterOffset: 0,-512,0` (the `DOME`/`PROC`
+pattern). The offset keeps the centre on the building's own cell, so the sprite, selection bounds, `HitShape` and
+`DockOffset` are where they were; the dock is now the footprint's `=` cell. The minibib (`WithBuildingBib` lays it on
+the footprint's bottom row) moves onto the dock tile, where the Hauler parks - the same place `PROC`'s bib sits. The
+death explosion uses `OccupiedTiles`, which excludes `=`, so it is unchanged. Bots place through the same
+`CanPlaceBuilding`, so they now keep the tile free too. The only map that places a Depot is the main-menu battle:
+both dock tiles there are clear ground with no actor on them, and `place_shellmap_roster.py --dry-run` (which reads
+footprints from the rules) reports no overlap.
+
+**Verified live.** A 40x40 test map, two Depots each with a 5x5 Scrap field south of it, launched with `Launch.Map=`,
+logging `Player.Resources` and the Haulers' cells every 100 ticks. Old rules with a wall (`brik`) on depot A's dock
+tile: depot B's Hauler docked on 28,11 and delivered 120 a trip (960 by tick 2702); depot A's waited at 10,12, beside
+the wall, and delivered 0 for the whole 3000 ticks - the report exactly. New rules (no wall): both Depots' centres are
+the same as before to the unit (10752,10752 and 29184,10752), both Haulers dock on the new `=` tiles (10,11 and 28,11)
+and deliver at the old rate (600 each by tick 1802). A screenshot (map revealed through the test map's own rules)
+shows the Hauler docked under the Depot with the tipping overlay running, and the pad on the dock tile when it is
+away. Then `make` and `--check-yaml` across all maps. **Not seen live:** the placement preview refusing a building on
+the dock tile (no input automation here, and Lua's `Actor.Create` skips the placement check) - that side is read from
+the engine (`BuildingUtils.CanPlaceBuilding` / `IsCellBuildable`), the same mechanism every `PROC` relies on.
+
+**Lesson (CLAUDE.md).** A dock building whose `DockOffset` lands outside its footprint can have its dock built over.
+A test-map Lua function must not be called `Tick`: the engine calls a global `Tick()` every game tick.
+
+**Files:** `rules/structures.yaml`; `CHANGELOG.md`, `CLAUDE.md`, `docs/BUILDINGS.md`.
+
+---
