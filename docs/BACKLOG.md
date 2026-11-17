@@ -6192,3 +6192,33 @@ A test-map Lua function must not be called `Tick`: the engine calls a global `Ti
 **Files:** `rules/structures.yaml`; `CHANGELOG.md`, `CLAUDE.md`, `docs/BUILDINGS.md`.
 
 ---
+
+### 149. Back to plain Grid Reserve by default: Day/Night Cycle off, Easy Grid Broker AI the default bot
+
+**Status:** Done; `make` and `--check-yaml` run here, not verified in a live client. Ships as **beta14** (beta11-beta13
+were already tagged).
+
+**Request.** Testers reported that the Day/Night Cycle (issue #136, on by default since its second revision) and the
+Saboteur AI (the default bot since issue #138) should not be the standard setup. The owner's call: keep both as
+opt-in choices, make a fresh skirmish plain Grid Reserve against Easy Grid Broker AI.
+
+**Change.**
+- `rules/world.yaml`: `SunCycleController.CheckboxEnabled: false` (explicit, the trait's own default; still unlocked).
+  The main-menu shellmap sets `CheckboxEnabled: True` / `CheckboxLocked: True` in its own `rules.yaml` and keeps its
+  sped-up showcase cycle. Grid Reserve stays on.
+- `rules/ai.yaml`: `ModularBot@EasyGridBrokerAI` is first on the Player actor (the engine's default bot and the head
+  of every bot dropdown), Grid Broker second, the stock four next, `ModularBot@SaboteurAI` last. "Add bots" is still
+  random (engine). A player's saved skirmish settings still restore their last choice.
+
+With the cycle off, a Battery Bank holds its whole 8000 Reserve again and the bank cap (issue #147) drops back to the
+cycle-off count, so a default match is the pre-#136 economy byte for byte. Saboteur tuning notes that assumed a night
+in every match (issue #138, `docs/GAME_MODES.md`) now apply only when the lobby turns the cycle on.
+
+**CI, same PR.** The first CI run failed on an unchanged engine: GitHub's runner now resolves `8.0.x` to SDK 8.0.428,
+whose analyzers report CA1830 at `OpenRA.Game/Support/ExceptionHandler.cs(62)` (`Append(new string(' ', n))`) in the
+Debug `-warnaserror` build. At the owner's call this is fixed with a fifth engine patch, not an SDK pin:
+`engine-patch/bded548-ca1830-stringbuilder` (`8d76f48`, `Append(' ', n)`, built on the previous pin), re-pinned in
+`mod.config`, re-fetched by SHA, then `make`, `--check-yaml` and both interface checks.
+
+**Files:** `rules/world.yaml`, `rules/ai.yaml`, `mod.config`; `CHANGELOG.md`, `CLAUDE.md`, `docs/GAME_MODES.md`,
+`docs/BETA_TESTING.md`, `docs/ENERGY_BALANCE.md`, `README.md`.

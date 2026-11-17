@@ -58,11 +58,11 @@ enough. If it failed, file a [bug report](#4-reporting-a-problem).
   isn't greyed out, it simply doesn't appear. The version is shown in the main menu.
 - **Grid Reserve** is on by default. Destruction victory (eliminate everyone) always works too. A popup explains
   the rules at the start of a match.
-- **Day/Night Cycle** is on by default too (switch it off in the lobby). Solar Arrays drop to 30% at night; Battery
+- **Day/Night Cycle** is off by default (tick it in the lobby to play with it). Solar Arrays drop to 30% at night; Battery
   Banks charge from spare power by day and power your base at night, on their own. The second bar at the top shows
   the time of day and the energy stored.
 - **3 or more players is what we most need to test.** Bots are fine for filling slots; **Easy Grid Broker AI** is
-  the beginner opponent, **Grid Broker AI** plays the economic win hard, and **Saboteur AI** banks quietly behind
+  the beginner opponent and the default, **Grid Broker AI** plays the economic win hard, and **Saboteur AI** banks quietly behind
   its defences and sends Spies at your power plants, with small diversion attacks to cover them.
 
 ### Same network (LAN)
