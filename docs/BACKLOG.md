@@ -6214,5 +6214,11 @@ With the cycle off, a Battery Bank holds its whole 8000 Reserve again and the ba
 cycle-off count, so a default match is the pre-#136 economy byte for byte. Saboteur tuning notes that assumed a night
 in every match (issue #138, `docs/GAME_MODES.md`) now apply only when the lobby turns the cycle on.
 
-**Files:** `rules/world.yaml`, `rules/ai.yaml`; `CHANGELOG.md`, `CLAUDE.md`, `docs/GAME_MODES.md`,
+**CI, same PR.** The first CI run failed on an unchanged engine: GitHub's runner now resolves `8.0.x` to SDK 8.0.428,
+whose analyzers report CA1830 at `OpenRA.Game/Support/ExceptionHandler.cs(62)` (`Append(new string(' ', n))`) in the
+Debug `-warnaserror` build. At the owner's call this is fixed with a fifth engine patch, not an SDK pin:
+`engine-patch/bded548-ca1830-stringbuilder` (`8d76f48`, `Append(' ', n)`, built on the previous pin), re-pinned in
+`mod.config`, re-fetched by SHA, then `make`, `--check-yaml` and both interface checks.
+
+**Files:** `rules/world.yaml`, `rules/ai.yaml`, `mod.config`; `CHANGELOG.md`, `CLAUDE.md`, `docs/GAME_MODES.md`,
 `docs/BETA_TESTING.md`, `docs/ENERGY_BALANCE.md`, `README.md`.
