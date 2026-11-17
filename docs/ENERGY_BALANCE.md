@@ -189,7 +189,7 @@ same reasoning that made issue #84's `AGUN`/`SAM` faction swap a rules-only chan
 
 ## Night: the Sun Cycle's faction identity (issue #136)
 
-With the `suncycle` lobby option on (on by default since issue #136's second revision; full spec in `docs/GAME_MODES.md`, "Sun Cycle"), Solar Arrays
+With the `suncycle` lobby option on (on by default from issue #136's second revision until issue #149 turned it off again; full spec in `docs/GAME_MODES.md`, "Sun Cycle"), Solar Arrays
 fall to 65% at dusk and dawn and 30% at night. Nothing else does. The ledger above gains a column:
 
 | | Cost | Power by day | **Power at night** | Night cr/power | Side |

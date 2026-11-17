@@ -164,9 +164,9 @@ The whole module short-circuits on `GridReserveManager.Enabled`, the same lobby-
 
 ## Sun Cycle (day/night, issue #136)
 
-A second, independent lobby option (`suncycle`, **"Day/Night Cycle", on by default** since issue #136's second
-revision - the owner's call; it was off until then. `rules/world.yaml` sets `CheckboxEnabled: true` over the trait's
-own default of off, the same pattern as Grid Reserve, and the checkbox stays unlocked). It changes no victory condition. One sky for the whole table: every player's night
+A second, independent lobby option (`suncycle`, **"Day/Night Cycle", off by default** since issue #149 - tester
+feedback, the owner's call. It was on by default from issue #136's second revision until beta13. `rules/world.yaml`
+sets `CheckboxEnabled: false`, and the checkbox stays unlocked). It changes no victory condition. One sky for the whole table: every player's night
 falls at the same moment, so a dusk is a shared, readable timing window rather than a per-player hidden state.
 Every number below is **reasoned, not measured**. Tick counts assume Normal speed (25 ticks/s), as elsewhere in this
 document.
@@ -390,7 +390,7 @@ Open: the bank's sprite still shows ore-storage fill, not charge (needs a sprite
 no night art states (lamps on the arrays, dark panels - art rule 16 territory); an
 observer-scoreboard column; a "hit the banks before sunset" squad hook for the bots (`GrantConditionOnSunPhase` works
 on the Player actor and is ready for a `PreferredTargetCondition`); and every constant above is waiting on a playtest.
-Since the cycle went on by default, the Saboteur AI (tuned with it off) meets a night in every default match, and night
+While the cycle was on by default (issue #136 to #149), the Saboteur AI (tuned with it off) met a night in every default match, and night
 makes its `EnemyGridStateBotModule` read more opponents as "grid down" - its push timing is the first thing to watch.
 The protected third (33%) and the energy-first rule are the owner's decisions; their numbers above are reasoned and
 modelled, not measured.

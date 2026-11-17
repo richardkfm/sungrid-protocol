@@ -50,7 +50,7 @@ This repo follows the [OpenRAModSDK](https://github.com/OpenRA/OpenRAModSDK) pat
 - **Mod SDK pattern, not a vendored engine fork** — the engine is fetched/pinned via `mod.config` + `fetch-engine.sh`, not committed to this repo. Superseded the original "full engine fork" decision before any mod content existed (see `docs/ARCHITECTURE.md` for the full reasoning).
 - Data-driven-first: buildings/units/rules go through YAML composing existing OpenRA traits wherever possible; new C# traits (in `OpenRA.Mods.Sungrid/`) are reserved for things YAML genuinely can't express (currently: only the Grid Reserve vault/win-condition mechanic).
 - Destruction victory is permanent and always available; Grid Reserve is an additive lobby option, **on by default** since issue #39 (the trait's own C# default is off — `mods/sungrid/rules/world.yaml` turns it on).
-- The Sun Cycle (day/night, issue #136) is a second lobby option, **on by default** since issue #136's second revision, by the same pattern (C# default off, `rules/world.yaml` turns it on, unlocked). It changes no victory condition; with Grid Reserve on, energy has first call on Battery Bank space (see "Sun Cycle" below).
+- The Sun Cycle (day/night, issue #136) is a second lobby option, **off by default** again since issue #149 (tester feedback; it was on from issue #136's second revision to beta13). `rules/world.yaml` sets `CheckboxEnabled: false` explicitly, unlocked. It changes no victory condition; with Grid Reserve on, energy has first call on Battery Bank space (see "Sun Cycle" below).
 - "Grid Reserve" is the recommended/working name for the economic victory mode (see `docs/GAME_MODES.md` for the other 4 candidates that were considered).
 - Diplomacy, alliance mechanics, and shared/pooled resources are explicitly out of scope until Phase 3-5 playtests justify them (see Phase 8+ in `docs/ROADMAP.md`).
 
@@ -142,9 +142,9 @@ each other's state and it is easy to leave one of them out:
 
 **Bots (issue #67).** `GridReserveBotModule` sizes Vault count off the real Target and queues them one
 at a time so stock `BaseBuilderQueueManager` still does the placing. Seven lobby personalities: the four
-stock ones plus **Grid Broker AI**, **Easy Grid Broker AI** and **Saboteur AI** (issue #135). **Saboteur AI is the
-default bot** (issue #138): the engine's default is the *first* `ModularBot` on the Player actor, so it heads `ai.yaml`;
-keep it first. "Add bots" picks at random in the engine, not from that order.
+stock ones plus **Grid Broker AI**, **Easy Grid Broker AI** and **Saboteur AI** (issue #135). **Easy Grid Broker AI is the
+default bot** (issue #149, after tester feedback; Saboteur was from issue #138 to beta13): the engine's default is the
+*first* `ModularBot` on the Player actor, so it heads `ai.yaml`; keep it first. Saboteur AI is listed last. "Add bots" picks at random in the engine, not from that order.
 
 **Bots now raid Vaults (issue #105).** This was the deferral above, and it did need the engine-level
 squad target-selection change #67 predicted. Squad targeting is *purely distance-based* — every state
@@ -258,8 +258,8 @@ and config, not measured against observed income.
 
 ### Sun Cycle (day/night, issue #136)
 
-A lobby option, `suncycle`, **on by default** since issue #136's second revision (the owner's call; `rules/world.yaml`
-sets `CheckboxEnabled: true`, the trait's C# default stays off, the same pattern as Grid Reserve; still unlocked).
+A lobby option, `suncycle`, **off by default** since issue #149 (tester feedback, the owner's call; it was on from issue
+#136's second revision until beta13; `rules/world.yaml` sets `CheckboxEnabled: false`, still unlocked).
 `docs/GAME_MODES.md` ("Sun Cycle") is the spec with every constant
 and its reasoning; read it before touching `OpenRA.Mods.Sungrid/SunCycle/` or the Battery Bank. Shipped: first dusk at
 7500 ticks, then Day 5250 / Dusk 750 / Night 2250 / Dawn 750 (a 6-minute cycle; night = `LockdownDurationTicks`);

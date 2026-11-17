@@ -6,8 +6,8 @@ parentheses refer to `docs/BACKLOG.md`, which holds the full engineering detail 
 (GitHub Issues is disabled on this repo, so the backlog file is the issue tracker).
 
 Pre-built packages for each tagged version are on the
-[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta10** (issues #131–#133:
-villages and towns on 22 maps, bots that fly their drones and aircraft, and four new large maps). **Testing a release?** Start with the
+[Releases](https://github.com/richardkfm/sungrid-protocol/releases) page. Latest release: **beta14** (issue #149: plain Grid Reserve
+again by default - Day/Night Cycle off, Easy Grid Broker AI as the default bot - plus the fixes from issues #144-#148). **Testing a release?** Start with the
 [beta tester guide](docs/BETA_TESTING.md) and report through the
 [issue forms](https://github.com/richardkfm/sungrid-protocol/issues/new/choose).
 
@@ -25,11 +25,11 @@ phase plan and `CLAUDE.md` for detailed current status.
 
 The detailed entries below track every issue through #119, plus #132; this list maps every issue onto its release tag.
 
-- **Unreleased** (on `main`): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
+- **beta11 - beta13** (tagged without entries of their own at the time; issues #134-#143): every AI opponent builds its base more slowly, Easy Grid Broker most of all, and
   its pair of drones arrives later (issue #134); a seventh AI personality, **Saboteur AI**, that banks toward the
   Reserve and sends Spies at your power grid under cover of small diversion attacks - and, with the Day/Night Cycle on, at your
   charged Battery Banks to drain them before nightfall (issue #135); a **Day/Night
-  Cycle** lobby option, on by default (switch it off in the lobby): Solar Arrays drop to 65% at dusk and 30% at night on a six-minute cycle, the
+  Cycle** lobby option, on by default (switch it off in the lobby; off by default again since beta14, issue #149): Solar Arrays drop to 65% at dusk and 30% at night on a six-minute cycle, the
   screen dims and cools after dark, and Battery Banks now store surplus power by day and release it at night - in the
   same space they bank Grid Reserve credits, so night storage and the economic victory compete for the same banks.
   The Consortium's banks hold half as much again and discharge faster; the Assembly's Wind Turbines run all night. A
@@ -76,7 +76,12 @@ The detailed entries below track every issue through #119, plus #132; this list 
   hard**, and the Assembly's **Wasp Gunship** can finally reload at its own Airfield (issue #141). **Breaking a
   Lockdown now buys real time:** after a raid cancels it, it cannot start again for 45 seconds, even if the owner
   banks straight back to the target - before, it restarted about five seconds later. The bar shows "LOCKDOWN
-  RE-ARMING" to the owner and "ENEMY RE-ARMING" to everyone else, with the seconds left (issue #143). **The main-menu
+  RE-ARMING" to the owner and "ENEMY RE-ARMING" to everyone else, with the seconds left (issue #143).
+- **beta14**: **Back to plain Grid Reserve by default.** After tester feedback, a fresh skirmish now starts the way
+  it did before the Day/Night Cycle: the **Day/Night Cycle is off by default** (tick it in the lobby if you want it;
+  the main-menu battle still shows it), and the default bot is **Easy Grid Broker AI** instead of Saboteur AI. Grid
+  Reserve stays on. Saboteur AI is still in every bot list, now at the bottom; Grid Broker AI is second (issue #149).
+  **The main-menu
   battle actually fights now:** every Assembly unit was ordered to march onto the Consortium Construction Yard's own
   building, which nobody can stand on, so most of them - every trooper its barracks built - stood still all match.
   They now attack open ground in the Consortium base and pour across the valley. The Battery Banks, Sensor Arrays,
